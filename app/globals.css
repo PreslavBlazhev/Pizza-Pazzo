@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Lora", Georgia, "Times New Roman", serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    /* Subtle food-doodle watermark over the warm cream base — decorative,
+       low-contrast, non-intrusive. Fixed so it reads as page texture. */
+    background-color: #FBF6EE;
+    background-image: url("/patterns/food-doodles.svg");
+    background-repeat: repeat;
+    background-size: 300px auto;
+    background-attachment: fixed;
+  }
+
+  @media print {
+    body {
+      background-image: none;
+    }
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: #17924a;
+    color: #fff;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for the horizontal category strip on mobile. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Thermal printer ticket (80mm) ──────────────────────────────
+   Utilities used by the browser-print order ticket. Refined in Stage 7. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-ticket {
+    width: 80mm;
+    margin: 0;
+    padding: 0;
+    color: #000;
+    background: #fff;
+  }
+}

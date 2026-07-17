@@ -1,0 +1,2170 @@
+[
+  {
+    "id": "prod_margarita",
+    "name": "Маргарита",
+    "slug": "margarita",
+    "description": "доматен сос и кашкавал",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 13.01,
+    "priceEur": 6.65,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "isPopular": true,
+    "variants": [
+      {
+        "id": "var_margarita_1",
+        "name": "30 см",
+        "priceBgn": 13.01,
+        "priceEur": 6.65
+      },
+      {
+        "id": "var_margarita_2",
+        "name": "40 см",
+        "priceBgn": 19.95,
+        "priceEur": 10.23
+      }
+    ]
+  },
+  {
+    "id": "prod_kashkavalina",
+    "name": "Кашкавалина",
+    "slug": "kashkavalina",
+    "description": "чеснова база и кашкавал",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 13.01,
+    "priceEur": 6.65,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "variants": [
+      {
+        "id": "var_kashkavalina_1",
+        "name": "30 см",
+        "priceBgn": 13.01,
+        "priceEur": 6.65
+      },
+      {
+        "id": "var_kashkavalina_2",
+        "name": "40 см",
+        "priceBgn": 19.95,
+        "priceEur": 10.23
+      }
+    ]
+  },
+  {
+    "id": "prod_margarita_de_luks",
+    "name": "Маргарита де Лукс",
+    "slug": "margarita-de-luks",
+    "description": "доматен сос, кашкавал, чери домати, рукола, сушени домати и грана падано",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "sulphites"
+    ],
+    "isAvailable": true,
+    "sortOrder": 3,
+    "variants": [
+      {
+        "id": "var_margarita_de_luks_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_margarita_de_luks_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_brusketitsa",
+    "name": "Брускетица",
+    "slug": "brusketitsa",
+    "description": "маргарита, гарнирана със свеж босилек, домати и червен лук",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 4,
+    "variants": [
+      {
+        "id": "var_brusketitsa_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_brusketitsa_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_tribagra",
+    "name": "Трибагра",
+    "slug": "tribagra",
+    "description": "доматен сос, кашкавал, чери домати, моцарела и пресен босилек",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 5,
+    "variants": [
+      {
+        "id": "var_tribagra_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_tribagra_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_shopska",
+    "name": "Шопска",
+    "slug": "shopska",
+    "description": "доматен сос, кашкавал, зелени и червени чушки, бяло сирене, домати и магданоз",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 6,
+    "variants": [
+      {
+        "id": "var_shopska_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_shopska_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_balkanska",
+    "name": "Балканска",
+    "slug": "balkanska",
+    "description": "доматен сос, кашкавал, гъби, маслини, червени чушки, домати и босилек",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 7,
+    "variants": [
+      {
+        "id": "var_balkanska_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_balkanska_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_vege",
+    "name": "Веге",
+    "slug": "vege",
+    "description": "доматен сос, кашкавал, зелени и червени чушки и червен лук",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 8,
+    "variants": [
+      {
+        "id": "var_vege_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_vege_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_vege_vulkano",
+    "name": "Веге Вулкано",
+    "slug": "vege-vulkano",
+    "description": "доматен сос, кашкавал, зелени и червени чушки, червен лук и халапеньо",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 9,
+    "variants": [
+      {
+        "id": "var_vege_vulkano_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_vege_vulkano_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_staroselska",
+    "name": "Староселска",
+    "slug": "staroselska",
+    "description": "доматен сос, кашкавал, червени и зелени чушки, чесън и магданоз",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 10,
+    "variants": [
+      {
+        "id": "var_staroselska_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_staroselska_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_chinkue_patsoni",
+    "name": "Чинкуе Пацони",
+    "slug": "chinkue-patsoni",
+    "description": "доматен сос, кашкавал, бяло сирене, гауда, моцарела, ементал",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 11,
+    "variants": [
+      {
+        "id": "var_chinkue_patsoni_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_chinkue_patsoni_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_selska",
+    "name": "Селска",
+    "slug": "selska",
+    "description": "доматен сос, кашкавал, свинска шунка и гъби",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 12,
+    "variants": [
+      {
+        "id": "var_selska_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_selska_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_havayska",
+    "name": "Хавайска",
+    "slug": "havayska",
+    "description": "доматен сос, кашкавал, свинска шунка и парченца ананас",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 13,
+    "variants": [
+      {
+        "id": "var_havayska_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_havayska_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_peperoni_maks",
+    "name": "Пеперони Макс",
+    "slug": "peperoni-maks",
+    "description": "червен лук и постеля от двойна порция пеперони",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 14,
+    "isPopular": true,
+    "variants": [
+      {
+        "id": "var_peperoni_maks_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_peperoni_maks_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_div_zapad",
+    "name": "Див Запад",
+    "slug": "div-zapad",
+    "description": "доматен сос, кашкавал, пиле на жар, механджийска наденица и бекон",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 15,
+    "variants": [
+      {
+        "id": "var_div_zapad_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_div_zapad_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_chika_latina",
+    "name": "Чика Латина",
+    "slug": "chika-latina",
+    "description": "гуакамоле сос, кашкавал, пушен бекон и пиле на жар",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 16,
+    "variants": [
+      {
+        "id": "var_chika_latina_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_chika_latina_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_tsezar",
+    "name": "Цезар",
+    "slug": "tsezar",
+    "description": "сметана за основа, пилешко филе, пармезан, цезар сос, рукола",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 17,
+    "variants": [
+      {
+        "id": "var_tsezar_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_tsezar_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_karbonara",
+    "name": "Карбонара",
+    "slug": "karbonara",
+    "description": "сос Холандес, кашкавал, гъби, пушен бекон и пилешко филе",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 18,
+    "variants": [
+      {
+        "id": "var_karbonara_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_karbonara_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_angliyska_zakuska",
+    "name": "Английска закуска",
+    "slug": "angliyska-zakuska",
+    "description": "доматен сос, кашкавал, гъби, пушен бекон и яйце",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "eggs"
+    ],
+    "isAvailable": true,
+    "sortOrder": 19,
+    "variants": [
+      {
+        "id": "var_angliyska_zakuska_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_angliyska_zakuska_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_amerikanski_burger",
+    "name": "Американски бургер",
+    "slug": "amerikanski-burger",
+    "description": "доматен сос, кашкавал, кисели краставички, телешки бургер и пушен бекон",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 20,
+    "variants": [
+      {
+        "id": "var_amerikanski_burger_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_amerikanski_burger_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_nyu_york_hot_dog",
+    "name": "Ню Йорк Хот Дог",
+    "slug": "nyu-york-hot-dog",
+    "description": "база медена горчица, червен лук и кренвирш",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 21,
+    "variants": [
+      {
+        "id": "var_nyu_york_hot_dog_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_nyu_york_hot_dog_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_teksasko_bbq",
+    "name": "Тексаско BBQ",
+    "slug": "teksasko-bbq",
+    "description": "доматен сос, кашкавал, червен лук, пилешка шунка, пушен бекон и BBQ сос",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 22,
+    "variants": [
+      {
+        "id": "var_teksasko_bbq_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_teksasko_bbq_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_meksiko",
+    "name": "Мексико",
+    "slug": "meksiko",
+    "description": "доматен сос, кашкавал, червен лук, червена чушка, пикантно телешко и халапеньо",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 23,
+    "variants": [
+      {
+        "id": "var_meksiko_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_meksiko_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_mestna_mesna",
+    "name": "Местна месна",
+    "slug": "mestna-mesna",
+    "description": "доматен сос, кашкавал, червен лук, деликатесен салам, пеперони и луканка",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 24,
+    "variants": [
+      {
+        "id": "var_mestna_mesna_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_mestna_mesna_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_vulkano",
+    "name": "Вулкано",
+    "slug": "vulkano",
+    "description": "доматен сос, кашкавал, смляна суха люта чушка, пеперони и халапеньо",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 25,
+    "variants": [
+      {
+        "id": "var_vulkano_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_vulkano_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_printsesa",
+    "name": "Принцеса",
+    "slug": "printsesa",
+    "description": "доматен сос, кашкавал, бяло сирене, луканка и яйце",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "eggs"
+    ],
+    "isAvailable": true,
+    "sortOrder": 26,
+    "variants": [
+      {
+        "id": "var_printsesa_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_printsesa_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_pile",
+    "name": "Пиле",
+    "slug": "pile",
+    "description": "доматен сос, кашкавал, сладка царевица, пилешка шунка и BBQ сос",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 27,
+    "variants": [
+      {
+        "id": "var_pile_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_pile_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_indiysko_pile",
+    "name": "Индийско пиле",
+    "slug": "indiysko-pile",
+    "description": "доматен сос, кашкавал, сладка царевица, пилешко филе с индийски подправки",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 28,
+    "variants": [
+      {
+        "id": "var_indiysko_pile_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_indiysko_pile_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_rancho",
+    "name": "Ранчо",
+    "slug": "rancho",
+    "description": "доматен сос, кашкавал, кисели краставички, топено сирене и пилешка шунка",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 29,
+    "variants": [
+      {
+        "id": "var_rancho_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_rancho_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_byalo_pile",
+    "name": "Бяло пиле",
+    "slug": "byalo-pile",
+    "description": "чеснова база, кашкавал, гъби и пилешка шунка",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 30,
+    "variants": [
+      {
+        "id": "var_byalo_pile_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_byalo_pile_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_nikulden",
+    "name": "Никулден",
+    "slug": "nikulden",
+    "description": "доматен сос, кашкавал, рачешки рулца, риба тон и аншоа",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "fish",
+      "crustaceans"
+    ],
+    "isAvailable": true,
+    "sortOrder": 31,
+    "variants": [
+      {
+        "id": "var_nikulden_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_nikulden_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_okeana",
+    "name": "Океана",
+    "slug": "okeana",
+    "description": "доматен сос, кашкавал, червен лук, маслини, риба тон, пресен босилек и сушени домати",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "fish",
+      "sulphites"
+    ],
+    "isAvailable": true,
+    "sortOrder": 32,
+    "variants": [
+      {
+        "id": "var_okeana_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_okeana_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_moyata_patso",
+    "name": "Моята Пацо",
+    "slug": "moyata-patso",
+    "description": "маргарита с три добавки по ваш избор",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 33,
+    "variants": [
+      {
+        "id": "var_moyata_patso_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_moyata_patso_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_spetsialna",
+    "name": "Специална",
+    "slug": "spetsialna",
+    "description": "доматен сос, кашкавал, пеперони, пиле на жар, пикантно телешко, зелени чушки, лук",
+    "categoryId": "cat_pizzas_standard",
+    "priceBgn": 19,
+    "priceEur": 9.71,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 34,
+    "isPopular": true,
+    "variants": [
+      {
+        "id": "var_spetsialna_1",
+        "name": "30 см",
+        "priceBgn": 19,
+        "priceEur": 9.71
+      },
+      {
+        "id": "var_spetsialna_2",
+        "name": "40 см",
+        "priceBgn": 25,
+        "priceEur": 12.78
+      }
+    ]
+  },
+  {
+    "id": "prod_syomga",
+    "name": "Сьомга",
+    "slug": "syomga",
+    "description": "база филаделфия и пушена сьомга",
+    "categoryId": "cat_pizzas_special",
+    "priceBgn": 23,
+    "priceEur": 11.76,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "fish"
+    ],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "variants": [
+      {
+        "id": "var_syomga_1",
+        "name": "30 см",
+        "priceBgn": 23,
+        "priceEur": 11.76
+      },
+      {
+        "id": "var_syomga_2",
+        "name": "40 см",
+        "priceBgn": 29.92,
+        "priceEur": 15.34
+      }
+    ]
+  },
+  {
+    "id": "prod_proshuto",
+    "name": "Прошуто",
+    "slug": "proshuto",
+    "description": "доматен сос, кашкавал, рукола, чери домати, прошуто крудо, грана падано",
+    "categoryId": "cat_pizzas_special",
+    "priceBgn": 23,
+    "priceEur": 11.76,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "isPopular": true,
+    "variants": [
+      {
+        "id": "var_proshuto_1",
+        "name": "30 см",
+        "priceBgn": 23,
+        "priceEur": 11.76
+      },
+      {
+        "id": "var_proshuto_2",
+        "name": "40 см",
+        "priceBgn": 29.92,
+        "priceEur": 15.34
+      }
+    ]
+  },
+  {
+    "id": "prod_kashkavalen_filadelfiya_krenvirsh_peperoni_bord",
+    "name": "Кашкавален / Филаделфия / Кренвирш / Пеперони борд",
+    "slug": "kashkavalen-filadelfiya-krenvirsh-peperoni-bord",
+    "description": "добавка за борд",
+    "categoryId": "cat_pizza_addons",
+    "priceBgn": 7,
+    "priceEur": 3.58,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "variants": [
+      {
+        "id": "var_kashkavalen_filadelfiya_krenvirsh_peperoni_bord_1",
+        "name": "30 см",
+        "priceBgn": 7,
+        "priceEur": 3.58
+      },
+      {
+        "id": "var_kashkavalen_filadelfiya_krenvirsh_peperoni_bord_2",
+        "name": "40 см",
+        "priceBgn": 9,
+        "priceEur": 4.6
+      }
+    ]
+  },
+  {
+    "id": "prod_mesni_mlechni_ribni",
+    "name": "Месни / млечни / рибни",
+    "slug": "mesni-mlechni-ribni",
+    "description": "добавки към пица",
+    "categoryId": "cat_pizza_addons",
+    "priceBgn": 4.89,
+    "priceEur": 2.56,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "variants": [
+      {
+        "id": "var_mesni_mlechni_ribni_1",
+        "name": "30 см",
+        "priceBgn": 4.89,
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_mesni_mlechni_ribni_2",
+        "name": "40 см",
+        "priceBgn": 6,
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_zelenchukovi",
+    "name": "Зеленчукови",
+    "slug": "zelenchukovi",
+    "description": "добавки към пица",
+    "categoryId": "cat_pizza_addons",
+    "priceBgn": 4.01,
+    "priceEur": 2.05,
+    "imageUrl": "/images/products/placeholder-pizza.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 3,
+    "variants": [
+      {
+        "id": "var_zelenchukovi_1",
+        "name": "30 см",
+        "priceBgn": 4.01,
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_zelenchukovi_2",
+        "name": "40 см",
+        "priceBgn": 5.01,
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_presni_hlebni_topcheta",
+    "name": "Пресни хлебни топчета",
+    "slug": "presni-hlebni-topcheta",
+    "description": "от тесто за пици, с чеснов сос",
+    "categoryId": "cat_starters",
+    "priceBgn": 6,
+    "priceEur": 3.07,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "size": "300 г"
+  },
+  {
+    "id": "prod_chesnova_bageta",
+    "name": "Чеснова багета",
+    "slug": "chesnova-bageta",
+    "description": "",
+    "categoryId": "cat_starters",
+    "priceBgn": 6,
+    "priceEur": 3.07,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "size": "120 г"
+  },
+  {
+    "id": "prod_chesnova_bageta_s_kashkaval",
+    "name": "Чеснова багета с кашкавал",
+    "slug": "chesnova-bageta-s-kashkaval",
+    "description": "",
+    "categoryId": "cat_starters",
+    "priceBgn": 8.51,
+    "priceEur": 4.35,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 3,
+    "size": "200 г"
+  },
+  {
+    "id": "prod_lucheni_kragcheta",
+    "name": "Лучени кръгчета",
+    "slug": "lucheni-kragcheta",
+    "description": "с чеснов сос",
+    "categoryId": "cat_starters",
+    "priceBgn": 9,
+    "priceEur": 4.6,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 4,
+    "size": "250 г"
+  },
+  {
+    "id": "prod_parzheni_kartofi",
+    "name": "Пържени картофи",
+    "slug": "parzheni-kartofi",
+    "description": "",
+    "categoryId": "cat_starters",
+    "priceBgn": 6,
+    "priceEur": 3.07,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 5,
+    "size": "200 г"
+  },
+  {
+    "id": "prod_parzheni_kartofi_sas_sirene",
+    "name": "Пържени картофи със сирене",
+    "slug": "parzheni-kartofi-sas-sirene",
+    "description": "",
+    "categoryId": "cat_starters",
+    "priceBgn": 7.5,
+    "priceEur": 3.83,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 6,
+    "size": "250 г"
+  },
+  {
+    "id": "prod_proletni_rultsa",
+    "name": "Пролетни рулца",
+    "slug": "proletni-rultsa",
+    "description": "със зеленчуци, сервирани със сладко чили",
+    "categoryId": "cat_starters",
+    "priceBgn": 8.51,
+    "priceEur": 4.35,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 7,
+    "size": "150 г"
+  },
+  {
+    "id": "prod_proletni_rultsa_s_pile",
+    "name": "Пролетни рулца с пиле",
+    "slug": "proletni-rultsa-s-pile",
+    "description": "сервирани със сладко чили",
+    "categoryId": "cat_starters",
+    "priceBgn": 12.01,
+    "priceEur": 6.14,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 8,
+    "size": "150 г"
+  },
+  {
+    "id": "prod_kartofeni_rezanki",
+    "name": "Картофени резанки",
+    "slug": "kartofeni-rezanki",
+    "description": "с BBQ сос",
+    "categoryId": "cat_starters",
+    "priceBgn": 9,
+    "priceEur": 4.6,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 9,
+    "size": "300 г"
+  },
+  {
+    "id": "prod_panirani_kalmari",
+    "name": "Панирани калмари",
+    "slug": "panirani-kalmari",
+    "description": "сервирани с млечен чеснов сос",
+    "categoryId": "cat_starters",
+    "priceBgn": 12.01,
+    "priceEur": 6.14,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "molluscs",
+      "crustaceans",
+      "fish"
+    ],
+    "isAvailable": true,
+    "sortOrder": 10,
+    "size": "250 г"
+  },
+  {
+    "id": "prod_pileshki_hapki",
+    "name": "Пилешки хапки",
+    "slug": "pileshki-hapki",
+    "description": "печено пилешко, овкусено с медена горчица",
+    "categoryId": "cat_starters",
+    "priceBgn": 9.78,
+    "priceEur": 5.11,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 11,
+    "size": "250 г"
+  },
+  {
+    "id": "prod_kari_pileshki_hapki",
+    "name": "Къри пилешки хапки",
+    "slug": "kari-pileshki-hapki",
+    "description": "печено пилешко, овкусено с къри сос",
+    "categoryId": "cat_starters",
+    "priceBgn": 9.78,
+    "priceEur": 5.11,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 12,
+    "size": "250 г"
+  },
+  {
+    "id": "prod_hrupkavi_pileshki_bonfilentsa",
+    "name": "Хрупкави пилешки бонфиленца",
+    "slug": "hrupkavi-pileshki-bonfilentsa",
+    "description": "с млечен чеснов сос",
+    "categoryId": "cat_starters",
+    "priceBgn": 15,
+    "priceEur": 7.67,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 13,
+    "size": "250 г"
+  },
+  {
+    "id": "prod_hrupkavi_spanacheni_kyufteta",
+    "name": "Хрупкави спаначени кюфтета",
+    "slug": "hrupkavi-spanacheni-kyufteta",
+    "description": "с млечен чеснов сос",
+    "categoryId": "cat_starters",
+    "priceBgn": 9.78,
+    "priceEur": 5.11,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 14,
+    "size": "350 г"
+  },
+  {
+    "id": "prod_motsareleni_prachitsi",
+    "name": "Моцарелени пръчици",
+    "slug": "motsareleni-prachitsi",
+    "description": "с доматен сос",
+    "categoryId": "cat_starters",
+    "priceBgn": 9.78,
+    "priceEur": 5.11,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 15,
+    "size": "10 бр."
+  },
+  {
+    "id": "prod_panirani_kashkavalcheta",
+    "name": "Панирани кашкавалчета",
+    "slug": "panirani-kashkavalcheta",
+    "description": "със сос от боровинки",
+    "categoryId": "cat_starters",
+    "priceBgn": 9.78,
+    "priceEur": 5.11,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 16,
+    "size": "200 г"
+  },
+  {
+    "id": "prod_panirani_sirentsa",
+    "name": "Панирани сиренца",
+    "slug": "panirani-sirentsa",
+    "description": "със сос от боровинки",
+    "categoryId": "cat_starters",
+    "priceBgn": 9.78,
+    "priceEur": 5.11,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 17,
+    "size": "200 г"
+  },
+  {
+    "id": "prod_mamini_kyuftentsa",
+    "name": "Мамини кюфтенца",
+    "slug": "mamini-kyuftentsa",
+    "description": "100% свинско месо",
+    "categoryId": "cat_starters",
+    "priceBgn": 12.01,
+    "priceEur": 6.14,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 18,
+    "size": "200 г"
+  },
+  {
+    "id": "prod_pikantni_kartofi",
+    "name": "Пикантни картофи",
+    "slug": "pikantni-kartofi",
+    "description": "",
+    "categoryId": "cat_starters",
+    "priceBgn": 5,
+    "priceEur": 2.56,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 19,
+    "size": "100 г"
+  },
+  {
+    "id": "prod_pikantni_kartofi_2",
+    "name": "Пикантни картофи",
+    "slug": "pikantni-kartofi-2",
+    "description": "",
+    "categoryId": "cat_starters",
+    "priceBgn": 8.5,
+    "priceEur": 4.35,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 20,
+    "size": "200 г"
+  },
+  {
+    "id": "prod_pileshki",
+    "name": "Пилешки",
+    "slug": "pileshki",
+    "description": "пилешко кюфте, чедър, кисели краставички, лук, айсберг, BBQ сос, майонеза",
+    "categoryId": "cat_burgers",
+    "priceBgn": 15,
+    "priceEur": 7.67,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+  },
+  {
+    "id": "prod_hrupkavo_pile",
+    "name": "Хрупкаво пиле",
+    "slug": "hrupkavo-pile",
+    "description": "пилешко бон филе, чедър, спанак, медена горчица, домат, кисели краставички и кетчуп",
+    "categoryId": "cat_burgers",
+    "priceBgn": 15,
+    "priceEur": 7.67,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+  },
+  {
+    "id": "prod_vege_2",
+    "name": "Веге",
+    "slug": "vege-2",
+    "description": "2 бр. картофени кюфтета, чедър, айсберг, лук, майонеза, кисели краставички, кетчуп",
+    "categoryId": "cat_burgers",
+    "priceBgn": 12.01,
+    "priceEur": 6.14,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 3,
+    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+  },
+  {
+    "id": "prod_teleshki",
+    "name": "Телешки",
+    "slug": "teleshki",
+    "description": "телешко кюфте, чедър, бекон, лук, кисели краставички, домат, айсберг",
+    "categoryId": "cat_burgers",
+    "priceBgn": 15.65,
+    "priceEur": 8.18,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 4,
+    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
+    "isPopular": true
+  },
+  {
+    "id": "prod_syomga_2",
+    "name": "Сьомга",
+    "slug": "syomga-2",
+    "description": "филаделфия, сьомга бургер, краставица, копър, лимонов дресинг, айсберг",
+    "categoryId": "cat_burgers",
+    "priceBgn": 17,
+    "priceEur": 8.69,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "fish"
+    ],
+    "isAvailable": true,
+    "sortOrder": 5,
+    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+  },
+  {
+    "id": "prod_rastitelen",
+    "name": "Растителен",
+    "slug": "rastitelen",
+    "description": "бургер сос, айсберг, лук, кисели краставички, бекон, чедър",
+    "categoryId": "cat_burgers",
+    "priceBgn": 17,
+    "priceEur": 8.69,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 6,
+    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+  },
+  {
+    "id": "prod_yaytse_i_bekon",
+    "name": "Яйце и бекон",
+    "slug": "yaytse-i-bekon",
+    "description": "майонеза, двойно яйце, кисели краставички, айсберг, бекон, чедър",
+    "categoryId": "cat_burgers",
+    "priceBgn": 12.91,
+    "priceEur": 6.65,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 7,
+    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+  },
+  {
+    "id": "prod_yaytse_pecheno",
+    "name": "Яйце печено",
+    "slug": "yaytse-pecheno",
+    "description": "",
+    "categoryId": "cat_burger_addons",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "eggs"
+    ],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "size": "1 бр."
+  },
+  {
+    "id": "prod_hrupkavo_pile_2",
+    "name": "Хрупкаво пиле",
+    "slug": "hrupkavo-pile-2",
+    "description": "",
+    "categoryId": "cat_burger_addons",
+    "priceBgn": 4,
+    "priceEur": 2.05,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "size": "100 г"
+  },
+  {
+    "id": "prod_pileshko_teleshko_kyufte",
+    "name": "Пилешко / телешко кюфте",
+    "slug": "pileshko-teleshko-kyufte",
+    "description": "",
+    "categoryId": "cat_burger_addons",
+    "priceBgn": 4,
+    "priceEur": 2.05,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 3,
+    "size": "120 г"
+  },
+  {
+    "id": "prod_chedar",
+    "name": "Чедър",
+    "slug": "chedar",
+    "description": "",
+    "categoryId": "cat_burger_addons",
+    "priceBgn": 1.5,
+    "priceEur": 0.77,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 4,
+    "size": "100 г"
+  },
+  {
+    "id": "prod_bekon_shunka",
+    "name": "Бекон / шунка",
+    "slug": "bekon-shunka",
+    "description": "",
+    "categoryId": "cat_burger_addons",
+    "priceBgn": 3,
+    "priceEur": 1.53,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 5,
+    "size": "50 г"
+  },
+  {
+    "id": "prod_zelenchukova",
+    "name": "Зеленчукова",
+    "slug": "zelenchukova",
+    "description": "",
+    "categoryId": "cat_burger_addons",
+    "priceBgn": 1.5,
+    "priceEur": 0.77,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 6,
+    "size": "30 г"
+  },
+  {
+    "id": "prod_shopska_2",
+    "name": "Шопска",
+    "slug": "shopska-2",
+    "description": "домати, краставици, зелени чушки, червен лук, печени червени чушки, бяло сирене, магданоз",
+    "categoryId": "cat_salads",
+    "priceBgn": 15.65,
+    "priceEur": 8,
+    "imageUrl": "/images/products/placeholder-salad.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "size": "450 г"
+  },
+  {
+    "id": "prod_ovcharska",
+    "name": "Овчарска",
+    "slug": "ovcharska",
+    "description": "краставица, домат, печена чушка, лук, сирене, кашкавал, свинска шунка, маслини",
+    "categoryId": "cat_salads",
+    "priceBgn": 15.65,
+    "priceEur": 8,
+    "imageUrl": "/images/products/placeholder-salad.svg",
+    "allergens": [
+      "milk",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "size": "450 г"
+  },
+  {
+    "id": "prod_tsezar_2",
+    "name": "Цезар",
+    "slug": "tsezar-2",
+    "description": "айсберг, чери домати, крутони, пържено пилешко бон филе, пармезан и цезар дресинг",
+    "categoryId": "cat_salads",
+    "priceBgn": 15.65,
+    "priceEur": 8,
+    "imageUrl": "/images/products/placeholder-salad.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 3,
+    "size": "450 г"
+  },
+  {
+    "id": "prod_riba_ton",
+    "name": "Риба тон",
+    "slug": "riba-ton",
+    "description": "айсберг, краставици, сладка царевица, риба тон, лимон, медена горчица",
+    "categoryId": "cat_salads",
+    "priceBgn": 15.65,
+    "priceEur": 8,
+    "imageUrl": "/images/products/placeholder-salad.svg",
+    "allergens": [
+      "fish",
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 4,
+    "size": "450 г"
+  },
+  {
+    "id": "prod_tribagra_2",
+    "name": "Трибагра",
+    "slug": "tribagra-2",
+    "description": "доматени шайби, песто дженовезе, бяло сирене, пресни листа босилек",
+    "categoryId": "cat_salads",
+    "priceBgn": 15.65,
+    "priceEur": 8,
+    "imageUrl": "/images/products/placeholder-salad.svg",
+    "allergens": [
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 5,
+    "size": "450 г"
+  },
+  {
+    "id": "prod_medena_gorchitsa",
+    "name": "Медена горчица",
+    "slug": "medena-gorchitsa",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_chesnov_sos",
+    "name": "Чеснов сос",
+    "slug": "chesnov-sos",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_sos_samuray",
+    "name": "Сос Самурай",
+    "slug": "sos-samuray",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 3,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_burger_sos",
+    "name": "Бургер сос",
+    "slug": "burger-sos",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 4,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_sos_tsezar",
+    "name": "Сос Цезар",
+    "slug": "sos-tsezar",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 5,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_pesto_dzhenoveze",
+    "name": "Песто Дженовезе",
+    "slug": "pesto-dzhenoveze",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 6,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_domaten_sos",
+    "name": "Доматен сос",
+    "slug": "domaten-sos",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 7,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_lyut_sos_sriracha",
+    "name": "Лют сос Срирача",
+    "slug": "lyut-sos-sriracha",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 8,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_sladko_chili",
+    "name": "Сладко чили",
+    "slug": "sladko-chili",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 9,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_bbq",
+    "name": "BBQ",
+    "slug": "bbq",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 10,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_mlechno_chesnov_sos",
+    "name": "Млечно-чеснов сос",
+    "slug": "mlechno-chesnov-sos",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 11,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_ketchup",
+    "name": "Кетчуп",
+    "slug": "ketchup",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 12,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_mayoneza",
+    "name": "Майонеза",
+    "slug": "mayoneza",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 13,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_1000_ostrova",
+    "name": "1000 острова",
+    "slug": "1000-ostrova",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 14,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_pikantna_mayoneza",
+    "name": "Пикантна майонеза",
+    "slug": "pikantna-mayoneza",
+    "description": "сос 70 мл.",
+    "categoryId": "cat_sauces",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-food.svg",
+    "allergens": [
+      "mustard"
+    ],
+    "isAvailable": true,
+    "sortOrder": 15,
+    "size": "70 мл."
+  },
+  {
+    "id": "prod_nutitsa",
+    "name": "Нутица",
+    "slug": "nutitsa",
+    "description": "нутела, орехи, портокалови корички",
+    "categoryId": "cat_desserts",
+    "priceBgn": 6.5,
+    "priceEur": 3.32,
+    "imageUrl": "/images/products/placeholder-dessert.svg",
+    "allergens": [
+      "nuts"
+    ],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "size": "150 г"
+  },
+  {
+    "id": "prod_new_york_style_cheesecake",
+    "name": "New York Style Cheesecake",
+    "slug": "new-york-style-cheesecake",
+    "description": "",
+    "categoryId": "cat_desserts",
+    "priceBgn": 9.99,
+    "priceEur": 5.11,
+    "imageUrl": "/images/products/placeholder-dessert.svg",
+    "allergens": [
+      "nuts",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "size": "120 г",
+    "isPopular": true
+  },
+  {
+    "id": "prod_shokoladovo_brauni",
+    "name": "Шоколадово брауни",
+    "slug": "shokoladovo-brauni",
+    "description": "",
+    "categoryId": "cat_desserts",
+    "priceBgn": 7,
+    "priceEur": 3.58,
+    "imageUrl": "/images/products/placeholder-dessert.svg",
+    "allergens": [
+      "nuts",
+      "milk"
+    ],
+    "isAvailable": true,
+    "sortOrder": 3,
+    "size": "70 г"
+  },
+  {
+    "id": "prod_coca_cola",
+    "name": "Coca-Cola",
+    "slug": "coca-cola",
+    "description": "",
+    "categoryId": "cat_drinks",
+    "priceBgn": 3.5,
+    "priceEur": 1.79,
+    "imageUrl": "/images/products/placeholder-drink.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 1,
+    "size": "330 мл"
+  },
+  {
+    "id": "prod_coca_cola_2",
+    "name": "Coca-Cola",
+    "slug": "coca-cola-2",
+    "description": "",
+    "categoryId": "cat_drinks",
+    "priceBgn": 4.5,
+    "priceEur": 2.3,
+    "imageUrl": "/images/products/placeholder-drink.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 2,
+    "size": "1 л"
+  },
+  {
+    "id": "prod_mineralna_voda_bankya",
+    "name": "Минерална вода Банкя",
+    "slug": "mineralna-voda-bankya",
+    "description": "",
+    "categoryId": "cat_drinks",
+    "priceBgn": 2,
+    "priceEur": 1.02,
+    "imageUrl": "/images/products/placeholder-drink.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 3,
+    "size": "500 мл"
+  },
+  {
+    "id": "prod_mineralna_voda_bankya_2",
+    "name": "Минерална вода Банкя",
+    "slug": "mineralna-voda-bankya-2",
+    "description": "",
+    "categoryId": "cat_drinks",
+    "priceBgn": 2.99,
+    "priceEur": 1.53,
+    "imageUrl": "/images/products/placeholder-drink.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 4,
+    "size": "1.5 л"
+  },
+  {
+    "id": "prod_stela_artoa",
+    "name": "Стела Артоа",
+    "slug": "stela-artoa",
+    "description": "бира",
+    "categoryId": "cat_drinks",
+    "priceBgn": 4.5,
+    "priceEur": 2.3,
+    "imageUrl": "/images/products/placeholder-drink.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 5,
+    "size": "500 мл"
+  },
+  {
+    "id": "prod_hayneken",
+    "name": "Хайнекен",
+    "slug": "hayneken",
+    "description": "бира",
+    "categoryId": "cat_drinks",
+    "priceBgn": 4.5,
+    "priceEur": 2.3,
+    "imageUrl": "/images/products/placeholder-drink.svg",
+    "allergens": [],
+    "isAvailable": true,
+    "sortOrder": 6,
+    "size": "500 мл"
+  }
+]

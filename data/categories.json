@@ -1,0 +1,92 @@
+[
+  {
+    "id": "cat_pizzas_standard",
+    "name": "Стандартни пици",
+    "slug": "pizzas-standard",
+    "description": "Класически пици на дърва в два размера — 30 и 40 см.",
+    "icon": "🍕",
+    "sortOrder": 1,
+    "isActive": true
+  },
+  {
+    "id": "cat_pizzas_special",
+    "name": "Специални пици",
+    "slug": "pizzas-special",
+    "description": "Авторски пици с премиум съставки.",
+    "icon": "⭐",
+    "sortOrder": 2,
+    "isActive": true
+  },
+  {
+    "id": "cat_pizza_addons",
+    "name": "Пица добавки",
+    "slug": "pizza-addons",
+    "description": "Допълнителни съставки към вашата пица.",
+    "icon": "➕",
+    "sortOrder": 3,
+    "isActive": true
+  },
+  {
+    "id": "cat_starters",
+    "name": "Предястия",
+    "slug": "starters",
+    "description": "Леки предястия и разядки за начало.",
+    "icon": "🥖",
+    "sortOrder": 4,
+    "isActive": true
+  },
+  {
+    "id": "cat_burgers",
+    "name": "Бургери",
+    "slug": "burgers",
+    "description": "Сочни бургери, сервирани с картофи и напитка.",
+    "icon": "🍔",
+    "sortOrder": 5,
+    "isActive": true
+  },
+  {
+    "id": "cat_burger_addons",
+    "name": "Бургер добавки",
+    "slug": "burger-addons",
+    "description": "Допълнителни съставки към вашия бургер.",
+    "icon": "➕",
+    "sortOrder": 6,
+    "isActive": true
+  },
+  {
+    "id": "cat_salads",
+    "name": "Салати",
+    "slug": "salads",
+    "description": "Свежи сезонни салати.",
+    "icon": "🥗",
+    "sortOrder": 7,
+    "isActive": true
+  },
+  {
+    "id": "cat_sauces",
+    "name": "Сосове",
+    "slug": "sauces",
+    "description": "Домашни сосове към вашите ястия.",
+    "icon": "🫙",
+    "sortOrder": 8,
+    "isActive": true
+  },
+  {
+    "id": "cat_desserts",
+    "name": "Десерти",
+    "slug": "desserts",
+    "description": "Сладък финал за вашата поръчка.",
+    "icon": "🍰",
+    "sortOrder": 9,
+    "isActive": true
+  },
+  {
+    "id": "cat_drinks",
+    "name": "Безалкохолни напитки и бира",
+    "slug": "drinks",
+    "description": "Безалкохолни напитки и бира.",
+    "icon": "🥤",
+    "sortOrder": 10,
+    "isActive": true
+  }
+]

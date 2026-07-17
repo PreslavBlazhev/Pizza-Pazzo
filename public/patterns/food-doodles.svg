@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360">
+  <g fill="none" stroke="#EADFC9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Pizza slice (top-left) -->
+    <g transform="translate(70 78) rotate(-12)">
+      <path d="M0 -34 L26 30 L-26 30 Z"/>
+      <path d="M-30 30 Q0 46 30 30"/>
+      <circle cx="-8" cy="8" r="4"/>
+      <circle cx="9" cy="4" r="4"/>
+      <circle cx="0" cy="22" r="4"/>
+    </g>
+
+    <!-- Tomato (top-right) -->
+    <g transform="translate(268 74)">
+      <circle cx="0" cy="4" r="22"/>
+      <path d="M-9 -16 L0 -8 L9 -16"/>
+      <path d="M0 -18 L0 -8"/>
+      <path d="M-7 -4 Q-2 2 3 -2" stroke-width="1.8"/>
+    </g>
+
+    <!-- Basil leaves (center) -->
+    <g transform="translate(178 152) rotate(8)">
+      <path d="M0 0 Q-22 -8 -30 -30 Q-8 -22 0 0 Z"/>
+      <path d="M-6 -6 Q-16 -14 -26 -26" stroke-width="1.6"/>
+      <path d="M0 0 Q22 -6 32 -26 Q10 -20 0 0 Z"/>
+      <path d="M6 -5 Q18 -12 28 -22" stroke-width="1.6"/>
+    </g>
+
+    <!-- Mushroom (bottom-left) -->
+    <g transform="translate(62 258)">
+      <path d="M-24 0 Q-24 -26 0 -26 Q24 -26 24 0 Z"/>
+      <path d="M-24 0 Q0 8 24 0"/>
+      <path d="M-9 0 L-9 20 Q0 26 9 20 L9 0"/>
+      <path d="M-13 -12 h3 M2 -14 h4 M13 -9 h3" stroke-width="1.6"/>
+    </g>
+
+    <!-- Chef's hat (bottom-right) -->
+    <g transform="translate(272 256)">
+      <path d="M-20 8 Q-30 8 -30 -6 Q-30 -22 -14 -22 Q-10 -34 6 -30 Q22 -32 22 -16 Q34 -14 30 0 Q30 8 20 8 Z"/>
+      <path d="M-20 8 L-20 22 Q0 28 20 22 L20 8"/>
+    </g>
+
+    <!-- Wheat sprig (bottom-center) -->
+    <g transform="translate(170 318) rotate(-4)">
+      <path d="M0 26 L0 -22"/>
+      <path d="M0 -18 Q-11 -20 -13 -10 Q-3 -10 0 -18 Z" stroke-width="1.7"/>
+      <path d="M0 -18 Q11 -20 13 -10 Q3 -10 0 -18 Z" stroke-width="1.7"/>
+      <path d="M0 -6 Q-11 -8 -13 2 Q-3 2 0 -6 Z" stroke-width="1.7"/>
+      <path d="M0 -6 Q11 -8 13 2 Q3 2 0 -6 Z" stroke-width="1.7"/>
+    </g>
+
+    <!-- Olive on a small twig (mid-left edge) -->
+    <g transform="translate(20 172) rotate(20)">
+      <ellipse cx="0" cy="0" rx="7" ry="11"/>
+      <path d="M0 -11 Q-8 -20 -16 -18" stroke-width="1.6"/>
+    </g>
+
+    <!-- Pepper (mid-right edge) -->
+    <g transform="translate(338 168) rotate(-18)">
+      <path d="M0 -14 Q16 -10 14 8 Q12 22 0 22 Q-12 22 -12 6 Q-12 -8 0 -14 Z"/>
+      <path d="M0 -14 L0 -22 L7 -24" stroke-width="1.6"/>
+    </g>
+
+  </g>
+</svg>

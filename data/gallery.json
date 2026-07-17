@@ -1,0 +1,10 @@
+[
+  { "id": "g1", "src": "/images/products/placeholder-pizza.svg", "alt": "Пица на дърва" },
+  { "id": "g2", "src": "/images/products/placeholder-pasta.svg", "alt": "Прясна паста" },
+  { "id": "g3", "src": "/images/products/placeholder-salad.svg", "alt": "Свежа салата" },
+  { "id": "g4", "src": "/images/products/placeholder-dessert.svg", "alt": "Италиански десерт" },
+  { "id": "g5", "src": "/images/products/placeholder-pizza.svg", "alt": "Пица Пеперони" },
+  { "id": "g6", "src": "/images/products/placeholder-food.svg", "alt": "Ястие от менюто" },
+  { "id": "g7", "src": "/images/products/placeholder-drink.svg", "alt": "Освежаваща напитка" },
+  { "id": "g8", "src": "/images/products/placeholder-pizza.svg", "alt": "Пица Маргарита" }
+]
