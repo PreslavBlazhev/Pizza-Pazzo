@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getProductById } from "@/lib/menu-data";
 import { checkoutSchema } from "@/lib/validators/checkout";
 import { DELIVERY_FEE, EUR_TO_BGN } from "@/lib/constants";
+import { sendNewOrderNotification } from "@/lib/email/resend";
 
 /**
  * Checkout — creates an Order + OrderItems in SQLite.
@@ -175,6 +176,25 @@ export async function createOrder(
           items: { create: lineData },
         },
       });
+    });
+
+    // Notify the restaurant inbox — best-effort, never blocks the order.
+    await sendNewOrderNotification({
+      orderNumber: order.orderNumber,
+      customerName: d.customerName,
+      customerPhone: d.customerPhone,
+      customerEmail: d.customerEmail,
+      deliveryCity: d.deliveryCity,
+      deliveryAddress: d.deliveryAddress,
+      deliveryNote: d.deliveryNote ?? null,
+      totalBgn,
+      totalEur,
+      items: lineData.map((i) => ({
+        nameBg: i.productNameBg,
+        variantName: i.variantName,
+        quantity: i.quantity,
+        totalPriceBgn: i.totalPriceBgn,
+      })),
     });
 
     return { ok: true, orderNumber: order.orderNumber };
