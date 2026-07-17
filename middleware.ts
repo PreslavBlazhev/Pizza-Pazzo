@@ -33,8 +33,10 @@ import { getPathname } from "@/i18n/navigation";
 
 const intlMiddleware = createMiddleware(routing);
 
-/** Routes that only require a session. */
-const CUSTOMER_PROTECTED = ["/profile", "/checkout"];
+/** Routes that only require a session. Checkout is intentionally NOT here —
+ *  guests may order (Order.userId is nullable); a signed-in user just gets
+ *  their details prefilled. */
+const CUSTOMER_PROTECTED = ["/profile"];
 
 /** Admin sub-paths that need more than the baseline STAFF role. */
 const ADMIN_RULES: { prefix: string; allow: readonly UserRole[] }[] = [

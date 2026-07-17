@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { use } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
-import { FormAlert } from "@/components/ui/FormAlert";
+import { getSessionUser } from "@/lib/auth";
 import type { Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -18,33 +16,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: t("title"), robots: { index: false, follow: false } };
 }
 
-/**
- * Checkout. The form is a Stage 4 placeholder — it renders but cannot submit.
- *
- * The page is prerendered (the locale params come from the layout above) and
- * that is fine while it reads no session: access is gated in `middleware.ts`,
- * which runs before any of this. Once Stage 4 reads the cart or the user here,
- * this needs `export const dynamic = "force-dynamic"` — as /profile has.
- */
-export default function CheckoutPage({ params }: PageProps) {
-  const { locale } = use(params);
+// Reads the session (to prefill) and the request — never prerender.
+export const dynamic = "force-dynamic";
+
+export default async function CheckoutPage({ params }: PageProps) {
+  const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = useTranslations("checkout");
+  const t = await getTranslations("checkout");
+  const user = await getSessionUser();
+  const defaults = user
+    ? { name: user.fullName, email: user.email, phone: user.phone ?? undefined }
+    : undefined;
 
   return (
     <>
       <Header />
-      <main className="container max-w-3xl py-10 sm:py-14">
-        <h1 className="font-display text-2xl font-bold text-pizza-ink sm:text-3xl">
+      <main className="container max-w-5xl py-10 sm:py-14">
+        <h1 className="mb-8 font-display text-2xl font-bold text-pizza-ink sm:text-3xl">
           {t("title")}
         </h1>
-        <FormAlert tone="info" className="mt-4">
-          {t("comingSoon")}
-        </FormAlert>
-        <div className="mt-6">
-          <CheckoutForm />
-        </div>
+        <CheckoutForm defaults={defaults} />
       </main>
       <Footer />
     </>

@@ -264,13 +264,20 @@
     "notes": "Delivery note",
     "notesPlaceholder": "Floor, flat, doorbell…",
     "submit": "Place the order",
-    "orderSummary": "Order summary"
+    "orderSummary": "Order summary",
+    "fullName": "Full name",
+    "address": "Delivery address",
+    "addressPlaceholder": "street, number, entrance, floor, apartment",
+    "payment": "Payment",
+    "paymentCod": "Cash on delivery",
+    "placing": "Placing…"
   },
 
   "orderSuccess": {
     "metaTitle": "Order placed",
     "title": "Thank you for your order!",
     "subtitle": "We've received your order. You'll be notified once the restaurant accepts it.",
+    "orderNumber": "Order number: #{number}",
     "backToMenu": "Back to the menu"
   },
 
