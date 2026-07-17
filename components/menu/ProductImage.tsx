@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface ProductImageProps {
@@ -15,6 +16,7 @@ interface ProductImageProps {
  * When the admin later uploads a real photo, only imageUrl changes — no code.
  */
 export function ProductImage({ src, alt, className }: ProductImageProps) {
+  const t = useTranslations("product");
   const [failed, setFailed] = useState(false);
   const showPlaceholder = !src || failed;
 
@@ -33,7 +35,7 @@ export function ProductImage({ src, alt, className }: ProductImageProps) {
           Pizza Pazzo
         </span>
         <span className="mt-0.5 text-[11px] uppercase tracking-widest text-pizza-green">
-          Снимка скоро
+          {t("imageSoon")}
         </span>
       </div>
     );

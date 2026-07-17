@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, isServiceRoleConfigured } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
@@ -181,13 +182,15 @@ export async function updateUserRole(
   const { error: guardError, sessionUser } = await requireSuperAdminCaller();
   if (guardError || !sessionUser) return { ok: false, error: guardError ?? undefined };
 
+  const tv = await getTranslations("validation");
+
   const parsed = adminRoleUpdateSchema.safeParse({
     userId: formData.get("userId"),
     role: formData.get("role"),
   });
 
   if (!parsed.success) {
-    return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+    return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
   const { userId, role } = parsed.data;
@@ -242,6 +245,8 @@ export async function createAdminUser(
   const { error: guardError } = await requireSuperAdminCaller();
   if (guardError) return { ok: false, error: guardError };
 
+  const tv = await getTranslations("validation");
+
   const parsed = createAdminUserSchema.safeParse({
     fullName: formData.get("fullName"),
     email: formData.get("email"),
@@ -251,7 +256,7 @@ export async function createAdminUser(
   });
 
   if (!parsed.success) {
-    return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+    return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
   if (!isServiceRoleConfigured()) {

@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { logoutUser } from "@/app/actions/auth";
 import { canAccessAdmin, isUserRole, type UserRole } from "@/types/auth";
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
  * are protected by middleware, not by hiding a link.
  */
 export function HeaderAuth({ className }: { className?: string }) {
+  const t = useTranslations("nav");
   const [state, setState] = useState<{
     status: "loading" | "signedOut" | "signedIn";
     role: UserRole;
@@ -83,13 +85,13 @@ export function HeaderAuth({ className }: { className?: string }) {
           href="/auth/login"
           className="rounded-full px-4 py-2 text-base font-semibold text-pizza-ink/80 transition hover:text-brand"
         >
-          Вход
+          {t("login")}
         </Link>
         <Link
           href="/auth/register"
           className="rounded-full border border-pizza-green/40 bg-white px-4 py-2 text-base font-semibold text-pizza-green transition hover:bg-pizza-green hover:text-white"
         >
-          Регистрация
+          {t("register")}
         </Link>
       </div>
     );
@@ -102,21 +104,21 @@ export function HeaderAuth({ className }: { className?: string }) {
           href="/admin"
           className="rounded-full border border-brand/30 bg-pizza-red-light px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-brand hover:text-white"
         >
-          Админ панел
+          {t("admin")}
         </Link>
       )}
       <Link
         href="/profile"
         className="rounded-full px-4 py-2 text-base font-semibold text-pizza-ink/80 transition hover:text-brand"
       >
-        Профил
+        {t("profile")}
       </Link>
       <form action={logoutUser}>
         <button
           type="submit"
           className="rounded-full border border-pizza-cream-dark bg-white px-4 py-2 text-base font-semibold text-pizza-ink transition hover:border-brand hover:text-brand"
         >
-          Изход
+          {t("logout")}
         </button>
       </form>
     </div>

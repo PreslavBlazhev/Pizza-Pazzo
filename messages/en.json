@@ -1,0 +1,465 @@
+{
+  "meta": {
+    "tagline": "Authentic Italian pizza",
+    "description": "Authentic Italian pizza delivered — order online from Pizza Pazzo.",
+    "menu": {
+      "title": "Digital menu",
+      "description": "Choose from our pizzas, burgers, starters, salads and desserts. Prices are shown in leva and euro."
+    },
+    "gallery": {
+      "title": "Gallery",
+      "description": "Photos of our dishes and the restaurant."
+    },
+    "reviews": {
+      "title": "Reviews",
+      "description": "What our guests say about Pizza Pazzo."
+    },
+    "contacts": {
+      "title": "Contact",
+      "description": "Get in touch with Pizza Pazzo — {address}, tel. {phone}."
+    },
+    "popular": {
+      "title": "Most ordered",
+      "description": "The dishes our guests love most."
+    }
+  },
+
+  "nav": {
+    "home": "Home",
+    "menu": "Menu",
+    "gallery": "Gallery",
+    "reviews": "Reviews",
+    "contacts": "Contact",
+    "cart": "Cart",
+    "profile": "Profile",
+    "login": "Sign in",
+    "register": "Sign up",
+    "logout": "Sign out",
+    "admin": "Admin panel",
+    "mainNav": "Main navigation",
+    "mobileNav": "Mobile navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "languageSwitcher": "Change language"
+  },
+
+  "common": {
+    "viewAll": "View all",
+    "viewAllArrow": "View all →",
+    "browseMenu": "Browse the menu",
+    "toMenu": "Go to the menu",
+    "loading": "Loading…",
+    "back": "Back",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "delete": "Delete",
+    "required": "required"
+  },
+
+  "promo": {
+    "message": "🎉 Special weekly offers — take a look at our menu!",
+    "dismiss": "Dismiss this message"
+  },
+
+  "logo": {
+    "home": "Pizza Pazzo — home"
+  },
+
+  "hours": {
+    "title": "Opening hours",
+    "monday": "Monday",
+    "tuesdayToThursday": "Tuesday – Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday",
+    "closed": "Closed"
+  },
+
+  "home": {
+    "hero": {
+      "badge": "Authentic Italian pizza",
+      "titleLead": "Deliciously",
+      "titleAccent": "Different",
+      "subtitle": "Fresh dough, quality ingredients and recipes with character. Browse our menu and order your favourite dish.",
+      "ctaMenu": "Browse the menu",
+      "ctaPopular": "Most ordered 🍕",
+      "trustDelivery": "🚗 Fast delivery",
+      "trustSince": "⭐ Since {year}",
+      "trustDough": "🍕 Fresh dough every day"
+    },
+    "categories": {
+      "eyebrow": "Explore",
+      "title": "Our categories",
+      "subtitle": "From classic pizzas to desserts — find your favourite."
+    },
+    "popular": {
+      "eyebrow": "Guest favourites",
+      "title": "Most ordered",
+      "subtitle": "The dishes our guests love most.",
+      "viewAll": "View all favourites"
+    },
+    "values": {
+      "wood": {
+        "title": "Wood-fired",
+        "text": "High heat and a crisp base for authentic Italian flavour."
+      },
+      "fresh": {
+        "title": "Fresh ingredients",
+        "text": "Hand-picked produce every day — no compromise on quality."
+      },
+      "easy": {
+        "title": "Easy ordering",
+        "text": "Browse the menu and order comfortably from any device."
+      }
+    },
+    "cta": {
+      "title": "Ready for real Italian pizza?",
+      "subtitle": "Browse the menu and find your favourite dish in just a few clicks.",
+      "button": "Go to the menu"
+    }
+  },
+
+  "footer": {
+    "about": "Authentic Italian pizza delivered to your door. Made with care since {year}.",
+    "navigation": "Navigation",
+    "contacts": "Contact",
+    "rights": "© {year} {legalName}. All rights reserved.",
+    "madeWith": "Made with ❤️ and plenty of mozzarella."
+  },
+
+  "menu": {
+    "hero": {
+      "title": "Digital menu",
+      "subtitle": "Choose from our pizzas, burgers, starters, salads and desserts.",
+      "priceNote": "Prices are shown in leva and euro."
+    },
+    "categoryNav": "Categories",
+    "allCategories": "← All categories",
+    "categoryFallback": "Category",
+    "empty": "There are no products in this category."
+  },
+
+  "product": {
+    "allergens": "Allergens",
+    "allergensNone": "No allergens listed",
+    "allergensUnknown": "Allergen information is being confirmed. Please ask our staff.",
+    "ingredients": "Ingredients",
+    "size": "Serving size",
+    "sizes": "Sizes",
+    "sizesNote": "Choosing a size and adding to the cart arrive in a later stage.",
+    "chooseSize": "Choose a size",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "unavailable": "Temporarily unavailable",
+    "popular": "Popular",
+    "new": "New",
+    "from": "from",
+    "imageSoon": "Photo coming soon",
+    "backToMenu": "← Back to the menu",
+    "details": "Details",
+    "fallbackTitle": "Product",
+    "viewDetailsFor": "View details for {name}",
+    "addToCart": "Add to cart",
+    "addToCartSoon": "Add to cart — coming soon"
+  },
+
+  "gallery": {
+    "eyebrow": "Appetising",
+    "title": "Gallery",
+    "subtitle": "A moment from the Pizza Pazzo kitchen — flavour you can see.",
+    "note": "These photos will be replaced with real ones from the restaurant.",
+    "empty": "Photos are coming soon.",
+    "homeTitle": "From our kitchen",
+    "homeSubtitle": "A few shots of what we make every day.",
+    "viewAll": "View the full gallery"
+  },
+
+  "reviews": {
+    "eyebrow": "Guest opinions",
+    "title": "What our customers say",
+    "subtitleAverage": "An average rating of {avg} out of 5 on Google and Facebook.",
+    "note": "* Sample reviews — these will be replaced with real ones from Google and Facebook.",
+    "empty": "No reviews have been published yet.",
+    "contactUs": "Get in touch",
+    "homeTitle": "What our guests say",
+    "homeSubtitle": "Reviews from Google and Facebook.",
+    "viewAll": "View all reviews",
+    "source": "Source: {source}",
+    "rating": "{rating} out of 5 stars"
+  },
+
+  "popular": {
+    "eyebrow": "Guest favourites",
+    "title": "Most ordered",
+    "subtitle": "The dishes our guests love most.",
+    "empty": "We'll highlight our guests' favourites here soon.",
+    "viewFullMenu": "View the full menu"
+  },
+
+  "contacts": {
+    "eyebrow": "We're here",
+    "title": "Contact",
+    "subtitle": "Call us, write to us, or drop by.",
+    "phones": "Phone",
+    "addressAndEmail": "Address and email",
+    "openInMaps": "Open in Google Maps →",
+    "mapTitle": "Map — {name}"
+  },
+
+  "allergens": {
+    "title": "Allergens",
+    "gluten": { "name": "Gluten", "description": "Cereals containing gluten" },
+    "crustaceans": { "name": "Crustaceans", "description": "Crustaceans and products thereof" },
+    "eggs": { "name": "Eggs", "description": "Eggs and products thereof" },
+    "fish": { "name": "Fish", "description": "Fish and products thereof" },
+    "peanuts": { "name": "Peanuts", "description": "Peanuts and products thereof" },
+    "soybeans": { "name": "Soya", "description": "Soybeans and products thereof" },
+    "milk": { "name": "Milk", "description": "Milk and dairy products (incl. lactose)" },
+    "nuts": { "name": "Nuts", "description": "Tree nuts and products thereof" },
+    "celery": { "name": "Celery", "description": "Celery and products thereof" },
+    "mustard": { "name": "Mustard", "description": "Mustard and products thereof" },
+    "sesame": { "name": "Sesame", "description": "Sesame seeds and products thereof" },
+    "sulphites": { "name": "Sulphites", "description": "Sulphur dioxide and sulphites" },
+    "lupin": { "name": "Lupin", "description": "Lupin and products thereof" },
+    "molluscs": { "name": "Molluscs", "description": "Molluscs and products thereof" }
+  },
+
+  "cart": {
+    "title": "Cart",
+    "comingSoon": "Online ordering is on its way. Very soon you'll be able to add dishes here and order straight from the site. Until then, give us a call — we take orders by phone.",
+    "empty": "Your cart is empty.",
+    "subtotal": "Subtotal",
+    "deliveryFee": "Delivery",
+    "total": "Total",
+    "quantity": "Quantity",
+    "quantityShort": "Qty: {count}",
+    "remove": "Remove",
+    "checkout": "Go to checkout",
+    "continueShopping": "Continue browsing"
+  },
+
+  "checkout": {
+    "title": "Checkout",
+    "comingSoon": "Placing orders online isn't live yet. Please call us to order.",
+    "contactDetails": "Contact details",
+    "deliveryDetails": "Delivery details",
+    "delivery": "Delivery",
+    "firstName": "First name",
+    "lastName": "Surname",
+    "phone": "Phone",
+    "email": "Email",
+    "street": "Street",
+    "streetPlaceholder": "Vitosha St",
+    "number": "Number",
+    "entrance": "Entrance",
+    "floor": "Floor",
+    "apartment": "Flat",
+    "city": "City",
+    "cityPlaceholder": "Varna",
+    "notes": "Delivery note",
+    "notesPlaceholder": "Floor, flat, doorbell…",
+    "submit": "Place the order",
+    "orderSummary": "Order summary"
+  },
+
+  "orderSuccess": {
+    "metaTitle": "Order placed",
+    "title": "Thank you for your order!",
+    "subtitle": "We've received your order. You'll be notified once the restaurant accepts it.",
+    "backToMenu": "Back to the menu"
+  },
+
+  "auth": {
+    "notConfigured": "This section will be enabled once Supabase is configured.",
+    "login": {
+      "metaTitle": "Sign in",
+      "metaDescription": "Sign in to your Pizza Pazzo account.",
+      "title": "Sign in to your account",
+      "subtitle": "Sign in to order faster.",
+      "submit": "Sign in",
+      "forgotPassword": "Forgotten your password? Give us a call and we'll help.",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign up"
+    },
+    "register": {
+      "metaTitle": "Sign up",
+      "metaDescription": "Create a Pizza Pazzo account and order faster.",
+      "title": "Create an account",
+      "subtitle": "Save your address and order in a few clicks.",
+      "submit": "Sign up",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign in"
+    },
+    "checkEmail": {
+      "metaTitle": "Confirm your email",
+      "title": "Check your inbox",
+      "sentLink": "We've sent you a confirmation link. Open it to activate your account.",
+      "sentLinkTo": "We've sent a confirmation link to <strong>{email}</strong>. Open it to activate your account.",
+      "spamNote": "If you can't see the email, check your spam folder.",
+      "backToLogin": "Go to sign in"
+    },
+    "fields": {
+      "email": "Email",
+      "emailPlaceholder": "ivan@example.com",
+      "password": "Password",
+      "passwordHint": "At least 8 characters.",
+      "passwordConfirm": "Confirm the password",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Ivan Petrov",
+      "phone": "Phone",
+      "phonePlaceholder": "0888123456",
+      "phoneHint": "So we can reach you about the delivery."
+    },
+    "acceptTerms": "I agree to the Terms and Conditions and the Privacy Policy.",
+    "creating": "Creating…",
+    "createAccount": "Create account",
+    "signingIn": "Signing in…",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "logout": "Sign out",
+    "loggingOut": "Signing out…"
+  },
+
+  "profile": {
+    "metaTitle": "My profile",
+    "title": "Profile",
+    "greeting": "Hello!",
+    "greetingNamed": "Hello, {name}!",
+    "subtitle": "Your details and delivery addresses.",
+    "adminAccess": "🛠 You have access to the admin panel",
+    "adminOpen": "Open →",
+    "ordersCardTitle": "My orders",
+    "ordersCardSubtitle": "A history of all your orders.",
+    "ordersCardLink": "View →",
+    "personalData": "Personal details",
+    "editProfile": "Edit profile",
+    "editTitle": "Edit your profile",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "emailImmutable": "Your email cannot be changed.",
+    "saving": "Saving…",
+    "addresses": "Addresses",
+    "orders": "My orders",
+    "ordersEmpty": "You don't have any orders yet.",
+    "ordersEmptyHint": "Once you place an order, it will appear here.",
+    "saved": "Your changes have been saved.",
+    "address": {
+      "sectionTitle": "Delivery addresses",
+      "add": "Add an address",
+      "emptyTitle": "Add an address to order faster.",
+      "emptyHint": "We'll fill it in automatically on every future order.",
+      "fallbackLabel": "Address",
+      "defaultBadge": "Default",
+      "label": "Label",
+      "labelPlaceholder": "Default address",
+      "labelHint": "For example: Home, Office.",
+      "fullName": "Full name",
+      "phone": "Phone",
+      "phonePlaceholder": "0888123456",
+      "city": "City",
+      "addressLine": "Address",
+      "addressLinePlaceholder": "12 Primer St",
+      "entrance": "Entrance",
+      "floor": "Floor",
+      "apartment": "Flat",
+      "entranceShort": "entr. {value}",
+      "floorShort": "fl. {value}",
+      "apartmentShort": "flat {value}",
+      "deliveryNote": "Delivery note",
+      "deliveryNotePlaceholder": "For example: the doorbell doesn't work, please call.",
+      "useAsDefault": "Use as my default address",
+      "saving": "Saving…",
+      "saveChanges": "Save changes",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure?"
+    }
+  },
+
+  "admin": {
+    "title": "Admin panel",
+    "nav": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "menu": "Menu",
+      "products": "Products",
+      "categories": "Categories",
+      "users": "Users",
+      "settings": "Settings"
+    },
+    "roles": {
+      "customer": "Customer",
+      "staff": "Staff",
+      "admin": "Administrator",
+      "super_admin": "Super administrator"
+    }
+  },
+
+  "validation": {
+    "phoneMin": "The phone number must be at least 8 characters.",
+    "phoneInvalid": "Enter a valid Bulgarian phone number, e.g. 0888123456.",
+    "emailInvalid": "Enter a valid email address.",
+    "passwordMin": "The password must be at least 8 characters.",
+    "passwordMax": "The password cannot be longer than 72 characters.",
+    "passwordRequired": "The password is required.",
+    "passwordsMismatch": "The passwords do not match.",
+    "nameMin": "The name must be at least 2 characters.",
+    "nameMax": "The name cannot be longer than 80 characters.",
+    "textMax": "This field cannot be longer than {max} characters.",
+    "termsRequired": "You must accept the Terms and Conditions to continue.",
+    "labelMax": "The label cannot be longer than 40 characters.",
+    "cityRequired": "The city is required.",
+    "cityMax": "The city cannot be longer than 60 characters.",
+    "addressMin": "The address must be at least 5 characters.",
+    "addressMax": "The address cannot be longer than 160 characters.",
+    "addressInvalid": "Invalid address.",
+    "userInvalid": "Invalid user.",
+    "roleInvalid": "Invalid role.",
+    "roleStaffOrAdmin": "The role must be staff or admin.",
+    "defaultAddressLabel": "Default address"
+  },
+
+  "actions": {
+    "mustBeSignedIn": "You need to be signed in.",
+    "authError": {
+      "invalidCredentials": "Wrong email or password.",
+      "emailNotConfirmed": "Your email is not confirmed. Check your inbox for the confirmation link.",
+      "alreadyRegistered": "An account with this email already exists.",
+      "rateLimited": "Too many attempts. Please try again in a few minutes.",
+      "passwordTooShort": "The password is too short.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "profile": {
+      "updateFailed": "The profile could not be updated.",
+      "updated": "Your profile has been updated."
+    },
+    "address": {
+      "saveFailed": "The address could not be saved.",
+      "added": "The address has been added.",
+      "updateFailed": "The address could not be updated.",
+      "updated": "The address has been updated.",
+      "deleteFailed": "The address could not be deleted.",
+      "deleted": "The address has been deleted."
+    }
+  },
+
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "subtitle": "It looks like this dish isn't on the menu.",
+      "toMenu": "Go to the menu"
+    },
+    "unauthorized": {
+      "metaTitle": "No access",
+      "title": "You don't have access to this page.",
+      "subtitle": "This page is only available to restaurant staff. If you think this is a mistake, please contact an administrator.",
+      "toProfile": "Go to my profile",
+      "home": "Homepage"
+    },
+    "generic": "Something went wrong. Please try again."
+  }
+}

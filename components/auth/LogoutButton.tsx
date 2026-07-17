@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { logoutUser } from "@/app/actions/auth";
 import { cn } from "@/lib/utils";
 
@@ -9,11 +10,14 @@ import { cn } from "@/lib/utils";
  */
 export function LogoutButton({
   className,
-  children = "Изход",
+  children,
 }: {
   className?: string;
+  /** Overrides the default "Sign out" label. */
   children?: React.ReactNode;
 }) {
+  const t = useTranslations("nav");
+
   return (
     <form action={logoutUser}>
       <button
@@ -23,7 +27,7 @@ export function LogoutButton({
           className
         )}
       >
-        {children}
+        {children ?? t("logout")}
       </button>
     </form>
   );

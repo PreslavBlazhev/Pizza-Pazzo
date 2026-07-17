@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Category } from "@/types/category";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ interface CategoryTabsProps {
  * highlighted (green) via a scroll spy (IntersectionObserver).
  */
 export function CategoryTabs({ categories }: CategoryTabsProps) {
+  const t = useTranslations("menu");
   const [activeSlug, setActiveSlug] = useState<string>(categories[0]?.slug ?? "");
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export function CategoryTabs({ categories }: CategoryTabsProps) {
 
   return (
     <nav
-      aria-label="Категории"
+      aria-label={t("categoryNav")}
       className="sticky top-20 z-30 -mx-4 border-b border-pizza-cream-dark bg-pizza-cream/90 px-4 py-3 backdrop-blur-md"
     >
       <ul className="no-scrollbar flex gap-2 overflow-x-auto pb-1">

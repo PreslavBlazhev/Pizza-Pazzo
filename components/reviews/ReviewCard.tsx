@@ -1,9 +1,12 @@
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import { sourceLabel, type Review } from "./reviews-data";
 
 export function Stars({ rating }: { rating: number }) {
+  const t = useTranslations("reviews");
+
   return (
-    <div className="flex gap-0.5 text-brand" aria-label={`${rating} от 5 звезди`}>
+    <div className="flex gap-0.5 text-brand" aria-label={t("rating", { rating })}>
       {Array.from({ length: 5 }).map((_, i) => (
         <span key={i} aria-hidden className={i < rating ? "" : "opacity-25"}>
           ★

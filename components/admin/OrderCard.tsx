@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { Order } from "@/types/order";
 import { formatEur } from "@/lib/format-price";
 import { formatDateTime } from "@/lib/utils";

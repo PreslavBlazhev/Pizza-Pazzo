@@ -1,12 +1,15 @@
 /** Global constants for the Pizza Pazzo app. */
 import type { UserRole } from "@/types/auth";
 
+/**
+ * Business facts that do not change with language: name, phones, address.
+ *
+ * Anything a visitor reads as a sentence (taglines, descriptions, day names)
+ * lives in `messages/*.json` instead — it has to exist in both languages.
+ */
 export const SITE = {
   name: "Pizza Pazzo",
   legalName: "Pizza Pazzo LTD",
-  tagline: "Доставка на пици",
-  description:
-    "Доставка на автентична италианска пица — поръчайте онлайн от Pizza Pazzo.",
   foundedYear: 2012,
   /** Public contact phones (primary first). */
   phones: ["+359 88 248 4777", "+359 801 999"],
@@ -17,14 +20,33 @@ export const SITE = {
   website: "www.pizzapazzo.bg",
 } as const;
 
-/** Working hours, grouped for display. Source: client intake. */
+/**
+ * Canonical origin of the site, used to build absolute URLs for Open Graph and
+ * hreflang. Override per environment with NEXT_PUBLIC_SITE_URL (Vercel previews
+ * and localhost are not pizzapazzo.bg).
+ */
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.pizzapazzo.bg";
+
+/**
+ * Working hours, grouped for display. Source: client intake.
+ *
+ * `dayKey` indexes the `hours` namespace in the message catalogues rather than
+ * naming the days here, and `closed` is a flag instead of the literal string
+ * "Затворено" — comparing against that string was how the old code decided to
+ * paint Sunday red, which would have silently stopped working in English.
+ */
 export const WORKING_HOURS = [
-  { days: "Понеделник", hours: "11:00 – 22:30" },
-  { days: "Вторник – Четвъртък", hours: "09:00 – 18:00" },
-  { days: "Петък", hours: "09:00 – 19:00" },
-  { days: "Събота", hours: "10:00 – 16:00" },
-  { days: "Неделя", hours: "Затворено" },
-] as const;
+  { dayKey: "monday", hours: "11:00 – 22:30", closed: false },
+  { dayKey: "tuesdayToThursday", hours: "09:00 – 18:00", closed: false },
+  { dayKey: "friday", hours: "09:00 – 19:00", closed: false },
+  { dayKey: "saturday", hours: "10:00 – 16:00", closed: false },
+  { dayKey: "sunday", hours: null, closed: true },
+] as const satisfies readonly {
+  dayKey: "monday" | "tuesdayToThursday" | "friday" | "saturday" | "sunday";
+  hours: string | null;
+  closed: boolean;
+}[];
 
 /** Brand identity — name, colours and defaults. Colours mirror the Tailwind
  *  theme (see tailwind.config.ts) and are kept here for non-CSS use. */
@@ -65,17 +87,19 @@ export const ETA_PRESETS = [20, 30, 45, 60, 90] as const;
 /**
  * Admin navigation. `allow` lists the roles that may see each link — it mirrors
  * the rules in `middleware.ts`, which is what actually enforces them.
+ *
+ * `labelKey` indexes the `admin.nav` namespace in the message catalogues.
  */
 export const ADMIN_NAV = [
-  { href: "/admin", label: "Табло", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/orders", label: "Поръчки", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/menu", label: "Меню", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/products", label: "Продукти", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/categories", label: "Категории", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/users", label: "Потребители", allow: ["admin", "super_admin"] },
-  { href: "/admin/settings", label: "Настройки", allow: ["admin", "super_admin"] },
+  { href: "/admin", labelKey: "dashboard", allow: ["staff", "admin", "super_admin"] },
+  { href: "/admin/orders", labelKey: "orders", allow: ["staff", "admin", "super_admin"] },
+  { href: "/admin/menu", labelKey: "menu", allow: ["staff", "admin", "super_admin"] },
+  { href: "/admin/products", labelKey: "products", allow: ["staff", "admin", "super_admin"] },
+  { href: "/admin/categories", labelKey: "categories", allow: ["staff", "admin", "super_admin"] },
+  { href: "/admin/users", labelKey: "users", allow: ["admin", "super_admin"] },
+  { href: "/admin/settings", labelKey: "settings", allow: ["admin", "super_admin"] },
 ] as const satisfies readonly {
   href: string;
-  label: string;
+  labelKey: string;
   allow: readonly UserRole[];
 }[];

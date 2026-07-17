@@ -95,7 +95,10 @@ create index if not exists user_roles_user_id_idx on public.user_roles(user_id);
 create table if not exists public.user_addresses (
   id             uuid primary key default gen_random_uuid(),
   user_id        uuid not null references auth.users(id) on delete cascade,
-  label          text default 'Основен адрес',
+  -- Nullable, with no default: a label written here in one language would stay
+  -- in that language for the other. An unlabelled address is rendered with the
+  -- translated `profile.address.fallbackLabel` instead.
+  label          text,
   full_name      text,
   phone          text,
   city           text default 'Варна',

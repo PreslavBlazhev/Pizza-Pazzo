@@ -1,19 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { logoutUser } from "@/app/actions/auth";
 import { canAccessAdmin, isUserRole, type UserRole } from "@/types/auth";
-
-const links = [
-  { href: "/", label: "Начало" },
-  { href: "/menu", label: "Меню" },
-  { href: "/gallery", label: "Галерия" },
-  { href: "/reviews", label: "Отзиви" },
-  { href: "/contacts", label: "Контакти" },
-  { href: "/cart", label: "🛒 Количка" },
-];
+import { NAV_LINKS } from "./Header";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 /**
  * Hamburger navigation for mobile (< lg).
@@ -22,6 +16,7 @@ const links = [
  * header must not force every page out of static rendering.
  */
 export function MobileNav() {
+  const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
   const [auth, setAuth] = useState<{
     status: "loading" | "signedOut" | "signedIn";
@@ -78,7 +73,7 @@ export function MobileNav() {
   return (
     <div className="lg:hidden">
       <button
-        aria-label={open ? "Затвори менюто" : "Отвори менюто"}
+        aria-label={open ? t("closeMenu") : t("openMenu")}
         aria-expanded={open}
         className="flex h-10 w-10 items-center justify-center rounded-full border border-pizza-cream-dark bg-white text-xl text-pizza-ink shadow-sm"
         onClick={() => setOpen((v) => !v)}
@@ -95,18 +90,27 @@ export function MobileNav() {
           />
           <nav
             className="absolute left-0 right-0 top-full z-40 flex flex-col gap-1 border-b border-pizza-cream-dark bg-pizza-cream px-4 py-4 shadow-soft"
-            aria-label="Мобилна навигация"
+            aria-label={t("mobileNav")}
           >
-            {links.map((l) => (
+            {NAV_LINKS.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 className={linkClass}
                 onClick={() => setOpen(false)}
               >
-                {l.label}
+                {t(l.labelKey)}
               </Link>
             ))}
+            <Link href="/cart" className={linkClass} onClick={() => setOpen(false)}>
+              🛒 {t("cart")}
+            </Link>
+
+            <span className="my-2 h-px bg-pizza-cream-dark" aria-hidden />
+
+            <div className="px-3 py-2">
+              <LanguageSwitcher />
+            </div>
 
             <span className="my-2 h-px bg-pizza-cream-dark" aria-hidden />
 
@@ -118,29 +122,29 @@ export function MobileNav() {
                     className="rounded-xl bg-pizza-red-light px-3 py-3 text-base font-semibold text-brand-dark"
                     onClick={() => setOpen(false)}
                   >
-                    🛠 Админ панел
+                    🛠 {t("admin")}
                   </Link>
                 )}
                 <Link href="/profile" className={linkClass} onClick={() => setOpen(false)}>
-                  Профил
+                  {t("profile")}
                 </Link>
                 <form action={logoutUser}>
                   <button type="submit" className={`${linkClass} w-full text-left`}>
-                    Изход
+                    {t("logout")}
                   </button>
                 </form>
               </>
             ) : auth.status === "signedOut" ? (
               <>
                 <Link href="/auth/login" className={linkClass} onClick={() => setOpen(false)}>
-                  Вход
+                  {t("login")}
                 </Link>
                 <Link
                   href="/auth/register"
                   className="rounded-xl bg-pizza-green px-3 py-3 text-center text-base font-semibold text-white"
                   onClick={() => setOpen(false)}
                 >
-                  Регистрация
+                  {t("register")}
                 </Link>
               </>
             ) : null}

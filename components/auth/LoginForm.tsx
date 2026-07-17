@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { loginUser } from "@/app/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/ui/FormAlert";
@@ -13,6 +14,7 @@ import type { ActionResult } from "@/types/auth";
  * relative paths.
  */
 export function LoginForm({ redirectTo }: { redirectTo?: string }) {
+  const t = useTranslations("auth");
   const [state, formAction, isPending] = useActionState<ActionResult | null, FormData>(
     loginUser,
     null
@@ -27,16 +29,16 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
       {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
 
       <Input
-        label="Имейл"
+        label={t("fields.email")}
         name="email"
         type="email"
         autoComplete="email"
-        placeholder="ivan@example.com"
+        placeholder={t("fields.emailPlaceholder")}
         error={fieldErrors.email}
       />
 
       <PasswordField
-        label="Парола"
+        label={t("fields.password")}
         name="password"
         autoComplete="current-password"
         error={fieldErrors.password}
@@ -47,7 +49,7 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
         disabled={isPending}
         className="w-full rounded-full bg-brand px-6 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isPending ? "Влизане…" : "Вход"}
+        {isPending ? t("signingIn") : t("login.submit")}
       </button>
     </form>
   );

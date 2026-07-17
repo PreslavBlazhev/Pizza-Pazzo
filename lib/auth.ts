@@ -1,5 +1,6 @@
 import { cache } from "react";
-import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
 import { createClient } from "./supabase/server";
 import { isUserRole, type Profile, type SessionUser, type UserRole } from "@/types/auth";
 import type { ProfileRow, UserAddressRow } from "@/types/database";
@@ -149,11 +150,18 @@ export async function getUserAddresses(): Promise<UserAddress[]> {
  * Requires a signed-in user; redirects to login otherwise.
  * The middleware already blocks these routes — this is defence in depth for
  * server actions and any page the matcher might miss.
+ *
+ * `redirectTo` is an unprefixed path ("/profile"); the locale is re-applied on
+ * the way out, so an English visitor is not bounced onto the Bulgarian login.
  */
 export async function requireUser(redirectTo = "/profile"): Promise<SessionUser> {
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
-    redirect(`/auth/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+    const locale = await getLocale();
+    redirect({
+      href: { pathname: "/auth/login", query: { redirectTo } },
+      locale,
+    });
   }
   return sessionUser;
 }
@@ -162,7 +170,8 @@ export async function requireUser(redirectTo = "/profile"): Promise<SessionUser>
 export async function requireRole(roles: readonly UserRole[]): Promise<SessionUser> {
   const sessionUser = await requireUser();
   if (!roles.includes(sessionUser.role)) {
-    redirect("/unauthorized");
+    const locale = await getLocale();
+    redirect({ href: "/unauthorized", locale });
   }
   return sessionUser;
 }

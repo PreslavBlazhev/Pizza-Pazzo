@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/Input";
 
 /** Password input with a show/hide toggle. */
@@ -19,6 +20,7 @@ export function PasswordField({
   autoComplete?: string;
   required?: boolean;
 }) {
+  const t = useTranslations("auth");
   const [visible, setVisible] = useState(false);
 
   return (
@@ -38,7 +40,7 @@ export function PasswordField({
         onClick={() => setVisible((v) => !v)}
         // Sits below the label row; nudged up when helper/error text is present.
         className="absolute right-3 top-[34px] text-lg text-pizza-muted transition hover:text-pizza-ink"
-        aria-label={visible ? "Скрий паролата" : "Покажи паролата"}
+        aria-label={visible ? t("hidePassword") : t("showPassword")}
         aria-pressed={visible}
         tabIndex={-1}
       >

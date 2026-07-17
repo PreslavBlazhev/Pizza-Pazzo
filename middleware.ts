@@ -1,17 +1,28 @@
-import { NextResponse, type NextRequest } from "next/server";
+import createMiddleware from "next-intl/middleware";
+import { NextResponse, type NextRequest, type NextResponse as NextResponseType } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { canAccessAdmin, isAdminRole, isSuperAdmin, isUserRole } from "@/types/auth";
 import type { UserRole } from "@/types/auth";
+import { routing, type Locale } from "@/i18n/routing";
+import { getPathname } from "@/i18n/navigation";
 
 /**
- * Route protection + Supabase session refresh.
+ * Locale routing + route protection + Supabase session refresh.
  *
- * This is the real security boundary for page access: it runs before any page
- * renders, so a protected route never even starts. Server actions and RLS
+ * Two concerns share one middleware, in this order:
+ *
+ *   1. next-intl resolves the locale. It must see every page request, because
+ *      it is what rewrites `/menu` to `/bg/menu` internally.
+ *   2. Auth runs only for protected routes. `updateSession` calls
+ *      `auth.getUser()`, a network round-trip to Supabase, and putting that in
+ *      front of `/` and `/menu` would slow down the hot path of a restaurant
+ *      site for no gain. Guests browsing the public menu never touch Supabase.
+ *
+ * This is the security boundary for *page access* only. Server actions and RLS
  * policies enforce the same rules again at the data layer (defence in depth) —
  * middleware alone is never enough, because it does not guard data access.
  *
- * Access rules:
+ * Access rules (locale prefix is stripped before matching):
  *   /profile/*      → any signed-in user
  *   /checkout       → any signed-in user
  *   /admin          → staff, admin, super_admin
@@ -19,6 +30,8 @@ import type { UserRole } from "@/types/auth";
  *   /admin/settings → admin, super_admin
  *   /admin/users/roles, /admin/roles → super_admin only
  */
+
+const intlMiddleware = createMiddleware(routing);
 
 /** Routes that only require a session. */
 const CUSTOMER_PROTECTED = ["/profile", "/checkout"];
@@ -32,36 +45,99 @@ const ADMIN_RULES: { prefix: string; allow: readonly UserRole[] }[] = [
   { prefix: "/admin/settings", allow: ["admin", "super_admin"] },
 ];
 
+/**
+ * Splits `/en/profile` into `{ locale: "en", pathname: "/profile" }`.
+ *
+ * Every rule below is written in terms of the unprefixed path, so that adding a
+ * locale can never silently open a protected route.
+ */
+function splitLocale(pathname: string): { locale: Locale; pathname: string } {
+  for (const locale of routing.locales) {
+    if (pathname === `/${locale}`) return { locale, pathname: "/" };
+    if (pathname.startsWith(`/${locale}/`)) {
+      return { locale, pathname: pathname.slice(locale.length + 1) };
+    }
+  }
+  return { locale: routing.defaultLocale, pathname };
+}
+
 function isProtectedCustomerPath(pathname: string): boolean {
   return CUSTOMER_PROTECTED.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
 }
 
+/**
+ * Carries the refreshed Supabase auth cookies onto whatever response we end up
+ * returning. `updateSession` writes the rotated tokens onto its own response;
+ * if we return a different one (an intl rewrite, or a redirect to login) those
+ * cookies are lost and the user is silently signed out.
+ */
+function withAuthCookies(
+  target: NextResponseType,
+  source: NextResponseType
+): NextResponseType {
+  source.cookies.getAll().forEach((cookie) => {
+    target.cookies.set(cookie);
+  });
+  return target;
+}
+
+/** Locale-aware redirect, so an English visitor lands on `/en/auth/login`. */
+function localeRedirect(
+  request: NextRequest,
+  href: string,
+  locale: Locale,
+  search?: string
+) {
+  const path = getPathname({ href, locale });
+  return NextResponse.redirect(new URL(`${path}${search ?? ""}`, request.url));
+}
+
 export async function middleware(request: NextRequest) {
-  // Always refresh first: this rotates the auth cookies onto the response.
-  const { supabaseResponse, user, supabase } = await updateSession(request);
-  const { pathname } = request.nextUrl;
+  // ── 1. Locale first ──
+  const intlResponse = intlMiddleware(request);
+
+  // A 3xx here is locale negotiation (e.g. an English visitor hitting `/menu`
+  // being sent to `/en/menu`). Let it happen; auth is evaluated on the request
+  // that follows, against the final URL.
+  if (intlResponse.status >= 300 && intlResponse.status < 400) {
+    return intlResponse;
+  }
+
+  const { locale, pathname } = splitLocale(request.nextUrl.pathname);
 
   const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
   const needsAuth = isProtectedCustomerPath(pathname) || isAdminPath;
 
-  if (!needsAuth) return supabaseResponse;
+  // ── 2. Public route → no Supabase round-trip ──
+  if (!needsAuth) return intlResponse;
 
-  // ── Not signed in → send to login, remembering where they were going ──
+  // ── 3. Protected route → refresh session and check access ──
+  const { supabaseResponse, user, supabase } = await updateSession(request);
+
   if (!user) {
-    const loginUrl = new URL("/auth/login", request.url);
-    loginUrl.searchParams.set("redirectTo", pathname + request.nextUrl.search);
-    return NextResponse.redirect(loginUrl);
+    const redirectTo = pathname + request.nextUrl.search;
+    return withAuthCookies(
+      localeRedirect(
+        request,
+        "/auth/login",
+        locale,
+        `?redirectTo=${encodeURIComponent(redirectTo)}`
+      ),
+      supabaseResponse
+    );
   }
 
-  // ── Signed in, non-admin route → allowed ──
-  if (!isAdminPath) return supabaseResponse;
+  // Signed in, non-admin route → allowed.
+  if (!isAdminPath) return withAuthCookies(intlResponse, supabaseResponse);
 
-  // ── Admin routes: role check ──
   // Without Supabase configured we cannot know the role. Fail closed.
   if (!supabase) {
-    return NextResponse.redirect(new URL("/unauthorized", request.url));
+    return withAuthCookies(
+      localeRedirect(request, "/unauthorized", locale),
+      supabaseResponse
+    );
   }
 
   const { data } = await supabase
@@ -74,7 +150,10 @@ export async function middleware(request: NextRequest) {
 
   // Baseline: /admin at all.
   if (!canAccessAdmin(role)) {
-    return NextResponse.redirect(new URL("/unauthorized", request.url));
+    return withAuthCookies(
+      localeRedirect(request, "/unauthorized", locale),
+      supabaseResponse
+    );
   }
 
   // Stricter rules for specific sub-paths.
@@ -83,34 +162,40 @@ export async function middleware(request: NextRequest) {
   );
 
   if (rule && !rule.allow.includes(role)) {
-    return NextResponse.redirect(new URL("/unauthorized", request.url));
+    return withAuthCookies(
+      localeRedirect(request, "/unauthorized", locale),
+      supabaseResponse
+    );
   }
 
   // Belt and braces: these two helpers are the same checks the pages use, so a
   // future rule added to ADMIN_RULES cannot silently disagree with the UI.
   if (pathname.startsWith("/admin/settings") && !isAdminRole(role)) {
-    return NextResponse.redirect(new URL("/unauthorized", request.url));
+    return withAuthCookies(
+      localeRedirect(request, "/unauthorized", locale),
+      supabaseResponse
+    );
   }
   if (pathname.startsWith("/admin/roles") && !isSuperAdmin(role)) {
-    return NextResponse.redirect(new URL("/unauthorized", request.url));
+    return withAuthCookies(
+      localeRedirect(request, "/unauthorized", locale),
+      supabaseResponse
+    );
   }
 
-  return supabaseResponse;
+  return withAuthCookies(intlResponse, supabaseResponse);
 }
 
 export const config = {
   /**
-   * Only the protected routes.
+   * Every page, but nothing else.
    *
-   * The usual Supabase example matches every path, but `updateSession` calls
-   * `auth.getUser()`, which is a network round-trip to Supabase. Running that
-   * on `/` and `/menu` would put a remote call in front of pages that are
-   * otherwise static — for a restaurant menu that is the hot path.
+   * Unlike the previous auth-only matcher, next-intl must see all pages to
+   * resolve the locale. The cost is contained by the early return above: public
+   * pages run locale routing only, never a Supabase call.
    *
-   * The trade-off: session cookies are not refreshed while a guest browses the
-   * public site. That is fine, because the browser client in
-   * `components/layout/HeaderAuth.tsx` refreshes tokens client-side, and any
-   * route that actually depends on the session is listed here.
+   * Excluded: /api, /_next, /_vercel and anything with a file extension
+   * (images, fonts, sitemap.xml, robots.txt).
    */
-  matcher: ["/profile/:path*", "/checkout", "/admin/:path*"],
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
 };

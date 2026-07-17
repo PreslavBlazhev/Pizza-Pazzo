@@ -1,12 +1,15 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import type { Product } from "@/types/product";
 import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
-import { formatAllergens } from "@/lib/allergens";
+import { isAllergenId, orderedAllergens } from "@/lib/allergens";
 import { cn } from "@/lib/utils";
 import { ProductImage } from "./ProductImage";
 
 export function ProductCard({ product }: { product: Product }) {
-  const allergens = formatAllergens(product.allergens);
+  const t = useTranslations("product");
+  const tAllergens = useTranslations("allergens");
+  const allergens = orderedAllergens(product.allergens);
   const unavailable = !product.isAvailable;
 
   return (
@@ -29,19 +32,19 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5">
           {product.isPopular && (
             <span className="rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white shadow-sm">
-              ★ Популярно
+              ★ {t("popular")}
             </span>
           )}
           {product.isNew && (
             <span className="rounded-full bg-pizza-green px-3 py-1 text-xs font-semibold text-white shadow-sm">
-              Ново
+              {t("new")}
             </span>
           )}
         </div>
         {unavailable && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/55">
             <span className="rounded-full bg-pizza-ink/85 px-4 py-1.5 text-xs font-semibold text-white">
-              Няма наличност
+              {t("outOfStock")}
             </span>
           </div>
         )}
@@ -66,17 +69,17 @@ export function ProductCard({ product }: { product: Product }) {
         {/* Allergens */}
         <div className="mt-4 flex flex-wrap gap-1.5">
           {allergens.length > 0 ? (
-            allergens.map((name) => (
+            allergens.map((id) => (
               <span
-                key={name}
+                key={id}
                 className="rounded-full bg-pizza-green-light px-2.5 py-0.5 text-[11px] font-medium text-pizza-green-dark"
               >
-                {name}
+                {isAllergenId(id) ? tAllergens(`${id}.name`) : id}
               </span>
             ))
           ) : (
             <span className="text-[11px] italic text-pizza-muted">
-              Без посочени алергени
+              {t("allergensNone")}
             </span>
           )}
         </div>
@@ -85,7 +88,9 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="mt-5 flex items-end justify-between gap-3 border-t border-pizza-cream-dark pt-4">
           <div className="leading-none">
             {product.variants && product.variants.length > 0 && (
-              <span className="mb-1 block text-[11px] text-pizza-muted">от</span>
+              <span className="mb-1 block text-[11px] text-pizza-muted">
+                {t("from")}
+              </span>
             )}
             <span className="font-display text-xl font-bold text-brand">
               {formatBgnPrice(product.priceBgn)}
@@ -97,9 +102,9 @@ export function ProductCard({ product }: { product: Product }) {
           <Link
             href={`/product/${product.slug}`}
             className="shrink-0 rounded-full bg-pizza-green px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pizza-green-dark focus:outline-none focus:ring-2 focus:ring-pizza-green/40 focus:ring-offset-2"
-            aria-label={`Виж детайли за ${product.name}`}
+            aria-label={t("viewDetailsFor", { name: product.name })}
           >
-            Детайли
+            {t("details")}
           </Link>
         </div>
       </div>

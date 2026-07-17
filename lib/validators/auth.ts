@@ -3,47 +3,59 @@ import { ASSIGNABLE_ROLES } from "@/types/auth";
 
 /**
  * Zod schemas for auth, profile, address and admin forms (zod v4 syntax).
- * All messages are in Bulgarian — they are shown directly to the user.
  *
  * These run on the **server** (inside server actions). Never trust the client
  * to have validated anything.
+ *
+ * ## Why the messages are keys
+ *
+ * The schemas are module-level constants, evaluated once at import — long before
+ * a request exists, so there is no locale to translate against. Instead each
+ * message carries a *key* into the `validation` namespace, and `toFieldErrors`
+ * resolves it with the request's translator. Nothing here is ever shown raw.
  */
 
 /** Bulgarian phone: 0888123456 / +359888123456, spaces and dashes tolerated. */
 const phoneRegex = /^(\+359|0)\d{8,9}$/;
 
+/**
+ * Encodes a translation key (plus any placeholder values) into the single
+ * string zod allows as a message. `toFieldErrors` is the only reader.
+ */
+function msg(key: string, values?: Record<string, string | number>): string {
+  return values ? `${key}|${JSON.stringify(values)}` : key;
+}
+
 const phoneField = z
   .string()
   .trim()
-  .min(8, "Телефонът трябва да е поне 8 символа.")
+  .min(8, msg("phoneMin"))
   .transform((v) => v.replace(/[\s\-()]/g, ""))
-  .refine((v) => phoneRegex.test(v), {
-    message: "Въведете валиден български телефон, напр. 0888123456.",
-  });
+  .refine((v) => phoneRegex.test(v), { message: msg("phoneInvalid") });
 
 const emailField = z
-  .email("Въведете валиден имейл адрес.")
+  .email(msg("emailInvalid"))
   .trim()
   .transform((v) => v.toLowerCase());
 
 const passwordField = z
   .string()
-  .min(8, "Паролата трябва да е поне 8 символа.")
+  .min(8, msg("passwordMin"))
   // Supabase hashes with bcrypt, which silently truncates past 72 bytes.
-  .max(72, "Паролата не може да е по-дълга от 72 символа.");
+  .max(72, msg("passwordMax"));
 
 const fullNameField = z
   .string()
   .trim()
-  .min(2, "Името трябва да е поне 2 символа.")
-  .max(80, "Името не може да е по-дълго от 80 символа.");
+  .min(2, msg("nameMin"))
+  .max(80, msg("nameMax"));
 
 /** Optional text from a form: "" becomes null so the column stays clean. */
 const optionalText = (max = 120) =>
   z
     .string()
     .trim()
-    .max(max, `Полето не може да е по-дълго от ${max} символа.`)
+    .max(max, msg("textMax", { max }))
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null));
 
@@ -66,17 +78,17 @@ export const registerSchema = z
     password: passwordField,
     confirmPassword: z.string(),
     acceptedTerms: checkboxField.refine((v) => v === true, {
-      message: "Трябва да приемете Общите условия, за да продължите.",
+      message: msg("termsRequired"),
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Паролите не съвпадат.",
+    message: msg("passwordsMismatch"),
     path: ["confirmPassword"],
   });
 
 export const loginSchema = z.object({
   email: emailField,
-  password: z.string().min(1, "Паролата е задължителна."),
+  password: z.string().min(1, msg("passwordRequired")),
 });
 
 // ── Profile ───────────────────────────────────────────────────────────────
@@ -88,25 +100,27 @@ export const profileUpdateSchema = z.object({
 
 // ── Addresses ─────────────────────────────────────────────────────────────
 
+/**
+ * Note `label`: an empty label used to default to the literal "Основен адрес".
+ * It now falls back to null and the UI shows the translated
+ * `profile.defaultAddress` — a label written into the database in one language
+ * would have stayed that way for the other.
+ */
 export const addressSchema = z.object({
   label: z
     .string()
     .trim()
-    .max(40, "Етикетът не може да е по-дълъг от 40 символа.")
+    .max(40, msg("labelMax"))
     .optional()
-    .transform((v) => (v && v.length > 0 ? v : "Основен адрес")),
+    .transform((v) => (v && v.length > 0 ? v : null)),
   fullName: fullNameField,
   phone: phoneField,
-  city: z
-    .string()
-    .trim()
-    .min(2, "Градът е задължителен.")
-    .max(60, "Градът не може да е по-дълъг от 60 символа."),
+  city: z.string().trim().min(2, msg("cityRequired")).max(60, msg("cityMax")),
   addressLine: z
     .string()
     .trim()
-    .min(5, "Адресът трябва да е поне 5 символа.")
-    .max(160, "Адресът не може да е по-дълъг от 160 символа."),
+    .min(5, msg("addressMin"))
+    .max(160, msg("addressMax")),
   entrance: optionalText(10),
   floor: optionalText(10),
   apartment: optionalText(10),
@@ -116,7 +130,7 @@ export const addressSchema = z.object({
 
 /** Same as addressSchema, plus the id of the address being edited. */
 export const addressUpdateSchema = addressSchema.extend({
-  id: z.uuid("Невалиден адрес."),
+  id: z.uuid(msg("addressInvalid")),
 });
 
 // ── Admin ─────────────────────────────────────────────────────────────────
@@ -126,8 +140,8 @@ export const addressUpdateSchema = addressSchema.extend({
  * role can never be granted through a form — only by manual SQL.
  */
 export const adminRoleUpdateSchema = z.object({
-  userId: z.uuid("Невалиден потребител."),
-  role: z.enum(ASSIGNABLE_ROLES, { error: "Невалидна роля." }),
+  userId: z.uuid(msg("userInvalid")),
+  role: z.enum(ASSIGNABLE_ROLES, { error: msg("roleInvalid") }),
 });
 
 /** Creating a staff/admin account from /admin/users. */
@@ -136,9 +150,7 @@ export const createAdminUserSchema = z.object({
   email: emailField,
   phone: phoneField,
   password: passwordField,
-  role: z.enum(["staff", "admin"], {
-    error: "Ролята трябва да е staff или admin.",
-  }),
+  role: z.enum(["staff", "admin"], { error: msg("roleStaffOrAdmin") }),
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -150,14 +162,49 @@ export type AddressInput = z.infer<typeof addressSchema>;
 export type AddressUpdateInput = z.infer<typeof addressUpdateSchema>;
 export type CreateAdminUserInput = z.infer<typeof createAdminUserSchema>;
 
-/** Flattens a ZodError into `{ field: "първото съобщение" }` for the forms. */
-export function toFieldErrors(error: z.ZodError): Record<string, string> {
+/** Every key in the `validation` namespace, taken from the reference catalogue. */
+type ValidationKey = keyof typeof import("@/messages/bg.json")["validation"];
+
+/**
+ * The subset of next-intl's translator this module needs. Narrow enough that a
+ * `useTranslations("validation")` result satisfies it.
+ */
+type ValidationTranslator = (
+  key: ValidationKey,
+  values?: Record<string, string | number>
+) => string;
+
+/**
+ * Flattens a ZodError into `{ field: "translated message" }` for the forms,
+ * resolving the keys produced by `msg` above.
+ */
+export function toFieldErrors(
+  error: z.ZodError,
+  t: ValidationTranslator
+): Record<string, string> {
   const result: Record<string, string> = {};
+
   for (const issue of error.issues) {
     const key = issue.path[0];
-    if (typeof key === "string" && !result[key]) {
-      result[key] = issue.message;
+    if (typeof key !== "string" || result[key]) continue;
+
+    const [messageKey, encodedValues] = issue.message.split("|");
+    let values: Record<string, string | number> | undefined;
+
+    if (encodedValues) {
+      try {
+        values = JSON.parse(encodedValues);
+      } catch {
+        // Malformed values should not cost the user their error message.
+        values = undefined;
+      }
     }
+
+    // The key travelled through zod as a plain string, so it has to be asserted
+    // back. `msg()` above is the only producer, and `check:i18n` guards the
+    // catalogue, so a key that does not exist would already have failed there.
+    result[key] = t(messageKey as ValidationKey, values);
   }
+
   return result;
 }

@@ -1,8 +1,13 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Logo } from "./Logo";
+import { NAV_LINKS } from "./Header";
 import { SITE, WORKING_HOURS } from "@/lib/constants";
 
 export function Footer() {
+  const t = useTranslations();
+  const tHours = useTranslations("hours");
+
   return (
     <footer className="border-t border-pizza-cream-dark bg-white">
       <div className="container grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
@@ -10,29 +15,30 @@ export function Footer() {
         <div className="sm:col-span-2 lg:col-span-1">
           <Logo className="h-16" linked={false} />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-pizza-muted">
-            Автентична италианска пица с доставка до вашата врата. С грижа към
-            вкуса от {SITE.foundedYear} г.
+            {t("footer.about", { year: SITE.foundedYear })}
           </p>
         </div>
 
         {/* Nav */}
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-pizza-ink">
-            Навигация
+            {t("footer.navigation")}
           </h3>
           <ul className="mt-4 space-y-2 text-sm text-pizza-muted">
-            <li><Link href="/" className="transition hover:text-brand">Начало</Link></li>
-            <li><Link href="/menu" className="transition hover:text-brand">Меню</Link></li>
-            <li><Link href="/gallery" className="transition hover:text-brand">Галерия</Link></li>
-            <li><Link href="/reviews" className="transition hover:text-brand">Отзиви</Link></li>
-            <li><Link href="/contacts" className="transition hover:text-brand">Контакти</Link></li>
+            {NAV_LINKS.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="transition hover:text-brand">
+                  {t(`nav.${l.labelKey}`)}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
         {/* Contact */}
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-pizza-ink">
-            Контакти
+            {t("footer.contacts")}
           </h3>
           <ul className="mt-4 space-y-2 text-sm text-pizza-muted">
             <li className="flex items-start gap-2">
@@ -61,20 +67,20 @@ export function Footer() {
         {/* Hours */}
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-pizza-ink">
-            Работно време
+            {tHours("title")}
           </h3>
           <ul className="mt-4 space-y-2 text-sm text-pizza-muted">
             {WORKING_HOURS.map((row) => (
-              <li key={row.days} className="flex flex-col">
-                <span>{row.days}</span>
+              <li key={row.dayKey} className="flex flex-col">
+                <span>{tHours(row.dayKey)}</span>
                 <span
                   className={
-                    row.hours === "Затворено"
+                    row.closed
                       ? "font-medium text-brand"
                       : "font-medium text-pizza-ink"
                   }
                 >
-                  {row.hours}
+                  {row.closed ? tHours("closed") : row.hours}
                 </span>
               </li>
             ))}
@@ -85,9 +91,12 @@ export function Footer() {
       <div className="border-t border-pizza-cream-dark">
         <div className="container flex flex-col items-center justify-between gap-2 py-5 text-xs text-pizza-muted sm:flex-row">
           <p>
-            © {new Date().getFullYear()} {SITE.legalName}. Всички права запазени.
+            {t("footer.rights", {
+              year: new Date().getFullYear(),
+              legalName: SITE.legalName,
+            })}
           </p>
-          <p>Приготвено с ❤️ и много моцарела.</p>
+          <p>{t("footer.madeWith")}</p>
         </div>
       </div>
     </footer>

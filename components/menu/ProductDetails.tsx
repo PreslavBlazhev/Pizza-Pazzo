@@ -1,7 +1,8 @@
+import { useTranslations } from "next-intl";
 import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
 import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
-import { formatAllergens } from "@/lib/allergens";
+import { isAllergenId, orderedAllergens } from "@/lib/allergens";
 import { ProductImage } from "./ProductImage";
 
 interface ProductDetailsProps {
@@ -11,7 +12,9 @@ interface ProductDetailsProps {
 
 /** Full product view. Add-to-cart controls arrive in Stage 2 (Количка). */
 export function ProductDetails({ product, category }: ProductDetailsProps) {
-  const allergens = formatAllergens(product.allergens);
+  const t = useTranslations("product");
+  const tAllergens = useTranslations("allergens");
+  const allergens = orderedAllergens(product.allergens);
 
   return (
     <div className="grid gap-10 md:grid-cols-2">
@@ -21,12 +24,12 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
         <div className="pointer-events-none absolute left-4 top-4 flex gap-2">
           {product.isPopular && (
             <span className="rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white shadow-sm">
-              ★ Популярно
+              ★ {t("popular")}
             </span>
           )}
           {product.isNew && (
             <span className="rounded-full bg-pizza-green px-3 py-1 text-xs font-semibold text-white shadow-sm">
-              Ново
+              {t("new")}
             </span>
           )}
         </div>
@@ -67,11 +70,11 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
           </div>
           {product.isAvailable ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-pizza-green-light px-3 py-1 text-sm font-medium text-pizza-green-dark">
-              ● В наличност
+              ● {t("inStock")}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-pizza-red-light px-3 py-1 text-sm font-medium text-brand">
-              ● Няма наличност
+              ● {t("outOfStock")}
             </span>
           )}
         </div>
@@ -79,7 +82,9 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
         {/* Variants */}
         {product.variants && product.variants.length > 0 && (
           <div className="mt-7">
-            <p className="mb-3 text-sm font-semibold text-pizza-ink">Размери</p>
+            <p className="mb-3 text-sm font-semibold text-pizza-ink">
+              {t("sizes")}
+            </p>
             <div className="flex flex-wrap gap-2">
               {product.variants.map((v) => (
                 <div
@@ -96,16 +101,16 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-xs text-pizza-muted">
-              Изборът на размер и добавяне в количката идват в следващ етап.
-            </p>
+            <p className="mt-2 text-xs text-pizza-muted">{t("sizesNote")}</p>
           </div>
         )}
 
         {/* Ingredients */}
         {product.ingredients && product.ingredients.length > 0 && (
           <div className="mt-7">
-            <p className="mb-2 text-sm font-semibold text-pizza-ink">Съставки</p>
+            <p className="mb-2 text-sm font-semibold text-pizza-ink">
+              {t("ingredients")}
+            </p>
             <p className="text-sm leading-relaxed text-pizza-muted">
               {product.ingredients.join(", ")}
             </p>
@@ -114,20 +119,25 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
 
         {/* Allergens */}
         <div className="mt-7">
-          <p className="mb-2 text-sm font-semibold text-pizza-ink">Алергени</p>
+          <p className="mb-2 text-sm font-semibold text-pizza-ink">
+            {t("allergens")}
+          </p>
           {allergens.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {allergens.map((name) => (
+              {allergens.map((id) => (
                 <span
-                  key={name}
+                  key={id}
+                  title={isAllergenId(id) ? tAllergens(`${id}.description`) : undefined}
                   className="rounded-full bg-pizza-green-light px-3 py-1 text-xs font-medium text-pizza-green-dark"
                 >
-                  {name}
+                  {isAllergenId(id) ? tAllergens(`${id}.name`) : id}
                 </span>
               ))}
             </div>
           ) : (
-            <p className="text-sm italic text-pizza-muted">Без посочени алергени</p>
+            <p className="text-sm italic text-pizza-muted">
+              {t("allergensNone")}
+            </p>
           )}
         </div>
 
@@ -138,7 +148,7 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
             disabled
             className="w-full cursor-not-allowed rounded-full bg-pizza-cream-dark px-6 py-3.5 text-sm font-semibold text-pizza-muted sm:w-auto sm:px-10"
           >
-            🛒 Добавяне в количка — скоро
+            🛒 {t("addToCartSoon")}
           </button>
         </div>
       </div>

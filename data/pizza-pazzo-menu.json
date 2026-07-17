@@ -1,9 +1,15 @@
 [
   {
     "id": "prod_margarita",
-    "name": "Маргарита",
+    "name": {
+      "bg": "Маргарита",
+      "en": "Margherita"
+    },
     "slug": "margarita",
-    "description": "доматен сос и кашкавал",
+    "description": {
+      "bg": "доматен сос и кашкавал",
+      "en": "tomato sauce and kashkaval cheese"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 13.01,
     "priceEur": 6.65,
@@ -18,13 +24,19 @@
     "variants": [
       {
         "id": "var_margarita_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 13.01,
         "priceEur": 6.65
       },
       {
         "id": "var_margarita_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 19.95,
         "priceEur": 10.23
       }
@@ -32,9 +44,15 @@
   },
   {
     "id": "prod_kashkavalina",
-    "name": "Кашкавалина",
+    "name": {
+      "bg": "Кашкавалина",
+      "en": "Kashkavalina"
+    },
     "slug": "kashkavalina",
-    "description": "чеснова база и кашкавал",
+    "description": {
+      "bg": "чеснова база и кашкавал",
+      "en": "garlic base and kashkaval cheese"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 13.01,
     "priceEur": 6.65,
@@ -48,13 +66,19 @@
     "variants": [
       {
         "id": "var_kashkavalina_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 13.01,
         "priceEur": 6.65
       },
       {
         "id": "var_kashkavalina_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 19.95,
         "priceEur": 10.23
       }
@@ -62,9 +86,15 @@
   },
   {
     "id": "prod_margarita_de_luks",
-    "name": "Маргарита де Лукс",
+    "name": {
+      "bg": "Маргарита де Лукс",
+      "en": "Margherita de Luxe"
+    },
     "slug": "margarita-de-luks",
-    "description": "доматен сос, кашкавал, чери домати, рукола, сушени домати и грана падано",
+    "description": {
+      "bg": "доматен сос, кашкавал, чери домати, рукола, сушени домати и грана падано",
+      "en": "tomato sauce, kashkaval cheese, cherry tomatoes, rocket, sun-dried tomatoes and Grana Padano"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -79,13 +109,19 @@
     "variants": [
       {
         "id": "var_margarita_de_luks_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_margarita_de_luks_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -93,9 +129,15 @@
   },
   {
     "id": "prod_brusketitsa",
-    "name": "Брускетица",
+    "name": {
+      "bg": "Брускетица",
+      "en": "Bruschettina"
+    },
     "slug": "brusketitsa",
-    "description": "маргарита, гарнирана със свеж босилек, домати и червен лук",
+    "description": {
+      "bg": "маргарита, гарнирана със свеж босилек, домати и червен лук",
+      "en": "Margherita topped with fresh basil, tomatoes and red onion"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -109,13 +151,19 @@
     "variants": [
       {
         "id": "var_brusketitsa_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_brusketitsa_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -123,9 +171,15 @@
   },
   {
     "id": "prod_tribagra",
-    "name": "Трибагра",
+    "name": {
+      "bg": "Трибагра",
+      "en": "Tribagra"
+    },
     "slug": "tribagra",
-    "description": "доматен сос, кашкавал, чери домати, моцарела и пресен босилек",
+    "description": {
+      "bg": "доматен сос, кашкавал, чери домати, моцарела и пресен босилек",
+      "en": "tomato sauce, kashkaval cheese, cherry tomatoes, mozzarella and fresh basil"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -139,13 +193,19 @@
     "variants": [
       {
         "id": "var_tribagra_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_tribagra_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -153,9 +213,15 @@
   },
   {
     "id": "prod_shopska",
-    "name": "Шопска",
+    "name": {
+      "bg": "Шопска",
+      "en": "Shopska"
+    },
     "slug": "shopska",
-    "description": "доматен сос, кашкавал, зелени и червени чушки, бяло сирене, домати и магданоз",
+    "description": {
+      "bg": "доматен сос, кашкавал, зелени и червени чушки, бяло сирене, домати и магданоз",
+      "en": "tomato sauce, kashkaval cheese, green and red peppers, white cheese, tomatoes and parsley"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -169,13 +235,19 @@
     "variants": [
       {
         "id": "var_shopska_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_shopska_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -183,9 +255,15 @@
   },
   {
     "id": "prod_balkanska",
-    "name": "Балканска",
+    "name": {
+      "bg": "Балканска",
+      "en": "Balkan"
+    },
     "slug": "balkanska",
-    "description": "доматен сос, кашкавал, гъби, маслини, червени чушки, домати и босилек",
+    "description": {
+      "bg": "доматен сос, кашкавал, гъби, маслини, червени чушки, домати и босилек",
+      "en": "tomato sauce, kashkaval cheese, mushrooms, olives, red peppers, tomatoes and basil"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -199,13 +277,19 @@
     "variants": [
       {
         "id": "var_balkanska_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_balkanska_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -213,9 +297,15 @@
   },
   {
     "id": "prod_vege",
-    "name": "Веге",
+    "name": {
+      "bg": "Веге",
+      "en": "Veggie"
+    },
     "slug": "vege",
-    "description": "доматен сос, кашкавал, зелени и червени чушки и червен лук",
+    "description": {
+      "bg": "доматен сос, кашкавал, зелени и червени чушки и червен лук",
+      "en": "tomato sauce, kashkaval cheese, green and red peppers and red onion"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -229,13 +319,19 @@
     "variants": [
       {
         "id": "var_vege_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_vege_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -243,9 +339,15 @@
   },
   {
     "id": "prod_vege_vulkano",
-    "name": "Веге Вулкано",
+    "name": {
+      "bg": "Веге Вулкано",
+      "en": "Veggie Vulcano"
+    },
     "slug": "vege-vulkano",
-    "description": "доматен сос, кашкавал, зелени и червени чушки, червен лук и халапеньо",
+    "description": {
+      "bg": "доматен сос, кашкавал, зелени и червени чушки, червен лук и халапеньо",
+      "en": "tomato sauce, kashkaval cheese, green and red peppers, red onion and jalapeño"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -259,13 +361,19 @@
     "variants": [
       {
         "id": "var_vege_vulkano_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_vege_vulkano_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -273,9 +381,15 @@
   },
   {
     "id": "prod_staroselska",
-    "name": "Староселска",
+    "name": {
+      "bg": "Староселска",
+      "en": "Old Village"
+    },
     "slug": "staroselska",
-    "description": "доматен сос, кашкавал, червени и зелени чушки, чесън и магданоз",
+    "description": {
+      "bg": "доматен сос, кашкавал, червени и зелени чушки, чесън и магданоз",
+      "en": "tomato sauce, kashkaval cheese, red and green peppers, garlic and parsley"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -289,13 +403,19 @@
     "variants": [
       {
         "id": "var_staroselska_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_staroselska_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -303,9 +423,15 @@
   },
   {
     "id": "prod_chinkue_patsoni",
-    "name": "Чинкуе Пацони",
+    "name": {
+      "bg": "Чинкуе Пацони",
+      "en": "Cinque Pazzoni"
+    },
     "slug": "chinkue-patsoni",
-    "description": "доматен сос, кашкавал, бяло сирене, гауда, моцарела, ементал",
+    "description": {
+      "bg": "доматен сос, кашкавал, бяло сирене, гауда, моцарела, ементал",
+      "en": "tomato sauce, kashkaval cheese, white cheese, Gouda, mozzarella, Emmental"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -319,13 +445,19 @@
     "variants": [
       {
         "id": "var_chinkue_patsoni_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_chinkue_patsoni_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -333,9 +465,15 @@
   },
   {
     "id": "prod_selska",
-    "name": "Селска",
+    "name": {
+      "bg": "Селска",
+      "en": "Village"
+    },
     "slug": "selska",
-    "description": "доматен сос, кашкавал, свинска шунка и гъби",
+    "description": {
+      "bg": "доматен сос, кашкавал, свинска шунка и гъби",
+      "en": "tomato sauce, kashkaval cheese, pork ham and mushrooms"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -349,13 +487,19 @@
     "variants": [
       {
         "id": "var_selska_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_selska_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -363,9 +507,15 @@
   },
   {
     "id": "prod_havayska",
-    "name": "Хавайска",
+    "name": {
+      "bg": "Хавайска",
+      "en": "Hawaiian"
+    },
     "slug": "havayska",
-    "description": "доматен сос, кашкавал, свинска шунка и парченца ананас",
+    "description": {
+      "bg": "доматен сос, кашкавал, свинска шунка и парченца ананас",
+      "en": "tomato sauce, kashkaval cheese, pork ham and pineapple pieces"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -379,13 +529,19 @@
     "variants": [
       {
         "id": "var_havayska_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_havayska_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -393,9 +549,15 @@
   },
   {
     "id": "prod_peperoni_maks",
-    "name": "Пеперони Макс",
+    "name": {
+      "bg": "Пеперони Макс",
+      "en": "Pepperoni Max"
+    },
     "slug": "peperoni-maks",
-    "description": "червен лук и постеля от двойна порция пеперони",
+    "description": {
+      "bg": "червен лук и постеля от двойна порция пеперони",
+      "en": "red onion and a double layer of pepperoni"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -410,13 +572,19 @@
     "variants": [
       {
         "id": "var_peperoni_maks_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_peperoni_maks_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -424,9 +592,15 @@
   },
   {
     "id": "prod_div_zapad",
-    "name": "Див Запад",
+    "name": {
+      "bg": "Див Запад",
+      "en": "Wild West"
+    },
     "slug": "div-zapad",
-    "description": "доматен сос, кашкавал, пиле на жар, механджийска наденица и бекон",
+    "description": {
+      "bg": "доматен сос, кашкавал, пиле на жар, механджийска наденица и бекон",
+      "en": "tomato sauce, kashkaval cheese, grilled chicken, tavern sausage and bacon"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -440,13 +614,19 @@
     "variants": [
       {
         "id": "var_div_zapad_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_div_zapad_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -454,9 +634,15 @@
   },
   {
     "id": "prod_chika_latina",
-    "name": "Чика Латина",
+    "name": {
+      "bg": "Чика Латина",
+      "en": "Chica Latina"
+    },
     "slug": "chika-latina",
-    "description": "гуакамоле сос, кашкавал, пушен бекон и пиле на жар",
+    "description": {
+      "bg": "гуакамоле сос, кашкавал, пушен бекон и пиле на жар",
+      "en": "guacamole sauce, kashkaval cheese, smoked bacon and grilled chicken"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -471,13 +657,19 @@
     "variants": [
       {
         "id": "var_chika_latina_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_chika_latina_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -485,9 +677,15 @@
   },
   {
     "id": "prod_tsezar",
-    "name": "Цезар",
+    "name": {
+      "bg": "Цезар",
+      "en": "Caesar"
+    },
     "slug": "tsezar",
-    "description": "сметана за основа, пилешко филе, пармезан, цезар сос, рукола",
+    "description": {
+      "bg": "сметана за основа, пилешко филе, пармезан, цезар сос, рукола",
+      "en": "cream base, chicken fillet, Parmesan, Caesar sauce, rocket"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -501,13 +699,19 @@
     "variants": [
       {
         "id": "var_tsezar_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_tsezar_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -515,9 +719,15 @@
   },
   {
     "id": "prod_karbonara",
-    "name": "Карбонара",
+    "name": {
+      "bg": "Карбонара",
+      "en": "Carbonara"
+    },
     "slug": "karbonara",
-    "description": "сос Холандес, кашкавал, гъби, пушен бекон и пилешко филе",
+    "description": {
+      "bg": "сос Холандес, кашкавал, гъби, пушен бекон и пилешко филе",
+      "en": "Hollandaise sauce, kashkaval cheese, mushrooms, smoked bacon and chicken fillet"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -532,13 +742,19 @@
     "variants": [
       {
         "id": "var_karbonara_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_karbonara_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -546,9 +762,15 @@
   },
   {
     "id": "prod_angliyska_zakuska",
-    "name": "Английска закуска",
+    "name": {
+      "bg": "Английска закуска",
+      "en": "English Breakfast"
+    },
     "slug": "angliyska-zakuska",
-    "description": "доматен сос, кашкавал, гъби, пушен бекон и яйце",
+    "description": {
+      "bg": "доматен сос, кашкавал, гъби, пушен бекон и яйце",
+      "en": "tomato sauce, kashkaval cheese, mushrooms, smoked bacon and egg"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -563,13 +785,19 @@
     "variants": [
       {
         "id": "var_angliyska_zakuska_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_angliyska_zakuska_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -577,9 +805,15 @@
   },
   {
     "id": "prod_amerikanski_burger",
-    "name": "Американски бургер",
+    "name": {
+      "bg": "Американски бургер",
+      "en": "American Burger"
+    },
     "slug": "amerikanski-burger",
-    "description": "доматен сос, кашкавал, кисели краставички, телешки бургер и пушен бекон",
+    "description": {
+      "bg": "доматен сос, кашкавал, кисели краставички, телешки бургер и пушен бекон",
+      "en": "tomato sauce, kashkaval cheese, pickles, beef patty and smoked bacon"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -594,13 +828,19 @@
     "variants": [
       {
         "id": "var_amerikanski_burger_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_amerikanski_burger_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -608,9 +848,15 @@
   },
   {
     "id": "prod_nyu_york_hot_dog",
-    "name": "Ню Йорк Хот Дог",
+    "name": {
+      "bg": "Ню Йорк Хот Дог",
+      "en": "New York Hot Dog"
+    },
     "slug": "nyu-york-hot-dog",
-    "description": "база медена горчица, червен лук и кренвирш",
+    "description": {
+      "bg": "база медена горчица, червен лук и кренвирш",
+      "en": "honey mustard base, red onion and frankfurter"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -625,13 +871,19 @@
     "variants": [
       {
         "id": "var_nyu_york_hot_dog_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_nyu_york_hot_dog_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -639,9 +891,15 @@
   },
   {
     "id": "prod_teksasko_bbq",
-    "name": "Тексаско BBQ",
+    "name": {
+      "bg": "Тексаско BBQ",
+      "en": "Texas BBQ"
+    },
     "slug": "teksasko-bbq",
-    "description": "доматен сос, кашкавал, червен лук, пилешка шунка, пушен бекон и BBQ сос",
+    "description": {
+      "bg": "доматен сос, кашкавал, червен лук, пилешка шунка, пушен бекон и BBQ сос",
+      "en": "tomato sauce, kashkaval cheese, red onion, chicken ham, smoked bacon and BBQ sauce"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -656,13 +914,19 @@
     "variants": [
       {
         "id": "var_teksasko_bbq_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_teksasko_bbq_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -670,9 +934,15 @@
   },
   {
     "id": "prod_meksiko",
-    "name": "Мексико",
+    "name": {
+      "bg": "Мексико",
+      "en": "Mexico"
+    },
     "slug": "meksiko",
-    "description": "доматен сос, кашкавал, червен лук, червена чушка, пикантно телешко и халапеньо",
+    "description": {
+      "bg": "доматен сос, кашкавал, червен лук, червена чушка, пикантно телешко и халапеньо",
+      "en": "tomato sauce, kashkaval cheese, red onion, red pepper, spicy beef and jalapeño"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -686,13 +956,19 @@
     "variants": [
       {
         "id": "var_meksiko_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_meksiko_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -700,9 +976,15 @@
   },
   {
     "id": "prod_mestna_mesna",
-    "name": "Местна месна",
+    "name": {
+      "bg": "Местна месна",
+      "en": "Local Meat"
+    },
     "slug": "mestna-mesna",
-    "description": "доматен сос, кашкавал, червен лук, деликатесен салам, пеперони и луканка",
+    "description": {
+      "bg": "доматен сос, кашкавал, червен лук, деликатесен салам, пеперони и луканка",
+      "en": "tomato sauce, kashkaval cheese, red onion, deli salami, pepperoni and lukanka"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -716,13 +998,19 @@
     "variants": [
       {
         "id": "var_mestna_mesna_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_mestna_mesna_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -730,9 +1018,15 @@
   },
   {
     "id": "prod_vulkano",
-    "name": "Вулкано",
+    "name": {
+      "bg": "Вулкано",
+      "en": "Vulcano"
+    },
     "slug": "vulkano",
-    "description": "доматен сос, кашкавал, смляна суха люта чушка, пеперони и халапеньо",
+    "description": {
+      "bg": "доматен сос, кашкавал, смляна суха люта чушка, пеперони и халапеньо",
+      "en": "tomato sauce, kashkaval cheese, ground dried chilli, pepperoni and jalapeño"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -746,13 +1040,19 @@
     "variants": [
       {
         "id": "var_vulkano_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_vulkano_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -760,9 +1060,15 @@
   },
   {
     "id": "prod_printsesa",
-    "name": "Принцеса",
+    "name": {
+      "bg": "Принцеса",
+      "en": "Princess"
+    },
     "slug": "printsesa",
-    "description": "доматен сос, кашкавал, бяло сирене, луканка и яйце",
+    "description": {
+      "bg": "доматен сос, кашкавал, бяло сирене, луканка и яйце",
+      "en": "tomato sauce, kashkaval cheese, white cheese, lukanka and egg"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -777,13 +1083,19 @@
     "variants": [
       {
         "id": "var_printsesa_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_printsesa_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -791,9 +1103,15 @@
   },
   {
     "id": "prod_pile",
-    "name": "Пиле",
+    "name": {
+      "bg": "Пиле",
+      "en": "Chicken"
+    },
     "slug": "pile",
-    "description": "доматен сос, кашкавал, сладка царевица, пилешка шунка и BBQ сос",
+    "description": {
+      "bg": "доматен сос, кашкавал, сладка царевица, пилешка шунка и BBQ сос",
+      "en": "tomato sauce, kashkaval cheese, sweet corn, chicken ham and BBQ sauce"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -808,13 +1126,19 @@
     "variants": [
       {
         "id": "var_pile_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_pile_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -822,9 +1146,15 @@
   },
   {
     "id": "prod_indiysko_pile",
-    "name": "Индийско пиле",
+    "name": {
+      "bg": "Индийско пиле",
+      "en": "Indian Chicken"
+    },
     "slug": "indiysko-pile",
-    "description": "доматен сос, кашкавал, сладка царевица, пилешко филе с индийски подправки",
+    "description": {
+      "bg": "доматен сос, кашкавал, сладка царевица, пилешко филе с индийски подправки",
+      "en": "tomato sauce, kashkaval cheese, sweet corn, chicken fillet with Indian spices"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -838,13 +1168,19 @@
     "variants": [
       {
         "id": "var_indiysko_pile_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_indiysko_pile_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -852,9 +1188,15 @@
   },
   {
     "id": "prod_rancho",
-    "name": "Ранчо",
+    "name": {
+      "bg": "Ранчо",
+      "en": "Ranch"
+    },
     "slug": "rancho",
-    "description": "доматен сос, кашкавал, кисели краставички, топено сирене и пилешка шунка",
+    "description": {
+      "bg": "доматен сос, кашкавал, кисели краставички, топено сирене и пилешка шунка",
+      "en": "tomato sauce, kashkaval cheese, pickles, processed cheese and chicken ham"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -868,13 +1210,19 @@
     "variants": [
       {
         "id": "var_rancho_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_rancho_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -882,9 +1230,15 @@
   },
   {
     "id": "prod_byalo_pile",
-    "name": "Бяло пиле",
+    "name": {
+      "bg": "Бяло пиле",
+      "en": "White Chicken"
+    },
     "slug": "byalo-pile",
-    "description": "чеснова база, кашкавал, гъби и пилешка шунка",
+    "description": {
+      "bg": "чеснова база, кашкавал, гъби и пилешка шунка",
+      "en": "garlic base, kashkaval cheese, mushrooms and chicken ham"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -899,13 +1253,19 @@
     "variants": [
       {
         "id": "var_byalo_pile_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_byalo_pile_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -913,9 +1273,15 @@
   },
   {
     "id": "prod_nikulden",
-    "name": "Никулден",
+    "name": {
+      "bg": "Никулден",
+      "en": "St Nicholas"
+    },
     "slug": "nikulden",
-    "description": "доматен сос, кашкавал, рачешки рулца, риба тон и аншоа",
+    "description": {
+      "bg": "доматен сос, кашкавал, рачешки рулца, риба тон и аншоа",
+      "en": "tomato sauce, kashkaval cheese, crab sticks, tuna and anchovies"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -931,13 +1297,19 @@
     "variants": [
       {
         "id": "var_nikulden_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_nikulden_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -945,9 +1317,15 @@
   },
   {
     "id": "prod_okeana",
-    "name": "Океана",
+    "name": {
+      "bg": "Океана",
+      "en": "Oceana"
+    },
     "slug": "okeana",
-    "description": "доматен сос, кашкавал, червен лук, маслини, риба тон, пресен босилек и сушени домати",
+    "description": {
+      "bg": "доматен сос, кашкавал, червен лук, маслини, риба тон, пресен босилек и сушени домати",
+      "en": "tomato sauce, kashkaval cheese, red onion, olives, tuna, fresh basil and sun-dried tomatoes"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -963,13 +1341,19 @@
     "variants": [
       {
         "id": "var_okeana_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_okeana_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -977,9 +1361,15 @@
   },
   {
     "id": "prod_moyata_patso",
-    "name": "Моята Пацо",
+    "name": {
+      "bg": "Моята Пацо",
+      "en": "My Pazzo"
+    },
     "slug": "moyata-patso",
-    "description": "маргарита с три добавки по ваш избор",
+    "description": {
+      "bg": "маргарита с три добавки по ваш избор",
+      "en": "Margherita with three toppings of your choice"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -993,13 +1383,19 @@
     "variants": [
       {
         "id": "var_moyata_patso_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_moyata_patso_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -1007,9 +1403,15 @@
   },
   {
     "id": "prod_spetsialna",
-    "name": "Специална",
+    "name": {
+      "bg": "Специална",
+      "en": "Special"
+    },
     "slug": "spetsialna",
-    "description": "доматен сос, кашкавал, пеперони, пиле на жар, пикантно телешко, зелени чушки, лук",
+    "description": {
+      "bg": "доматен сос, кашкавал, пеперони, пиле на жар, пикантно телешко, зелени чушки, лук",
+      "en": "tomato sauce, kashkaval cheese, pepperoni, grilled chicken, spicy beef, green peppers, onion"
+    },
     "categoryId": "cat_pizzas_standard",
     "priceBgn": 19,
     "priceEur": 9.71,
@@ -1024,13 +1426,19 @@
     "variants": [
       {
         "id": "var_spetsialna_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 19,
         "priceEur": 9.71
       },
       {
         "id": "var_spetsialna_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 25,
         "priceEur": 12.78
       }
@@ -1038,9 +1446,15 @@
   },
   {
     "id": "prod_syomga",
-    "name": "Сьомга",
+    "name": {
+      "bg": "Сьомга",
+      "en": "Salmon"
+    },
     "slug": "syomga",
-    "description": "база филаделфия и пушена сьомга",
+    "description": {
+      "bg": "база филаделфия и пушена сьомга",
+      "en": "Philadelphia base and smoked salmon"
+    },
     "categoryId": "cat_pizzas_special",
     "priceBgn": 23,
     "priceEur": 11.76,
@@ -1055,13 +1469,19 @@
     "variants": [
       {
         "id": "var_syomga_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 23,
         "priceEur": 11.76
       },
       {
         "id": "var_syomga_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 29.92,
         "priceEur": 15.34
       }
@@ -1069,9 +1489,15 @@
   },
   {
     "id": "prod_proshuto",
-    "name": "Прошуто",
+    "name": {
+      "bg": "Прошуто",
+      "en": "Prosciutto"
+    },
     "slug": "proshuto",
-    "description": "доматен сос, кашкавал, рукола, чери домати, прошуто крудо, грана падано",
+    "description": {
+      "bg": "доматен сос, кашкавал, рукола, чери домати, прошуто крудо, грана падано",
+      "en": "tomato sauce, kashkaval cheese, rocket, cherry tomatoes, prosciutto crudo, Grana Padano"
+    },
     "categoryId": "cat_pizzas_special",
     "priceBgn": 23,
     "priceEur": 11.76,
@@ -1086,13 +1512,19 @@
     "variants": [
       {
         "id": "var_proshuto_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 23,
         "priceEur": 11.76
       },
       {
         "id": "var_proshuto_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 29.92,
         "priceEur": 15.34
       }
@@ -1100,9 +1532,15 @@
   },
   {
     "id": "prod_kashkavalen_filadelfiya_krenvirsh_peperoni_bord",
-    "name": "Кашкавален / Филаделфия / Кренвирш / Пеперони борд",
+    "name": {
+      "bg": "Кашкавален / Филаделфия / Кренвирш / Пеперони борд",
+      "en": "Kashkaval / Philadelphia / Frankfurter / Pepperoni crust"
+    },
     "slug": "kashkavalen-filadelfiya-krenvirsh-peperoni-bord",
-    "description": "добавка за борд",
+    "description": {
+      "bg": "добавка за борд",
+      "en": "stuffed crust filling"
+    },
     "categoryId": "cat_pizza_addons",
     "priceBgn": 7,
     "priceEur": 3.58,
@@ -1115,13 +1553,19 @@
     "variants": [
       {
         "id": "var_kashkavalen_filadelfiya_krenvirsh_peperoni_bord_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 7,
         "priceEur": 3.58
       },
       {
         "id": "var_kashkavalen_filadelfiya_krenvirsh_peperoni_bord_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 9,
         "priceEur": 4.6
       }
@@ -1129,9 +1573,15 @@
   },
   {
     "id": "prod_mesni_mlechni_ribni",
-    "name": "Месни / млечни / рибни",
+    "name": {
+      "bg": "Месни / млечни / рибни",
+      "en": "Meat / dairy / fish"
+    },
     "slug": "mesni-mlechni-ribni",
-    "description": "добавки към пица",
+    "description": {
+      "bg": "добавки към пица",
+      "en": "pizza toppings"
+    },
     "categoryId": "cat_pizza_addons",
     "priceBgn": 4.89,
     "priceEur": 2.56,
@@ -1144,13 +1594,19 @@
     "variants": [
       {
         "id": "var_mesni_mlechni_ribni_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 4.89,
         "priceEur": 2.56
       },
       {
         "id": "var_mesni_mlechni_ribni_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 6,
         "priceEur": 3.07
       }
@@ -1158,9 +1614,15 @@
   },
   {
     "id": "prod_zelenchukovi",
-    "name": "Зеленчукови",
+    "name": {
+      "bg": "Зеленчукови",
+      "en": "Vegetable"
+    },
     "slug": "zelenchukovi",
-    "description": "добавки към пица",
+    "description": {
+      "bg": "добавки към пица",
+      "en": "pizza toppings"
+    },
     "categoryId": "cat_pizza_addons",
     "priceBgn": 4.01,
     "priceEur": 2.05,
@@ -1171,13 +1633,19 @@
     "variants": [
       {
         "id": "var_zelenchukovi_1",
-        "name": "30 см",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
         "priceBgn": 4.01,
         "priceEur": 2.05
       },
       {
         "id": "var_zelenchukovi_2",
-        "name": "40 см",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
         "priceBgn": 5.01,
         "priceEur": 2.56
       }
@@ -1185,9 +1653,15 @@
   },
   {
     "id": "prod_presni_hlebni_topcheta",
-    "name": "Пресни хлебни топчета",
+    "name": {
+      "bg": "Пресни хлебни топчета",
+      "en": "Fresh bread bites"
+    },
     "slug": "presni-hlebni-topcheta",
-    "description": "от тесто за пици, с чеснов сос",
+    "description": {
+      "bg": "от тесто за пици, с чеснов сос",
+      "en": "made from pizza dough, with garlic sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 6,
     "priceEur": 3.07,
@@ -1198,13 +1672,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 1,
-    "size": "300 г"
+    "size": {
+      "bg": "300 г",
+      "en": "300 g"
+    }
   },
   {
     "id": "prod_chesnova_bageta",
-    "name": "Чеснова багета",
+    "name": {
+      "bg": "Чеснова багета",
+      "en": "Garlic baguette"
+    },
     "slug": "chesnova-bageta",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_starters",
     "priceBgn": 6,
     "priceEur": 3.07,
@@ -1215,13 +1698,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 2,
-    "size": "120 г"
+    "size": {
+      "bg": "120 г",
+      "en": "120 g"
+    }
   },
   {
     "id": "prod_chesnova_bageta_s_kashkaval",
-    "name": "Чеснова багета с кашкавал",
+    "name": {
+      "bg": "Чеснова багета с кашкавал",
+      "en": "Garlic baguette with kashkaval cheese"
+    },
     "slug": "chesnova-bageta-s-kashkaval",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_starters",
     "priceBgn": 8.51,
     "priceEur": 4.35,
@@ -1232,13 +1724,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 3,
-    "size": "200 г"
+    "size": {
+      "bg": "200 г",
+      "en": "200 g"
+    }
   },
   {
     "id": "prod_lucheni_kragcheta",
-    "name": "Лучени кръгчета",
+    "name": {
+      "bg": "Лучени кръгчета",
+      "en": "Onion rings"
+    },
     "slug": "lucheni-kragcheta",
-    "description": "с чеснов сос",
+    "description": {
+      "bg": "с чеснов сос",
+      "en": "with garlic sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 9,
     "priceEur": 4.6,
@@ -1248,13 +1749,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 4,
-    "size": "250 г"
+    "size": {
+      "bg": "250 г",
+      "en": "250 g"
+    }
   },
   {
     "id": "prod_parzheni_kartofi",
-    "name": "Пържени картофи",
+    "name": {
+      "bg": "Пържени картофи",
+      "en": "French fries"
+    },
     "slug": "parzheni-kartofi",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_starters",
     "priceBgn": 6,
     "priceEur": 3.07,
@@ -1262,13 +1772,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 5,
-    "size": "200 г"
+    "size": {
+      "bg": "200 г",
+      "en": "200 g"
+    }
   },
   {
     "id": "prod_parzheni_kartofi_sas_sirene",
-    "name": "Пържени картофи със сирене",
+    "name": {
+      "bg": "Пържени картофи със сирене",
+      "en": "French fries with cheese"
+    },
     "slug": "parzheni-kartofi-sas-sirene",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_starters",
     "priceBgn": 7.5,
     "priceEur": 3.83,
@@ -1278,13 +1797,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 6,
-    "size": "250 г"
+    "size": {
+      "bg": "250 г",
+      "en": "250 g"
+    }
   },
   {
     "id": "prod_proletni_rultsa",
-    "name": "Пролетни рулца",
+    "name": {
+      "bg": "Пролетни рулца",
+      "en": "Spring rolls"
+    },
     "slug": "proletni-rultsa",
-    "description": "със зеленчуци, сервирани със сладко чили",
+    "description": {
+      "bg": "със зеленчуци, сервирани със сладко чили",
+      "en": "with vegetables, served with sweet chilli"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 8.51,
     "priceEur": 4.35,
@@ -1292,13 +1820,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 7,
-    "size": "150 г"
+    "size": {
+      "bg": "150 г",
+      "en": "150 g"
+    }
   },
   {
     "id": "prod_proletni_rultsa_s_pile",
-    "name": "Пролетни рулца с пиле",
+    "name": {
+      "bg": "Пролетни рулца с пиле",
+      "en": "Spring rolls with chicken"
+    },
     "slug": "proletni-rultsa-s-pile",
-    "description": "сервирани със сладко чили",
+    "description": {
+      "bg": "сервирани със сладко чили",
+      "en": "served with sweet chilli"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 12.01,
     "priceEur": 6.14,
@@ -1306,13 +1843,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 8,
-    "size": "150 г"
+    "size": {
+      "bg": "150 г",
+      "en": "150 g"
+    }
   },
   {
     "id": "prod_kartofeni_rezanki",
-    "name": "Картофени резанки",
+    "name": {
+      "bg": "Картофени резанки",
+      "en": "Potato wedges"
+    },
     "slug": "kartofeni-rezanki",
-    "description": "с BBQ сос",
+    "description": {
+      "bg": "с BBQ сос",
+      "en": "with BBQ sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 9,
     "priceEur": 4.6,
@@ -1322,13 +1868,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 9,
-    "size": "300 г"
+    "size": {
+      "bg": "300 г",
+      "en": "300 g"
+    }
   },
   {
     "id": "prod_panirani_kalmari",
-    "name": "Панирани калмари",
+    "name": {
+      "bg": "Панирани калмари",
+      "en": "Breaded calamari"
+    },
     "slug": "panirani-kalmari",
-    "description": "сервирани с млечен чеснов сос",
+    "description": {
+      "bg": "сервирани с млечен чеснов сос",
+      "en": "served with creamy garlic sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 12.01,
     "priceEur": 6.14,
@@ -1340,13 +1895,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 10,
-    "size": "250 г"
+    "size": {
+      "bg": "250 г",
+      "en": "250 g"
+    }
   },
   {
     "id": "prod_pileshki_hapki",
-    "name": "Пилешки хапки",
+    "name": {
+      "bg": "Пилешки хапки",
+      "en": "Chicken bites"
+    },
     "slug": "pileshki-hapki",
-    "description": "печено пилешко, овкусено с медена горчица",
+    "description": {
+      "bg": "печено пилешко, овкусено с медена горчица",
+      "en": "roast chicken seasoned with honey mustard"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 9.78,
     "priceEur": 5.11,
@@ -1357,13 +1921,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 11,
-    "size": "250 г"
+    "size": {
+      "bg": "250 г",
+      "en": "250 g"
+    }
   },
   {
     "id": "prod_kari_pileshki_hapki",
-    "name": "Къри пилешки хапки",
+    "name": {
+      "bg": "Къри пилешки хапки",
+      "en": "Curry chicken bites"
+    },
     "slug": "kari-pileshki-hapki",
-    "description": "печено пилешко, овкусено с къри сос",
+    "description": {
+      "bg": "печено пилешко, овкусено с къри сос",
+      "en": "roast chicken seasoned with curry sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 9.78,
     "priceEur": 5.11,
@@ -1374,13 +1947,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 12,
-    "size": "250 г"
+    "size": {
+      "bg": "250 г",
+      "en": "250 g"
+    }
   },
   {
     "id": "prod_hrupkavi_pileshki_bonfilentsa",
-    "name": "Хрупкави пилешки бонфиленца",
+    "name": {
+      "bg": "Хрупкави пилешки бонфиленца",
+      "en": "Crispy chicken tenders"
+    },
     "slug": "hrupkavi-pileshki-bonfilentsa",
-    "description": "с млечен чеснов сос",
+    "description": {
+      "bg": "с млечен чеснов сос",
+      "en": "with creamy garlic sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 15,
     "priceEur": 7.67,
@@ -1390,13 +1972,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 13,
-    "size": "250 г"
+    "size": {
+      "bg": "250 г",
+      "en": "250 g"
+    }
   },
   {
     "id": "prod_hrupkavi_spanacheni_kyufteta",
-    "name": "Хрупкави спаначени кюфтета",
+    "name": {
+      "bg": "Хрупкави спаначени кюфтета",
+      "en": "Crispy spinach balls"
+    },
     "slug": "hrupkavi-spanacheni-kyufteta",
-    "description": "с млечен чеснов сос",
+    "description": {
+      "bg": "с млечен чеснов сос",
+      "en": "with creamy garlic sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 9.78,
     "priceEur": 5.11,
@@ -1406,13 +1997,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 14,
-    "size": "350 г"
+    "size": {
+      "bg": "350 г",
+      "en": "350 g"
+    }
   },
   {
     "id": "prod_motsareleni_prachitsi",
-    "name": "Моцарелени пръчици",
+    "name": {
+      "bg": "Моцарелени пръчици",
+      "en": "Mozzarella sticks"
+    },
     "slug": "motsareleni-prachitsi",
-    "description": "с доматен сос",
+    "description": {
+      "bg": "с доматен сос",
+      "en": "with tomato sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 9.78,
     "priceEur": 5.11,
@@ -1422,13 +2022,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 15,
-    "size": "10 бр."
+    "size": {
+      "bg": "10 бр.",
+      "en": "10 pcs"
+    }
   },
   {
     "id": "prod_panirani_kashkavalcheta",
-    "name": "Панирани кашкавалчета",
+    "name": {
+      "bg": "Панирани кашкавалчета",
+      "en": "Breaded kashkaval bites"
+    },
     "slug": "panirani-kashkavalcheta",
-    "description": "със сос от боровинки",
+    "description": {
+      "bg": "със сос от боровинки",
+      "en": "with blueberry sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 9.78,
     "priceEur": 5.11,
@@ -1438,13 +2047,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 16,
-    "size": "200 г"
+    "size": {
+      "bg": "200 г",
+      "en": "200 g"
+    }
   },
   {
     "id": "prod_panirani_sirentsa",
-    "name": "Панирани сиренца",
+    "name": {
+      "bg": "Панирани сиренца",
+      "en": "Breaded white cheese bites"
+    },
     "slug": "panirani-sirentsa",
-    "description": "със сос от боровинки",
+    "description": {
+      "bg": "със сос от боровинки",
+      "en": "with blueberry sauce"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 9.78,
     "priceEur": 5.11,
@@ -1454,13 +2072,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 17,
-    "size": "200 г"
+    "size": {
+      "bg": "200 г",
+      "en": "200 g"
+    }
   },
   {
     "id": "prod_mamini_kyuftentsa",
-    "name": "Мамини кюфтенца",
+    "name": {
+      "bg": "Мамини кюфтенца",
+      "en": "Mum's meatballs"
+    },
     "slug": "mamini-kyuftentsa",
-    "description": "100% свинско месо",
+    "description": {
+      "bg": "100% свинско месо",
+      "en": "100% pork"
+    },
     "categoryId": "cat_starters",
     "priceBgn": 12.01,
     "priceEur": 6.14,
@@ -1468,13 +2095,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 18,
-    "size": "200 г"
+    "size": {
+      "bg": "200 г",
+      "en": "200 g"
+    }
   },
   {
     "id": "prod_pikantni_kartofi",
-    "name": "Пикантни картофи",
+    "name": {
+      "bg": "Пикантни картофи",
+      "en": "Spicy potatoes"
+    },
     "slug": "pikantni-kartofi",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_starters",
     "priceBgn": 5,
     "priceEur": 2.56,
@@ -1482,13 +2118,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 19,
-    "size": "100 г"
+    "size": {
+      "bg": "100 г",
+      "en": "100 g"
+    }
   },
   {
     "id": "prod_pikantni_kartofi_2",
-    "name": "Пикантни картофи",
+    "name": {
+      "bg": "Пикантни картофи",
+      "en": "Spicy potatoes"
+    },
     "slug": "pikantni-kartofi-2",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_starters",
     "priceBgn": 8.5,
     "priceEur": 4.35,
@@ -1496,13 +2141,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 20,
-    "size": "200 г"
+    "size": {
+      "bg": "200 г",
+      "en": "200 g"
+    }
   },
   {
     "id": "prod_pileshki",
-    "name": "Пилешки",
+    "name": {
+      "bg": "Пилешки",
+      "en": "Chicken"
+    },
     "slug": "pileshki",
-    "description": "пилешко кюфте, чедър, кисели краставички, лук, айсберг, BBQ сос, майонеза",
+    "description": {
+      "bg": "пилешко кюфте, чедър, кисели краставички, лук, айсберг, BBQ сос, майонеза",
+      "en": "chicken patty, cheddar, pickles, onion, iceberg lettuce, BBQ sauce, mayonnaise"
+    },
     "categoryId": "cat_burgers",
     "priceBgn": 15,
     "priceEur": 7.67,
@@ -1514,13 +2168,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 1,
-    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+    "size": {
+      "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
+      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+    }
   },
   {
     "id": "prod_hrupkavo_pile",
-    "name": "Хрупкаво пиле",
+    "name": {
+      "bg": "Хрупкаво пиле",
+      "en": "Crispy Chicken"
+    },
     "slug": "hrupkavo-pile",
-    "description": "пилешко бон филе, чедър, спанак, медена горчица, домат, кисели краставички и кетчуп",
+    "description": {
+      "bg": "пилешко бон филе, чедър, спанак, медена горчица, домат, кисели краставички и кетчуп",
+      "en": "chicken tenderloin, cheddar, spinach, honey mustard, tomato, pickles and ketchup"
+    },
     "categoryId": "cat_burgers",
     "priceBgn": 15,
     "priceEur": 7.67,
@@ -1532,13 +2195,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 2,
-    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+    "size": {
+      "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
+      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+    }
   },
   {
     "id": "prod_vege_2",
-    "name": "Веге",
+    "name": {
+      "bg": "Веге",
+      "en": "Veggie"
+    },
     "slug": "vege-2",
-    "description": "2 бр. картофени кюфтета, чедър, айсберг, лук, майонеза, кисели краставички, кетчуп",
+    "description": {
+      "bg": "2 бр. картофени кюфтета, чедър, айсберг, лук, майонеза, кисели краставички, кетчуп",
+      "en": "2 potato patties, cheddar, iceberg lettuce, onion, mayonnaise, pickles, ketchup"
+    },
     "categoryId": "cat_burgers",
     "priceBgn": 12.01,
     "priceEur": 6.14,
@@ -1550,13 +2222,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 3,
-    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+    "size": {
+      "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
+      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+    }
   },
   {
     "id": "prod_teleshki",
-    "name": "Телешки",
+    "name": {
+      "bg": "Телешки",
+      "en": "Beef"
+    },
     "slug": "teleshki",
-    "description": "телешко кюфте, чедър, бекон, лук, кисели краставички, домат, айсберг",
+    "description": {
+      "bg": "телешко кюфте, чедър, бекон, лук, кисели краставички, домат, айсберг",
+      "en": "beef patty, cheddar, bacon, onion, pickles, tomato, iceberg lettuce"
+    },
     "categoryId": "cat_burgers",
     "priceBgn": 15.65,
     "priceEur": 8.18,
@@ -1568,14 +2249,23 @@
     ],
     "isAvailable": true,
     "sortOrder": 4,
-    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
+    "size": {
+      "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
+      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+    },
     "isPopular": true
   },
   {
     "id": "prod_syomga_2",
-    "name": "Сьомга",
+    "name": {
+      "bg": "Сьомга",
+      "en": "Salmon"
+    },
     "slug": "syomga-2",
-    "description": "филаделфия, сьомга бургер, краставица, копър, лимонов дресинг, айсберг",
+    "description": {
+      "bg": "филаделфия, сьомга бургер, краставица, копър, лимонов дресинг, айсберг",
+      "en": "Philadelphia, salmon patty, cucumber, dill, lemon dressing, iceberg lettuce"
+    },
     "categoryId": "cat_burgers",
     "priceBgn": 17,
     "priceEur": 8.69,
@@ -1587,13 +2277,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 5,
-    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+    "size": {
+      "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
+      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+    }
   },
   {
     "id": "prod_rastitelen",
-    "name": "Растителен",
+    "name": {
+      "bg": "Растителен",
+      "en": "Plant-based"
+    },
     "slug": "rastitelen",
-    "description": "бургер сос, айсберг, лук, кисели краставички, бекон, чедър",
+    "description": {
+      "bg": "бургер сос, айсберг, лук, кисели краставички, бекон, чедър",
+      "en": "burger sauce, iceberg lettuce, onion, pickles, bacon, cheddar"
+    },
     "categoryId": "cat_burgers",
     "priceBgn": 17,
     "priceEur": 8.69,
@@ -1604,13 +2303,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 6,
-    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+    "size": {
+      "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
+      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+    }
   },
   {
     "id": "prod_yaytse_i_bekon",
-    "name": "Яйце и бекон",
+    "name": {
+      "bg": "Яйце и бекон",
+      "en": "Egg and Bacon"
+    },
     "slug": "yaytse-i-bekon",
-    "description": "майонеза, двойно яйце, кисели краставички, айсберг, бекон, чедър",
+    "description": {
+      "bg": "майонеза, двойно яйце, кисели краставички, айсберг, бекон, чедър",
+      "en": "mayonnaise, double egg, pickles, iceberg lettuce, bacon, cheddar"
+    },
     "categoryId": "cat_burgers",
     "priceBgn": 12.91,
     "priceEur": 6.65,
@@ -1622,13 +2330,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 7,
-    "size": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл"
+    "size": {
+      "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
+      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+    }
   },
   {
     "id": "prod_yaytse_pecheno",
-    "name": "Яйце печено",
+    "name": {
+      "bg": "Яйце печено",
+      "en": "Fried egg"
+    },
     "slug": "yaytse-pecheno",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_burger_addons",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1638,13 +2355,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 1,
-    "size": "1 бр."
+    "size": {
+      "bg": "1 бр.",
+      "en": "1 pc"
+    }
   },
   {
     "id": "prod_hrupkavo_pile_2",
-    "name": "Хрупкаво пиле",
+    "name": {
+      "bg": "Хрупкаво пиле",
+      "en": "Crispy chicken"
+    },
     "slug": "hrupkavo-pile-2",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_burger_addons",
     "priceBgn": 4,
     "priceEur": 2.05,
@@ -1652,13 +2378,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 2,
-    "size": "100 г"
+    "size": {
+      "bg": "100 г",
+      "en": "100 g"
+    }
   },
   {
     "id": "prod_pileshko_teleshko_kyufte",
-    "name": "Пилешко / телешко кюфте",
+    "name": {
+      "bg": "Пилешко / телешко кюфте",
+      "en": "Chicken / beef patty"
+    },
     "slug": "pileshko-teleshko-kyufte",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_burger_addons",
     "priceBgn": 4,
     "priceEur": 2.05,
@@ -1666,13 +2401,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 3,
-    "size": "120 г"
+    "size": {
+      "bg": "120 г",
+      "en": "120 g"
+    }
   },
   {
     "id": "prod_chedar",
-    "name": "Чедър",
+    "name": {
+      "bg": "Чедър",
+      "en": "Cheddar"
+    },
     "slug": "chedar",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_burger_addons",
     "priceBgn": 1.5,
     "priceEur": 0.77,
@@ -1682,13 +2426,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 4,
-    "size": "100 г"
+    "size": {
+      "bg": "100 г",
+      "en": "100 g"
+    }
   },
   {
     "id": "prod_bekon_shunka",
-    "name": "Бекон / шунка",
+    "name": {
+      "bg": "Бекон / шунка",
+      "en": "Bacon / ham"
+    },
     "slug": "bekon-shunka",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_burger_addons",
     "priceBgn": 3,
     "priceEur": 1.53,
@@ -1696,13 +2449,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 5,
-    "size": "50 г"
+    "size": {
+      "bg": "50 г",
+      "en": "50 g"
+    }
   },
   {
     "id": "prod_zelenchukova",
-    "name": "Зеленчукова",
+    "name": {
+      "bg": "Зеленчукова",
+      "en": "Vegetable"
+    },
     "slug": "zelenchukova",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_burger_addons",
     "priceBgn": 1.5,
     "priceEur": 0.77,
@@ -1710,13 +2472,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 6,
-    "size": "30 г"
+    "size": {
+      "bg": "30 г",
+      "en": "30 g"
+    }
   },
   {
     "id": "prod_shopska_2",
-    "name": "Шопска",
+    "name": {
+      "bg": "Шопска",
+      "en": "Shopska"
+    },
     "slug": "shopska-2",
-    "description": "домати, краставици, зелени чушки, червен лук, печени червени чушки, бяло сирене, магданоз",
+    "description": {
+      "bg": "домати, краставици, зелени чушки, червен лук, печени червени чушки, бяло сирене, магданоз",
+      "en": "tomatoes, cucumbers, green peppers, red onion, roasted red peppers, white cheese, parsley"
+    },
     "categoryId": "cat_salads",
     "priceBgn": 15.65,
     "priceEur": 8,
@@ -1726,13 +2497,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 1,
-    "size": "450 г"
+    "size": {
+      "bg": "450 г",
+      "en": "450 g"
+    }
   },
   {
     "id": "prod_ovcharska",
-    "name": "Овчарска",
+    "name": {
+      "bg": "Овчарска",
+      "en": "Shepherd's"
+    },
     "slug": "ovcharska",
-    "description": "краставица, домат, печена чушка, лук, сирене, кашкавал, свинска шунка, маслини",
+    "description": {
+      "bg": "краставица, домат, печена чушка, лук, сирене, кашкавал, свинска шунка, маслини",
+      "en": "cucumber, tomato, roasted pepper, onion, white cheese, kashkaval cheese, pork ham, olives"
+    },
     "categoryId": "cat_salads",
     "priceBgn": 15.65,
     "priceEur": 8,
@@ -1743,13 +2523,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 2,
-    "size": "450 г"
+    "size": {
+      "bg": "450 г",
+      "en": "450 g"
+    }
   },
   {
     "id": "prod_tsezar_2",
-    "name": "Цезар",
+    "name": {
+      "bg": "Цезар",
+      "en": "Caesar"
+    },
     "slug": "tsezar-2",
-    "description": "айсберг, чери домати, крутони, пържено пилешко бон филе, пармезан и цезар дресинг",
+    "description": {
+      "bg": "айсберг, чери домати, крутони, пържено пилешко бон филе, пармезан и цезар дресинг",
+      "en": "iceberg lettuce, cherry tomatoes, croutons, fried chicken tenderloin, Parmesan and Caesar dressing"
+    },
     "categoryId": "cat_salads",
     "priceBgn": 15.65,
     "priceEur": 8,
@@ -1757,13 +2546,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 3,
-    "size": "450 г"
+    "size": {
+      "bg": "450 г",
+      "en": "450 g"
+    }
   },
   {
     "id": "prod_riba_ton",
-    "name": "Риба тон",
+    "name": {
+      "bg": "Риба тон",
+      "en": "Tuna"
+    },
     "slug": "riba-ton",
-    "description": "айсберг, краставици, сладка царевица, риба тон, лимон, медена горчица",
+    "description": {
+      "bg": "айсберг, краставици, сладка царевица, риба тон, лимон, медена горчица",
+      "en": "iceberg lettuce, cucumbers, sweet corn, tuna, lemon, honey mustard"
+    },
     "categoryId": "cat_salads",
     "priceBgn": 15.65,
     "priceEur": 8,
@@ -1774,13 +2572,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 4,
-    "size": "450 г"
+    "size": {
+      "bg": "450 г",
+      "en": "450 g"
+    }
   },
   {
     "id": "prod_tribagra_2",
-    "name": "Трибагра",
+    "name": {
+      "bg": "Трибагра",
+      "en": "Tribagra"
+    },
     "slug": "tribagra-2",
-    "description": "доматени шайби, песто дженовезе, бяло сирене, пресни листа босилек",
+    "description": {
+      "bg": "доматени шайби, песто дженовезе, бяло сирене, пресни листа босилек",
+      "en": "tomato slices, pesto genovese, white cheese, fresh basil leaves"
+    },
     "categoryId": "cat_salads",
     "priceBgn": 15.65,
     "priceEur": 8,
@@ -1790,13 +2597,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 5,
-    "size": "450 г"
+    "size": {
+      "bg": "450 г",
+      "en": "450 g"
+    }
   },
   {
     "id": "prod_medena_gorchitsa",
-    "name": "Медена горчица",
+    "name": {
+      "bg": "Медена горчица",
+      "en": "Honey mustard"
+    },
     "slug": "medena-gorchitsa",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1806,13 +2622,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 1,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_chesnov_sos",
-    "name": "Чеснов сос",
+    "name": {
+      "bg": "Чеснов сос",
+      "en": "Garlic sauce"
+    },
     "slug": "chesnov-sos",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1822,13 +2647,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 2,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_sos_samuray",
-    "name": "Сос Самурай",
+    "name": {
+      "bg": "Сос Самурай",
+      "en": "Samurai sauce"
+    },
     "slug": "sos-samuray",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1838,13 +2672,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 3,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_burger_sos",
-    "name": "Бургер сос",
+    "name": {
+      "bg": "Бургер сос",
+      "en": "Burger sauce"
+    },
     "slug": "burger-sos",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1854,13 +2697,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 4,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_sos_tsezar",
-    "name": "Сос Цезар",
+    "name": {
+      "bg": "Сос Цезар",
+      "en": "Caesar sauce"
+    },
     "slug": "sos-tsezar",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1870,13 +2722,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 5,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_pesto_dzhenoveze",
-    "name": "Песто Дженовезе",
+    "name": {
+      "bg": "Песто Дженовезе",
+      "en": "Pesto Genovese"
+    },
     "slug": "pesto-dzhenoveze",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1886,13 +2747,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 6,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_domaten_sos",
-    "name": "Доматен сос",
+    "name": {
+      "bg": "Доматен сос",
+      "en": "Tomato sauce"
+    },
     "slug": "domaten-sos",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1902,13 +2772,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 7,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_lyut_sos_sriracha",
-    "name": "Лют сос Срирача",
+    "name": {
+      "bg": "Лют сос Срирача",
+      "en": "Sriracha hot sauce"
+    },
     "slug": "lyut-sos-sriracha",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1918,13 +2797,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 8,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_sladko_chili",
-    "name": "Сладко чили",
+    "name": {
+      "bg": "Сладко чили",
+      "en": "Sweet chilli"
+    },
     "slug": "sladko-chili",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1934,13 +2822,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 9,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_bbq",
-    "name": "BBQ",
+    "name": {
+      "bg": "BBQ",
+      "en": "BBQ"
+    },
     "slug": "bbq",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1950,13 +2847,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 10,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_mlechno_chesnov_sos",
-    "name": "Млечно-чеснов сос",
+    "name": {
+      "bg": "Млечно-чеснов сос",
+      "en": "Creamy garlic sauce"
+    },
     "slug": "mlechno-chesnov-sos",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1966,13 +2872,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 11,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_ketchup",
-    "name": "Кетчуп",
+    "name": {
+      "bg": "Кетчуп",
+      "en": "Ketchup"
+    },
     "slug": "ketchup",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1982,13 +2897,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 12,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_mayoneza",
-    "name": "Майонеза",
+    "name": {
+      "bg": "Майонеза",
+      "en": "Mayonnaise"
+    },
     "slug": "mayoneza",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -1998,13 +2922,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 13,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_1000_ostrova",
-    "name": "1000 острова",
+    "name": {
+      "bg": "1000 острова",
+      "en": "Thousand Island"
+    },
     "slug": "1000-ostrova",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -2014,13 +2947,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 14,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_pikantna_mayoneza",
-    "name": "Пикантна майонеза",
+    "name": {
+      "bg": "Пикантна майонеза",
+      "en": "Spicy mayonnaise"
+    },
     "slug": "pikantna-mayoneza",
-    "description": "сос 70 мл.",
+    "description": {
+      "bg": "сос 70 мл.",
+      "en": "70 ml sauce"
+    },
     "categoryId": "cat_sauces",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -2030,13 +2972,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 15,
-    "size": "70 мл."
+    "size": {
+      "bg": "70 мл.",
+      "en": "70 ml"
+    }
   },
   {
     "id": "prod_nutitsa",
-    "name": "Нутица",
+    "name": {
+      "bg": "Нутица",
+      "en": "Nutitsa"
+    },
     "slug": "nutitsa",
-    "description": "нутела, орехи, портокалови корички",
+    "description": {
+      "bg": "нутела, орехи, портокалови корички",
+      "en": "Nutella, walnuts, orange zest"
+    },
     "categoryId": "cat_desserts",
     "priceBgn": 6.5,
     "priceEur": 3.32,
@@ -2046,13 +2997,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 1,
-    "size": "150 г"
+    "size": {
+      "bg": "150 г",
+      "en": "150 g"
+    }
   },
   {
     "id": "prod_new_york_style_cheesecake",
-    "name": "New York Style Cheesecake",
+    "name": {
+      "bg": "New York Style Cheesecake",
+      "en": "New York Style Cheesecake"
+    },
     "slug": "new-york-style-cheesecake",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_desserts",
     "priceBgn": 9.99,
     "priceEur": 5.11,
@@ -2063,14 +3023,23 @@
     ],
     "isAvailable": true,
     "sortOrder": 2,
-    "size": "120 г",
+    "size": {
+      "bg": "120 г",
+      "en": "120 g"
+    },
     "isPopular": true
   },
   {
     "id": "prod_shokoladovo_brauni",
-    "name": "Шоколадово брауни",
+    "name": {
+      "bg": "Шоколадово брауни",
+      "en": "Chocolate brownie"
+    },
     "slug": "shokoladovo-brauni",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_desserts",
     "priceBgn": 7,
     "priceEur": 3.58,
@@ -2081,13 +3050,22 @@
     ],
     "isAvailable": true,
     "sortOrder": 3,
-    "size": "70 г"
+    "size": {
+      "bg": "70 г",
+      "en": "70 g"
+    }
   },
   {
     "id": "prod_coca_cola",
-    "name": "Coca-Cola",
+    "name": {
+      "bg": "Coca-Cola",
+      "en": "Coca-Cola"
+    },
     "slug": "coca-cola",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_drinks",
     "priceBgn": 3.5,
     "priceEur": 1.79,
@@ -2095,13 +3073,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 1,
-    "size": "330 мл"
+    "size": {
+      "bg": "330 мл",
+      "en": "330 ml"
+    }
   },
   {
     "id": "prod_coca_cola_2",
-    "name": "Coca-Cola",
+    "name": {
+      "bg": "Coca-Cola",
+      "en": "Coca-Cola"
+    },
     "slug": "coca-cola-2",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_drinks",
     "priceBgn": 4.5,
     "priceEur": 2.3,
@@ -2109,13 +3096,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 2,
-    "size": "1 л"
+    "size": {
+      "bg": "1 л",
+      "en": "1 l"
+    }
   },
   {
     "id": "prod_mineralna_voda_bankya",
-    "name": "Минерална вода Банкя",
+    "name": {
+      "bg": "Минерална вода Банкя",
+      "en": "Bankya mineral water"
+    },
     "slug": "mineralna-voda-bankya",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_drinks",
     "priceBgn": 2,
     "priceEur": 1.02,
@@ -2123,13 +3119,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 3,
-    "size": "500 мл"
+    "size": {
+      "bg": "500 мл",
+      "en": "500 ml"
+    }
   },
   {
     "id": "prod_mineralna_voda_bankya_2",
-    "name": "Минерална вода Банкя",
+    "name": {
+      "bg": "Минерална вода Банкя",
+      "en": "Bankya mineral water"
+    },
     "slug": "mineralna-voda-bankya-2",
-    "description": "",
+    "description": {
+      "bg": "",
+      "en": ""
+    },
     "categoryId": "cat_drinks",
     "priceBgn": 2.99,
     "priceEur": 1.53,
@@ -2137,13 +3142,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 4,
-    "size": "1.5 л"
+    "size": {
+      "bg": "1.5 л",
+      "en": "1.5 l"
+    }
   },
   {
     "id": "prod_stela_artoa",
-    "name": "Стела Артоа",
+    "name": {
+      "bg": "Стела Артоа",
+      "en": "Stella Artois"
+    },
     "slug": "stela-artoa",
-    "description": "бира",
+    "description": {
+      "bg": "бира",
+      "en": "beer"
+    },
     "categoryId": "cat_drinks",
     "priceBgn": 4.5,
     "priceEur": 2.3,
@@ -2151,13 +3165,22 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 5,
-    "size": "500 мл"
+    "size": {
+      "bg": "500 мл",
+      "en": "500 ml"
+    }
   },
   {
     "id": "prod_hayneken",
-    "name": "Хайнекен",
+    "name": {
+      "bg": "Хайнекен",
+      "en": "Heineken"
+    },
     "slug": "hayneken",
-    "description": "бира",
+    "description": {
+      "bg": "бира",
+      "en": "beer"
+    },
     "categoryId": "cat_drinks",
     "priceBgn": 4.5,
     "priceEur": 2.3,
@@ -2165,6 +3188,9 @@
     "allergens": [],
     "isAvailable": true,
     "sortOrder": 6,
-    "size": "500 мл"
+    "size": {
+      "bg": "500 мл",
+      "en": "500 ml"
+    }
   }
 ]

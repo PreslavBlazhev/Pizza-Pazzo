@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthUser, getCurrentRole } from "@/lib/auth";
 import { canAccessAdmin, type ActionResult } from "@/types/auth";
@@ -22,31 +23,41 @@ import {
  *   - input is validated with zod before touching Supabase;
  *   - `user_id` always comes from the session, NEVER from client input —
  *     otherwise a user could write rows onto someone else's account;
- *   - errors are returned as Bulgarian strings, not thrown;
+ *   - errors are returned as translated strings, not thrown;
  *   - Supabase's own error messages are mapped, never shown raw (they leak
  *     English internals and sometimes whether an email exists).
+ *
+ * `getTranslations()` here resolves the locale from the request the action was
+ * called on, so a message lands in the language the form was submitted in.
+ *
+ * Every `redirect` below is the one from `@/i18n/navigation` and is passed an
+ * explicit locale. Plain `next/navigation` would send a visitor who signed in
+ * at /en/auth/login to the Bulgarian /profile, because an unprefixed path *is*
+ * the Bulgarian one.
  */
 
-/** Translates the Supabase auth errors we actually expect. */
-function translateAuthError(message: string): string {
+type AuthErrorKey =
+  | "invalidCredentials"
+  | "emailNotConfirmed"
+  | "alreadyRegistered"
+  | "rateLimited"
+  | "passwordTooShort"
+  | "generic";
+
+/** Maps the Supabase auth errors we actually expect onto a message key. */
+function authErrorKey(message: string): AuthErrorKey {
   const m = message.toLowerCase();
 
-  if (m.includes("invalid login credentials")) {
-    return "Грешен имейл или парола.";
-  }
-  if (m.includes("email not confirmed")) {
-    return "Имейлът не е потвърден. Проверете пощата си за линк за потвърждение.";
-  }
+  if (m.includes("invalid login credentials")) return "invalidCredentials";
+  if (m.includes("email not confirmed")) return "emailNotConfirmed";
   if (m.includes("user already registered") || m.includes("already been registered")) {
-    return "Вече съществува профил с този имейл.";
+    return "alreadyRegistered";
   }
   if (m.includes("email rate limit") || m.includes("too many requests")) {
-    return "Твърде много опити. Опитайте отново след няколко минути.";
+    return "rateLimited";
   }
-  if (m.includes("password should be at least")) {
-    return "Паролата е твърде кратка.";
-  }
-  return "Възникна грешка. Опитайте отново.";
+  if (m.includes("password should be at least")) return "passwordTooShort";
+  return "generic";
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -57,6 +68,10 @@ export async function registerUser(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
+  const locale = await getLocale();
+  const tv = await getTranslations("validation");
+  const te = await getTranslations("actions.authError");
+
   const parsed = registerSchema.safeParse({
     fullName: formData.get("fullName"),
     email: formData.get("email"),
@@ -67,7 +82,7 @@ export async function registerUser(
   });
 
   if (!parsed.success) {
-    return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+    return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
   const supabase = await createClient();
@@ -85,17 +100,23 @@ export async function registerUser(
   });
 
   if (error) {
-    return { ok: false, error: translateAuthError(error.message) };
+    return { ok: false, error: te(authErrorKey(error.message)) };
   }
 
   // When email confirmation is ON, Supabase returns a user with no session.
   const needsEmailConfirmation = !data.session;
   if (needsEmailConfirmation) {
-    redirect(`/auth/check-email?email=${encodeURIComponent(email)}`);
+    redirect({
+      href: {
+        pathname: "/auth/check-email",
+        query: { email },
+      },
+      locale,
+    });
   }
 
   revalidatePath("/", "layout");
-  redirect("/profile");
+  redirect({ href: "/profile", locale });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -106,13 +127,17 @@ export async function loginUser(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
+  const locale = await getLocale();
+  const tv = await getTranslations("validation");
+  const te = await getTranslations("actions.authError");
+
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+    return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
   const supabase = await createClient();
@@ -120,7 +145,7 @@ export async function loginUser(
 
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
-    return { ok: false, error: translateAuthError(error.message) };
+    return { ok: false, error: te(authErrorKey(error.message)) };
   }
 
   revalidatePath("/", "layout");
@@ -135,11 +160,11 @@ export async function loginUser(
       ? rawRedirect
       : null;
 
-  if (redirectTo) redirect(redirectTo);
+  if (redirectTo) redirect({ href: redirectTo, locale });
 
   // Staff land in the admin panel, customers in their profile.
   const role = await getCurrentRole();
-  redirect(canAccessAdmin(role) ? "/admin" : "/profile");
+  redirect({ href: canAccessAdmin(role) ? "/admin" : "/profile", locale });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -147,11 +172,12 @@ export async function loginUser(
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function logoutUser(): Promise<void> {
+  const locale = await getLocale();
   const supabase = await createClient();
   if (supabase) await supabase.auth.signOut();
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect({ href: "/", locale });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -162,8 +188,11 @@ export async function updateProfile(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions");
+  const tv = await getTranslations("validation");
+
   const user = await getAuthUser();
-  if (!user) return { ok: false, error: "Трябва да сте влезли в профила си." };
+  if (!user) return { ok: false, error: t("mustBeSignedIn") };
 
   const parsed = profileUpdateSchema.safeParse({
     fullName: formData.get("fullName"),
@@ -171,7 +200,7 @@ export async function updateProfile(
   });
 
   if (!parsed.success) {
-    return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+    return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
   const supabase = await createClient();
@@ -185,11 +214,11 @@ export async function updateProfile(
     .eq("id", user.id);
 
   if (error) {
-    return { ok: false, error: "Профилът не можа да бъде обновен." };
+    return { ok: false, error: t("profile.updateFailed") };
   }
 
   revalidatePath("/profile");
-  return { ok: true, message: "Профилът е обновен." };
+  return { ok: true, message: t("profile.updated") };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -216,12 +245,15 @@ export async function createAddress(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions");
+  const tv = await getTranslations("validation");
+
   const user = await getAuthUser();
-  if (!user) return { ok: false, error: "Трябва да сте влезли в профила си." };
+  if (!user) return { ok: false, error: t("mustBeSignedIn") };
 
   const parsed = addressSchema.safeParse(readAddressForm(formData));
   if (!parsed.success) {
-    return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+    return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
   const supabase = await createClient();
@@ -252,19 +284,22 @@ export async function createAddress(
   });
 
   if (error) {
-    return { ok: false, error: "Адресът не можа да бъде запазен." };
+    return { ok: false, error: t("address.saveFailed") };
   }
 
   revalidatePath("/profile");
-  return { ok: true, message: "Адресът е добавен." };
+  return { ok: true, message: t("address.added") };
 }
 
 export async function updateAddress(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions");
+  const tv = await getTranslations("validation");
+
   const user = await getAuthUser();
-  if (!user) return { ok: false, error: "Трябва да сте влезли в профила си." };
+  if (!user) return { ok: false, error: t("mustBeSignedIn") };
 
   const parsed = addressUpdateSchema.safeParse({
     ...readAddressForm(formData),
@@ -272,7 +307,7 @@ export async function updateAddress(
   });
 
   if (!parsed.success) {
-    return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+    return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
   const supabase = await createClient();
@@ -300,16 +335,18 @@ export async function updateAddress(
     .eq("user_id", user.id);
 
   if (error) {
-    return { ok: false, error: "Адресът не можа да бъде обновен." };
+    return { ok: false, error: t("address.updateFailed") };
   }
 
   revalidatePath("/profile");
-  return { ok: true, message: "Адресът е обновен." };
+  return { ok: true, message: t("address.updated") };
 }
 
 export async function deleteAddress(addressId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions");
+
   const user = await getAuthUser();
-  if (!user) return { ok: false, error: "Трябва да сте влезли в профила си." };
+  if (!user) return { ok: false, error: t("mustBeSignedIn") };
 
   const supabase = await createClient();
   if (!supabase) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
@@ -321,9 +358,9 @@ export async function deleteAddress(addressId: string): Promise<ActionResult> {
     .eq("user_id", user.id);
 
   if (error) {
-    return { ok: false, error: "Адресът не можа да бъде изтрит." };
+    return { ok: false, error: t("address.deleteFailed") };
   }
 
   revalidatePath("/profile");
-  return { ok: true, message: "Адресът е изтрит." };
+  return { ok: true, message: t("address.deleted") };
 }

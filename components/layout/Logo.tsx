@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
@@ -14,6 +15,7 @@ interface LogoProps {
  * The image is the single source of truth — swap the file to rebrand.
  */
 export function Logo({ className = "h-11", linked = true, priority }: LogoProps) {
+  const t = useTranslations("logo");
   const img = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -28,7 +30,7 @@ export function Logo({ className = "h-11", linked = true, priority }: LogoProps)
 
   if (!linked) return img;
   return (
-    <Link href="/" aria-label="Pizza Pazzo — начало" className="inline-flex">
+    <Link href="/" aria-label={t("home")} className="inline-flex">
       {img}
     </Link>
   );

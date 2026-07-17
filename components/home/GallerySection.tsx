@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GalleryGrid } from "@/components/gallery/GalleryGrid";
 import { galleryItems } from "@/components/gallery/gallery-data";
@@ -8,6 +9,8 @@ import { galleryItems } from "@/components/gallery/gallery-data";
  * real food photos into /public/images/gallery and update data/gallery.json.
  */
 export function GallerySection() {
+  const t = useTranslations("gallery");
+
   if (galleryItems.length === 0) return null;
 
   return (
@@ -15,9 +18,9 @@ export function GallerySection() {
       <div className="container">
         <SectionHeading
           center
-          eyebrow="Апетитно"
-          title="Галерия"
-          subtitle="Момент от кухнята на Pizza Pazzo — вкус, който се вижда."
+          eyebrow={t("eyebrow")}
+          title={t("homeTitle")}
+          subtitle={t("homeSubtitle")}
         />
         <div className="mt-10">
           <GalleryGrid items={galleryItems.slice(0, 5)} />
@@ -27,7 +30,7 @@ export function GallerySection() {
             href="/gallery"
             className="inline-block rounded-full border border-pizza-ink/15 px-8 py-3 font-semibold text-pizza-ink transition hover:border-brand hover:text-brand"
           >
-            Виж цялата галерия
+            {t("viewAll")}
           </Link>
         </div>
       </div>

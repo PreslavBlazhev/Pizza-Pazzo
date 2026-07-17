@@ -1,90 +1,150 @@
 [
   {
     "id": "cat_pizzas_standard",
-    "name": "Стандартни пици",
+    "name": {
+      "bg": "Стандартни пици",
+      "en": "Standard pizzas"
+    },
     "slug": "pizzas-standard",
-    "description": "Класически пици на дърва в два размера — 30 и 40 см.",
+    "description": {
+      "bg": "Класически пици на дърва в два размера — 30 и 40 см.",
+      "en": "Classic wood-fired pizzas in two sizes — 30 and 40 cm."
+    },
     "icon": "🍕",
     "sortOrder": 1,
     "isActive": true
   },
   {
     "id": "cat_pizzas_special",
-    "name": "Специални пици",
+    "name": {
+      "bg": "Специални пици",
+      "en": "Special pizzas"
+    },
     "slug": "pizzas-special",
-    "description": "Авторски пици с премиум съставки.",
+    "description": {
+      "bg": "Авторски пици с премиум съставки.",
+      "en": "Signature pizzas with premium ingredients."
+    },
     "icon": "⭐",
     "sortOrder": 2,
     "isActive": true
   },
   {
     "id": "cat_pizza_addons",
-    "name": "Пица добавки",
+    "name": {
+      "bg": "Пица добавки",
+      "en": "Pizza toppings"
+    },
     "slug": "pizza-addons",
-    "description": "Допълнителни съставки към вашата пица.",
+    "description": {
+      "bg": "Допълнителни съставки към вашата пица.",
+      "en": "Extra ingredients for your pizza."
+    },
     "icon": "➕",
     "sortOrder": 3,
     "isActive": true
   },
   {
     "id": "cat_starters",
-    "name": "Предястия",
+    "name": {
+      "bg": "Предястия",
+      "en": "Starters"
+    },
     "slug": "starters",
-    "description": "Леки предястия и разядки за начало.",
+    "description": {
+      "bg": "Леки предястия и разядки за начало.",
+      "en": "Light starters and nibbles to begin."
+    },
     "icon": "🥖",
     "sortOrder": 4,
     "isActive": true
   },
   {
     "id": "cat_burgers",
-    "name": "Бургери",
+    "name": {
+      "bg": "Бургери",
+      "en": "Burgers"
+    },
     "slug": "burgers",
-    "description": "Сочни бургери, сервирани с картофи и напитка.",
+    "description": {
+      "bg": "Сочни бургери, сервирани с картофи и напитка.",
+      "en": "Juicy burgers served with fries and a drink."
+    },
     "icon": "🍔",
     "sortOrder": 5,
     "isActive": true
   },
   {
     "id": "cat_burger_addons",
-    "name": "Бургер добавки",
+    "name": {
+      "bg": "Бургер добавки",
+      "en": "Burger extras"
+    },
     "slug": "burger-addons",
-    "description": "Допълнителни съставки към вашия бургер.",
+    "description": {
+      "bg": "Допълнителни съставки към вашия бургер.",
+      "en": "Extra ingredients for your burger."
+    },
     "icon": "➕",
     "sortOrder": 6,
     "isActive": true
   },
   {
     "id": "cat_salads",
-    "name": "Салати",
+    "name": {
+      "bg": "Салати",
+      "en": "Salads"
+    },
     "slug": "salads",
-    "description": "Свежи сезонни салати.",
+    "description": {
+      "bg": "Свежи сезонни салати.",
+      "en": "Fresh seasonal salads."
+    },
     "icon": "🥗",
     "sortOrder": 7,
     "isActive": true
   },
   {
     "id": "cat_sauces",
-    "name": "Сосове",
+    "name": {
+      "bg": "Сосове",
+      "en": "Sauces"
+    },
     "slug": "sauces",
-    "description": "Домашни сосове към вашите ястия.",
+    "description": {
+      "bg": "Домашни сосове към вашите ястия.",
+      "en": "House-made sauces for your meal."
+    },
     "icon": "🫙",
     "sortOrder": 8,
     "isActive": true
   },
   {
     "id": "cat_desserts",
-    "name": "Десерти",
+    "name": {
+      "bg": "Десерти",
+      "en": "Desserts"
+    },
     "slug": "desserts",
-    "description": "Сладък финал за вашата поръчка.",
+    "description": {
+      "bg": "Сладък финал за вашата поръчка.",
+      "en": "A sweet finish to your order."
+    },
     "icon": "🍰",
     "sortOrder": 9,
     "isActive": true
   },
   {
     "id": "cat_drinks",
-    "name": "Безалкохолни напитки и бира",
+    "name": {
+      "bg": "Безалкохолни напитки и бира",
+      "en": "Soft drinks and beer"
+    },
     "slug": "drinks",
-    "description": "Безалкохолни напитки и бира.",
+    "description": {
+      "bg": "Безалкохолни напитки и бира.",
+      "en": "Soft drinks and beer."
+    },
     "icon": "🥤",
     "sortOrder": 10,
     "isActive": true

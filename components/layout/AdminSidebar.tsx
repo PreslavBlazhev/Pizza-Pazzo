@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { ADMIN_NAV } from "@/lib/constants";
 import { UserRoleBadge } from "@/components/admin/UserRoleBadge";
 import { LogoutButton } from "@/components/auth/LogoutButton";
@@ -11,6 +12,7 @@ import type { SessionUser } from "@/types/auth";
  * The enforcement lives in `middleware.ts` and in each action's role guard.
  */
 export function AdminSidebar({ sessionUser }: { sessionUser: SessionUser }) {
+  const t = useTranslations("admin");
   const links = ADMIN_NAV.filter((item) =>
     (item.allow as readonly string[]).includes(sessionUser.role)
   );
@@ -22,18 +24,18 @@ export function AdminSidebar({ sessionUser }: { sessionUser: SessionUser }) {
           Pizza Pazzo
         </Link>
         <p className="mt-0.5 text-xs uppercase tracking-wide text-pizza-muted">
-          Админ панел
+          {t("title")}
         </p>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="Админ навигация">
+      <nav className="flex flex-1 flex-col gap-1 p-3" aria-label={t("title")}>
         {links.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className="rounded-xl px-3.5 py-2.5 text-sm font-medium text-pizza-ink transition hover:bg-pizza-green-light hover:text-pizza-green-dark"
           >
-            {item.label}
+            {t(`nav.${item.labelKey}`)}
           </Link>
         ))}
       </nav>

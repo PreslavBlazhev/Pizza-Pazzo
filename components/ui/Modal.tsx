@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
@@ -19,6 +20,7 @@ interface ModalProps {
  * revisit if it ever wraps customer-facing flows.
  */
 export function Modal({ open, onClose, title, children, className }: ModalProps) {
+  const t = useTranslations("common");
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +73,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             <button
               type="button"
               onClick={onClose}
-              aria-label="Затвори"
+              aria-label={t("close")}
               className="shrink-0 rounded-full p-1 text-xl leading-none text-pizza-muted transition hover:text-pizza-ink"
             >
               <span aria-hidden>✕</span>

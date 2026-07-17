@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { registerUser } from "@/app/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/ui/FormAlert";
@@ -9,6 +10,7 @@ import type { ActionResult } from "@/types/auth";
 
 /** Registration form. Validation and account creation happen in the action. */
 export function RegisterForm() {
+  const t = useTranslations("auth");
   const [state, formAction, isPending] = useActionState<ActionResult | null, FormData>(
     registerUser,
     null
@@ -17,48 +19,48 @@ export function RegisterForm() {
   const fieldErrors = state?.fieldErrors ?? {};
 
   return (
-    // noValidate: the browser's own English bubbles would compete with our
-    // Bulgarian messages from zod.
+    // noValidate: the browser's own bubbles are in its UI language, which is not
+    // necessarily the site's, and would compete with our messages from zod.
     <form action={formAction} className="space-y-4" noValidate>
       {state?.error && <FormAlert tone="error">{state.error}</FormAlert>}
 
       <Input
-        label="Име и фамилия"
+        label={t("fields.fullName")}
         name="fullName"
         autoComplete="name"
-        placeholder="Иван Петров"
+        placeholder={t("fields.fullNamePlaceholder")}
         error={fieldErrors.fullName}
       />
 
       <Input
-        label="Имейл"
+        label={t("fields.email")}
         name="email"
         type="email"
         autoComplete="email"
-        placeholder="ivan@example.com"
+        placeholder={t("fields.emailPlaceholder")}
         error={fieldErrors.email}
       />
 
       <Input
-        label="Телефон"
+        label={t("fields.phone")}
         name="phone"
         type="tel"
         autoComplete="tel"
-        placeholder="0888123456"
-        hint="За връзка при доставка."
+        placeholder={t("fields.phonePlaceholder")}
+        hint={t("fields.phoneHint")}
         error={fieldErrors.phone}
       />
 
       <PasswordField
-        label="Парола"
+        label={t("fields.password")}
         name="password"
         autoComplete="new-password"
-        hint="Минимум 8 символа."
+        hint={t("fields.passwordHint")}
         error={fieldErrors.password}
       />
 
       <PasswordField
-        label="Потвърди паролата"
+        label={t("fields.passwordConfirm")}
         name="confirmPassword"
         autoComplete="new-password"
         error={fieldErrors.confirmPassword}
@@ -71,12 +73,10 @@ export function RegisterForm() {
             name="acceptedTerms"
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-pizza-cream-dark text-pizza-green focus:ring-2 focus:ring-pizza-green/25"
           />
-          {/* TODO: link "Общи условия" and "Политика за поверителност" once those
-              pages exist. Left as plain text on purpose — a dead link on a legal
-              consent checkbox is worse than no link. */}
-          <span>
-            Съгласен съм с Общите условия и Политиката за поверителност.
-          </span>
+          {/* TODO: link the Terms and the Privacy Policy once those pages exist.
+              Left as plain text on purpose — a dead link on a legal consent
+              checkbox is worse than no link. */}
+          <span>{t("acceptTerms")}</span>
         </label>
         {fieldErrors.acceptedTerms && (
           <span role="alert" className="mt-1.5 block text-xs font-medium text-brand">
@@ -90,7 +90,7 @@ export function RegisterForm() {
         disabled={isPending}
         className="w-full rounded-full bg-brand px-6 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isPending ? "Създаване…" : "Създай профил"}
+        {isPending ? t("creating") : t("createAccount")}
       </button>
     </form>
   );
