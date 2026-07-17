@@ -47,3 +47,55 @@ export interface User {
   addresses: Address[];
   createdAt: string;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Prisma / SQLite user system (DB layer)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Real database shapes for the SQLite + Prisma system (matches the `User` and
+// `UserAddress` models in prisma/schema.prisma). `Db`-prefixed to avoid a
+// collision with the legacy `User` above and the `UserRole` re-export.
+//
+// SQLite has no native enum type, so `USER_ROLES` is the canonical value list.
+
+/** Allowed `User.role` values (matches schema TEXT column). */
+export const USER_ROLES = ["CUSTOMER", "STAFF", "ADMIN", "SUPER_ADMIN"] as const;
+export type DbUserRole = (typeof USER_ROLES)[number];
+
+/** A saved delivery address (`UserAddress` model). Timestamps are ISO strings. */
+export interface DbUserAddress {
+  id: string;
+  userId: string;
+
+  label: string;
+  fullName: string | null;
+  phone: string | null;
+  city: string;
+  addressLine: string;
+  entrance: string | null;
+  floor: string | null;
+  apartment: string | null;
+  deliveryNote: string | null;
+  isDefault: boolean;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * A registered user (`User` model). `passwordHash` is intentionally omitted —
+ * it must never leave the server. Timestamps are ISO strings.
+ */
+export interface DbUser {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string | null;
+  role: DbUserRole;
+
+  createdAt: string;
+  updatedAt: string;
+
+  /** Present when the query includes the relation. */
+  addresses?: DbUserAddress[];
+}

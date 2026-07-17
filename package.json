@@ -9,9 +9,14 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:deploy": "prisma migrate deploy"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
     "next": "^15.5.20",
@@ -29,6 +34,7 @@
     "eslint": "9.18.0",
     "eslint-config-next": "^15.5.20",
     "postcss": "8.5.1",
+    "prisma": "^5.22.0",
     "tailwindcss": "3.4.17",
     "typescript": "5.7.3"
   }

@@ -19,3 +19,14 @@ export interface CartTotals {
   deliveryFee: number;
   total: number;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Bridge to the Prisma / SQLite order system
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// The cart is client-side state (Zustand) and has no database table of its own.
+// At checkout (Part 2) each `CartItem` is snapshotted into a `DbOrderItem`
+// (see types/order.ts) so an order keeps the product name/price as they were at
+// order time, even if the product is later edited. This alias documents that
+// relationship; the actual mapping logic lives in the Part 2 checkout code.
+export type { DbOrderItem, DbOrder } from "@/types/order";

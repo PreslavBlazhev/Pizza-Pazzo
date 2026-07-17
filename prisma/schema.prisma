@@ -1,0 +1,146 @@
+// Pizza Pazzo — Prisma schema (SQLite).
+//
+// Local dev DB:  file:./dev.db                   (DATABASE_URL in .env / .env.local)
+// Render prod:   file:/var/data/pizza-pazzo.db   (on a Persistent Disk mount)
+//
+// See docs/sqlite-prisma-setup.md and docs/render-sqlite-deploy.md.
+// This models the order system built in Parts 2–3. Prices always use Decimal —
+// never Float — and are stored in both BGN and EUR.
+//
+// NOTE — SQLite has no native enum type, so "enum" columns below are TEXT
+// (String) whose allowed values are enforced at the application layer. The
+// canonical value lists live in TypeScript:
+//   UserRole        → types/user.ts  (CUSTOMER | STAFF | ADMIN | SUPER_ADMIN)
+//   OrderStatus     → types/order.ts + lib/order-status.ts
+//   PaymentMethod   → types/order.ts (CASH_ON_DELIVERY)
+//   DeliveryMethod  → types/order.ts (DELIVERY)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  // UserRole enum (SQLite = TEXT): CUSTOMER | STAFF | ADMIN | SUPER_ADMIN
+  role         String        @default("CUSTOMER")
+
+  addresses    UserAddress[]
+  orders       Order[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model UserAddress {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label        String   @default("Основен адрес")
+  fullName     String?
+  phone        String?
+  city         String   @default("Варна")
+  addressLine  String
+  entrance     String?
+  floor        String?
+  apartment    String?
+  deliveryNote String?
+  isDefault    Boolean  @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  // Human-friendly sequential number shown to staff. SQLite only allows
+  // autoincrement on the @id column, so this is assigned in application logic
+  // (Part 2), not by the database.
+  orderNumber           Int         @unique
+
+  userId                String?
+  user                  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  customerName          String
+  customerEmail         String
+  customerPhone         String
+
+  deliveryAddress       String
+  deliveryCity          String      @default("Варна")
+  deliveryNote          String?
+
+  // PaymentMethod enum (SQLite = TEXT): CASH_ON_DELIVERY
+  paymentMethod         String      @default("CASH_ON_DELIVERY")
+  // DeliveryMethod enum (SQLite = TEXT): DELIVERY
+  deliveryMethod        String      @default("DELIVERY")
+
+  // OrderStatus enum (SQLite = TEXT): PENDING | ACCEPTED | PREPARING | READY
+  //   | OUT_FOR_DELIVERY | DELIVERED | CANCELLED
+  status                String      @default("PENDING")
+
+  subtotalBgn           Decimal
+  subtotalEur           Decimal
+  deliveryFeeBgn        Decimal     @default(0)
+  deliveryFeeEur        Decimal     @default(0)
+  totalBgn              Decimal
+  totalEur              Decimal
+
+  estimatedTimeMinutes  Int?
+  adminNote             String?
+
+  acceptedAt            DateTime?
+  cancelledAt           DateTime?
+  completedAt           DateTime?
+
+  items                 OrderItem[]
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id              String   @id @default(cuid())
+
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId       String
+  productSlug     String?
+  productNameBg   String
+  productNameEn   String?
+  productImageUrl String?
+
+  variantId       String?
+  variantName     String?
+
+  quantity        Int
+
+  unitPriceBgn    Decimal
+  unitPriceEur    Decimal
+  totalPriceBgn   Decimal
+  totalPriceEur   Decimal
+
+  itemNote        String?
+
+  createdAt       DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}

@@ -22,7 +22,14 @@ yarn-error.log*
 
 # env files (never commit real credentials)
 .env
+.env.local
 .env*.local
+
+# database (SQLite — never commit the local DB or its journal)
+*.db
+*.db-journal
+prisma/dev.db
+prisma/dev.db-journal
 
 # typescript
 *.tsbuildinfo
