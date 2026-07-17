@@ -163,6 +163,7 @@
     "fallbackTitle": "Product",
     "viewDetailsFor": "View details for {name}",
     "addToCart": "Add to cart",
+    "added": "Added ✓",
     "addToCartSoon": "Add to cart — coming soon"
   },
 
@@ -238,7 +239,8 @@
     "quantityShort": "Qty: {count}",
     "remove": "Remove",
     "checkout": "Go to checkout",
-    "continueShopping": "Continue browsing"
+    "continueShopping": "Continue browsing",
+    "clear": "Clear cart"
   },
 
   "checkout": {

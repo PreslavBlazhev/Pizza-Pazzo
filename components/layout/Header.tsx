@@ -4,6 +4,7 @@ import { Logo } from "./Logo";
 import { MobileNav } from "./MobileNav";
 import { HeaderAuth } from "./HeaderAuth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { CartBadge } from "@/components/cart/CartBadge";
 
 /** Nav targets. Labels come from the `nav` namespace, keyed by `labelKey`. */
 export const NAV_LINKS = [
@@ -49,14 +50,25 @@ export function Header() {
 
           <Link
             href="/cart"
-            className="inline-flex items-center gap-2 rounded-full border border-pizza-green/40 bg-white px-4 py-2 text-base font-semibold text-pizza-green shadow-sm transition hover:bg-pizza-green hover:text-white"
+            className="relative inline-flex items-center gap-2 rounded-full border border-pizza-green/40 bg-white px-4 py-2 text-base font-semibold text-pizza-green shadow-sm transition hover:bg-pizza-green hover:text-white"
           >
             <span aria-hidden>🛒</span> {t("cart")}
+            <CartBadge />
           </Link>
         </nav>
 
-        {/* Mobile nav */}
-        <MobileNav />
+        {/* Mobile: cart + hamburger */}
+        <div className="flex items-center gap-1 lg:hidden">
+          <Link
+            href="/cart"
+            aria-label={t("cart")}
+            className="relative rounded-full p-2 text-2xl transition hover:bg-pizza-cream-dark/40"
+          >
+            <span aria-hidden>🛒</span>
+            <CartBadge />
+          </Link>
+          <MobileNav />
+        </div>
       </div>
     </header>
   );

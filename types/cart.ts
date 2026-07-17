@@ -15,9 +15,14 @@ export interface CartItem {
 
 export interface CartTotals {
   itemsCount: number;
+  /** EUR amounts. */
   subtotal: number;
   deliveryFee: number;
   total: number;
+  /** BGN amounts (лв.), summed from each item's BGN price. */
+  subtotalBgn: number;
+  deliveryFeeBgn: number;
+  totalBgn: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -163,6 +163,7 @@
     "fallbackTitle": "Продукт",
     "viewDetailsFor": "Виж детайли за {name}",
     "addToCart": "Добави в количката",
+    "added": "Добавено ✓",
     "addToCartSoon": "Добавяне в количка — скоро"
   },
 
@@ -238,7 +239,8 @@
     "quantityShort": "Кол.: {count}",
     "remove": "Премахни",
     "checkout": "Към поръчката",
-    "continueShopping": "Продължи с избора"
+    "continueShopping": "Продължи с избора",
+    "clear": "Изчисти количката"
   },
 
   "checkout": {

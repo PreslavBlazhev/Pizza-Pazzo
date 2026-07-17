@@ -3,6 +3,7 @@ import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
 import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
 import { isAllergenId, orderedAllergens } from "@/lib/allergens";
+import { AddToCart } from "@/components/cart/AddToCart";
 import { ProductImage } from "./ProductImage";
 
 interface ProductDetailsProps {
@@ -79,32 +80,6 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
           )}
         </div>
 
-        {/* Variants */}
-        {product.variants && product.variants.length > 0 && (
-          <div className="mt-7">
-            <p className="mb-3 text-sm font-semibold text-pizza-ink">
-              {t("sizes")}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {product.variants.map((v) => (
-                <div
-                  key={v.id}
-                  className="rounded-2xl border border-pizza-cream-dark bg-white px-4 py-2.5 text-sm shadow-sm"
-                >
-                  <span className="font-medium text-pizza-ink">{v.name}</span>
-                  <span className="ml-2 font-semibold text-brand">
-                    {formatBgnPrice(v.priceBgn)}
-                  </span>
-                  <span className="ml-1 text-pizza-muted">
-                    {formatEurPrice(v.priceEur)}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <p className="mt-2 text-xs text-pizza-muted">{t("sizesNote")}</p>
-          </div>
-        )}
-
         {/* Ingredients */}
         {product.ingredients && product.ingredients.length > 0 && (
           <div className="mt-7">
@@ -141,16 +116,8 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
           )}
         </div>
 
-        {/* Cart placeholder */}
-        <div className="mt-9">
-          <button
-            type="button"
-            disabled
-            className="w-full cursor-not-allowed rounded-full bg-pizza-cream-dark px-6 py-3.5 text-sm font-semibold text-pizza-muted sm:w-auto sm:px-10"
-          >
-            🛒 {t("addToCartSoon")}
-          </button>
-        </div>
+        {/* Add to cart */}
+        <AddToCart product={product} />
       </div>
     </div>
   );
