@@ -13,9 +13,9 @@ export const metadata: Metadata = {
 export default async function AdminUsersPage() {
   // Middleware already restricts /admin/users to admin+, but a page that reads
   // personal data should not depend on the matcher being right.
-  const sessionUser = await requireRole(["admin", "super_admin"]);
+  const sessionUser = await requireRole(["ADMIN", "SUPER_ADMIN"]);
 
-  const { users, error, notConfigured } = await getAllUsers();
+  const { users, error } = await getAllUsers();
 
   return (
     <div>
@@ -29,12 +29,7 @@ export default async function AdminUsersPage() {
         </p>
       </div>
 
-      {notConfigured ? (
-        <FormAlert tone="info">
-          Supabase не е конфигуриран. Добавете env keys в <code>.env.local</code>{" "}
-          и пуснете <code>docs/supabase-auth-schema.sql</code>.
-        </FormAlert>
-      ) : error ? (
+      {error ? (
         <FormAlert tone="error">{error}</FormAlert>
       ) : (
         <AdminUserTable users={users} canManageRoles={isSuperAdmin(sessionUser.role)} />

@@ -25,7 +25,7 @@ const demoStats: AdminStats = {
 
 export default async function AdminDashboardPage() {
   const sessionUser = await getSessionUser();
-  const firstName = sessionUser?.profile?.fullName?.split(" ")[0];
+  const firstName = sessionUser?.fullName?.split(" ")[0];
 
   return (
     <div>

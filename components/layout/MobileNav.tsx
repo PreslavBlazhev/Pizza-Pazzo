@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { logoutUser } from "@/app/actions/auth";
 import { canAccessAdmin, isUserRole, type UserRole } from "@/types/auth";
 import { NAV_LINKS } from "./Header";
@@ -13,7 +12,8 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
  * Hamburger navigation for mobile (< lg).
  *
  * Reads the session in the browser for the same reason as <HeaderAuth />: the
- * header must not force every page out of static rendering.
+ * header must not force every page out of static rendering. Uses the cheap
+ * `GET /api/auth/session` JWT probe.
  */
 export function MobileNav() {
   const t = useTranslations("nav");
@@ -21,49 +21,30 @@ export function MobileNav() {
   const [auth, setAuth] = useState<{
     status: "loading" | "signedOut" | "signedIn";
     role: UserRole;
-  }>({ status: "loading", role: "customer" });
+  }>({ status: "loading", role: "CUSTOMER" });
 
   useEffect(() => {
-    const supabase = createClient();
-
-    if (!supabase) {
-      setAuth({ status: "signedOut", role: "customer" });
-      return;
-    }
-
     let active = true;
 
-    async function loadRole(userId: string) {
-      const { data } = await supabase!
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (!active) return;
-      setAuth({
-        status: "signedIn",
-        role: isUserRole(data?.role) ? data.role : "customer",
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data: { signedIn?: boolean; role?: unknown }) => {
+        if (!active) return;
+        if (data?.signedIn) {
+          setAuth({
+            status: "signedIn",
+            role: isUserRole(data.role) ? data.role : "CUSTOMER",
+          });
+        } else {
+          setAuth({ status: "signedOut", role: "CUSTOMER" });
+        }
+      })
+      .catch(() => {
+        if (active) setAuth({ status: "signedOut", role: "CUSTOMER" });
       });
-    }
-
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!active) return;
-      if (user) void loadRole(user.id);
-      else setAuth({ status: "signedOut", role: "customer" });
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return;
-      if (session?.user) void loadRole(session.user.id);
-      else setAuth({ status: "signedOut", role: "customer" });
-    });
 
     return () => {
       active = false;
-      subscription.unsubscribe();
     };
   }, []);
 

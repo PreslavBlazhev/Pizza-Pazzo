@@ -35,7 +35,7 @@ export default async function ProfilePage({ params }: PageProps) {
   const sessionUser = await requireUser("/profile");
   const addresses = await getUserAddresses();
 
-  const firstName = sessionUser.profile?.fullName?.split(" ")[0];
+  const firstName = sessionUser.fullName?.split(" ")[0];
 
   return (
     <>
@@ -50,7 +50,7 @@ export default async function ProfilePage({ params }: PageProps) {
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <p className="text-sm text-pizza-muted">{sessionUser.email}</p>
               {/* Customers do not need to be told they are customers. */}
-              {sessionUser.role !== "customer" && <UserRoleBadge role={sessionUser.role} />}
+              {sessionUser.role !== "CUSTOMER" && <UserRoleBadge role={sessionUser.role} />}
             </div>
           </div>
           <LogoutButton />
@@ -72,7 +72,11 @@ export default async function ProfilePage({ params }: PageProps) {
         )}
 
         <div className="mt-8 space-y-6">
-          <ProfileEditForm profile={sessionUser.profile} email={sessionUser.email} />
+          <ProfileEditForm
+            fullName={sessionUser.fullName}
+            phone={sessionUser.phone}
+            email={sessionUser.email}
+          />
 
           <AddressSection addresses={addresses} />
 

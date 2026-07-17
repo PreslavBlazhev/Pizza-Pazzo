@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getAuthUser, getCurrentRole } from "@/lib/auth";
-import { canAccessAdmin, type ActionResult } from "@/types/auth";
-import { SUPABASE_NOT_CONFIGURED_MESSAGE } from "@/lib/supabase/env";
+import { db } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
+import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import { setSessionCookie, clearSessionCookie } from "@/lib/auth/session";
+import { canAccessAdmin, isUserRole, type ActionResult } from "@/types/auth";
 import {
   addressSchema,
   addressUpdateSchema,
@@ -17,48 +19,22 @@ import {
 } from "@/lib/validators/auth";
 
 /**
- * Auth server actions.
+ * Auth server actions (custom SQLite/Prisma auth).
  *
  * Rules that hold for every action in this file:
- *   - input is validated with zod before touching Supabase;
- *   - `user_id` always comes from the session, NEVER from client input —
+ *   - input is validated with zod before touching the database;
+ *   - `userId` always comes from the session, NEVER from client input —
  *     otherwise a user could write rows onto someone else's account;
  *   - errors are returned as translated strings, not thrown;
- *   - Supabase's own error messages are mapped, never shown raw (they leak
- *     English internals and sometimes whether an email exists).
+ *   - we never reveal whether an email exists (login failures are generic).
  *
- * `getTranslations()` here resolves the locale from the request the action was
+ * `getTranslations()` resolves the locale from the request the action was
  * called on, so a message lands in the language the form was submitted in.
  *
  * Every `redirect` below is the one from `@/i18n/navigation` and is passed an
- * explicit locale. Plain `next/navigation` would send a visitor who signed in
- * at /en/auth/login to the Bulgarian /profile, because an unprefixed path *is*
- * the Bulgarian one.
+ * explicit locale, so a visitor who signed in at /en/... is not bounced onto a
+ * Bulgarian page.
  */
-
-type AuthErrorKey =
-  | "invalidCredentials"
-  | "emailNotConfirmed"
-  | "alreadyRegistered"
-  | "rateLimited"
-  | "passwordTooShort"
-  | "generic";
-
-/** Maps the Supabase auth errors we actually expect onto a message key. */
-function authErrorKey(message: string): AuthErrorKey {
-  const m = message.toLowerCase();
-
-  if (m.includes("invalid login credentials")) return "invalidCredentials";
-  if (m.includes("email not confirmed")) return "emailNotConfirmed";
-  if (m.includes("user already registered") || m.includes("already been registered")) {
-    return "alreadyRegistered";
-  }
-  if (m.includes("email rate limit") || m.includes("too many requests")) {
-    return "rateLimited";
-  }
-  if (m.includes("password should be at least")) return "passwordTooShort";
-  return "generic";
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Registration
@@ -85,34 +61,21 @@ export async function registerUser(
     return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-
   const { fullName, email, phone, password } = parsed.data;
 
-  // full_name/phone go into raw_user_meta_data; the `handle_new_user` trigger
-  // reads them to build the profile row. Note we do NOT pass `role` here —
-  // the trigger defaults to 'customer' and ignores anything privileged.
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { full_name: fullName, phone } },
-  });
-
-  if (error) {
-    return { ok: false, error: te(authErrorKey(error.message)) };
-  }
-
-  // When email confirmation is ON, Supabase returns a user with no session.
-  const needsEmailConfirmation = !data.session;
-  if (needsEmailConfirmation) {
-    redirect({
-      href: {
-        pathname: "/auth/check-email",
-        query: { email },
-      },
-      locale,
+  try {
+    const passwordHash = await hashPassword(password);
+    const user = await db.user.create({
+      data: { email, passwordHash, fullName, phone, role: "CUSTOMER" },
     });
+
+    await setSessionCookie({ sub: user.id, email: user.email, role: "CUSTOMER" });
+  } catch (error) {
+    // Unique constraint on email → the address is already registered.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { ok: false, error: te("alreadyRegistered") };
+    }
+    return { ok: false, error: te("generic") };
   }
 
   revalidatePath("/", "layout");
@@ -140,13 +103,18 @@ export async function loginUser(
     return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
+  const { email, password } = parsed.data;
+  const user = await db.user.findUnique({ where: { email } });
 
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) {
-    return { ok: false, error: te(authErrorKey(error.message)) };
+  // Same generic error whether the email is unknown or the password is wrong —
+  // never leak which accounts exist. bcrypt.compare on a dummy hash would be
+  // ideal to equalise timing; acceptable to skip for this workload.
+  if (!user || !user.isActive || !(await verifyPassword(password, user.passwordHash))) {
+    return { ok: false, error: te("invalidCredentials") };
   }
+
+  const role = isUserRole(user.role) ? user.role : "CUSTOMER";
+  await setSessionCookie({ sub: user.id, email: user.email, role });
 
   revalidatePath("/", "layout");
 
@@ -163,7 +131,6 @@ export async function loginUser(
   if (redirectTo) redirect({ href: redirectTo, locale });
 
   // Staff land in the admin panel, customers in their profile.
-  const role = await getCurrentRole();
   redirect({ href: canAccessAdmin(role) ? "/admin" : "/profile", locale });
 }
 
@@ -173,8 +140,7 @@ export async function loginUser(
 
 export async function logoutUser(): Promise<void> {
   const locale = await getLocale();
-  const supabase = await createClient();
-  if (supabase) await supabase.auth.signOut();
+  await clearSessionCookie();
 
   revalidatePath("/", "layout");
   redirect({ href: "/", locale });
@@ -191,8 +157,8 @@ export async function updateProfile(
   const t = await getTranslations("actions");
   const tv = await getTranslations("validation");
 
-  const user = await getAuthUser();
-  if (!user) return { ok: false, error: t("mustBeSignedIn") };
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return { ok: false, error: t("mustBeSignedIn") };
 
   const parsed = profileUpdateSchema.safeParse({
     fullName: formData.get("fullName"),
@@ -203,17 +169,12 @@ export async function updateProfile(
     return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-
-  // The row is pinned to the session user id, and the RLS policy
-  // "Потребителят обновява своя профил" enforces the same server-side.
-  const { error } = await supabase
-    .from("profiles")
-    .update({ full_name: parsed.data.fullName, phone: parsed.data.phone })
-    .eq("id", user.id);
-
-  if (error) {
+  try {
+    await db.user.update({
+      where: { id: sessionUser.id },
+      data: { fullName: parsed.data.fullName, phone: parsed.data.phone },
+    });
+  } catch {
     return { ok: false, error: t("profile.updateFailed") };
   }
 
@@ -248,42 +209,37 @@ export async function createAddress(
   const t = await getTranslations("actions");
   const tv = await getTranslations("validation");
 
-  const user = await getAuthUser();
-  if (!user) return { ok: false, error: t("mustBeSignedIn") };
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return { ok: false, error: t("mustBeSignedIn") };
 
   const parsed = addressSchema.safeParse(readAddressForm(formData));
   if (!parsed.success) {
     return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-
   const a = parsed.data;
 
-  // The first address a user saves becomes their default automatically.
-  const { count } = await supabase
-    .from("user_addresses")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
+  try {
+    // The first address a user saves becomes their default automatically.
+    const existing = await db.userAddress.count({ where: { userId: sessionUser.id } });
+    const isFirst = existing === 0;
 
-  const isFirst = (count ?? 0) === 0;
-
-  const { error } = await supabase.from("user_addresses").insert({
-    user_id: user.id, // from the session — never from the form
-    label: a.label,
-    full_name: a.fullName,
-    phone: a.phone,
-    city: a.city,
-    address_line: a.addressLine,
-    entrance: a.entrance,
-    floor: a.floor,
-    apartment: a.apartment,
-    delivery_note: a.deliveryNote,
-    is_default: a.isDefault || isFirst,
-  });
-
-  if (error) {
+    await db.userAddress.create({
+      data: {
+        userId: sessionUser.id, // from the session — never from the form
+        label: a.label ?? undefined, // let the DB default apply when empty
+        fullName: a.fullName,
+        phone: a.phone,
+        city: a.city,
+        addressLine: a.addressLine,
+        entrance: a.entrance,
+        floor: a.floor,
+        apartment: a.apartment,
+        deliveryNote: a.deliveryNote,
+        isDefault: a.isDefault || isFirst,
+      },
+    });
+  } catch {
     return { ok: false, error: t("address.saveFailed") };
   }
 
@@ -298,8 +254,8 @@ export async function updateAddress(
   const t = await getTranslations("actions");
   const tv = await getTranslations("validation");
 
-  const user = await getAuthUser();
-  if (!user) return { ok: false, error: t("mustBeSignedIn") };
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return { ok: false, error: t("mustBeSignedIn") };
 
   const parsed = addressUpdateSchema.safeParse({
     ...readAddressForm(formData),
@@ -310,31 +266,28 @@ export async function updateAddress(
     return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-
   const a = parsed.data;
 
-  // .eq("user_id", user.id) means a forged id cannot touch someone else's row,
-  // even before RLS gets a say.
-  const { error } = await supabase
-    .from("user_addresses")
-    .update({
-      label: a.label,
-      full_name: a.fullName,
-      phone: a.phone,
-      city: a.city,
-      address_line: a.addressLine,
-      entrance: a.entrance,
-      floor: a.floor,
-      apartment: a.apartment,
-      delivery_note: a.deliveryNote,
-      is_default: a.isDefault,
-    })
-    .eq("id", a.id)
-    .eq("user_id", user.id);
-
-  if (error) {
+  try {
+    // Scoping the where by userId means a forged id cannot touch someone
+    // else's row. updateMany returns a count instead of throwing on no-match.
+    const { count } = await db.userAddress.updateMany({
+      where: { id: a.id, userId: sessionUser.id },
+      data: {
+        label: a.label ?? undefined,
+        fullName: a.fullName,
+        phone: a.phone,
+        city: a.city,
+        addressLine: a.addressLine,
+        entrance: a.entrance,
+        floor: a.floor,
+        apartment: a.apartment,
+        deliveryNote: a.deliveryNote,
+        isDefault: a.isDefault,
+      },
+    });
+    if (count === 0) return { ok: false, error: t("address.updateFailed") };
+  } catch {
     return { ok: false, error: t("address.updateFailed") };
   }
 
@@ -345,19 +298,15 @@ export async function updateAddress(
 export async function deleteAddress(addressId: string): Promise<ActionResult> {
   const t = await getTranslations("actions");
 
-  const user = await getAuthUser();
-  if (!user) return { ok: false, error: t("mustBeSignedIn") };
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return { ok: false, error: t("mustBeSignedIn") };
 
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-
-  const { error } = await supabase
-    .from("user_addresses")
-    .delete()
-    .eq("id", addressId)
-    .eq("user_id", user.id);
-
-  if (error) {
+  try {
+    const { count } = await db.userAddress.deleteMany({
+      where: { id: addressId, userId: sessionUser.id },
+    });
+    if (count === 0) return { ok: false, error: t("address.deleteFailed") };
+  } catch {
     return { ok: false, error: t("address.deleteFailed") };
   }
 

@@ -2,7 +2,7 @@ import type { UserRole } from "./auth";
 
 /**
  * A user as shown in the admin users table (/admin/users).
- * Joins `profiles` with `user_roles` — see `app/actions/admin-users.ts`.
+ * A `User` row from Prisma — see `app/actions/admin-users.ts`.
  */
 export interface AdminUser {
   id: string;
@@ -10,6 +10,7 @@ export interface AdminUser {
   fullName: string;
   phone: string | null;
   role: UserRole;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -25,10 +26,10 @@ export const ADMIN_USER_FILTER_LABELS: Record<AdminUserFilter, string> = {
 
 /** Which roles each filter tab shows. */
 export const ADMIN_USER_FILTER_ROLES: Record<AdminUserFilter, readonly UserRole[]> = {
-  all: ["customer", "staff", "admin", "super_admin"],
-  customers: ["customer"],
-  staff: ["staff"],
-  admins: ["admin", "super_admin"],
+  all: ["CUSTOMER", "STAFF", "ADMIN", "SUPER_ADMIN"],
+  customers: ["CUSTOMER"],
+  staff: ["STAFF"],
+  admins: ["ADMIN", "SUPER_ADMIN"],
 };
 
 /** Quick figures for the admin dashboard cards. */

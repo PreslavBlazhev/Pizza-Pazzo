@@ -6,12 +6,8 @@ export const metadata = {
 };
 
 /**
- * Never prerender the admin panel.
- *
- * Without this, a build that runs with no Supabase env keys never reaches
- * `cookies()` (the client short-circuits to null), so Next sees no dynamic API,
- * prerenders these pages, and bakes in the signed-out redirect for everyone.
- * Applies to every segment under /admin.
+ * Never prerender the admin panel — it reads the session cookie, which is a
+ * per-request dynamic API. Applies to every segment under /admin.
  */
 export const dynamic = "force-dynamic";
 
@@ -20,12 +16,12 @@ export const dynamic = "force-dynamic";
  *
  * `requireRole` runs before any admin page renders, so even if the middleware
  * matcher were changed by mistake, /admin stays closed to customers. This is
- * the second of three layers — middleware, this guard, and RLS in the database.
+ * the second of two layers — the Edge middleware and this server-side guard.
  */
 export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const sessionUser = await requireRole(["staff", "admin", "super_admin"]);
+  const sessionUser = await requireRole(["STAFF", "ADMIN", "SUPER_ADMIN"]);
 
   return (
     <div className="flex min-h-screen bg-pizza-cream">

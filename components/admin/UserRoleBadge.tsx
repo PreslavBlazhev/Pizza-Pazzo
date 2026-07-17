@@ -10,10 +10,10 @@ export function UserRoleBadge({
   className?: string;
 }) {
   const tones: Record<UserRole, string> = {
-    customer: "bg-pizza-cream-dark/60 text-pizza-ink",
-    staff: "bg-blue-100 text-blue-800",
-    admin: "bg-pizza-green-light text-pizza-green-dark",
-    super_admin: "bg-pizza-red-light text-brand-dark",
+    CUSTOMER: "bg-pizza-cream-dark/60 text-pizza-ink",
+    STAFF: "bg-blue-100 text-blue-800",
+    ADMIN: "bg-pizza-green-light text-pizza-green-dark",
+    SUPER_ADMIN: "bg-pizza-red-light text-brand-dark",
   };
 
   return (

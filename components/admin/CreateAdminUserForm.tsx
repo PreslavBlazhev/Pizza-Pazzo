@@ -46,7 +46,7 @@ export function CreateAdminUserForm({ onDone }: { onDone?: () => void }) {
 
       <fieldset className="space-y-2">
         <legend className="mb-2 text-sm font-medium text-pizza-ink">Роля</legend>
-        {(["staff", "admin"] as const).map((role) => (
+        {(["STAFF", "ADMIN"] as const).map((role) => (
           <label
             key={role}
             className="flex cursor-pointer items-start gap-3 rounded-xl border border-pizza-cream-dark p-3 transition hover:border-pizza-green/50"
@@ -55,7 +55,7 @@ export function CreateAdminUserForm({ onDone }: { onDone?: () => void }) {
               type="radio"
               name="role"
               value={role}
-              defaultChecked={role === "staff"}
+              defaultChecked={role === "STAFF"}
               className="mt-1 h-4 w-4 border-pizza-cream-dark text-pizza-green focus:ring-2 focus:ring-pizza-green/25"
             />
             <span>

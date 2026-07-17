@@ -34,6 +34,8 @@ model User {
   phone        String?
   // UserRole enum (SQLite = TEXT): CUSTOMER | STAFF | ADMIN | SUPER_ADMIN
   role         String        @default("CUSTOMER")
+  // Soft-disable for staff/customer accounts (admin deactivate/reactivate).
+  isActive     Boolean       @default(true)
 
   addresses    UserAddress[]
   orders       Order[]

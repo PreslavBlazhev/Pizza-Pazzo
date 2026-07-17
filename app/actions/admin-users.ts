@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient, isServiceRoleConfigured } from "@/lib/supabase/admin";
+import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { hashPassword } from "@/lib/auth/password";
 import {
   isAdminRole,
   isSuperAdmin,
@@ -13,8 +14,6 @@ import {
   type UserRole,
 } from "@/types/auth";
 import type { AdminUser } from "@/types/admin";
-import type { ProfileRow } from "@/types/database";
-import { SUPABASE_NOT_CONFIGURED_MESSAGE } from "@/lib/supabase/env";
 import {
   adminRoleUpdateSchema,
   createAdminUserSchema,
@@ -22,24 +21,42 @@ import {
 } from "@/lib/validators/auth";
 
 /**
- * Admin user-management server actions.
+ * Admin user-management server actions (custom SQLite/Prisma auth).
  *
- * Permission model (enforced here AND by RLS in the database):
- *   customer     → no access at all
- *   staff        → no access to this module
- *   admin        → may view users; may NOT change roles or create accounts
- *   super_admin  → may view, change roles (customer/staff/admin) and create
- *                  staff/admin accounts
+ * Permission model (enforced here — the only gate now that RLS is gone):
+ *   CUSTOMER     → no access at all
+ *   STAFF        → no access to this module
+ *   ADMIN        → may view users; may NOT change roles or create accounts
+ *   SUPER_ADMIN  → may view, change roles (CUSTOMER/STAFF/ADMIN) and create
+ *                  STAFF/ADMIN accounts
  *
- * 'super_admin' is never assignable through any of these actions — see
- * ASSIGNABLE_ROLES in types/auth.ts and the note in the SQL schema.
- *
- * Reads use the normal (anon-key) server client so RLS applies as a second
- * layer. Only account creation needs the service-role client, because it calls
- * the Supabase auth admin API.
+ * SUPER_ADMIN is never assignable through any of these actions — see
+ * ASSIGNABLE_ROLES in types/auth.ts. It is granted only by the seed script or a
+ * manual DB edit.
  */
 
-/** Guard: caller must be admin or super_admin. */
+/** Shape returned to the users table. */
+function toAdminUser(row: {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string | null;
+  role: string;
+  isActive: boolean;
+  createdAt: Date;
+}): AdminUser {
+  return {
+    id: row.id,
+    email: row.email,
+    fullName: row.fullName,
+    phone: row.phone,
+    role: isUserRole(row.role) ? row.role : "CUSTOMER",
+    isActive: row.isActive,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+/** Guard: caller must be ADMIN or SUPER_ADMIN. */
 async function requireAdminCaller() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
@@ -51,7 +68,7 @@ async function requireAdminCaller() {
   return { error: null, sessionUser };
 }
 
-/** Guard: caller must be super_admin. */
+/** Guard: caller must be SUPER_ADMIN. */
 async function requireSuperAdminCaller() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
@@ -74,105 +91,38 @@ export interface GetAllUsersResult {
   ok: boolean;
   users: AdminUser[];
   error?: string;
-  /** True when Supabase env keys are missing — the page shows a dev notice. */
-  notConfigured?: boolean;
 }
 
 /**
- * All users with their roles. Requires admin or super_admin.
+ * All users, newest first. Requires ADMIN or SUPER_ADMIN.
  * Never throws — /admin/users renders whatever comes back.
  */
 export async function getAllUsers(): Promise<GetAllUsersResult> {
-  const supabase = await createClient();
-  if (!supabase) {
-    return { ok: false, users: [], notConfigured: true, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-  }
-
   const { error: guardError } = await requireAdminCaller();
   if (guardError) return { ok: false, users: [], error: guardError };
 
-  // The RLS policy "Админ чете всички профили" makes this return every row for
-  // an admin, and only the caller's own row for anyone else.
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, phone, created_at, user_roles(role)")
-    .order("created_at", { ascending: false });
-
-  if (error) {
+  try {
+    const rows = await db.user.findMany({ orderBy: { createdAt: "desc" } });
+    return { ok: true, users: rows.map(toAdminUser) };
+  } catch {
     return { ok: false, users: [], error: "Потребителите не можаха да бъдат заредени." };
   }
-
-  type Row = Pick<ProfileRow, "id" | "full_name" | "email" | "phone" | "created_at"> & {
-    user_roles: { role: string }[] | { role: string } | null;
-  };
-
-  const users: AdminUser[] = (data as Row[]).map((row) => {
-    // PostgREST returns an array for the embedded table; user_roles is 1:1 so
-    // take the first entry.
-    const roleValue = Array.isArray(row.user_roles)
-      ? row.user_roles[0]?.role
-      : row.user_roles?.role;
-
-    return {
-      id: row.id,
-      email: row.email,
-      fullName: row.full_name,
-      phone: row.phone,
-      role: isUserRole(roleValue) ? roleValue : "customer",
-      createdAt: row.created_at,
-    };
-  });
-
-  return { ok: true, users };
 }
 
 export async function getUserById(
   userId: string
 ): Promise<{ ok: boolean; user: AdminUser | null; error?: string }> {
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, user: null, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-
   const { error: guardError } = await requireAdminCaller();
   if (guardError) return { ok: false, user: null, error: guardError };
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, phone, created_at, user_roles(role)")
-    .eq("id", userId)
-    .maybeSingle();
+  const row = await db.user.findUnique({ where: { id: userId } });
+  if (!row) return { ok: false, user: null, error: "Потребителят не беше намерен." };
 
-  if (error || !data) {
-    return { ok: false, user: null, error: "Потребителят не беше намерен." };
-  }
-
-  const row = data as {
-    id: string;
-    full_name: string;
-    email: string;
-    phone: string | null;
-    created_at: string;
-    user_roles: { role: string }[] | { role: string } | null;
-  };
-
-  const roleValue = Array.isArray(row.user_roles)
-    ? row.user_roles[0]?.role
-    : row.user_roles?.role;
-
-  return {
-    ok: true,
-    user: {
-      id: row.id,
-      email: row.email,
-      fullName: row.full_name,
-      phone: row.phone,
-      role: isUserRole(roleValue) ? roleValue : "customer",
-      createdAt: row.created_at,
-    },
-  };
+  return { ok: true, user: toAdminUser(row) };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Role management — super_admin only
+// Role management — SUPER_ADMIN only
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function updateUserRole(
@@ -196,37 +146,25 @@ export async function updateUserRole(
   const { userId, role } = parsed.data;
 
   // A super_admin must not be able to demote themselves — that could leave the
-  // system with no super_admin at all, recoverable only by manual SQL.
+  // system with no super_admin at all, recoverable only by manual DB edit.
   if (userId === sessionUser.id) {
     return { ok: false, error: "Не можете да променяте собствената си роля." };
   }
 
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
+  const target = await db.user.findUnique({ where: { id: userId } });
+  if (!target) return { ok: false, error: "Потребителят не беше намерен." };
 
-  // Guard against demoting another super_admin through this form: the schema
-  // cannot produce 'super_admin' as a target, but the *current* role of the
-  // target may be super_admin, and that must stay a manual-SQL decision.
-  const { data: existing } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (existing?.role === "super_admin") {
+  // Demoting another SUPER_ADMIN stays a manual-DB decision.
+  if (target.role === "SUPER_ADMIN") {
     return {
       ok: false,
       error: "Ролята на главен администратор се променя само ръчно през базата.",
     };
   }
 
-  // RLS policy "Super admin управлява роли" enforces this a second time.
-  const { error } = await supabase
-    .from("user_roles")
-    .update({ role })
-    .eq("user_id", userId);
-
-  if (error) {
+  try {
+    await db.user.update({ where: { id: userId }, data: { role } });
+  } catch {
     return { ok: false, error: "Ролята не можа да бъде променена." };
   }
 
@@ -235,7 +173,7 @@ export async function updateUserRole(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Account creation — super_admin only
+// Account creation — SUPER_ADMIN only
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function createAdminUser(
@@ -259,31 +197,15 @@ export async function createAdminUser(
     return { ok: false, fieldErrors: toFieldErrors(parsed.error, tv) };
   }
 
-  if (!isServiceRoleConfigured()) {
-    return {
-      ok: false,
-      error:
-        "Липсва SUPABASE_SERVICE_ROLE_KEY. Създаването на служебни профили изисква service role ключ.",
-    };
-  }
-
-  const admin = createAdminClient();
-  if (!admin) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-
   const { fullName, email, phone, password, role } = parsed.data;
 
-  // `role` in user_metadata is read by the handle_new_user trigger, which only
-  // honours 'staff' and 'admin' — it can never produce a super_admin.
-  const { error } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true, // staff accounts are created by a human; skip the email
-    user_metadata: { full_name: fullName, phone, role },
-  });
-
-  if (error) {
-    const message = error.message.toLowerCase();
-    if (message.includes("already been registered") || message.includes("already exists")) {
+  try {
+    const passwordHash = await hashPassword(password);
+    await db.user.create({
+      data: { email, passwordHash, fullName, phone, role },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return { ok: false, error: "Вече съществува профил с този имейл." };
     }
     return { ok: false, error: "Профилът не можа да бъде създаден." };
@@ -297,14 +219,10 @@ export async function createAdminUser(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Deactivation — super_admin only
+// Deactivation — SUPER_ADMIN only
 // ═══════════════════════════════════════════════════════════════════════════
 
-/**
- * Deactivates a user by banning them in Supabase Auth for ~100 years.
- * Supabase has no "disabled" flag; a long ban_duration is the documented way.
- * The profile and any future orders stay intact — only sign-in is blocked.
- */
+/** Deactivates a user (blocks sign-in). Orders/profile stay intact. */
 export async function deactivateUser(userId: string): Promise<ActionResult> {
   const { error: guardError, sessionUser } = await requireSuperAdminCaller();
   if (guardError || !sessionUser) return { ok: false, error: guardError ?? undefined };
@@ -313,18 +231,15 @@ export async function deactivateUser(userId: string): Promise<ActionResult> {
     return { ok: false, error: "Не можете да деактивирате собствения си профил." };
   }
 
-  if (!isServiceRoleConfigured()) {
-    return { ok: false, error: "Липсва SUPABASE_SERVICE_ROLE_KEY." };
+  const target = await db.user.findUnique({ where: { id: userId } });
+  if (!target) return { ok: false, error: "Потребителят не беше намерен." };
+  if (target.role === "SUPER_ADMIN") {
+    return { ok: false, error: "Главен администратор не може да бъде деактивиран оттук." };
   }
 
-  const admin = createAdminClient();
-  if (!admin) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-
-  const { error } = await admin.auth.admin.updateUserById(userId, {
-    ban_duration: "876000h",
-  });
-
-  if (error) {
+  try {
+    await db.user.update({ where: { id: userId }, data: { isActive: false } });
+  } catch {
     return { ok: false, error: "Профилът не можа да бъде деактивиран." };
   }
 
@@ -337,18 +252,9 @@ export async function reactivateUser(userId: string): Promise<ActionResult> {
   const { error: guardError } = await requireSuperAdminCaller();
   if (guardError) return { ok: false, error: guardError };
 
-  if (!isServiceRoleConfigured()) {
-    return { ok: false, error: "Липсва SUPABASE_SERVICE_ROLE_KEY." };
-  }
-
-  const admin = createAdminClient();
-  if (!admin) return { ok: false, error: SUPABASE_NOT_CONFIGURED_MESSAGE };
-
-  const { error } = await admin.auth.admin.updateUserById(userId, {
-    ban_duration: "none",
-  });
-
-  if (error) {
+  try {
+    await db.user.update({ where: { id: userId }, data: { isActive: true } });
+  } catch {
     return { ok: false, error: "Профилът не можа да бъде активиран." };
   }
 

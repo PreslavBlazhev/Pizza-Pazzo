@@ -5,14 +5,22 @@ import { useTranslations } from "next-intl";
 import { updateProfile } from "@/app/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/ui/FormAlert";
-import type { ActionResult, Profile } from "@/types/auth";
+import type { ActionResult } from "@/types/auth";
 
 /**
  * Read-only profile details that swap to an edit form in place.
- * The email is shown but not editable — changing it in Supabase requires a
- * confirmation flow on both addresses, which is out of scope for this stage.
+ * The email is shown but not editable — changing it would need a re-verification
+ * flow, which is out of scope for this stage.
  */
-export function ProfileEditForm({ profile, email }: { profile: Profile | null; email: string }) {
+export function ProfileEditForm({
+  fullName,
+  phone,
+  email,
+}: {
+  fullName: string;
+  phone: string | null;
+  email: string;
+}) {
   const t = useTranslations("profile");
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
@@ -57,7 +65,7 @@ export function ProfileEditForm({ profile, email }: { profile: Profile | null; e
               {t("name")}
             </dt>
             <dd className="mt-1 font-medium text-pizza-ink">
-              {profile?.fullName || "—"}
+              {fullName || "—"}
             </dd>
           </div>
           <div>
@@ -70,7 +78,7 @@ export function ProfileEditForm({ profile, email }: { profile: Profile | null; e
             <dt className="text-xs uppercase tracking-wide text-pizza-muted">
               {t("phone")}
             </dt>
-            <dd className="mt-1 font-medium text-pizza-ink">{profile?.phone || "—"}</dd>
+            <dd className="mt-1 font-medium text-pizza-ink">{phone || "—"}</dd>
           </div>
         </dl>
       </div>
@@ -89,7 +97,7 @@ export function ProfileEditForm({ profile, email }: { profile: Profile | null; e
         <Input
           label={tAuth("fields.fullName")}
           name="fullName"
-          defaultValue={profile?.fullName ?? ""}
+          defaultValue={fullName ?? ""}
           autoComplete="name"
           error={fieldErrors.fullName}
         />
@@ -98,7 +106,7 @@ export function ProfileEditForm({ profile, email }: { profile: Profile | null; e
           label={tAuth("fields.phone")}
           name="phone"
           type="tel"
-          defaultValue={profile?.phone ?? ""}
+          defaultValue={phone ?? ""}
           autoComplete="tel"
           error={fieldErrors.phone}
         />

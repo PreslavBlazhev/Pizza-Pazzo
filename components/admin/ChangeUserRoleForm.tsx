@@ -23,7 +23,7 @@ export function ChangeUserRoleForm({
   );
 
   // super_admin is deliberately not assignable through the UI.
-  if (user.role === "super_admin") {
+  if (user.role === "SUPER_ADMIN") {
     return (
       <FormAlert tone="info">
         Ролята на главен администратор се променя само ръчно през базата.

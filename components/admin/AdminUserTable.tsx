@@ -129,10 +129,10 @@ export function AdminUserTable({
                       <button
                         type="button"
                         onClick={() => setEditingUser(user)}
-                        disabled={user.role === "super_admin"}
+                        disabled={user.role === "SUPER_ADMIN"}
                         className="rounded-full border border-pizza-cream-dark px-3.5 py-1.5 text-xs font-semibold text-pizza-ink transition hover:border-pizza-green hover:text-pizza-green disabled:cursor-not-allowed disabled:opacity-40"
                         title={
-                          user.role === "super_admin"
+                          user.role === "SUPER_ADMIN"
                             ? "Ролята на главен администратор се променя само през базата."
                             : undefined
                         }

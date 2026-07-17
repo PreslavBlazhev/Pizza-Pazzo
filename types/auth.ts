@@ -1,93 +1,66 @@
 /**
- * Auth, profile and role types.
+ * Auth and role types for the custom SQLite/Prisma auth system.
  *
- * These mirror the SQL in `docs/supabase-auth-schema.sql`. DB columns are
- * snake_case; everything above the data layer uses camelCase — the mapping
- * lives in `lib/auth.ts`.
+ * Roles are UPPERCASE and match the `User.role` TEXT column in
+ * prisma/schema.prisma. User/address shapes come straight from Prisma.
  */
+import type { UserAddress as PrismaUserAddress } from "@prisma/client";
 
-/** Roles, ordered from least to most privileged. */
-export type UserRole = "customer" | "staff" | "admin" | "super_admin";
+/** Roles, ordered from least to most privileged. Match the DB values. */
+export type UserRole = "CUSTOMER" | "STAFF" | "ADMIN" | "SUPER_ADMIN";
 
 // `as const satisfies` keeps the literal tuple type (needed by z.enum) while
 // still checking every entry against UserRole.
 export const USER_ROLES = [
-  "customer",
-  "staff",
-  "admin",
-  "super_admin",
+  "CUSTOMER",
+  "STAFF",
+  "ADMIN",
+  "SUPER_ADMIN",
 ] as const satisfies readonly UserRole[];
 
-/** Roles a super_admin may assign through the UI. super_admin is NOT one of
- *  them — that role is granted only by manual SQL (see the schema file). */
+/** Roles a super_admin may assign through the UI. SUPER_ADMIN is NOT one of
+ *  them — that role is granted only by the seed script / manual DB edit. */
 export const ASSIGNABLE_ROLES = [
-  "customer",
-  "staff",
-  "admin",
+  "CUSTOMER",
+  "STAFF",
+  "ADMIN",
 ] as const satisfies readonly UserRole[];
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  customer: "Клиент",
-  staff: "Служител",
-  admin: "Администратор",
-  super_admin: "Главен администратор",
+  CUSTOMER: "Клиент",
+  STAFF: "Служител",
+  ADMIN: "Администратор",
+  SUPER_ADMIN: "Главен администратор",
 };
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-  customer: "Може да поръчва и да управлява своя профил.",
-  staff: "Вижда и обработва поръчки.",
-  admin: "Управлява меню, продукти и потребители.",
-  super_admin: "Пълен достъп. Може да назначава роли.",
+  CUSTOMER: "Може да поръчва и да управлява своя профил.",
+  STAFF: "Вижда и обработва поръчки.",
+  ADMIN: "Управлява меню, продукти и потребители.",
+  SUPER_ADMIN: "Пълен достъп. Може да назначава роли.",
 };
 
 /** Can this role open /admin at all? */
 export function canAccessAdmin(role: UserRole | null): boolean {
-  return role === "staff" || role === "admin" || role === "super_admin";
+  return role === "STAFF" || role === "ADMIN" || role === "SUPER_ADMIN";
 }
 
 /** Can this role manage users, menu and settings? */
 export function isAdminRole(role: UserRole | null): boolean {
-  return role === "admin" || role === "super_admin";
+  return role === "ADMIN" || role === "SUPER_ADMIN";
 }
 
 export function isSuperAdmin(role: UserRole | null): boolean {
-  return role === "super_admin";
+  return role === "SUPER_ADMIN";
 }
 
-/** Narrowing helper for values coming out of the database. */
+/** Narrowing helper for values coming out of the database / a JWT. */
 export function isUserRole(value: unknown): value is UserRole {
   return typeof value === "string" && (USER_ROLES as readonly string[]).includes(value);
 }
 
-/** A row of `public.profiles`, camelCased. */
-export interface Profile {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string | null;
-  avatarUrl: string | null;
-  defaultAddressId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** A row of `public.user_addresses`, camelCased. */
-export interface UserAddress {
-  id: string;
-  userId: string;
-  label: string | null;
-  fullName: string | null;
-  phone: string | null;
-  city: string | null;
-  addressLine: string;
-  entrance: string | null;
-  floor: string | null;
-  apartment: string | null;
-  deliveryNote: string | null;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+/** A saved delivery address — the Prisma row shape. */
+export type UserAddress = PrismaUserAddress;
 
 /** Shape of the registration form. */
 export interface AuthFormData {
@@ -99,11 +72,16 @@ export interface AuthFormData {
   acceptedTerms: boolean;
 }
 
-/** The signed-in user as the app sees them: profile + role in one object. */
+/**
+ * The signed-in user as the app sees them. Never carries `passwordHash`.
+ * `fullName`/`phone` come from the `User` row (the old `profiles` table is
+ * folded into `User`).
+ */
 export interface SessionUser {
   id: string;
   email: string;
-  profile: Profile | null;
+  fullName: string;
+  phone: string | null;
   role: UserRole;
 }
 

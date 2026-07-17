@@ -4,9 +4,7 @@ import { Link, redirect } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { RegisterForm } from "@/components/auth/RegisterForm";
-import { FormAlert } from "@/components/ui/FormAlert";
-import { getAuthUser } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { getSessionUser } from "@/lib/auth";
 import type { Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -32,10 +30,8 @@ export default async function RegisterPage({ params }: PageProps) {
 
   const t = await getTranslations("auth");
 
-  const user = await getAuthUser();
+  const user = await getSessionUser();
   if (user) redirect({ href: "/profile", locale });
-
-  const configured = isSupabaseConfigured();
 
   return (
     <>
@@ -52,12 +48,6 @@ export default async function RegisterPage({ params }: PageProps) {
           </div>
 
           <div className="mt-8 rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card sm:p-8">
-            {!configured && (
-              <FormAlert tone="info" className="mb-5">
-                {t("notConfigured")}
-              </FormAlert>
-            )}
-
             <RegisterForm />
           </div>
 

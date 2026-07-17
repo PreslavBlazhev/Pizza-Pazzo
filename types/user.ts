@@ -1,12 +1,11 @@
 /**
  * Customer-facing user types.
  *
- * The authoritative auth types (Profile, UserAddress, UserRole, AuthFormData)
- * live in `types/auth.ts` and are re-exported here for convenience.
+ * The authoritative auth types (UserAddress, UserRole, AuthFormData,
+ * SessionUser) live in `types/auth.ts` and are re-exported here for convenience.
  */
 
 export type {
-  Profile,
   UserAddress,
   UserRole,
   AuthFormData,

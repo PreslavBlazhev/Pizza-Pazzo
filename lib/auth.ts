@@ -1,147 +1,56 @@
 import { cache } from "react";
 import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { createClient } from "./supabase/server";
-import { isUserRole, type Profile, type SessionUser, type UserRole } from "@/types/auth";
-import type { ProfileRow, UserAddressRow } from "@/types/database";
-import type { UserAddress } from "@/types/auth";
+import { db } from "@/lib/db";
+import { readSession } from "@/lib/auth/session";
+import { isUserRole, type SessionUser, type UserRole, type UserAddress } from "@/types/auth";
 
 /**
- * Server-side auth helpers.
+ * Server-side auth helpers — the single source of truth for "who is the current
+ * user and what may they do". Every server action and protected page goes here.
  *
- * These are the single source of truth for "who is the current user and what
- * may they do". Every server action and protected page goes through here.
+ * The session cookie (a signed JWT) identifies the user; the authoritative
+ * role and active-flag are re-read from the database, so a revoked role or a
+ * deactivated account takes effect immediately (the JWT itself is not trusted
+ * for authorization decisions, only for identity).
  *
- * `cache()` dedupes the Supabase round-trip within one request, so a page can
- * call getSessionUser() in the layout and again in the page for free.
+ * `cache()` dedupes the DB round-trip within one request.
  */
-
-// ── Row → domain mapping (snake_case → camelCase) ─────────────────────────
-
-export function mapProfile(row: ProfileRow): Profile {
-  return {
-    id: row.id,
-    fullName: row.full_name,
-    email: row.email,
-    phone: row.phone,
-    avatarUrl: row.avatar_url,
-    defaultAddressId: row.default_address_id,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-export function mapAddress(row: UserAddressRow): UserAddress {
-  return {
-    id: row.id,
-    userId: row.user_id,
-    label: row.label,
-    fullName: row.full_name,
-    phone: row.phone,
-    city: row.city,
-    addressLine: row.address_line,
-    entrance: row.entrance,
-    floor: row.floor,
-    apartment: row.apartment,
-    deliveryNote: row.delivery_note,
-    isDefault: row.is_default,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
 
 // ── Session ───────────────────────────────────────────────────────────────
 
-/**
- * The authenticated user, or null.
- *
- * Uses getUser() (not getSession()) — getUser() revalidates the JWT against
- * Supabase, while getSession() trusts a cookie the client could have forged.
- */
-export const getAuthUser = cache(async () => {
-  const supabase = await createClient();
-  if (!supabase) return null;
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) return null;
-  return user;
-});
-
-/** The current user's profile row, or null when not signed in. */
-export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
-  const user = await getAuthUser();
-  if (!user) return null;
-
-  const supabase = await createClient();
-  if (!supabase) return null;
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return mapProfile(data as ProfileRow);
-});
-
-/**
- * The current user's role. Falls back to "customer" for a signed-in user whose
- * role row is somehow missing — never to something privileged.
- */
-export const getCurrentRole = cache(async (): Promise<UserRole | null> => {
-  const user = await getAuthUser();
-  if (!user) return null;
-
-  const supabase = await createClient();
-  if (!supabase) return null;
-
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (error || !data) return "customer";
-  return isUserRole(data.role) ? data.role : "customer";
-});
-
-/** Profile + role + email in one object, or null when signed out. */
+/** The signed-in user (profile + role), or null. Reflects the live DB row. */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
-  const user = await getAuthUser();
-  if (!user) return null;
+  const session = await readSession();
+  if (!session) return null;
 
-  const [profile, role] = await Promise.all([getCurrentProfile(), getCurrentRole()]);
+  const user = await db.user.findUnique({ where: { id: session.sub } });
+  if (!user || !user.isActive) return null;
 
   return {
     id: user.id,
-    email: user.email ?? profile?.email ?? "",
-    profile,
-    role: role ?? "customer",
+    email: user.email,
+    fullName: user.fullName,
+    phone: user.phone,
+    role: isUserRole(user.role) ? user.role : "CUSTOMER",
   };
 });
 
-/** The current user's saved addresses, newest default first. */
+/** The current user's role, or null when signed out. */
+export const getCurrentRole = cache(async (): Promise<UserRole | null> => {
+  const user = await getSessionUser();
+  return user?.role ?? null;
+});
+
+/** The current user's saved addresses, default first then newest. */
 export async function getUserAddresses(): Promise<UserAddress[]> {
-  const user = await getAuthUser();
+  const user = await getSessionUser();
   if (!user) return [];
 
-  const supabase = await createClient();
-  if (!supabase) return [];
-
-  const { data, error } = await supabase
-    .from("user_addresses")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("is_default", { ascending: false })
-    .order("created_at", { ascending: false });
-
-  if (error || !data) return [];
-  return (data as UserAddressRow[]).map(mapAddress);
+  return db.userAddress.findMany({
+    where: { userId: user.id },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+  });
 }
 
 // ── Guards ────────────────────────────────────────────────────────────────

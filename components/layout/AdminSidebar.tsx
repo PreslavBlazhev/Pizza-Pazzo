@@ -42,7 +42,7 @@ export function AdminSidebar({ sessionUser }: { sessionUser: SessionUser }) {
 
       <div className="border-t border-pizza-cream-dark p-4">
         <p className="truncate text-sm font-medium text-pizza-ink">
-          {sessionUser.profile?.fullName || sessionUser.email}
+          {sessionUser.fullName || sessionUser.email}
         </p>
         <div className="mt-1.5">
           <UserRoleBadge role={sessionUser.role} />

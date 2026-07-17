@@ -91,13 +91,13 @@ export const ETA_PRESETS = [20, 30, 45, 60, 90] as const;
  * `labelKey` indexes the `admin.nav` namespace in the message catalogues.
  */
 export const ADMIN_NAV = [
-  { href: "/admin", labelKey: "dashboard", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/orders", labelKey: "orders", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/menu", labelKey: "menu", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/products", labelKey: "products", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/categories", labelKey: "categories", allow: ["staff", "admin", "super_admin"] },
-  { href: "/admin/users", labelKey: "users", allow: ["admin", "super_admin"] },
-  { href: "/admin/settings", labelKey: "settings", allow: ["admin", "super_admin"] },
+  { href: "/admin", labelKey: "dashboard", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/orders", labelKey: "orders", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/menu", labelKey: "menu", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/products", labelKey: "products", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/categories", labelKey: "categories", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/users", labelKey: "users", allow: ["ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/settings", labelKey: "settings", allow: ["ADMIN", "SUPER_ADMIN"] },
 ] as const satisfies readonly {
   href: string;
   labelKey: string;

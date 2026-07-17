@@ -128,9 +128,10 @@ export const addressSchema = z.object({
   isDefault: checkboxField,
 });
 
-/** Same as addressSchema, plus the id of the address being edited. */
+/** Same as addressSchema, plus the id of the address being edited.
+ *  Ids are Prisma cuids (not UUIDs), so validate as a non-empty string. */
 export const addressUpdateSchema = addressSchema.extend({
-  id: z.uuid(msg("addressInvalid")),
+  id: z.string().min(1, msg("addressInvalid")),
 });
 
 // ── Admin ─────────────────────────────────────────────────────────────────
@@ -140,7 +141,7 @@ export const addressUpdateSchema = addressSchema.extend({
  * role can never be granted through a form — only by manual SQL.
  */
 export const adminRoleUpdateSchema = z.object({
-  userId: z.uuid(msg("userInvalid")),
+  userId: z.string().min(1, msg("userInvalid")),
   role: z.enum(ASSIGNABLE_ROLES, { error: msg("roleInvalid") }),
 });
 
@@ -150,7 +151,7 @@ export const createAdminUserSchema = z.object({
   email: emailField,
   phone: phoneField,
   password: passwordField,
-  role: z.enum(["staff", "admin"], { error: msg("roleStaffOrAdmin") }),
+  role: z.enum(["STAFF", "ADMIN"], { error: msg("roleStaffOrAdmin") }),
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────
