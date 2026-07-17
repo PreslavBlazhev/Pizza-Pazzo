@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { OrderDetails } from "@/components/admin/OrderDetails";
 import { Button } from "@/components/ui/Button";
-import { getMockOrderById } from "@/lib/mock-orders";
+import { getOrderById } from "@/lib/orders";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -10,7 +10,7 @@ interface PageProps {
 
 export default async function AdminOrderDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const order = getMockOrderById(id);
+  const order = await getOrderById(id);
   if (!order) notFound();
 
   return (

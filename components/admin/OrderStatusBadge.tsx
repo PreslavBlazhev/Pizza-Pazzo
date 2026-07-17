@@ -1,16 +1,17 @@
 import type { OrderStatus } from "@/types/order";
-import { Badge } from "@/components/ui/Badge";
+import { ORDER_STATUS_LABELS_BG, ORDER_STATUS_BADGE_CLASSES } from "@/lib/order-status";
+import { cn } from "@/lib/utils";
 
-const map: Record<OrderStatus, { label: string; tone: "neutral" | "success" | "warning" | "danger" | "info" }> = {
-  pending: { label: "Чакаща", tone: "warning" },
-  accepted: { label: "Приета", tone: "info" },
-  preparing: { label: "Приготвя се", tone: "info" },
-  out_for_delivery: { label: "За доставка", tone: "info" },
-  completed: { label: "Изпълнена", tone: "success" },
-  cancelled: { label: "Отказана", tone: "danger" },
-};
-
+/** Colour-coded order-status chip (Bulgarian, admin-facing). */
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  const { label, tone } = map[status];
-  return <Badge tone={tone}>{label}</Badge>;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+        ORDER_STATUS_BADGE_CLASSES[status]
+      )}
+    >
+      {ORDER_STATUS_LABELS_BG[status]}
+    </span>
+  );
 }

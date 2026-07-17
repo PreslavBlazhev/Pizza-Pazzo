@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { PrintTicket } from "@/components/admin/PrintTicket";
-import { getMockOrderById } from "@/lib/mock-orders";
+import { getOrderById } from "@/lib/orders";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -13,7 +13,7 @@ interface PageProps {
  */
 export default async function PrintOrderPage({ params }: PageProps) {
   const { id } = await params;
-  const order = getMockOrderById(id);
+  const order = await getOrderById(id);
   if (!order) notFound();
 
   return (

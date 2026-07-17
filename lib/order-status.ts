@@ -1,14 +1,14 @@
 /**
  * Order-status metadata for the SQLite + Prisma order system.
  *
- * Keyed by the UPPERCASE `DbOrderStatus` values stored in the database
+ * Keyed by the UPPERCASE `OrderStatus` values stored in the database
  * (see prisma/schema.prisma and types/order.ts). Pure data + a transition
  * guard — safe to import from both server and client code.
  */
-import type { DbOrderStatus } from "@/types/order";
+import type { OrderStatus } from "@/types/order";
 
 /** Bulgarian labels shown to staff/customers. */
-export const ORDER_STATUS_LABELS_BG: Record<DbOrderStatus, string> = {
+export const ORDER_STATUS_LABELS_BG: Record<OrderStatus, string> = {
   PENDING: "Очаква потвърждение",
   ACCEPTED: "Прието",
   PREPARING: "Приготвя се",
@@ -19,7 +19,7 @@ export const ORDER_STATUS_LABELS_BG: Record<DbOrderStatus, string> = {
 };
 
 /** English labels. */
-export const ORDER_STATUS_LABELS_EN: Record<DbOrderStatus, string> = {
+export const ORDER_STATUS_LABELS_EN: Record<OrderStatus, string> = {
   PENDING: "Awaiting confirmation",
   ACCEPTED: "Accepted",
   PREPARING: "Preparing",
@@ -30,7 +30,7 @@ export const ORDER_STATUS_LABELS_EN: Record<DbOrderStatus, string> = {
 };
 
 /** Tailwind classes for a status badge (background + text + ring). */
-export const ORDER_STATUS_BADGE_CLASSES: Record<DbOrderStatus, string> = {
+export const ORDER_STATUS_BADGE_CLASSES: Record<OrderStatus, string> = {
   PENDING: "bg-amber-100 text-amber-800 ring-1 ring-amber-200",
   ACCEPTED: "bg-blue-100 text-blue-800 ring-1 ring-blue-200",
   PREPARING: "bg-indigo-100 text-indigo-800 ring-1 ring-indigo-200",
@@ -45,7 +45,7 @@ export const ORDER_STATUS_BADGE_CLASSES: Record<DbOrderStatus, string> = {
  * reached a terminal state. Use {@link canTransition} to enforce this before
  * writing a status change.
  */
-export const ORDER_STATUS_FLOW: Record<DbOrderStatus, readonly DbOrderStatus[]> = {
+export const ORDER_STATUS_FLOW: Record<OrderStatus, readonly OrderStatus[]> = {
   PENDING: ["ACCEPTED", "CANCELLED"],
   ACCEPTED: ["PREPARING", "CANCELLED"],
   PREPARING: ["READY", "CANCELLED"],
@@ -56,6 +56,6 @@ export const ORDER_STATUS_FLOW: Record<DbOrderStatus, readonly DbOrderStatus[]> 
 };
 
 /** True if `from → to` is a permitted status transition. */
-export function canTransition(from: DbOrderStatus, to: DbOrderStatus): boolean {
+export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
   return ORDER_STATUS_FLOW[from].includes(to);
 }

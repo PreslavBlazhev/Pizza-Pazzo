@@ -1,64 +1,13 @@
-import type { CartItem, CartTotals } from "@/types/cart";
-import type { Address } from "@/types/user";
+/**
+ * Order types for the SQLite/Prisma order system.
+ *
+ * These are the UI-facing shapes: money is a plain `number`, timestamps are ISO
+ * strings and the enum-like fields are narrowed string unions (UPPERCASE, same
+ * values as prisma/schema.prisma). `lib/orders.ts` maps raw Prisma rows
+ * (Decimal / Date / string) into these before they reach a component.
+ */
 
-export type OrderStatus =
-  | "pending" // placed, awaiting restaurant confirmation
-  | "accepted" // confirmed with an ETA
-  | "preparing"
-  | "out_for_delivery"
-  | "completed"
-  | "cancelled";
-
-export type OrderType = "delivery" | "pickup";
-
-export type PaymentMethod = "cash" | "card_on_delivery";
-
-/** Contact + delivery details captured at checkout. */
-export interface OrderCustomer {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  email?: string;
-}
-
-export interface Order {
-  id: string;
-  /** Human-friendly sequential number shown to staff, e.g. "#1042". */
-  number: string;
-  status: OrderStatus;
-  type: OrderType;
-  customer: OrderCustomer;
-  address?: Address;
-  items: CartItem[];
-  totals: CartTotals;
-  paymentMethod: PaymentMethod;
-  /** Estimated prep/delivery time in minutes, set by the restaurant on accept. */
-  etaMinutes?: number;
-  customerNote?: string;
-  /** Reason shown to the customer when cancelled. */
-  cancellationReason?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  Prisma / SQLite order system (DB layer)
-// ═══════════════════════════════════════════════════════════════════════════
-//
-// Everything ABOVE is the legacy mock/UI layer (lowercase unions) still used by
-// the admin panel, cart and email templates. Everything BELOW is the real
-// database layer for the SQLite + Prisma order system (Parts 2–3) and matches
-// `prisma/schema.prisma` exactly.
-//
-// The two layers coexist deliberately: replacing the lowercase types now would
-// break admin/cart code that Part 1 must not touch. `Db`-prefixed names avoid
-// the collision with `OrderStatus` / `PaymentMethod` / `Order` above.
-//
-// SQLite has no native enum type, so these value lists are the canonical source
-// of truth the application validates against. Values are UPPERCASE and identical
-// to the `@default(...)` strings in the schema.
-
-/** Allowed `Order.status` values (matches schema TEXT column). */
+/** Allowed `Order.status` values (matches the schema TEXT column). */
 export const ORDER_STATUSES = [
   "PENDING",
   "ACCEPTED",
@@ -68,24 +17,21 @@ export const ORDER_STATUSES = [
   "DELIVERED",
   "CANCELLED",
 ] as const;
-export type DbOrderStatus = (typeof ORDER_STATUSES)[number];
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-/** Allowed `Order.paymentMethod` values. Cash on delivery only, for now. */
 export const PAYMENT_METHODS = ["CASH_ON_DELIVERY"] as const;
-export type DbPaymentMethod = (typeof PAYMENT_METHODS)[number];
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
-/** Allowed `Order.deliveryMethod` values. Delivery only, for now. */
 export const DELIVERY_METHODS = ["DELIVERY"] as const;
-export type DbDeliveryMethod = (typeof DELIVERY_METHODS)[number];
+export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
 
-/**
- * One order line as stored in the database (`OrderItem` model).
- *
- * Money fields are Prisma `Decimal` in the schema; here they are typed as
- * `string` — the safe, precision-preserving serializable shape to pass between
- * server and client. Never parse them into a JS `number` for arithmetic.
- */
-export interface DbOrderItem {
+/** Narrowing guard for a status coming out of the database (typed `string`). */
+export function isOrderStatus(value: unknown): value is OrderStatus {
+  return typeof value === "string" && (ORDER_STATUSES as readonly string[]).includes(value);
+}
+
+/** One line of an order (a snapshot taken at checkout). Money in `number`. */
+export interface OrderItem {
   id: string;
   orderId: string;
 
@@ -100,21 +46,16 @@ export interface DbOrderItem {
 
   quantity: number;
 
-  unitPriceBgn: string;
-  unitPriceEur: string;
-  totalPriceBgn: string;
-  totalPriceEur: string;
+  unitPriceBgn: number;
+  unitPriceEur: number;
+  totalPriceBgn: number;
+  totalPriceEur: number;
 
   itemNote: string | null;
-
-  createdAt: string;
 }
 
-/**
- * An order as stored in the database (`Order` model). Timestamps are ISO
- * strings and money fields are `Decimal` strings (see {@link DbOrderItem}).
- */
-export interface DbOrder {
+/** An order. Timestamps are ISO strings; money is `number` (BGN + EUR). */
+export interface Order {
   id: string;
   orderNumber: number;
 
@@ -128,17 +69,16 @@ export interface DbOrder {
   deliveryCity: string;
   deliveryNote: string | null;
 
-  paymentMethod: DbPaymentMethod;
-  deliveryMethod: DbDeliveryMethod;
+  paymentMethod: PaymentMethod;
+  deliveryMethod: DeliveryMethod;
+  status: OrderStatus;
 
-  status: DbOrderStatus;
-
-  subtotalBgn: string;
-  subtotalEur: string;
-  deliveryFeeBgn: string;
-  deliveryFeeEur: string;
-  totalBgn: string;
-  totalEur: string;
+  subtotalBgn: number;
+  subtotalEur: number;
+  deliveryFeeBgn: number;
+  deliveryFeeEur: number;
+  totalBgn: number;
+  totalEur: number;
 
   estimatedTimeMinutes: number | null;
   adminNote: string | null;
@@ -151,5 +91,8 @@ export interface DbOrder {
   updatedAt: string;
 
   /** Present when the query includes the relation. */
-  items?: DbOrderItem[];
+  items?: OrderItem[];
 }
+
+/** An order guaranteed to carry its line items. */
+export type OrderWithItems = Order & { items: OrderItem[] };

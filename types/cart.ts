@@ -30,8 +30,8 @@ export interface CartTotals {
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // The cart is client-side state (Zustand) and has no database table of its own.
-// At checkout (Part 2) each `CartItem` is snapshotted into a `DbOrderItem`
-// (see types/order.ts) so an order keeps the product name/price as they were at
-// order time, even if the product is later edited. This alias documents that
-// relationship; the actual mapping logic lives in the Part 2 checkout code.
-export type { DbOrderItem, DbOrder } from "@/types/order";
+// At checkout each `CartItem` is snapshotted into an `OrderItem` (see
+// types/order.ts) so an order keeps the product name/price as they were at order
+// time, even if the product is later edited. The mapping logic lives in the
+// checkout server action (app/actions/checkout.ts).
+export type { OrderItem, Order } from "@/types/order";
