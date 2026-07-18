@@ -17,8 +17,8 @@ export function OrderDetails({ order }: { order: Order }) {
     >
       <span>{label}</span>
       <span>
-        {formatBgnPrice(bgn)}{" "}
-        <span className="text-xs text-neutral-400">{formatEurPrice(eur)}</span>
+        {formatEurPrice(eur)}{" "}
+        <span className="text-xs text-neutral-400">{formatBgnPrice(bgn)}</span>
       </span>
     </div>
   );
@@ -30,6 +30,20 @@ export function OrderDetails({ order }: { order: Order }) {
         <OrderStatusBadge status={order.status} />
         <span className="text-sm text-neutral-400">{formatDateTime(order.createdAt)}</span>
       </div>
+
+      {(order.estimatedTimeMinutes !== null || order.adminNote) && (
+        <div className="space-y-0.5 text-sm text-neutral-600">
+          {order.estimatedTimeMinutes !== null && (
+            <p>
+              Ориентировъчно време: <strong>{order.estimatedTimeMinutes} мин</strong>
+              {order.acceptedAt && (
+                <span className="text-neutral-400"> · прието {formatDateTime(order.acceptedAt)}</span>
+              )}
+            </p>
+          )}
+          {order.adminNote && <p>Бележка (админ): {order.adminNote}</p>}
+        </div>
+      )}
 
       {/* Status control */}
       <section className="rounded-2xl border border-neutral-200 bg-white p-4">
@@ -67,7 +81,10 @@ export function OrderDetails({ order }: { order: Order }) {
                 ) : null}
               </span>
               <span className="shrink-0 text-sm font-medium text-neutral-700">
-                {formatBgnPrice(item.totalPriceBgn)}
+                {formatEurPrice(item.totalPriceEur)}{" "}
+                <span className="text-xs text-neutral-400">
+                  {formatBgnPrice(item.totalPriceBgn)}
+                </span>
               </span>
             </li>
           ))}

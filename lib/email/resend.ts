@@ -7,6 +7,86 @@
  */
 import { Resend } from "resend";
 import { newOrderEmail, type NewOrderEmailData } from "@/lib/email-templates/new-order";
+import { customerOrderAcceptedEmail } from "@/lib/email-templates/customer-order-accepted";
+import { customerOrderCancelledEmail } from "@/lib/email-templates/customer-order-cancelled";
+import type { Order } from "@/types/order";
+
+/** Just enough validation to skip obviously broken addresses before calling Resend. */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Best-effort send of a prebuilt message to the order's customer. Skips (with a
+ * log line) when Resend isn't configured or the address is missing/invalid;
+ * never throws — a failed email must never undo a status change.
+ */
+async function sendToCustomer(
+  order: Order,
+  message: { subject: string; html: string; text: string },
+  kind: string
+): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.FROM_EMAIL;
+
+  if (!apiKey || !from) {
+    console.warn(
+      `[email] Resend not configured (RESEND_API_KEY/FROM_EMAIL) — ` +
+        `skipping "${kind}" email for order #${order.orderNumber}`
+    );
+    return;
+  }
+  if (!order.customerEmail || !EMAIL_RE.test(order.customerEmail)) {
+    console.warn(
+      `[email] order #${order.orderNumber} has no valid customer email — skipping "${kind}" email`
+    );
+    return;
+  }
+
+  try {
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from,
+      to: order.customerEmail,
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+    });
+    if (error) {
+      console.error(`[email] Resend rejected "${kind}" email for order #${order.orderNumber}:`, error);
+    }
+  } catch (err) {
+    console.error(`[email] failed to send "${kind}" email for order #${order.orderNumber}:`, err);
+  }
+}
+
+/** Tells the customer their order was accepted, with the estimated time. */
+export async function sendCustomerOrderAcceptedEmail(order: Order): Promise<void> {
+  await sendToCustomer(
+    order,
+    customerOrderAcceptedEmail({
+      orderNumber: order.orderNumber,
+      customerName: order.customerName,
+      estimatedTimeMinutes: order.estimatedTimeMinutes ?? 30,
+      totalBgn: order.totalBgn,
+      totalEur: order.totalEur,
+      deliveryAddress: order.deliveryAddress,
+      deliveryCity: order.deliveryCity,
+    }),
+    "accepted"
+  );
+}
+
+/** Tells the customer their order was cancelled, with the reason if any. */
+export async function sendCustomerOrderCancelledEmail(order: Order): Promise<void> {
+  await sendToCustomer(
+    order,
+    customerOrderCancelledEmail({
+      orderNumber: order.orderNumber,
+      customerName: order.customerName,
+      reason: order.adminNote,
+    }),
+    "cancelled"
+  );
+}
 
 /** Notifies the restaurant inbox about a newly placed order. */
 export async function sendNewOrderNotification(data: NewOrderEmailData): Promise<void> {
