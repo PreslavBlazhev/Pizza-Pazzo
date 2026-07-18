@@ -7,6 +7,8 @@
  */
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { ACTIVE_ORDER_STATUSES } from "@/lib/order-status";
+import type { AdminDashboardStats } from "@/types/admin";
 import {
   isOrderStatus,
   type Order,
@@ -76,6 +78,58 @@ export async function getOrders(): Promise<Order[]> {
   return rows.map(mapOrder);
 }
 
+/** Orders of a registered user, newest first. Guest orders have no userId and never match. */
+export async function getOrdersForUser(userId: string): Promise<Order[]> {
+  const rows = await db.order.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: { items: true },
+  });
+  return rows.map(mapOrder);
+}
+
+/** The most recent orders (default 5), with their line items. */
+export async function getLatestOrders(limit = 5): Promise<Order[]> {
+  const rows = await db.order.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: { items: true },
+  });
+  return rows.map(mapOrder);
+}
+
+/**
+ * KPI figures for the admin dashboard. "Today" is the server's local calendar
+ * day; today's revenue excludes cancelled orders.
+ */
+export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const [ordersToday, pendingOrders, activeOrders, deliveredOrders, cancelledOrders, revenueToday] =
+    await Promise.all([
+      db.order.count({ where: { createdAt: { gte: startOfToday } } }),
+      db.order.count({ where: { status: "PENDING" } }),
+      db.order.count({ where: { status: { in: [...ACTIVE_ORDER_STATUSES] } } }),
+      db.order.count({ where: { status: "DELIVERED" } }),
+      db.order.count({ where: { status: "CANCELLED" } }),
+      db.order.aggregate({
+        _sum: { totalBgn: true, totalEur: true },
+        where: { createdAt: { gte: startOfToday }, status: { not: "CANCELLED" } },
+      }),
+    ]);
+
+  return {
+    ordersToday,
+    pendingOrders,
+    activeOrders,
+    deliveredOrders,
+    cancelledOrders,
+    revenueTodayBgn: Number(revenueToday._sum.totalBgn ?? 0),
+    revenueTodayEur: Number(revenueToday._sum.totalEur ?? 0),
+  };
+}
+
 /** A single order with its items, or null. */
 export async function getOrderById(id: string): Promise<Order | null> {
   const row = await db.order.findUnique({ where: { id }, include: { items: true } });
@@ -98,10 +152,29 @@ export function statusTimestamps(next: OrderStatus): Prisma.OrderUpdateInput {
   return {};
 }
 
+/** Optional fields written together with a status change. */
+export interface StatusUpdateExtras {
+  /** Estimated delivery time, set when accepting an order. */
+  estimatedTimeMinutes?: number;
+  /** Staff note, e.g. the reason for a cancellation. */
+  adminNote?: string;
+}
+
 /** Writes a validated status change. Assumes the transition was already checked. */
-export async function setOrderStatus(id: string, next: OrderStatus): Promise<void> {
+export async function setOrderStatus(
+  id: string,
+  next: OrderStatus,
+  extras: StatusUpdateExtras = {}
+): Promise<void> {
   await db.order.update({
     where: { id },
-    data: { status: next, ...statusTimestamps(next) },
+    data: {
+      status: next,
+      ...(extras.estimatedTimeMinutes !== undefined && {
+        estimatedTimeMinutes: extras.estimatedTimeMinutes,
+      }),
+      ...(extras.adminNote !== undefined && { adminNote: extras.adminNote }),
+      ...statusTimestamps(next),
+    },
   });
 }

@@ -14,12 +14,12 @@ export function OrderCard({ order }: { order: Order }) {
           <OrderStatusBadge status={order.status} />
         </div>
         <p className="text-xs text-neutral-500">
-          {order.customerName} · {formatDateTime(order.createdAt)}
+          {order.customerName} · {order.customerPhone} · {formatDateTime(order.createdAt)}
         </p>
       </div>
       <div className="text-right">
-        <p className="font-medium text-brand">{formatBgnPrice(order.totalBgn)}</p>
-        <p className="text-xs text-neutral-400">{formatEurPrice(order.totalEur)}</p>
+        <p className="font-medium text-brand">{formatEurPrice(order.totalEur)}</p>
+        <p className="text-xs text-neutral-400">{formatBgnPrice(order.totalBgn)}</p>
         <Link
           href={`/admin/orders/${order.id}`}
           className="text-xs font-medium text-neutral-700 hover:text-brand"

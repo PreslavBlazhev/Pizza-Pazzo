@@ -20,6 +20,6 @@ export function uid(prefix = "id"): string {
 }
 
 /** Format an ISO date string for display. */
-export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("bg-BG");
+export function formatDateTime(iso: string, locale = "bg-BG"): string {
+  return new Date(iso).toLocaleString(locale);
 }

@@ -1,9 +1,21 @@
 import type { OrderStatus } from "@/types/order";
-import { ORDER_STATUS_LABELS_BG, ORDER_STATUS_BADGE_CLASSES } from "@/lib/order-status";
+import type { Locale } from "@/i18n/routing";
+import {
+  ORDER_STATUS_LABELS_BG,
+  ORDER_STATUS_LABELS_EN,
+  ORDER_STATUS_BADGE_CLASSES,
+} from "@/lib/order-status";
 import { cn } from "@/lib/utils";
 
-/** Colour-coded order-status chip (Bulgarian, admin-facing). */
-export function OrderStatusBadge({ status }: { status: OrderStatus }) {
+/** Colour-coded order-status chip. Bulgarian by default (admin); pass `locale` on public pages. */
+export function OrderStatusBadge({
+  status,
+  locale = "bg",
+}: {
+  status: OrderStatus;
+  locale?: Locale;
+}) {
+  const labels = locale === "en" ? ORDER_STATUS_LABELS_EN : ORDER_STATUS_LABELS_BG;
   return (
     <span
       className={cn(
@@ -11,7 +23,7 @@ export function OrderStatusBadge({ status }: { status: OrderStatus }) {
         ORDER_STATUS_BADGE_CLASSES[status]
       )}
     >
-      {ORDER_STATUS_LABELS_BG[status]}
+      {labels[status]}
     </span>
   );
 }

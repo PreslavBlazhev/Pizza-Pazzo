@@ -4,7 +4,7 @@
     "description": "Authentic Italian pizza delivered — order online from Pizza Pazzo.",
     "menu": {
       "title": "Digital menu",
-      "description": "Choose from our pizzas, burgers, starters, salads and desserts. Prices are shown in leva and euro."
+      "description": "Choose from our pizzas, burgers, starters, salads and desserts. Prices are shown in euro and leva."
     },
     "gallery": {
       "title": "Gallery",
@@ -134,7 +134,7 @@
     "hero": {
       "title": "Digital menu",
       "subtitle": "Choose from our pizzas, burgers, starters, salads and desserts.",
-      "priceNote": "Prices are shown in leva and euro."
+      "priceNote": "Prices are shown in euro and leva."
     },
     "categoryNav": "Categories",
     "allCategories": "← All categories",
@@ -355,6 +355,9 @@
     "orders": "My orders",
     "ordersEmpty": "You don't have any orders yet.",
     "ordersEmptyHint": "Once you place an order, it will appear here.",
+    "orderTitle": "Order #{number}",
+    "orderAddress": "Address",
+    "orderItemsCount": "{count, plural, one {# item} other {# items}}",
     "saved": "Your changes have been saved.",
     "address": {
       "sectionTitle": "Delivery addresses",

@@ -40,6 +40,14 @@ export const ORDER_STATUS_BADGE_CLASSES: Record<OrderStatus, string> = {
   CANCELLED: "bg-red-100 text-red-800 ring-1 ring-red-200",
 };
 
+/** Statuses of orders currently in progress (confirmed but not yet closed). */
+export const ACTIVE_ORDER_STATUSES = [
+  "ACCEPTED",
+  "PREPARING",
+  "READY",
+  "OUT_FOR_DELIVERY",
+] as const satisfies readonly OrderStatus[];
+
 /**
  * Allowed next statuses for each status. An empty array means the order has
  * reached a terminal state. Use {@link canTransition} to enforce this before

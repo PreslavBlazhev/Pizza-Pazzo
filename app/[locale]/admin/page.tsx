@@ -1,30 +1,22 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { AdminStatsCards } from "@/components/admin/AdminStatsCards";
-import { FormAlert } from "@/components/ui/FormAlert";
+import { OrderCard } from "@/components/admin/OrderCard";
 import { getSessionUser } from "@/lib/auth";
+import { getAdminDashboardStats, getLatestOrders } from "@/lib/orders";
 import { isAdminRole } from "@/types/auth";
-import type { AdminStats } from "@/types/admin";
 
 export const metadata: Metadata = {
   title: "Табло",
   robots: { index: false, follow: false },
 };
 
-/**
- * Demo figures. Orders do not exist yet, so there is nothing real to count —
- * the banner below says so out loud, because an unlabelled number on a
- * dashboard will be read as fact.
- */
-const demoStats: AdminStats = {
-  ordersToday: 0,
-  pendingOrders: 0,
-  revenueToday: 0,
-  avgPrepMinutes: 0,
-};
-
 export default async function AdminDashboardPage() {
-  const sessionUser = await getSessionUser();
+  const [sessionUser, stats, latestOrders] = await Promise.all([
+    getSessionUser(),
+    getAdminDashboardStats(),
+    getLatestOrders(5),
+  ]);
   const firstName = sessionUser?.fullName?.split(" ")[0];
 
   return (
@@ -36,13 +28,33 @@ export default async function AdminDashboardPage() {
         Добре дошли{firstName ? `, ${firstName}` : ""}.
       </p>
 
-      <FormAlert tone="info" className="mt-6">
-        Показателите са нулеви, защото модулът за поръчки още не е разработен.
-        Тук ще се показват реални данни, когато поръчките заработят.
-      </FormAlert>
-
       <div className="mt-6">
-        <AdminStatsCards stats={demoStats} />
+        <AdminStatsCards stats={stats} />
+      </div>
+
+      <div className="mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold text-pizza-ink">
+            Последни поръчки
+          </h2>
+          <Link
+            href="/admin/orders"
+            className="text-sm font-medium text-neutral-700 transition hover:text-brand"
+          >
+            Виж всички →
+          </Link>
+        </div>
+        {latestOrders.length === 0 ? (
+          <p className="mt-4 rounded-2xl border border-dashed border-pizza-cream-dark bg-white px-4 py-8 text-center text-sm text-neutral-500">
+            Все още няма поръчки.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {latestOrders.map((order) => (
+              <OrderCard key={order.id} order={order} />
+            ))}
+          </div>
+        )}
       </div>
 
       {isAdminRole(sessionUser?.role ?? null) && (

@@ -32,10 +32,22 @@ export const ADMIN_USER_FILTER_ROLES: Record<AdminUserFilter, readonly UserRole[
   admins: ["ADMIN", "SUPER_ADMIN"],
 };
 
-/** Quick figures for the admin dashboard cards. */
-export interface AdminStats {
+/**
+ * KPI figures for the admin dashboard (/admin), computed in lib/orders.ts.
+ * Money is a plain `number` (both currencies stored on the order).
+ */
+export interface AdminDashboardStats {
+  /** Orders created today, any status. */
   ordersToday: number;
+  /** Orders awaiting confirmation (PENDING). */
   pendingOrders: number;
-  revenueToday: number;
-  avgPrepMinutes: number;
+  /** Orders in progress (ACCEPTED / PREPARING / READY / OUT_FOR_DELIVERY). */
+  activeOrders: number;
+  /** Delivered orders, all time. */
+  deliveredOrders: number;
+  /** Cancelled orders, all time. */
+  cancelledOrders: number;
+  /** Revenue today, cancelled orders excluded. */
+  revenueTodayBgn: number;
+  revenueTodayEur: number;
 }
