@@ -1,4 +1,9 @@
-import { EUR_TO_BGN } from "./constants";
+/**
+ * Price display: EUR is the PRIMARY currency, BGN the secondary one — every
+ * dual price on the site reads "6.65 € / 13.01 лв.", never the reverse.
+ * Both values always come from the data (priceEur/priceBgn pairs); nothing
+ * here converts between currencies.
+ */
 
 /** Format a BGN price, e.g. 12.9 → "12.90 лв.". */
 export function formatBgnPrice(price: number): string {
@@ -10,19 +15,7 @@ export function formatEurPrice(price: number): string {
   return `${price.toFixed(2)} €`;
 }
 
-// ── Legacy helpers (kept for older placeholder code: admin/print) ──────────
-
-/** @deprecated use formatEurPrice */
-export function formatEur(amount: number): string {
-  return `€${amount.toFixed(2)}`;
-}
-
-/** Convert an EUR amount to BGN and format. */
-export function formatBgn(amountEur: number): string {
-  return `${(amountEur * EUR_TO_BGN).toFixed(2)} лв.`;
-}
-
-/** Dual display from a single EUR amount, e.g. "€9.50 / 18.58 лв.". */
-export function formatDualPrice(amountEur: number): string {
-  return `${formatEur(amountEur)} / ${formatBgn(amountEur)}`;
+/** Dual display, EUR first: "6.65 € / 13.01 лв.". */
+export function formatDualPrice(eur: number, bgn: number): string {
+  return `${formatEurPrice(eur)} / ${formatBgnPrice(bgn)}`;
 }

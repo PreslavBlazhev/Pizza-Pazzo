@@ -72,6 +72,9 @@ export function AddToCart({ product }: { product: Product }) {
                 >
                   <span className="font-medium text-pizza-ink">{v.name}</span>
                   <span className="ml-2 font-semibold text-brand">
+                    {formatEurPrice(v.priceEur)}
+                  </span>
+                  <span className="ml-1.5 text-xs text-pizza-muted">
                     {formatBgnPrice(v.priceBgn)}
                   </span>
                 </button>
@@ -118,10 +121,10 @@ export function AddToCart({ product }: { product: Product }) {
 
         <div className="flex items-end gap-2">
           <span className="font-display text-2xl font-bold text-brand">
-            {formatBgnPrice(priceBgn * quantity)}
+            {formatEurPrice(priceEur * quantity)}
           </span>
           <span className="pb-0.5 text-sm text-pizza-muted">
-            {formatEurPrice(priceEur * quantity)}
+            {formatBgnPrice(priceBgn * quantity)}
           </span>
         </div>
       </div>

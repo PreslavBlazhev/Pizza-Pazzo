@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { use } from "react";
 import { getCategoryById, getProducts } from "@/lib/menu-data";
-import { formatBgnPrice } from "@/lib/format-price";
+import { formatDualPrice } from "@/lib/format-price";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -56,7 +56,7 @@ export default function AdminMenuPage({
                   {p.isPopular && <Badge tone="success">Популярно</Badge>}
                 </div>
                 <p className="text-xs text-neutral-500">
-                  {category?.name} · {formatBgnPrice(p.priceBgn)}
+                  {category?.name} · {formatDualPrice(p.priceEur, p.priceBgn)}
                 </p>
               </div>
 

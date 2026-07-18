@@ -58,10 +58,10 @@ export function CartItem({ item }: { item: CartItemType }) {
 
       <div className="shrink-0 text-right">
         <p className="font-semibold text-brand">
-          {formatBgnPrice(unitBgn * item.quantity)}
+          {formatEurPrice(unitEur * item.quantity)}
         </p>
         <p className="text-xs text-pizza-muted">
-          {formatEurPrice(unitEur * item.quantity)}
+          {formatBgnPrice(unitBgn * item.quantity)}
         </p>
       </div>
     </div>

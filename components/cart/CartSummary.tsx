@@ -2,14 +2,14 @@ import { useTranslations } from "next-intl";
 import type { CartTotals } from "@/types/cart";
 import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
 
-/** Dual-currency (BGN + EUR) totals block for the cart and checkout. */
+/** Dual-currency (EUR primary + BGN) totals block for the cart and checkout. */
 export function CartSummary({ totals }: { totals: CartTotals }) {
   const t = useTranslations("cart");
 
   const row = (bgn: number, eur: number) => (
     <span className="text-right">
-      <span className="font-medium text-pizza-ink">{formatBgnPrice(bgn)}</span>
-      <span className="ml-2 text-xs text-pizza-muted">{formatEurPrice(eur)}</span>
+      <span className="font-medium text-pizza-ink">{formatEurPrice(eur)}</span>
+      <span className="ml-2 text-xs text-pizza-muted">{formatBgnPrice(bgn)}</span>
     </span>
   );
 

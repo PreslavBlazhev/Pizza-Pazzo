@@ -194,6 +194,7 @@ export async function createOrder(
         variantName: i.variantName,
         quantity: i.quantity,
         totalPriceBgn: i.totalPriceBgn,
+        totalPriceEur: i.totalPriceEur,
       })),
     });
 

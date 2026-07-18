@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { use } from "react";
 import { getProducts } from "@/lib/menu-data";
-import { formatBgnPrice } from "@/lib/format-price";
+import { formatDualPrice } from "@/lib/format-price";
 import type { Locale } from "@/i18n/routing";
 
 export const metadata: Metadata = { title: "Products" };
@@ -30,7 +30,7 @@ export default function AdminProductsPage({
             {products.map((p) => (
               <tr key={p.id} className="border-t border-neutral-100">
                 <td className="px-4 py-2 font-medium text-neutral-800">{p.name}</td>
-                <td className="px-4 py-2">{formatBgnPrice(p.priceBgn)}</td>
+                <td className="px-4 py-2">{formatDualPrice(p.priceEur, p.priceBgn)}</td>
                 <td className="px-4 py-2">{p.isAvailable ? "Да" : "Не"}</td>
               </tr>
             ))}

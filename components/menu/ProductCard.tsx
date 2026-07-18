@@ -93,10 +93,10 @@ export function ProductCard({ product }: { product: Product }) {
               </span>
             )}
             <span className="font-display text-xl font-bold text-brand">
-              {formatBgnPrice(product.priceBgn)}
+              {formatEurPrice(product.priceEur)}
             </span>
             <span className="ml-1.5 text-sm text-pizza-muted">
-              {formatEurPrice(product.priceEur)}
+              {formatBgnPrice(product.priceBgn)}
             </span>
           </div>
           <Link

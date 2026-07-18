@@ -1,6 +1,6 @@
 import type { Order } from "@/types/order";
 import { PRINT_CONFIG } from "./print-config";
-import { formatBgnPrice } from "@/lib/format-price";
+import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
 
 /**
  * Builds a plain-text 80mm ticket representation of an order.
@@ -19,7 +19,7 @@ export function buildTicketText(order: Order): string {
 
   for (const item of order.items ?? []) {
     const left = `${item.quantity}x ${item.productNameBg}`;
-    const right = formatBgnPrice(item.totalPriceBgn);
+    const right = formatEurPrice(item.totalPriceEur);
     const pad = Math.max(1, width - left.length - right.length);
     rows.push(left + " ".repeat(pad) + right);
     if (item.variantName) {
@@ -28,8 +28,11 @@ export function buildTicketText(order: Order): string {
   }
 
   rows.push(line);
-  const total = formatBgnPrice(order.totalBgn);
-  rows.push(`ОБЩО${" ".repeat(Math.max(1, width - 4 - total.length))}${total}`);
+  // EUR is the primary currency; the BGN equivalent prints right-aligned below.
+  const totalEur = formatEurPrice(order.totalEur);
+  const totalBgn = formatBgnPrice(order.totalBgn);
+  rows.push(`ОБЩО${" ".repeat(Math.max(1, width - 4 - totalEur.length))}${totalEur}`);
+  rows.push(" ".repeat(Math.max(0, width - totalBgn.length)) + totalBgn);
   rows.push(line);
   rows.push(`${order.deliveryAddress}, ${order.deliveryCity}`);
   rows.push(`Тел: ${order.customerPhone}`);

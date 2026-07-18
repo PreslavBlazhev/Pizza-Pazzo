@@ -9,6 +9,7 @@ export interface NewOrderEmailItem {
   variantName?: string | null;
   quantity: number;
   totalPriceBgn: number;
+  totalPriceEur: number;
 }
 
 export interface NewOrderEmailData {
@@ -36,9 +37,9 @@ export function newOrderEmail(data: NewOrderEmailData): {
 
   const itemLines = data.items.map(
     (i) =>
-      `${i.quantity}× ${i.nameBg}${i.variantName ? ` (${i.variantName})` : ""} — ${bgn(
-        i.totalPriceBgn
-      )}`
+      `${i.quantity}× ${i.nameBg}${i.variantName ? ` (${i.variantName})` : ""} — ${eur(
+        i.totalPriceEur
+      )} / ${bgn(i.totalPriceBgn)}`
   );
 
   const text = [
@@ -53,7 +54,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
     `Поръчка:`,
     ...itemLines,
     ``,
-    `Общо: ${bgn(data.totalBgn)} / ${eur(data.totalEur)}`,
+    `Общо: ${eur(data.totalEur)} / ${bgn(data.totalBgn)}`,
     `Плащане: Наложен платеж`,
   ]
     .filter(Boolean)
@@ -65,9 +66,9 @@ export function newOrderEmail(data: NewOrderEmailData): {
       <td style="padding:6px 0;border-bottom:1px solid #eee;">${i.quantity}× ${i.nameBg}${
         i.variantName ? ` <span style="color:#888;">(${i.variantName})</span>` : ""
       }</td>
-      <td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right;white-space:nowrap;">${bgn(
-        i.totalPriceBgn
-      )}</td>
+      <td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right;white-space:nowrap;">${eur(
+        i.totalPriceEur
+      )} <span style="color:#888;">${bgn(i.totalPriceBgn)}</span></td>
     </tr>`
     )
     .join("");
@@ -80,8 +81,8 @@ export function newOrderEmail(data: NewOrderEmailData): {
   <p style="margin:4px 0;"><strong>Адрес:</strong> ${data.deliveryAddress}, ${data.deliveryCity}</p>
   ${data.deliveryNote ? `<p style="margin:4px 0;"><strong>Бележка:</strong> ${data.deliveryNote}</p>` : ""}
   <table style="width:100%;border-collapse:collapse;margin:16px 0;">${itemRows}</table>
-  <p style="font-size:18px;"><strong>Общо: ${bgn(data.totalBgn)}</strong> <span style="color:#888;">/ ${eur(
-    data.totalEur
+  <p style="font-size:18px;"><strong>Общо: ${eur(data.totalEur)}</strong> <span style="color:#888;">/ ${bgn(
+    data.totalBgn
   )}</span></p>
   <p style="color:#888;">Плащане: Наложен платеж</p>
 </div>`;
