@@ -5,6 +5,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
 import { SITE, SITE_URL } from "@/lib/constants";
+import { getRestaurantJsonLd } from "@/lib/seo/structured-data";
 import { routing, type Locale } from "@/i18n/routing";
 
 const display = Lora({
@@ -65,6 +66,13 @@ export async function generateMetadata({
       title: `${SITE.name} — ${t("tagline")}`,
       description: t("description"),
       url: locale === routing.defaultLocale ? "/" : `/${locale}`,
+      // og:image comes from app/[locale]/opengraph-image.tsx (file convention).
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${SITE.name} — ${t("tagline")}`,
+      description: t("description"),
+      // twitter:image comes from app/[locale]/twitter-image.tsx.
     },
   };
 }
@@ -87,9 +95,19 @@ export default async function LocaleLayout({
   // Required for the pages below to stay statically rendered.
   setRequestLocale(locale);
 
+  const restaurantJsonLd = getRestaurantJsonLd(locale);
+
   return (
     <html lang={locale} className={`${display.variable} ${sans.variable}`}>
       <body className="min-h-screen bg-pizza-cream font-sans text-pizza-ink antialiased">
+        {/* schema.org Restaurant data for rich results. The `<` escape keeps a
+            hypothetical "</script>" inside the data from closing the tag. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(restaurantJsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>
     </html>

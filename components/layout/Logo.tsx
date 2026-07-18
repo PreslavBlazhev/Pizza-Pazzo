@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
@@ -17,13 +18,12 @@ interface LogoProps {
 export function Logo({ className = "h-11", linked = true, priority }: LogoProps) {
   const t = useTranslations("logo");
   const img = (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src="/logos/pizza-pazzo-logo.png"
       alt="Pizza Pazzo"
       width={528}
       height={298}
-      loading={priority ? "eager" : "lazy"}
+      priority={priority}
       className={cn("w-auto select-none", className)}
     />
   );

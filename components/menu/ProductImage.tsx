@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +9,11 @@ interface ProductImageProps {
   src?: string;
   alt: string;
   className?: string;
+  /**
+   * Responsive hint for next/image (how wide the image renders per viewport).
+   * Tune per grid at the call site; the default fits the product-card grids.
+   */
+  sizes?: string;
 }
 
 /**
@@ -15,7 +21,12 @@ interface ProductImageProps {
  * If there is no src, or it fails to load, a branded placeholder is shown.
  * When the admin later uploads a real photo, only imageUrl changes — no code.
  */
-export function ProductImage({ src, alt, className }: ProductImageProps) {
+export function ProductImage({
+  src,
+  alt,
+  className,
+  sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
+}: ProductImageProps) {
   const t = useTranslations("product");
   const [failed, setFailed] = useState(false);
   const showPlaceholder = !src || failed;
@@ -42,13 +53,18 @@ export function ProductImage({ src, alt, className }: ProductImageProps) {
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      onError={() => setFailed(true)}
-      className={cn("h-full w-full object-cover", className)}
-    />
+    <div className="relative h-full w-full">
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        // The optimizer rejects SVG (the current placeholders); real JPG/PNG
+        // photos go through it and get resized/WebP'd automatically.
+        unoptimized={src.endsWith(".svg")}
+        onError={() => setFailed(true)}
+        className={cn("object-cover", className)}
+      />
+    </div>
   );
 }

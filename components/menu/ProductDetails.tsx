@@ -21,7 +21,11 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
     <div className="grid gap-10 md:grid-cols-2">
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-pizza-cream-dark bg-white shadow-card">
-        <ProductImage src={product.imageUrl} alt={product.name} />
+        <ProductImage
+          src={product.imageUrl}
+          alt={product.name}
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
         <div className="pointer-events-none absolute left-4 top-4 flex gap-2">
           {product.isPopular && (
             <span className="rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white shadow-sm">
@@ -63,10 +67,10 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <div className="flex items-end gap-2">
             <span className="font-display text-3xl font-bold text-brand">
-              {formatBgnPrice(product.priceBgn)}
+              {formatEurPrice(product.priceEur)}
             </span>
             <span className="pb-1 text-pizza-muted">
-              {formatEurPrice(product.priceEur)}
+              {formatBgnPrice(product.priceBgn)}
             </span>
           </div>
           {product.isAvailable ? (

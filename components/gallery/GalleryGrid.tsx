@@ -21,6 +21,7 @@ export function GalleryGrid({ items, feature = true }: GalleryGridProps) {
             <ProductImage
               src={item.src}
               alt={item.alt}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="transition duration-500 group-hover:scale-105"
             />
           </div>
