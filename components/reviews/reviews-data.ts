@@ -9,7 +9,18 @@ export interface Review {
   date: string;
 }
 
-export const reviews = reviewsJson as Review[];
+/**
+ * PRODUCTION SAFETY GATE. The entries in data/reviews.json are INVENTED
+ * sample reviews labelled as coming from Google/Facebook — publishing them
+ * as real would violate consumer-protection law and Google's policies.
+ * While this is false, the public pages render their honest empty states
+ * (the homepage section disappears, /reviews says none are published yet).
+ * Flip to true ONLY after data/reviews.json holds real customer reviews.
+ * See docs/client-reviews-needed.md.
+ */
+export const REVIEWS_ENABLED = false;
+
+export const reviews: Review[] = REVIEWS_ENABLED ? (reviewsJson as Review[]) : [];
 
 export const sourceLabel: Record<Review["source"], string> = {
   google: "Google",

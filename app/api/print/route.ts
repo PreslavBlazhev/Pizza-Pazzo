@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 
 /**
- * Print API (placeholder).
- * The v1 print flow uses a browser print page (see docs/printing-plan.md), so
- * this endpoint is a stub for a future network/agent-based auto-print (Stage 7+).
+ * Print API — intentionally NOT implemented.
+ *
+ * v1 printing is the browser print page (/admin/orders/[id]/print, 80mm
+ * template — see docs/printing-plan.md). This endpoint is reserved for a
+ * future network/agent-based auto-print (Stage 7+); until then it answers
+ * honestly instead of returning a fake success.
  */
-export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  return NextResponse.json({
-    ok: true,
-    note: "Placeholder — direct printing not implemented; use the browser print page.",
-    received: body,
-  });
+export async function POST() {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "Print API is not enabled. Use the browser print page (/admin/orders/[id]/print).",
+    },
+    { status: 501 }
+  );
 }

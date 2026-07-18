@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server";
 
 /**
- * Orders API (placeholder).
- * GET  — will list orders (admin) / customer's own orders.
- * POST — will create an order from the cart at checkout (Stage 4).
- * No database is connected yet; these return stubs.
+ * Orders API — intentionally NOT implemented.
+ *
+ * Checkout creates orders through the `createOrder` server action
+ * (app/actions/checkout.ts) and the admin reads them through server
+ * components; there is no REST surface, and a public one would only add
+ * attack surface. This stub exists so the URL answers honestly instead of
+ * pretending to work. Remove it entirely if a future integration never
+ * materialises.
  */
 
+const NOT_ENABLED = {
+  ok: false,
+  error: "Orders API is not enabled. Checkout uses server actions.",
+} as const;
+
 export async function GET() {
-  return NextResponse.json({ ok: true, orders: [], note: "Placeholder — Stage 4/5." });
+  return NextResponse.json(NOT_ENABLED, { status: 501 });
 }
 
-export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  return NextResponse.json(
-    { ok: true, note: "Placeholder — order creation not implemented yet.", received: body },
-    { status: 201 }
-  );
+export async function POST() {
+  return NextResponse.json(NOT_ENABLED, { status: 501 });
 }

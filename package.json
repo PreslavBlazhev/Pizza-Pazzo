@@ -3,13 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "description": "Pizza Pazzo — online ordering system for a pizza restaurant (public site, digital menu, cart, orders, admin panel).",
+  "engines": {
+    "node": ">=22 <23"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "check:i18n": "node scripts/check-i18n.mjs",
+    "smoke": "node scripts/smoke-checkout.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
@@ -32,6 +36,7 @@
     "zustand": "5.0.3"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "22.10.7",
     "@types/react": "19.0.7",

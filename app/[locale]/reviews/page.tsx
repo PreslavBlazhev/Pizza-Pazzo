@@ -43,7 +43,7 @@ export default function ReviewsPage({ params }: PageProps) {
               ? t("subtitleAverage", { avg: avg.toFixed(1) })
               : undefined
           }
-          note={t("note")}
+          note={reviews.length > 0 ? t("note") : undefined}
         />
 
         <div className="container pb-24 pt-12">
