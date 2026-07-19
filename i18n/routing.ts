@@ -13,10 +13,13 @@ export const routing = defineRouting({
   locales: ["bg", "en"],
   defaultLocale: "bg",
   localePrefix: "as-needed",
-  // The visitor's own choice wins over the Accept-Language header, and it is
-  // remembered in a cookie. Without this, a Bulgarian browser could never stay
-  // on the English site.
-  localeDetection: true,
+  // NO automatic locale detection (client decision 2026-07-18): with detection
+  // on, any browser whose Accept-Language is English got 307-redirected from
+  // `/` to `/en` — the site "loaded in English". The restaurant is Bulgarian:
+  // the bare URLs ALWAYS serve Bulgarian, and English is an explicit choice
+  // via the switcher (which navigates to /en/...). URLs alone carry the
+  // locale; no cookie redirects.
+  localeDetection: false,
 });
 
 export type Locale = (typeof routing.locales)[number];

@@ -24,8 +24,10 @@
 - [ ] Branch: `master`
 - [ ] Runtime: Node · Plan: Starter (или по-висок)
 - [ ] Build command:
-      `npm install && npx prisma generate && npx prisma migrate deploy && npm run build`
-- [ ] Start command: `npm start`
+      `npm install && npx prisma generate && npm run build`
+- [ ] Start command: `npx prisma migrate deploy && npm start`
+      (миграциите вървят при СТАРТ, не при build — дискът с базата не е
+      монтиран по време на build)
 
 ## 2. Persistent Disk (ЗАДЪЛЖИТЕЛНО преди първия deploy)
 
@@ -54,10 +56,14 @@
 - [ ] Deploy от dashboard-а → изчакай build + `migrate deploy` да минат.
 - [ ] Логовете нямат Prisma грешки.
 
-## 5. Seed на първия админ
+## 5. Seed на първия админ + менюто
 
 - [ ] Render → Shell на service-а → `npm run db:seed`
 - [ ] Изход: `✔ Seeded SUPER_ADMIN: <email>` (паролата не се печата).
+- [ ] Пак в Shell: `node scripts/import-menu-to-db.mjs` — зарежда менюто
+      (10 категории, 98 продукта). Без това сайтът е с празно меню!
+      Изпълнява се ЕДНОКРАТНО — повторното изпълнение връща менюто към
+      seed стойностите и затрива админските редакции.
 - [ ] Влез на `/auth/login` с ADMIN_EMAIL/ADMIN_PASSWORD → виждаш `/admin`.
 
 ## 6. Smoke проверки на staging

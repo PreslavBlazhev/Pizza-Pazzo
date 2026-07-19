@@ -117,6 +117,77 @@ model Order {
   @@index([createdAt])
 }
 
+// ── Menu (DB-backed since 2026-07-18, see docs/admin-menu-db-plan.md) ───────
+//
+// The id/slug values from data/*.json are PRESERVED on import so that
+// OrderItem.productId/variantId on existing orders stay valid, and so the
+// public URLs (/product/[slug]) never change. Slugs are deliberately not
+// editable from the admin (SEO). data/*.json stays in the repo as seed/backup;
+// after the one-time import the database is the source of truth.
+
+model MenuCategory {
+  id            String        @id // preserved cat_* ids from the JSON seed
+  slug          String        @unique
+  nameBg        String
+  nameEn        String
+  descriptionBg String        @default("")
+  descriptionEn String        @default("")
+  icon          String?
+  sortOrder     Int           @default(0)
+  isActive      Boolean       @default(true)
+
+  products      MenuProduct[]
+}
+
+model MenuProduct {
+  id                  String        @id // preserved prod_* ids
+  slug                String        @unique // preserved — public URL + SEO
+  nameBg              String
+  nameEn              String
+  descriptionBg       String        @default("")
+  descriptionEn       String        @default("")
+  categoryId          String
+  category            MenuCategory  @relation(fields: [categoryId], references: [id])
+
+  // Base price; for products with variants this is the "from" price.
+  priceBgn            Decimal
+  priceEur            Decimal
+
+  imageUrl            String?
+  // JSON array of allergen ids (SQLite has no arrays) — see lib/allergens.ts.
+  allergens           String        @default("[]")
+  // True until the kitchen confirms the allergen list (EU 1169/2011) — the UI
+  // then shows "being confirmed, ask the staff" instead of claiming "none".
+  allergensUnverified Boolean       @default(false)
+  sizeBg              String?
+  sizeEn              String?
+  isAvailable         Boolean       @default(true)
+  isPopular           Boolean       @default(false)
+  isNew               Boolean       @default(false)
+  sortOrder           Int           @default(0)
+
+  variants            MenuVariant[]
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([categoryId])
+}
+
+model MenuVariant {
+  id        String      @id // preserved var_* ids — referenced by OrderItem.variantId
+  productId String
+  product   MenuProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  nameBg    String
+  nameEn    String
+  priceBgn  Decimal
+  priceEur  Decimal
+  sortOrder Int         @default(0)
+
+  @@index([productId])
+}
+
 model OrderItem {
   id              String   @id @default(cuid())
 

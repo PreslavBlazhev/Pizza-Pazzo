@@ -68,18 +68,22 @@ export function ProductCard({ product }: { product: Product }) {
 
         {/* Allergens */}
         <div className="mt-4 flex flex-wrap gap-1.5">
-          {allergens.length > 0 ? (
-            allergens.map((id) => (
-              <span
-                key={id}
-                className="rounded-full bg-pizza-green-light px-2.5 py-0.5 text-[11px] font-medium text-pizza-green-dark"
-              >
-                {isAllergenId(id) ? tAllergens(`${id}.name`) : id}
-              </span>
-            ))
-          ) : (
+          {allergens.map((id) => (
+            <span
+              key={id}
+              className="rounded-full bg-pizza-green-light px-2.5 py-0.5 text-[11px] font-medium text-pizza-green-dark"
+            >
+              {isAllergenId(id) ? tAllergens(`${id}.name`) : id}
+            </span>
+          ))}
+          {allergens.length === 0 && !product.allergensUnverified && (
             <span className="text-[11px] italic text-pizza-muted">
               {t("allergensNone")}
+            </span>
+          )}
+          {product.allergensUnverified && (
+            <span className="text-[11px] italic text-pizza-muted">
+              {t("allergensUnknown")}
             </span>
           )}
         </div>

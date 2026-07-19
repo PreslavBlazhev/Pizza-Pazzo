@@ -1,19 +1,21 @@
 /**
  * Smoke test for the menu data + the checkout price-derivation contract.
  *
- * Pure data checks — reads data/*.json, touches NO database and creates NO
- * orders, so it is safe to run anywhere (dev, CI, production build step).
- * It re-implements the exact price-resolution rule from
+ * Reads the DATABASE (the menu's source of truth since 2026-07-18 — see
+ * docs/admin-menu-db-plan.md), creates NO orders and writes nothing, so it is
+ * safe to run anywhere the DATABASE_URL points at a migrated DB (local dev,
+ * Render Shell). It re-implements the exact price-resolution rule from
  * app/actions/checkout.ts (variant price wins over base price; unavailable
  * products are rejected) and fails loudly if the data would break it.
  *
+ * The checks are deliberately structural, not exact-price: the admin panel
+ * edits prices now, so asserting seed values would fail on the first edit.
+ *
  * Usage: npm run smoke   (alias for: node scripts/smoke-checkout.mjs)
  */
-import { readFileSync } from "node:fs";
+import { PrismaClient } from "@prisma/client";
 
-const load = (p) => JSON.parse(readFileSync(new URL(`../data/${p}`, import.meta.url), "utf8"));
-const products = load("pizza-pazzo-menu.json");
-const categories = load("categories.json");
+const prisma = new PrismaClient();
 
 const EUR_TO_BGN = 1.95583; // fixed conversion rate (lib/constants.ts)
 const RATE_TOLERANCE = 0.05; // docx source rounds some prices up ~2.3%
@@ -24,9 +26,42 @@ const fail = (msg) => {
   console.error(`  ✗ ${msg}`);
 };
 const ok = (msg) => console.log(`  ✓ ${msg}`);
+const round2 = (n) => Math.round(n * 100) / 100;
+
+// Load DB rows into the same shape the checkout logic sees.
+const categories = await prisma.menuCategory.findMany();
+const products = (
+  await prisma.menuProduct.findMany({
+    include: { variants: { orderBy: { sortOrder: "asc" } } },
+  })
+).map((p) => ({
+  id: p.id,
+  slug: p.slug,
+  name: { bg: p.nameBg, en: p.nameEn },
+  categoryId: p.categoryId,
+  priceBgn: Number(p.priceBgn),
+  priceEur: Number(p.priceEur),
+  isAvailable: p.isAvailable,
+  allergensJson: p.allergens,
+  variants: p.variants.length
+    ? p.variants.map((v) => ({
+        id: v.id,
+        name: { bg: v.nameBg, en: v.nameEn },
+        priceBgn: Number(v.priceBgn),
+        priceEur: Number(v.priceEur),
+      }))
+    : undefined,
+}));
+
+if (products.length === 0) {
+  console.error(
+    "SMOKE FAILED — the menu tables are empty. Run: node scripts/import-menu-to-db.mjs"
+  );
+  process.exit(1);
+}
 
 // ── 1. Structural integrity ────────────────────────────────────────────────
-console.log("1) Menu data integrity");
+console.log("1) Menu data integrity (database)");
 
 const ids = new Set();
 const slugs = new Set();
@@ -38,9 +73,15 @@ for (const p of products) {
   ids.add(p.id);
   slugs.add(p.slug);
 
-  if (!p.name?.bg) fail(`${p.slug}: missing BG name`);
-  if (!p.name?.en) fail(`${p.slug}: missing EN name`);
+  if (!p.name.bg) fail(`${p.slug}: missing BG name`);
   if (!categoryIds.has(p.categoryId)) fail(`${p.slug}: unknown category ${p.categoryId}`);
+
+  try {
+    const allergens = JSON.parse(p.allergensJson);
+    if (!Array.isArray(allergens)) fail(`${p.slug}: allergens is not an array`);
+  } catch {
+    fail(`${p.slug}: allergens JSON does not parse`);
+  }
 
   const pricePoints = p.variants?.length ? p.variants : [p];
   for (const v of pricePoints) {
@@ -57,11 +98,12 @@ for (const p of products) {
     for (const v of p.variants) {
       if (vIds.has(v.id)) fail(`${p.slug}: duplicate variant id ${v.id}`);
       vIds.add(v.id);
-      if (!v.name?.bg || !v.name?.en) fail(`${p.slug}/${v.id}: missing variant name translation`);
+      if (!v.name.bg) fail(`${p.slug}/${v.id}: missing variant BG name`);
     }
   }
 }
-if (failures === 0) ok(`${products.length} products, ${categories.length} categories, ids/slugs unique, prices sane`);
+if (failures === 0)
+  ok(`${products.length} products, ${categories.length} categories, ids/slugs unique, prices sane`);
 
 // ── 2. Checkout price derivation (same rule as app/actions/checkout.ts) ───
 console.log("2) Checkout price derivation");
@@ -88,27 +130,29 @@ for (const p of products) {
 }
 ok(`price derivable for ${resolved} products`);
 
-// The three merged products must resolve BOTH variants to their exact prices.
-const expectations = [
-  ["prod_coca_cola", "var_coca_cola_1", 3.5, 1.79],
-  ["prod_coca_cola", "var_coca_cola_2", 4.5, 2.3],
-  ["prod_mineralna_voda_bankya", "var_mineralna_voda_bankya_1", 2, 1.02],
-  ["prod_mineralna_voda_bankya", "var_mineralna_voda_bankya_2", 2.99, 1.53],
-  ["prod_pikantni_kartofi", "var_pikantni_kartofi_1", 5, 2.56],
-  ["prod_pikantni_kartofi", "var_pikantni_kartofi_2", 8.5, 4.35],
-  ["prod_margarita", "var_margarita_2", 19.95, 10.23],
-];
-for (const [pid, vid, bgn, eur] of expectations) {
-  const r = derivePrice(pid, vid);
-  if (r.error) fail(`${pid}/${vid}: ${r.error}`);
-  else if (r.unitBgn !== bgn || r.unitEur !== eur) {
-    fail(`${pid}/${vid}: expected ${bgn} лв./${eur} €, got ${r.unitBgn}/${r.unitEur}`);
+// Multi-variant products must resolve EACH variant to that variant's own
+// price — the "two sizes, one price" bug class from the docx import.
+let variantChecks = 0;
+for (const p of products.filter((x) => x.isAvailable && (x.variants?.length ?? 0) >= 2)) {
+  for (const v of p.variants) {
+    const r = derivePrice(p.id, v.id);
+    if (r.error) fail(`${p.slug}/${v.id}: ${r.error}`);
+    else if (r.unitBgn !== v.priceBgn || r.unitEur !== v.priceEur) {
+      fail(`${p.slug}/${v.id}: derived ${r.unitBgn}/${r.unitEur}, stored ${v.priceBgn}/${v.priceEur}`);
+    } else {
+      variantChecks++;
+    }
+  }
+  const [a, b] = p.variants;
+  if (a.priceBgn === b.priceBgn && a.priceEur === b.priceEur) {
+    console.warn(`  ⚠ ${p.slug}: first two variants have identical prices — check the data`);
   }
 }
-ok("merged-product variants resolve to their exact prices");
+ok(`variant prices resolve exactly (${variantChecks} variants)`);
 
 // A bogus variant id must be rejected, not silently fall back to base price.
-if (!derivePrice("prod_margarita", "var_no_such").error) {
+const anyProduct = products.find((p) => p.isAvailable);
+if (!derivePrice(anyProduct.id, "var_no_such").error) {
   fail("bogus variant id was accepted — checkout would mischarge");
 } else {
   ok("bogus variant id is rejected");
@@ -116,24 +160,28 @@ if (!derivePrice("prod_margarita", "var_no_such").error) {
 
 // ── 3. Line/total arithmetic (round2, same as checkout) ────────────────────
 console.log("3) Totals arithmetic");
-const round2 = (n) => Math.round(n * 100) / 100;
-const cart = [
-  { ...derivePrice("prod_margarita", "var_margarita_1"), qty: 2 },
-  { ...derivePrice("prod_coca_cola", "var_coca_cola_2"), qty: 1 },
-];
+const sample = products
+  .filter((p) => p.isAvailable)
+  .slice(0, 2)
+  .map((p, i) => ({ ...derivePrice(p.id, p.variants?.[0]?.id), qty: i + 2, slug: p.slug }));
 let subBgn = 0;
 let subEur = 0;
-for (const l of cart) {
+let expectBgn = 0;
+let expectEur = 0;
+for (const l of sample) {
   subBgn = round2(subBgn + round2(l.unitBgn * l.qty));
   subEur = round2(subEur + round2(l.unitEur * l.qty));
+  expectBgn += Math.round(l.unitBgn * 100) * l.qty;
+  expectEur += Math.round(l.unitEur * 100) * l.qty;
 }
-if (subBgn !== 30.52 || subEur !== 15.6) {
-  fail(`sample cart totals wrong: got ${subBgn} лв. / ${subEur} € (expected 30.52 / 15.60)`);
+if (Math.round(subBgn * 100) !== expectBgn || Math.round(subEur * 100) !== expectEur) {
+  fail(`sample cart totals drift: got ${subBgn} лв. / ${subEur} € (integer check ${expectBgn}/${expectEur} stotinki)`);
 } else {
-  ok(`sample cart: 2× Маргарита 30см + 1× Coca-Cola 1л = ${subEur} € / ${subBgn} лв.`);
+  ok(`sample cart (${sample.map((l) => `${l.qty}× ${l.slug}`).join(" + ")}) = ${subEur} € / ${subBgn} лв., no rounding drift`);
 }
 
 // ── Result ────────────────────────────────────────────────────────────────
+await prisma.$disconnect();
 if (failures > 0) {
   console.error(`\nSMOKE FAILED — ${failures} problem(s).`);
   process.exit(1);

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/constants";
-import { getAllCategorySlugs, getAllProductSlugs } from "@/lib/menu-data";
+import categoriesJson from "@/data/categories.json";
+import menuJson from "@/data/pizza-pazzo-menu.json";
 import { routing } from "@/i18n/routing";
 
 /**
@@ -51,9 +52,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/contacts", 0.7],
   ];
 
+  // Slugs come from the JSON SEED, not the DB: the sitemap is prerendered at
+  // build time, when the Render disk (and with it the DB) is not mounted.
+  // That is safe because slugs are deliberately immutable in the admin MVP —
+  // for URLs the seed and the DB are the same set.
+  const categorySlugs = (categoriesJson as { slug: string; isActive: boolean }[])
+    .filter((c) => c.isActive)
+    .map((c) => c.slug);
+  const productSlugs = (menuJson as { slug: string }[]).map((p) => p.slug);
+
   return [
     ...staticPaths.map(([path, priority]) => entry(path, priority)),
-    ...getAllCategorySlugs().map((slug) => entry(`/menu/${slug}`, 0.8)),
-    ...getAllProductSlugs().map((slug) => entry(`/product/${slug}`, 0.5)),
+    ...categorySlugs.map((slug) => entry(`/menu/${slug}`, 0.8)),
+    ...productSlugs.map((slug) => entry(`/product/${slug}`, 0.5)),
   ];
 }
