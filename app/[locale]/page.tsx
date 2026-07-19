@@ -1,6 +1,4 @@
-import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
-import { use } from "react";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -20,20 +18,27 @@ const VALUES = [
   { key: "easy", icon: "⚡" },
 ] as const;
 
-export default function HomePage({
+// The menu lives in the database, which on Render is not available at build
+// time — so this page renders on demand; the data layer itself is cached and
+// tag-invalidated on admin edits (see lib/menu-data.ts).
+export const dynamic = "force-dynamic";
+
+export default async function HomePage({
   params,
 }: {
   params: Promise<{ locale: Locale }>;
 }) {
-  const { locale } = use(params);
+  const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = useTranslations("home");
-  const tCommon = useTranslations("common");
+  const t = await getTranslations({ locale, namespace: "home" });
+  const tCommon = await getTranslations({ locale, namespace: "common" });
 
   // Exclude add-on categories from the homepage showcase (kept in the full menu).
-  const categories = getCategories(locale).filter((c) => !c.id.includes("addons"));
-  const popular = getPopularProducts(locale);
+  const categories = (await getCategories(locale)).filter(
+    (c) => !c.id.includes("addons")
+  );
+  const popular = await getPopularProducts(locale);
 
   return (
     <>

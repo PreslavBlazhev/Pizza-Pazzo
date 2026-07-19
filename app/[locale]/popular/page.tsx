@@ -1,22 +1,20 @@
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { use } from "react";
 import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHero } from "@/components/ui/PageHero";
 import { ProductCard } from "@/components/menu/ProductCard";
 import { getPopularProducts } from "@/lib/menu-data";
-import { routing, type Locale } from "@/i18n/routing";
+import { type Locale } from "@/i18n/routing";
 
 interface PageProps {
   params: Promise<{ locale: Locale }>;
 }
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+// Rendered on demand: the menu lives in the DB, unavailable at build time on
+// Render. The data layer is cached and tag-invalidated (lib/menu-data.ts).
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
@@ -24,12 +22,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: t("title"), description: t("description") };
 }
 
-export default function PopularPage({ params }: PageProps) {
-  const { locale } = use(params);
+export default async function PopularPage({ params }: PageProps) {
+  const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = useTranslations("popular");
-  const popular = getPopularProducts(locale);
+  const t = await getTranslations({ locale, namespace: "popular" });
+  const popular = await getPopularProducts(locale);
 
   return (
     <>

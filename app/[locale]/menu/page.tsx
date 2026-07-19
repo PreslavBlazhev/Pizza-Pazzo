@@ -1,21 +1,20 @@
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { use } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CategoryTabs } from "@/components/menu/CategoryTabs";
 import { ProductGrid } from "@/components/menu/ProductGrid";
 import { getCategories, getProducts } from "@/lib/menu-data";
-import { routing, type Locale } from "@/i18n/routing";
+import { type Locale } from "@/i18n/routing";
 
 interface PageProps {
   params: Promise<{ locale: Locale }>;
 }
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+// The menu lives in the database, which on Render is not available at build
+// time — so this page renders on demand; the data layer itself is cached and
+// tag-invalidated on admin edits (see lib/menu-data.ts).
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
@@ -23,13 +22,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: t("title"), description: t("description") };
 }
 
-export default function MenuPage({ params }: PageProps) {
-  const { locale } = use(params);
+export default async function MenuPage({ params }: PageProps) {
+  const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = useTranslations("menu.hero");
-  const categories = getCategories(locale);
-  const products = getProducts(locale);
+  const t = await getTranslations({ locale, namespace: "menu.hero" });
+  const categories = await getCategories(locale);
+  const products = await getProducts(locale);
 
   // Only show categories that actually have products.
   const usedCategories = categories.filter((c) =>

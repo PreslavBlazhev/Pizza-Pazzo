@@ -1649,7 +1649,8 @@
         "priceBgn": 5.01,
         "priceEur": 2.56
       }
-    ]
+    ],
+    "allergensUnverified": true
   },
   {
     "id": "prod_presni_hlebni_topcheta",
@@ -1775,7 +1776,8 @@
     "size": {
       "bg": "200 г",
       "en": "200 g"
-    }
+    },
+    "allergensUnverified": true
   },
   {
     "id": "prod_parzheni_kartofi_sas_sirene",
@@ -1817,13 +1819,17 @@
     "priceBgn": 8.51,
     "priceEur": 4.35,
     "imageUrl": "/images/products/placeholder-food.svg",
-    "allergens": [],
+    "allergens": [
+      "gluten",
+      "soybeans"
+    ],
     "isAvailable": true,
     "sortOrder": 7,
     "size": {
       "bg": "150 г",
       "en": "150 g"
-    }
+    },
+    "allergensUnverified": true
   },
   {
     "id": "prod_proletni_rultsa_s_pile",
@@ -1840,13 +1846,17 @@
     "priceBgn": 12.01,
     "priceEur": 6.14,
     "imageUrl": "/images/products/placeholder-food.svg",
-    "allergens": [],
+    "allergens": [
+      "gluten",
+      "soybeans"
+    ],
     "isAvailable": true,
     "sortOrder": 8,
     "size": {
       "bg": "150 г",
       "en": "150 g"
-    }
+    },
+    "allergensUnverified": true
   },
   {
     "id": "prod_kartofeni_rezanki",
@@ -2092,13 +2102,16 @@
     "priceBgn": 12.01,
     "priceEur": 6.14,
     "imageUrl": "/images/products/placeholder-food.svg",
-    "allergens": [],
+    "allergens": [
+      "gluten"
+    ],
     "isAvailable": true,
     "sortOrder": 18,
     "size": {
       "bg": "200 г",
       "en": "200 g"
-    }
+    },
+    "allergensUnverified": true
   },
   {
     "id": "prod_pikantni_kartofi",
@@ -2137,7 +2150,8 @@
         "priceBgn": 8.5,
         "priceEur": 4.35
       }
-    ]
+    ],
+    "allergensUnverified": true
   },
   {
     "id": "prod_pileshki",
@@ -2368,13 +2382,17 @@
     "priceBgn": 4,
     "priceEur": 2.05,
     "imageUrl": "/images/products/placeholder-food.svg",
-    "allergens": [],
+    "allergens": [
+      "gluten",
+      "milk"
+    ],
     "isAvailable": true,
     "sortOrder": 2,
     "size": {
       "bg": "100 г",
       "en": "100 g"
-    }
+    },
+    "allergensUnverified": true
   },
   {
     "id": "prod_pileshko_teleshko_kyufte",
@@ -2391,13 +2409,16 @@
     "priceBgn": 4,
     "priceEur": 2.05,
     "imageUrl": "/images/products/placeholder-food.svg",
-    "allergens": [],
+    "allergens": [
+      "gluten"
+    ],
     "isAvailable": true,
     "sortOrder": 3,
     "size": {
       "bg": "120 г",
       "en": "120 g"
-    }
+    },
+    "allergensUnverified": true
   },
   {
     "id": "prod_chedar",
@@ -2445,7 +2466,8 @@
     "size": {
       "bg": "50 г",
       "en": "50 g"
-    }
+    },
+    "allergensUnverified": true
   },
   {
     "id": "prod_zelenchukova",
@@ -2468,7 +2490,8 @@
     "size": {
       "bg": "30 г",
       "en": "30 g"
-    }
+    },
+    "allergensUnverified": true
   },
   {
     "id": "prod_shopska_2",
@@ -2536,13 +2559,18 @@
     "priceBgn": 15.65,
     "priceEur": 8,
     "imageUrl": "/images/products/placeholder-salad.svg",
-    "allergens": [],
+    "allergens": [
+      "gluten",
+      "milk",
+      "mustard"
+    ],
     "isAvailable": true,
     "sortOrder": 3,
     "size": {
       "bg": "450 г",
       "en": "450 g"
-    }
+    },
+    "allergensUnverified": true
   },
   {
     "id": "prod_riba_ton",
@@ -3141,7 +3169,9 @@
     "priceBgn": 4.5,
     "priceEur": 2.3,
     "imageUrl": "/images/products/placeholder-drink.svg",
-    "allergens": [],
+    "allergens": [
+      "gluten"
+    ],
     "isAvailable": true,
     "sortOrder": 5,
     "size": {
@@ -3164,7 +3194,9 @@
     "priceBgn": 4.5,
     "priceEur": 2.3,
     "imageUrl": "/images/products/placeholder-drink.svg",
-    "allergens": [],
+    "allergens": [
+      "gluten"
+    ],
     "isAvailable": true,
     "sortOrder": 6,
     "size": {

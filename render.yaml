@@ -12,8 +12,11 @@ services:
     runtime: node
     plan: starter # needs a paid plan for Persistent Disks
     branch: master
-    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
-    startCommand: npm start
+    # migrate deploy runs at START, not build: the Persistent Disk (and so the
+    # SQLite file) is NOT mounted during builds. Pages that read the menu render
+    # dynamically for the same reason (see docs/admin-menu-db-plan.md).
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
 
     # SQLite file lives on this disk so it survives redeploys/restarts.
     disk:

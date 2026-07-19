@@ -34,6 +34,14 @@ export interface Product {
   imageUrl: string;
   /** Allergen ids — names live in the `allergens` message namespace. */
   allergens: string[];
+  /**
+   * True while the kitchen has NOT yet confirmed the allergen list for this
+   * product (EU 1169/2011 — the values are our provisional reading, see
+   * docs/client-allergens-needed.md). The UI must then say "being confirmed —
+   * ask the staff" instead of claiming "no allergens". Delete the flag from
+   * `data/pizza-pazzo-menu.json` once the restaurant confirms the product.
+   */
+  allergensUnverified?: boolean;
   /** Optional list of ingredients shown on the card / detail page. */
   ingredients?: string[];
   /** Optional serving size / weight, e.g. "300 г", "330 мл". */

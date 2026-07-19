@@ -1,36 +1,34 @@
 import type { Metadata } from "next";
-import { use } from "react";
-import { getCategories } from "@/lib/menu-data";
-import type { Locale } from "@/i18n/routing";
+import { requireRole } from "@/lib/auth";
+import { getAdminCategories } from "@/lib/admin-menu";
+import { CategoryEditForm } from "@/components/admin/CategoryEditForm";
 
-export const metadata: Metadata = { title: "Categories" };
+export const metadata: Metadata = { title: "Категории" };
 
-export default function AdminCategoriesPage({
-  params,
-}: {
-  params: Promise<{ locale: Locale }>;
-}) {
-  const { locale } = use(params);
-  const categories = getCategories(locale);
+/**
+ * Category management (ADMIN+ — categories shape the whole public menu, so
+ * this is not a STAFF page). Deactivating a category hides it AND its
+ * products from the site; the products stay in the database untouched.
+ */
+export default async function AdminCategoriesPage() {
+  await requireRole(["ADMIN", "SUPER_ADMIN"]);
+  const categories = await getAdminCategories();
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold text-neutral-800">Категории</h1>
-      <ul className="space-y-2">
-        {categories.map((c) => (
-          <li
-            key={c.id}
-            className="flex items-center justify-between rounded-md border border-neutral-200 px-4 py-2 text-sm"
-          >
-            <span className="font-medium text-neutral-800">{c.name}</span>
-            <span className="text-neutral-400">/{c.slug}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-4 text-sm text-pizza-muted">
-        Категориите се четат от менюто. Редакцията им ще се активира заедно с
-        модула за управление на менюто.
+    <div className="max-w-4xl">
+      <h1 className="font-display text-2xl font-bold text-pizza-ink sm:text-3xl">
+        Категории
+      </h1>
+      <p className="mb-6 mt-1.5 text-sm text-pizza-muted">
+        Редът определя подредбата в менюто. Неактивна категория скрива и
+        продуктите си от сайта. Промените се публикуват веднага.
       </p>
+
+      <div className="space-y-4">
+        {categories.map((c) => (
+          <CategoryEditForm key={c.id} category={c} />
+        ))}
+      </div>
     </div>
   );
 }

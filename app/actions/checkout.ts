@@ -93,8 +93,8 @@ export async function createOrder(
   let subtotalEur = 0;
 
   for (const it of itemsParsed.data) {
-    const pBg = getProductById(it.productId, "bg");
-    const pEn = getProductById(it.productId, "en");
+    const pBg = await getProductById(it.productId, "bg");
+    const pEn = await getProductById(it.productId, "en");
     if (!pBg || !pBg.isAvailable) {
       return { ok: false, error: "Един от продуктите вече не е наличен. Обновете количката." };
     }

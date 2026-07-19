@@ -114,8 +114,15 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm italic text-pizza-muted">
-              {t("allergensNone")}
+            !product.allergensUnverified && (
+              <p className="text-sm italic text-pizza-muted">
+                {t("allergensNone")}
+              </p>
+            )
+          )}
+          {product.allergensUnverified && (
+            <p className="mt-2 text-sm italic text-pizza-muted">
+              {t("allergensUnknown")}
             </p>
           )}
         </div>

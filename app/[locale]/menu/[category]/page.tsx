@@ -1,33 +1,24 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { use } from "react";
 import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductGrid } from "@/components/menu/ProductGrid";
-import {
-  getAllCategorySlugs,
-  getCategoryBySlug,
-  getProductsByCategory,
-} from "@/lib/menu-data";
-import { routing, type Locale } from "@/i18n/routing";
+import { getCategoryBySlug, getProductsByCategory } from "@/lib/menu-data";
+import { type Locale } from "@/i18n/routing";
 
 interface PageProps {
   params: Promise<{ category: string; locale: Locale }>;
 }
 
-/** Every category in every locale — the whole menu is known at build time. */
-export function generateStaticParams() {
-  return routing.locales.flatMap((locale) =>
-    getAllCategorySlugs().map((category) => ({ locale, category }))
-  );
-}
+// Rendered on demand: the menu lives in the DB, unavailable at build time on
+// Render. The data layer is cached and tag-invalidated (lib/menu-data.ts).
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category: slug, locale } = await params;
-  const category = getCategoryBySlug(slug, locale);
+  const category = await getCategoryBySlug(slug, locale);
   const t = await getTranslations({ locale, namespace: "menu" });
   return {
     title: category ? category.name : t("categoryFallback"),
@@ -35,15 +26,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function CategoryPage({ params }: PageProps) {
-  const { category: slug, locale } = use(params);
+export default async function CategoryPage({ params }: PageProps) {
+  const { category: slug, locale } = await params;
   setRequestLocale(locale);
 
-  const t = useTranslations("menu");
-  const category = getCategoryBySlug(slug, locale);
+  const t = await getTranslations({ locale, namespace: "menu" });
+  const category = await getCategoryBySlug(slug, locale);
   if (!category) notFound();
 
-  const products = getProductsByCategory(category.id, locale);
+  const products = await getProductsByCategory(category.id, locale);
 
   return (
     <>
