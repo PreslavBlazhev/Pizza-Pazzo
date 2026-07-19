@@ -56,7 +56,7 @@ export function OrderDetails({ order }: { order: Order }) {
         <p className="text-sm text-neutral-700">
           {order.customerName} · {order.customerPhone}
         </p>
-        <p className="text-sm text-neutral-500">{order.customerEmail}</p>
+        <p className="text-sm text-neutral-500">{order.customerEmail || "— без имейл"}</p>
       </section>
 
       <section>

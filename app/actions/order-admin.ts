@@ -9,10 +9,7 @@ import {
   type StatusUpdateExtras,
 } from "@/lib/orders";
 import { canTransition } from "@/lib/order-status";
-import {
-  sendCustomerOrderAcceptedEmail,
-  sendCustomerOrderCancelledEmail,
-} from "@/lib/email/resend";
+import { sendCustomerOrderAcceptedEmail } from "@/lib/email/resend";
 import { isOrderStatus } from "@/types/order";
 import type { ActionResult } from "@/types/auth";
 
@@ -27,8 +24,9 @@ const MAX_NOTE_LENGTH = 500;
  * back to PENDING.
  *
  * ACCEPTED requires an estimated delivery time (minutes); CANCELLED may carry a
- * reason (adminNote). After the write, the customer is emailed best-effort —
- * a failed email never rolls back the status change.
+ * reason (adminNote, shown in the admin only). After the write, ACCEPTED — and
+ * only ACCEPTED — triggers a best-effort email to the customer; a failed email
+ * never rolls back the status change.
  */
 export async function updateOrderStatusAction(
   _prev: ActionResult | null,
@@ -76,13 +74,13 @@ export async function updateOrderStatusAction(
   }
 
   // Status is committed; the customer email is best-effort on top of it. The
-  // senders log and swallow their own failures, so a broken mail setup can't
-  // surface an error here or undo the write.
-  if (next === "ACCEPTED" || next === "CANCELLED") {
+  // sender logs and swallows its own failures, so a broken mail setup can't
+  // surface an error here or undo the write. ACCEPTED is the only status the
+  // customer is ever emailed about, and only if they gave an email address.
+  if (next === "ACCEPTED") {
     const order = await getOrderById(id);
-    if (order) {
-      if (next === "ACCEPTED") await sendCustomerOrderAcceptedEmail(order);
-      else await sendCustomerOrderCancelledEmail(order);
+    if (order?.items) {
+      await sendCustomerOrderAcceptedEmail({ ...order, items: order.items });
     }
   }
 

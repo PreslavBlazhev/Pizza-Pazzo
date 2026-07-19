@@ -47,7 +47,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
     ``,
     `Клиент: ${data.customerName}`,
     `Телефон: ${data.customerPhone}`,
-    `Имейл: ${data.customerEmail}`,
+    `Имейл: ${data.customerEmail || "— (не е посочен)"}`,
     `Адрес: ${data.deliveryAddress}, ${data.deliveryCity}`,
     data.deliveryNote ? `Бележка: ${data.deliveryNote}` : ``,
     ``,
@@ -77,7 +77,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
   <h2 style="color:#c0392b;">Нова поръчка #${data.orderNumber}</h2>
   <p style="margin:4px 0;"><strong>Клиент:</strong> ${data.customerName}</p>
   <p style="margin:4px 0;"><strong>Телефон:</strong> ${data.customerPhone}</p>
-  <p style="margin:4px 0;"><strong>Имейл:</strong> ${data.customerEmail}</p>
+  <p style="margin:4px 0;"><strong>Имейл:</strong> ${data.customerEmail || "— (не е посочен)"}</p>
   <p style="margin:4px 0;"><strong>Адрес:</strong> ${data.deliveryAddress}, ${data.deliveryCity}</p>
   ${data.deliveryNote ? `<p style="margin:4px 0;"><strong>Бележка:</strong> ${data.deliveryNote}</p>` : ""}
   <table style="width:100%;border-collapse:collapse;margin:16px 0;">${itemRows}</table>

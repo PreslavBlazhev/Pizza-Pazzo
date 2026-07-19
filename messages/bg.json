@@ -267,6 +267,7 @@
     "lastName": "Фамилия",
     "phone": "Телефон",
     "email": "Имейл",
+    "emailRequired": "Имейл (на него ще получите потвърждението)",
     "street": "Улица",
     "streetPlaceholder": "ул. Витоша",
     "number": "Номер",
@@ -412,6 +413,7 @@
     "nav": {
       "dashboard": "Табло",
       "orders": "Поръчки",
+      "liveOrders": "Поръчки на живо 🔔",
       "menu": "Меню",
       "products": "Продукти",
       "categories": "Категории",

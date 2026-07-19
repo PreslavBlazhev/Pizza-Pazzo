@@ -267,6 +267,7 @@
     "lastName": "Surname",
     "phone": "Phone",
     "email": "Email",
+    "emailRequired": "Email (your confirmation will be sent here)",
     "street": "Street",
     "streetPlaceholder": "Vitosha St",
     "number": "Number",
@@ -412,6 +413,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "orders": "Orders",
+      "liveOrders": "Live orders 🔔",
       "menu": "Menu",
       "products": "Products",
       "categories": "Categories",

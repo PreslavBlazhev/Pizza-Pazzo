@@ -8,8 +8,7 @@
 import { Resend } from "resend";
 import { newOrderEmail, type NewOrderEmailData } from "@/lib/email-templates/new-order";
 import { customerOrderAcceptedEmail } from "@/lib/email-templates/customer-order-accepted";
-import { customerOrderCancelledEmail } from "@/lib/email-templates/customer-order-cancelled";
-import type { Order } from "@/types/order";
+import type { Order, OrderWithItems } from "@/types/order";
 
 /** Just enough validation to skip obviously broken addresses before calling Resend. */
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -58,34 +57,13 @@ async function sendToCustomer(
   }
 }
 
-/** Tells the customer their order was accepted, with the estimated time. */
-export async function sendCustomerOrderAcceptedEmail(order: Order): Promise<void> {
-  await sendToCustomer(
-    order,
-    customerOrderAcceptedEmail({
-      orderNumber: order.orderNumber,
-      customerName: order.customerName,
-      estimatedTimeMinutes: order.estimatedTimeMinutes ?? 30,
-      totalBgn: order.totalBgn,
-      totalEur: order.totalEur,
-      deliveryAddress: order.deliveryAddress,
-      deliveryCity: order.deliveryCity,
-    }),
-    "accepted"
-  );
-}
-
-/** Tells the customer their order was cancelled, with the reason if any. */
-export async function sendCustomerOrderCancelledEmail(order: Order): Promise<void> {
-  await sendToCustomer(
-    order,
-    customerOrderCancelledEmail({
-      orderNumber: order.orderNumber,
-      customerName: order.customerName,
-      reason: order.adminNote,
-    }),
-    "cancelled"
-  );
+/**
+ * Tells the customer their order was accepted — the only email a customer ever
+ * gets. Carries the full order (items, totals, address) and the estimated time
+ * the staff picked. Skipped silently when the customer gave no email.
+ */
+export async function sendCustomerOrderAcceptedEmail(order: OrderWithItems): Promise<void> {
+  await sendToCustomer(order, customerOrderAcceptedEmail(order), "accepted");
 }
 
 /** Notifies the restaurant inbox about a newly placed order. */
@@ -111,7 +89,7 @@ export async function sendNewOrderNotification(data: NewOrderEmailData): Promise
       subject,
       html,
       text,
-      replyTo: data.customerEmail,
+      replyTo: data.customerEmail || undefined,
     });
     if (error) {
       console.error(`[email] Resend rejected order #${data.orderNumber} notification:`, error);

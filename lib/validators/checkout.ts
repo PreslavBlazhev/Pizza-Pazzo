@@ -14,8 +14,9 @@ export const checkoutSchema = z.object({
     .string()
     .trim()
     .min(2, "Името трябва да е поне 2 символа."),
+  // Required — the "order accepted" confirmation is sent to this address.
   customerEmail: z
-    .email("Невалиден имейл адрес.")
+    .email("Въведете валиден имейл адрес — на него ще получите потвърждението.")
     .trim()
     .transform((v) => v.toLowerCase()),
   customerPhone: z

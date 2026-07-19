@@ -24,9 +24,9 @@ export default async function AdminLayout({
   const sessionUser = await requireRole(["STAFF", "ADMIN", "SUPER_ADMIN"]);
 
   return (
-    <div className="flex min-h-screen bg-pizza-cream">
+    <div className="flex min-h-screen flex-col lg:flex-row bg-pizza-cream">
       <AdminSidebar sessionUser={sessionUser} />
-      <div className="flex-1 overflow-x-auto p-6 sm:p-8">{children}</div>
+      <div className="flex-1 overflow-x-auto p-4 sm:p-8">{children}</div>
     </div>
   );
 }

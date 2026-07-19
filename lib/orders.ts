@@ -78,6 +78,16 @@ export async function getOrders(): Promise<Order[]> {
   return rows.map(mapOrder);
 }
 
+/** Orders still waiting for confirmation, oldest first — the live board's queue. */
+export async function getPendingOrders(): Promise<Order[]> {
+  const rows = await db.order.findMany({
+    where: { status: "PENDING" },
+    orderBy: { createdAt: "asc" },
+    include: { items: true },
+  });
+  return rows.map(mapOrder);
+}
+
 /** Orders of a registered user, newest first. Guest orders have no userId and never match. */
 export async function getOrdersForUser(userId: string): Promise<Order[]> {
   const rows = await db.order.findMany({

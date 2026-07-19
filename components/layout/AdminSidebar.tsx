@@ -18,7 +18,30 @@ export function AdminSidebar({ sessionUser }: { sessionUser: SessionUser }) {
   );
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-pizza-cream-dark bg-white">
+    <>
+      {/* Phone/tablet-portrait: slim sticky top bar with scrollable nav. */}
+      <header className="sticky top-0 z-30 border-b border-pizza-cream-dark bg-white lg:hidden">
+        <div className="flex items-center justify-between px-4 pt-3">
+          <Link href="/" className="font-display text-lg font-bold text-brand">
+            Pizza Pazzo
+          </Link>
+          <LogoutButton />
+        </div>
+        <nav className="flex gap-1.5 overflow-x-auto px-3 py-2" aria-label={t("title")}>
+          {links.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="whitespace-nowrap rounded-full border border-pizza-cream-dark px-3.5 py-1.5 text-sm font-medium text-pizza-ink transition hover:bg-pizza-green-light"
+            >
+              {t(`nav.${item.labelKey}`)}
+            </Link>
+          ))}
+        </nav>
+      </header>
+
+      {/* Desktop: the classic sidebar. */}
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-pizza-cream-dark bg-white lg:flex">
       <div className="border-b border-pizza-cream-dark px-5 py-5">
         <Link href="/" className="font-display text-lg font-bold text-brand">
           Pizza Pazzo
@@ -49,6 +72,7 @@ export function AdminSidebar({ sessionUser }: { sessionUser: SessionUser }) {
         </div>
         <LogoutButton className="mt-3 w-full" />
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

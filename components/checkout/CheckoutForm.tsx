@@ -99,9 +99,10 @@ export function CheckoutForm({ defaults }: Props) {
               error={fieldErrors.customerPhone}
             />
             <Input
-              label={t("email")}
+              label={t("emailRequired")}
               name="customerEmail"
               type="email"
+              required
               defaultValue={defaults?.email ?? ""}
               autoComplete="email"
               error={fieldErrors.customerEmail}
