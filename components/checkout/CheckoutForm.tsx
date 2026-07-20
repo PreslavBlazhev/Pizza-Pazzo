@@ -115,7 +115,7 @@ export function CheckoutForm({ defaults }: Props) {
           <Input
             label={t("city")}
             name="deliveryCity"
-            defaultValue="Варна"
+            defaultValue="Плевен"
             error={fieldErrors.deliveryCity}
           />
           <Textarea

@@ -23,7 +23,7 @@ export const checkoutSchema = z.object({
     .string()
     .trim()
     .min(8, "Телефонът трябва да е поне 8 символа."),
-  deliveryCity: z.string().trim().default("Варна"),
+  deliveryCity: z.string().trim().default("Плевен"),
   deliveryAddress: z
     .string()
     .trim()

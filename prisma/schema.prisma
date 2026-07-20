@@ -52,7 +52,7 @@ model UserAddress {
   label        String   @default("Основен адрес")
   fullName     String?
   phone        String?
-  city         String   @default("Варна")
+  city         String   @default("Плевен")
   addressLine  String
   entrance     String?
   floor        String?
@@ -81,7 +81,7 @@ model Order {
   customerPhone         String
 
   deliveryAddress       String
-  deliveryCity          String      @default("Варна")
+  deliveryCity          String      @default("Плевен")
   deliveryNote          String?
 
   // PaymentMethod enum (SQLite = TEXT): CASH_ON_DELIVERY

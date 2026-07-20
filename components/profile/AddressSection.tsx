@@ -80,7 +80,7 @@ function AddressForm({
         <Input
           label={t("city")}
           name="city"
-          defaultValue={address?.city ?? "Варна"}
+          defaultValue={address?.city ?? "Плевен"}
           error={fieldErrors.city}
         />
         <Input
