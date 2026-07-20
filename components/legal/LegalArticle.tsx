@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { COMPANY } from "@/content/legal/company";
 import { pickL, type LegalBlock, type LegalDoc } from "@/content/legal/types";
 import type { Locale } from "@/i18n/routing";
@@ -9,6 +10,7 @@ import type { Locale } from "@/i18n/routing";
  */
 export function LegalArticle({ doc, locale }: { doc: LegalDoc; locale: Locale }) {
   const t = useTranslations("legal");
+  const tCommon = useTranslations("common");
 
   const renderBlock = (block: LegalBlock, key: number) =>
     "p" in block ? (
@@ -36,10 +38,25 @@ export function LegalArticle({ doc, locale }: { doc: LegalDoc; locale: Locale })
                 {t("uic")}: {COMPANY.uic}
               </li>
             )}
+            {COMPANY.vatNumber && (
+              <li>
+                {t("vatNumber")}: {COMPANY.vatNumber}
+              </li>
+            )}
             <li>
               {t("addressLabel")}: {COMPANY.address}
               {COMPANY.city ? `, ${COMPANY.city}` : ""}
             </li>
+            {COMPANY.registeredAddress && (
+              <li>
+                {t("registeredAddress")}: {COMPANY.registeredAddress}
+              </li>
+            )}
+            {COMPANY.managerName && (
+              <li>
+                {t("managerName")}: {COMPANY.managerName}
+              </li>
+            )}
             <li>
               {t("emailLabel")}:{" "}
               <a href={`mailto:${COMPANY.email}`} className="underline transition hover:text-brand">
@@ -69,6 +86,15 @@ export function LegalArticle({ doc, locale }: { doc: LegalDoc; locale: Locale })
           {section.blocks.map(renderBlock)}
         </section>
       ))}
+
+      <div className="mt-12 border-t border-pizza-cream-dark pt-8 text-center">
+        <Link
+          href="/menu"
+          className="inline-block rounded-full bg-brand px-8 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark"
+        >
+          ← {tCommon("toMenu")}
+        </Link>
+      </div>
     </article>
   );
 }

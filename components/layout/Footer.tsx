@@ -4,9 +4,18 @@ import { Logo } from "./Logo";
 import { NAV_LINKS } from "./Header";
 import { SITE, WORKING_HOURS } from "@/lib/constants";
 
+const LEGAL_LINKS = [
+  { href: "/terms", labelKey: "terms" },
+  { href: "/privacy", labelKey: "privacy" },
+  { href: "/cookies", labelKey: "cookies" },
+  { href: "/delivery", labelKey: "delivery" },
+  { href: "/refunds", labelKey: "refunds" },
+] as const;
+
 export function Footer() {
   const t = useTranslations();
   const tHours = useTranslations("hours");
+  const tLegal = useTranslations("legal");
 
   return (
     <footer className="border-t border-pizza-cream-dark bg-white">
@@ -89,14 +98,27 @@ export function Footer() {
       </div>
 
       <div className="border-t border-pizza-cream-dark">
-        <div className="container flex flex-col items-center justify-between gap-2 py-5 text-xs text-pizza-muted sm:flex-row">
-          <p>
-            {t("footer.rights", {
-              year: new Date().getFullYear(),
-              legalName: SITE.legalName,
-            })}
-          </p>
-          <p>{t("footer.madeWith")}</p>
+        <div className="container flex flex-col items-center gap-3 py-5 text-xs text-pizza-muted">
+          <nav aria-label={t("footer.legal")}>
+            <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+              {LEGAL_LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="transition hover:text-brand">
+                    {tLegal(l.labelKey)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div className="flex w-full flex-col items-center justify-between gap-2 sm:flex-row">
+            <p>
+              {t("footer.rights", {
+                year: new Date().getFullYear(),
+                legalName: SITE.legalName,
+              })}
+            </p>
+            <p>{t("footer.madeWith")}</p>
+          </div>
         </div>
       </div>
     </footer>

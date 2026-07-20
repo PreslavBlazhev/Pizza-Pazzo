@@ -35,5 +35,9 @@ prisma/dev.db-journal
 *.tsbuildinfo
 next-env.d.ts
 
+# local uploads (dev-only stand-in for the Render Persistent Disk — see
+# lib/uploads/paths.ts / UPLOADS_DIR)
+/.data
+
 # working / non-production materials
 /_downloads-and-unused

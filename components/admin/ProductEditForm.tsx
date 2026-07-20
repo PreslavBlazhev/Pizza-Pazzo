@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { updateProductAction } from "@/app/actions/admin-menu";
 import { ALLERGEN_IDS } from "@/lib/allergens";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { FormAlert } from "@/components/ui/FormAlert";
+import { ProductImageUploadField } from "./ProductImageUploadField";
 import type { AdminMenuCategory, AdminMenuProduct } from "@/lib/admin-menu";
 import type { ActionResult } from "@/types/auth";
 
@@ -29,6 +30,7 @@ export function ProductEditForm({
   );
   const tAllergens = useTranslations("allergens");
   const fieldError = (name: string) => state?.fieldErrors?.[name];
+  const [imageUploading, setImageUploading] = useState(false);
 
   return (
     <form action={formAction} className="space-y-8" noValidate>
@@ -113,14 +115,6 @@ export function ProductEditForm({
           required
         />
         <Input
-          label="Снимка (път)"
-          name="imageUrl"
-          defaultValue={product.imageUrl ?? ""}
-          error={fieldError("imageUrl")}
-          hint="Напр. /images/products/margarita.jpg"
-          className="font-mono"
-        />
-        <Input
           label="Грамаж (BG)"
           name="sizeBg"
           defaultValue={product.sizeBg ?? ""}
@@ -139,6 +133,11 @@ export function ProductEditForm({
           defaultValue={String(product.sortOrder)}
           error={fieldError("sortOrder")}
           inputMode="numeric"
+        />
+        <ProductImageUploadField
+          defaultValue={product.imageUrl ?? ""}
+          error={fieldError("imageUrl")}
+          onUploadingChange={setImageUploading}
         />
       </section>
 
@@ -260,10 +259,10 @@ export function ProductEditForm({
       <div className="flex items-center gap-4 border-t border-pizza-cream-dark pt-5">
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || imageUploading}
           className="rounded-full bg-pizza-green px-8 py-3 text-sm font-semibold text-white transition hover:bg-pizza-green-dark disabled:opacity-60"
         >
-          {isPending ? "Запазване…" : "Запази продукта"}
+          {isPending ? "Запазване…" : imageUploading ? "Изчакайте качването…" : "Запази продукта"}
         </button>
         <span className="text-xs text-pizza-muted">
           Адрес на сайта: /product/{product.slug} (не се променя)

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 base theme. The kitchen UI itself is the web page; the native
+         chrome stays neutral (cream background, brand colors). -->
+    <style name="Theme.PizzaPazzoKitchen" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/pp_red</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/pp_green</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:windowBackground">@color/pp_cream</item>
+        <item name="android:statusBarColor">@color/pp_red_dark</item>
+    </style>
+
+    <!-- Splash: brand red screen with the round "logo" icon, then MainActivity. -->
+    <style name="Theme.PizzaPazzoKitchen.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/pp_red</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.PizzaPazzoKitchen</item>
+    </style>
+
+</resources>

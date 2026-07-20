@@ -21,6 +21,23 @@
     "popular": {
       "title": "Most ordered",
       "description": "The dishes our guests love most."
+    },
+    "legal": {
+      "terms": {
+        "description": "Terms and Conditions for using the site and placing online orders with Pizza Pazzo."
+      },
+      "privacy": {
+        "description": "How Pizza Pazzo handles your personal data when you order or register — what we collect, why, and your rights."
+      },
+      "cookies": {
+        "description": "What cookies and local storage the Pizza Pazzo site uses and how to manage them."
+      },
+      "delivery": {
+        "description": "Areas, timing and terms for delivery of orders from Pizza Pazzo."
+      },
+      "refunds": {
+        "description": "How to cancel an order, file a complaint, and how refunds work at Pizza Pazzo."
+      }
     }
   },
 
@@ -137,8 +154,12 @@
     "privacy": "Privacy Policy",
     "cookies": "Cookie Policy",
     "delivery": "Delivery Terms",
+    "refunds": "Cancellations, Complaints & Refunds",
     "updated": "Last updated: {date}",
     "uic": "Company ID (EIK)",
+    "vatNumber": "VAT number",
+    "registeredAddress": "Registered address",
+    "managerName": "Manager",
     "addressLabel": "Address",
     "emailLabel": "Email",
     "phoneLabel": "Phone"
@@ -285,7 +306,7 @@
     "addressPlaceholder": "street, number, entrance, floor, apartment",
     "payment": "Payment",
     "paymentCod": "Cash on delivery",
-    "agreeTerms": "I have read and agree to the <terms>Terms and Conditions</terms> and the <privacy>Privacy Policy</privacy>.",
+    "agreeTerms": "By placing your order you agree to the <terms>Terms and Conditions</terms> and the <privacy>Privacy Policy</privacy>.",
     "placing": "Placing…"
   },
 
@@ -338,7 +359,7 @@
       "phonePlaceholder": "0888123456",
       "phoneHint": "So we can reach you about the delivery."
     },
-    "acceptTerms": "I agree to the Terms and Conditions and the Privacy Policy.",
+    "acceptTerms": "I agree to the <terms>Terms and Conditions</terms> and the <privacy>Privacy Policy</privacy>.",
     "creating": "Creating…",
     "createAccount": "Create account",
     "signingIn": "Signing in…",

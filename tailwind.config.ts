@@ -39,6 +39,10 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "Georgia", "serif"],
+        // Slogan/badge font under the logo — matches the logo's carved-serif
+        // lettering; falls back to the display serif, never system-ui, so a
+        // slow font load never flashes plain sans-serif on brand text.
+        slogan: ["var(--font-slogan)", "var(--font-display)", "Georgia", "serif"],
       },
       boxShadow: {
         soft: "0 12px 32px -14px rgba(43, 38, 34, 0.18)",

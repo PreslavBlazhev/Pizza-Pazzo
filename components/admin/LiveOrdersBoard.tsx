@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { updateOrderStatusAction } from "@/app/actions/order-admin";
 import { formatDualPrice } from "@/lib/format-price";
-import type { Order } from "@/types/order";
+import { PrintOrderButton } from "./PrintOrderButton";
+import type { Order, OrderWithItems } from "@/types/order";
 
 const POLL_INTERVAL_MS = 8_000;
 const QUICK_TIMES = [20, 30, 45, 60];
@@ -21,6 +22,9 @@ export function LiveOrdersBoard() {
   const [connectionLost, setConnectionLost] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
+  // Orders accepted this shift stay listed below the pending ones so the staff
+  // can print the kitchen ticket (via the Android app) after accepting.
+  const [acceptedOrders, setAcceptedOrders] = useState<OrderWithItems[]>([]);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
@@ -121,7 +125,22 @@ export function LiveOrdersBoard() {
       const fd = new FormData();
       fd.set("orderId", orderId);
       for (const [k, v] of Object.entries(fields)) fd.set(k, v);
-      await updateOrderStatusAction(null, fd);
+      const result = await updateOrderStatusAction(null, fd);
+      // Keep the just-accepted order around (with the ETA the staff picked) so
+      // its print button is available. Printing is NEVER automatic.
+      if (result?.ok && fields.status === "ACCEPTED") {
+        const accepted = orders.find((o) => o.id === orderId);
+        if (accepted) {
+          const withItems: OrderWithItems = {
+            ...accepted,
+            items: accepted.items ?? [],
+            status: "ACCEPTED",
+            estimatedTimeMinutes: Number(fields.estimatedTimeMinutes) || null,
+            acceptedAt: new Date().toISOString(),
+          };
+          setAcceptedOrders((prev) => [withItems, ...prev.filter((o) => o.id !== orderId)].slice(0, 8));
+        }
+      }
       await fetchPending();
     } finally {
       setBusyOrderId(null);
@@ -181,6 +200,37 @@ export function LiveOrdersBoard() {
           />
         ))}
       </div>
+
+      {acceptedOrders.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 text-lg font-bold text-neutral-700">
+            Приети наскоро — печат на бележка
+          </h2>
+          <div className="space-y-3">
+            {acceptedOrders.map((order) => (
+              <div
+                key={order.id}
+                className="flex flex-col gap-3 rounded-2xl border-2 border-pizza-green/40 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="text-lg font-extrabold text-pizza-ink">
+                    ✓ Поръчка #{order.orderNumber}
+                    {order.estimatedTimeMinutes && (
+                      <span className="ml-2 text-sm font-semibold text-pizza-green-dark">
+                        {order.estimatedTimeMinutes} мин
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-sm text-neutral-500">
+                    {order.customerName} · {order.deliveryAddress}
+                  </p>
+                </div>
+                <PrintOrderButton order={order} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

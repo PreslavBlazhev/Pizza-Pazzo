@@ -59,9 +59,12 @@ export function ProductImage({
         alt={alt}
         fill
         sizes={sizes}
-        // The optimizer rejects SVG (the current placeholders); real JPG/PNG
-        // photos go through it and get resized/WebP'd automatically.
-        unoptimized={src.endsWith(".svg")}
+        // The optimizer rejects SVG (the current placeholders) and can't read
+        // /uploads/* — those live on the Persistent Disk, not /public, so
+        // Next's local-file optimizer would 400 on them (see
+        // lib/uploads/paths.ts). Static /images/... photos still go through
+        // it and get resized/WebP'd automatically.
+        unoptimized={src.endsWith(".svg") || src.startsWith("/uploads/")}
         onError={() => setFailed(true)}
         className={cn("object-cover", className)}
       />

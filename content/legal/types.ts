@@ -28,7 +28,7 @@ export interface LegalSection {
 
 export interface LegalDoc {
   /** Route segment and messages key (`legal.<slug>`). */
-  slug: "terms" | "privacy" | "cookies" | "delivery";
+  slug: "terms" | "privacy" | "cookies" | "delivery" | "refunds";
   /** Display date of the last revision, e.g. "18.07.2026". */
   updated: string;
   /** Shown before the numbered sections. */

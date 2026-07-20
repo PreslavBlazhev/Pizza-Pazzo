@@ -29,6 +29,12 @@ services:
       - key: DATABASE_URL
         value: file:/var/data/pizza-pazzo.db
 
+      # Admin-uploaded product photos are also stored on the same Persistent
+      # Disk (a subfolder next to the DB file), so they survive redeploys and
+      # restarts. See lib/uploads/paths.ts.
+      - key: UPLOADS_DIR
+        value: /var/data/uploads
+
       # Secrets / environment-specific — set these in the dashboard.
       - key: AUTH_SECRET
         sync: false
