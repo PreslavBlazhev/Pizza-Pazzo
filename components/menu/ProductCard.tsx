@@ -5,23 +5,13 @@ import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
 import { isAllergenId, orderedAllergens } from "@/lib/allergens";
 import { cn } from "@/lib/utils";
 import { ProductImage } from "./ProductImage";
+import { ProductImageLink } from "./ProductImageLink";
 
 export function ProductCard({ product }: { product: Product }) {
   const t = useTranslations("product");
   const tAllergens = useTranslations("allergens");
   const allergens = orderedAllergens(product.allergens);
   const unavailable = !product.isAvailable;
-
-  // A plain <a> only activates on Enter natively; Space is expected too (the
-  // image is being made keyboard-activatable like a button). preventDefault
-  // stops the page from scrolling, then a synthetic click re-triggers the
-  // Link's own navigation — no separate navigation logic is introduced.
-  const activateOnSpace = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
-    if (e.key === " ") {
-      e.preventDefault();
-      e.currentTarget.click();
-    }
-  };
 
   return (
     <article
@@ -33,10 +23,9 @@ export function ProductCard({ product }: { product: Product }) {
       {/* Image + badges — the image itself opens the product (same route as
           the "details" button below); badges/overlay stay pointer-events-none
           so they never intercept the click. */}
-      <Link
+      <ProductImageLink
         href={`/product/${product.slug}`}
-        aria-label={t("viewDetailsFor", { name: product.name })}
-        onKeyDown={activateOnSpace}
+        ariaLabel={t("viewDetailsFor", { name: product.name })}
         className="relative block aspect-[4/3] cursor-pointer overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-2"
       >
         <ProductImage
@@ -66,7 +55,7 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           </div>
         )}
-      </Link>
+      </ProductImageLink>
 
       {/* Body */}
       <div className="flex flex-1 flex-col p-5">
