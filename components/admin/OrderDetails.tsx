@@ -3,6 +3,7 @@ import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
 import { formatDateTime } from "@/lib/utils";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusControl } from "./OrderStatusControl";
+import { PrintOrderButton } from "./PrintOrderButton";
 
 export function OrderDetails({ order }: { order: Order }) {
   const items = order.items ?? [];
@@ -50,6 +51,15 @@ export function OrderDetails({ order }: { order: Order }) {
         <h2 className="mb-3 text-sm font-semibold text-neutral-600">Смяна на статус</h2>
         <OrderStatusControl orderId={order.id} status={order.status} />
       </section>
+
+      {/* Kitchen ticket — only after the order is accepted, never for pending
+          or cancelled ones. Real button only inside the Android kitchen app. */}
+      {order.status !== "PENDING" && order.status !== "CANCELLED" && (
+        <section className="rounded-2xl border border-neutral-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold text-neutral-600">Кухненска бележка</h2>
+          <PrintOrderButton order={{ ...order, items: order.items ?? [] }} />
+        </section>
+      )}
 
       <section>
         <h2 className="mb-1 text-sm font-semibold text-neutral-600">Клиент</h2>

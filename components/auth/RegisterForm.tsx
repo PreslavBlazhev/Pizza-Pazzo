@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { registerUser } from "@/app/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/ui/FormAlert";
@@ -73,10 +74,29 @@ export function RegisterForm() {
             name="acceptedTerms"
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-pizza-cream-dark text-pizza-green focus:ring-2 focus:ring-pizza-green/25"
           />
-          {/* TODO: link the Terms and the Privacy Policy once those pages exist.
-              Left as plain text on purpose — a dead link on a legal consent
-              checkbox is worse than no link. */}
-          <span>{t("acceptTerms")}</span>
+          {/* target="_blank" so opening a policy doesn't wipe the half-filled form. */}
+          <span>
+            {t.rich("acceptTerms", {
+              terms: (chunks) => (
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  className="underline transition hover:text-brand"
+                >
+                  {chunks}
+                </Link>
+              ),
+              privacy: (chunks) => (
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  className="underline transition hover:text-brand"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </span>
         </label>
         {fieldErrors.acceptedTerms && (
           <span role="alert" className="mt-1.5 block text-xs font-medium text-brand">

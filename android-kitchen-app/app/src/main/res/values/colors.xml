@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand palette (matches the web: red serif logo, green accents, cream). -->
+    <color name="pp_red">#C0392B</color>
+    <color name="pp_red_dark">#96281B</color>
+    <color name="pp_green">#1E8449</color>
+    <color name="pp_green_dark">#145A32</color>
+    <color name="pp_cream">#FDF6EC</color>
+    <color name="pp_ink">#2C2C2C</color>
+    <color name="white">#FFFFFF</color>
+    <color name="overlay_scrim">#66000000</color>
+</resources>

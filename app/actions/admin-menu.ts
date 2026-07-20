@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MENU_CACHE_TAG } from "@/lib/menu-data";
+import { deleteProductImageIfUnused } from "@/lib/uploads/product-image-storage";
 import {
   categoryUpdateSchema,
   productUpdateSchema,
@@ -182,6 +183,14 @@ export async function updateProductAction(
       })
     ),
   ]);
+
+  // Best-effort cleanup: if the image actually changed and the OLD one was one
+  // of our uploads (not a manually-typed /images/... path), delete it from
+  // disk — but only once confirmed no other product still uses that exact
+  // path. Never blocks or fails the save that already committed above.
+  if (existing.imageUrl && existing.imageUrl !== data.imageUrl) {
+    await deleteProductImageIfUnused(existing.imageUrl, id).catch(() => {});
+  }
 
   revalidateMenu();
   revalidatePath(`/admin/products/${id}`);

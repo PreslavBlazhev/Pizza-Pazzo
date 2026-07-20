@@ -20,7 +20,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "legal" });
-  return { title: t("terms") };
+  const tMeta = await getTranslations({ locale, namespace: "meta.legal" });
+  return { title: t("terms"), description: tMeta("terms.description") };
 }
 
 export default function TermsPage({ params }: PageProps) {

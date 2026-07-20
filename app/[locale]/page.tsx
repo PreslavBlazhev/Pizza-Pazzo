@@ -53,7 +53,11 @@ export default async function HomePage({
           <div className="container relative flex flex-col items-center py-16 text-center sm:py-24">
             <Logo className="h-28 sm:h-40" linked={false} priority />
 
-            <span className="mt-8 inline-block rounded-full border border-pizza-green/30 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-pizza-green">
+            {/* Slogan — font-slogan (Yeseva One) echoes the carved-serif "PIZZA
+                PAZZO" lettering in the logo above; tracking is deliberately
+                lighter than a sans-serif badge would use, since the display
+                face is already wide and dense at small sizes. */}
+            <span className="mt-8 inline-block rounded-full border border-pizza-green/30 bg-white/70 px-5 py-2 font-slogan text-sm uppercase leading-none tracking-wide text-pizza-green sm:text-base">
               {t("hero.badge")}
             </span>
 

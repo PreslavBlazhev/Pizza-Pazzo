@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pizza Pazzo Kitchen</string>
+
+    <!-- Main screen -->
+    <string name="loading">Зареждане…</string>
+    <string name="offline_title">Няма връзка с интернет</string>
+    <string name="offline_message">Проверете Wi-Fi връзката на таблета и опитайте отново.</string>
+    <string name="retry">Опитай отново</string>
+    <string name="open_settings">Настройки</string>
+    <string name="blocked_external_url">Външни сайтове не се отварят в кухненското приложение.</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Настройки на принтера</string>
+    <string name="settings_printer_section">Bluetooth принтер</string>
+    <string name="settings_select_printer">Избери сдвоен принтер</string>
+    <string name="settings_no_printer">Няма избран принтер</string>
+    <string name="settings_no_paired_devices">Няма сдвоени Bluetooth устройства. Сдвоете принтера от системните настройки на Android.</string>
+    <string name="settings_status_label">Статус: %1$s</string>
+    <string name="settings_test_connection">Тест на връзката</string>
+    <string name="settings_test_print">Тестов печат</string>
+    <string name="settings_disconnect">Прекъсни връзката</string>
+    <string name="settings_paper_section">Хартия и текст</string>
+    <string name="settings_paper_width">Ширина на хартията</string>
+    <string name="settings_paper_58">58 mm</string>
+    <string name="settings_paper_80">80 mm</string>
+    <string name="settings_encoding">Кодиране (кирилица)</string>
+    <string name="settings_chars_per_line">Символи на ред</string>
+    <string name="settings_auto_connect">Автоматично свързване при печат</string>
+    <string name="settings_auto_cut">Автоматично рязане (ако се поддържа)</string>
+    <string name="settings_feed_lines">Празни редове след бележката</string>
+    <string name="settings_app_section">Приложение</string>
+    <string name="settings_kitchen_url">Kitchen URL</string>
+    <string name="settings_clear_cache">Изчисти WebView кеша</string>
+    <string name="settings_cache_cleared">Кешът е изчистен.</string>
+    <string name="settings_reload_page">Презареди kitchen страницата</string>
+    <string name="settings_version">Версия: %1$s</string>
+    <string name="settings_last_error">Последна грешка при печат: %1$s</string>
+    <string name="settings_last_error_none">Последна грешка при печат: няма</string>
+    <string name="settings_diagnostics">Диагностика</string>
+    <string name="settings_saved">Настройките са запазени.</string>
+    <string name="settings_save">Запази</string>
+    <string name="settings_bt_permission_needed">Необходимо е разрешение за Bluetooth, за да се покажат сдвоените устройства.</string>
+
+    <!-- Printer states (mirrors PrinterConnectionState) -->
+    <string name="state_disconnected">Несвързан</string>
+    <string name="state_connecting">Свързване…</string>
+    <string name="state_connected">Свързан</string>
+    <string name="state_printing">Печата…</string>
+    <string name="state_error">Грешка</string>
+</resources>

@@ -12,6 +12,17 @@ export function ProductCard({ product }: { product: Product }) {
   const allergens = orderedAllergens(product.allergens);
   const unavailable = !product.isAvailable;
 
+  // A plain <a> only activates on Enter natively; Space is expected too (the
+  // image is being made keyboard-activatable like a button). preventDefault
+  // stops the page from scrolling, then a synthetic click re-triggers the
+  // Link's own navigation — no separate navigation logic is introduced.
+  const activateOnSpace = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
+    if (e.key === " ") {
+      e.preventDefault();
+      e.currentTarget.click();
+    }
+  };
+
   return (
     <article
       className={cn(
@@ -19,8 +30,15 @@ export function ProductCard({ product }: { product: Product }) {
         unavailable && "opacity-70"
       )}
     >
-      {/* Image + badges */}
-      <div className="relative aspect-[4/3] overflow-hidden">
+      {/* Image + badges — the image itself opens the product (same route as
+          the "details" button below); badges/overlay stay pointer-events-none
+          so they never intercept the click. */}
+      <Link
+        href={`/product/${product.slug}`}
+        aria-label={t("viewDetailsFor", { name: product.name })}
+        onKeyDown={activateOnSpace}
+        className="relative block aspect-[4/3] cursor-pointer overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-2"
+      >
         <ProductImage
           src={product.imageUrl}
           alt={product.name}
@@ -48,12 +66,17 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Body */}
       <div className="flex flex-1 flex-col p-5">
         <h3 className="font-display text-lg font-semibold text-pizza-ink">
-          {product.name}
+          <Link
+            href={`/product/${product.slug}`}
+            className="outline-none transition hover:text-brand focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-2"
+          >
+            {product.name}
+          </Link>
         </h3>
         {product.description && (
           <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-pizza-muted">

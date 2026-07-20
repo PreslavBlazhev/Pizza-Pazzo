@@ -14,6 +14,7 @@ const config = [
       "node_modules/**",
       "_downloads-and-unused/**",
       "Pizza Pazzo/**",
+      "android-kitchen-app/**",
       "next-env.d.ts",
     ],
   },

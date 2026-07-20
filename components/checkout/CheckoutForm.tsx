@@ -144,6 +144,29 @@ export function CheckoutForm({ defaults }: Props) {
         >
           {isPending ? t("placing") : t("submit")}
         </button>
+
+        <p className="text-center text-xs text-pizza-muted">
+          {t.rich("agreeTerms", {
+            terms: (chunks) => (
+              <Link
+                href="/terms"
+                target="_blank"
+                className="underline transition hover:text-brand"
+              >
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks) => (
+              <Link
+                href="/privacy"
+                target="_blank"
+                className="underline transition hover:text-brand"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
+        </p>
       </form>
 
       {/* Order summary */}

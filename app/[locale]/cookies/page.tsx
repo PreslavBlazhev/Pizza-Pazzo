@@ -20,7 +20,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "legal" });
-  return { title: t("cookies") };
+  const tMeta = await getTranslations({ locale, namespace: "meta.legal" });
+  return { title: t("cookies"), description: tMeta("cookies.description") };
 }
 
 export default function CookiesPage({ params }: PageProps) {

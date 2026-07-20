@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Lora, Inter } from "next/font/google";
+import { Lora, Inter, Yeseva_One } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -18,6 +18,21 @@ const display = Lora({
 const sans = Inter({
   subsets: ["latin", "cyrillic"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+/**
+ * Slogan font — visually matches the flared, high-contrast carved-serif "PIZZA
+ * PAZZO" lettering in the logo image (public/logos/pizza-pazzo-logo.png) far
+ * more closely than the body serif (Lora). Only used for the small badge
+ * under the homepage logo (see home.hero.badge). Chosen over a Latin-only
+ * match like Cinzel/Trajan-style faces specifically because it also covers
+ * Cyrillic — required since the same slogan renders in Bulgarian.
+ */
+const slogan = Yeseva_One({
+  subsets: ["latin", "cyrillic"],
+  weight: "400",
+  variable: "--font-slogan",
   display: "swap",
 });
 
@@ -98,7 +113,7 @@ export default async function LocaleLayout({
   const restaurantJsonLd = getRestaurantJsonLd(locale);
 
   return (
-    <html lang={locale} className={`${display.variable} ${sans.variable}`}>
+    <html lang={locale} className={`${display.variable} ${sans.variable} ${slogan.variable}`}>
       <body className="min-h-screen bg-pizza-cream font-sans text-pizza-ink antialiased">
         {/* schema.org Restaurant data for rich results. The `<` escape keeps a
             hypothetical "</script>" inside the data from closing the tag. */}
