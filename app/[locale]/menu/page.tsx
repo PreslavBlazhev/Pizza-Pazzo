@@ -39,8 +39,9 @@ export default async function MenuPage({ params }: PageProps) {
     <>
       <Header />
       <main>
-        {/* Hero */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-white to-pizza-cream">
+        {/* Hero — deliberately no background of its own: the body's cream +
+            food-doodle pattern shows through (client request, 2026-07). */}
+        <section className="relative overflow-hidden">
           <div className="pointer-events-none absolute -right-20 -top-16 h-64 w-64 rounded-full bg-pizza-red-light blur-3xl" />
           <div className="container relative py-14 text-center sm:py-16">
             <span className="inline-block rounded-full border border-pizza-green/30 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-pizza-green">

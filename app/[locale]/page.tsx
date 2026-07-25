@@ -42,7 +42,7 @@ export default async function HomePage({
 
   return (
     <>
-      <Header />
+      <Header variant="home" />
       <main>
         {/* ── Hero ─────────────────────────────────────────────── */}
         <section className="relative overflow-hidden">
@@ -51,7 +51,12 @@ export default async function HomePage({
           <div className="pointer-events-none absolute -right-24 top-10 h-72 w-72 rounded-full bg-pizza-red-light blur-3xl" />
 
           <div className="container relative flex flex-col items-center py-16 text-center sm:py-24">
-            <Logo className="h-28 sm:h-40" linked={false} priority />
+            {/* The bar above hides its logo on this page, so this is the only
+                (and therefore bigger) brand mark above the fold. Height-based
+                sizing + w-auto keeps the PNG's aspect ratio; at h-40 the logo
+                is ~283px wide and still fits a 360px viewport with the
+                container padding. */}
+            <Logo className="h-40 sm:h-56" linked={false} priority />
 
             {/* Slogan — font-slogan (Yeseva One) echoes the carved-serif "PIZZA
                 PAZZO" lettering in the logo above; tracking is deliberately
@@ -61,7 +66,10 @@ export default async function HomePage({
               {t("hero.badge")}
             </span>
 
-            <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight text-pizza-ink sm:text-6xl">
+            {/* font-slogan (Yeseva One, single 400 weight — no font-bold, it
+                would only synthesize a faux bold) matches the carved-serif
+                "PIZZA PAZZO" lettering of the logo and covers Cyrillic. */}
+            <h1 className="mt-5 max-w-3xl font-slogan text-4xl leading-tight text-pizza-ink sm:text-6xl">
               {t("hero.titleLead")}{" "}
               <span className="text-brand">{t("hero.titleAccent")}</span>
             </h1>

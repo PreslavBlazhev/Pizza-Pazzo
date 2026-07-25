@@ -16,9 +16,22 @@ export const SITE = {
   /** Primary phone (kept for convenience). */
   phone: "+359 88 248 4777",
   email: "orderspp@gmail.com",
-  address: "ул. Димитър Константинов 35",
+  /** Full display address (BG) as shown to visitors. Updated 2026-07. */
+  address: "Плевен, ул. Георги Кочев 13 (Срещу Технополис)",
+  /** Full display address for the English pages. */
+  addressEn: "13 Georgi Kochev St., Pleven (opposite Technopolis)",
+  /** Street only — for schema.org streetAddress and Maps queries, where the
+   *  "(Срещу Технополис)" landmark hint would just add noise. */
+  streetAddress: "ул. Георги Кочев 13",
+  city: "Плевен",
+  cityEn: "Pleven",
   website: "www.pizzapazzo.bg",
 } as const;
+
+/** Display address in the visitor's language (BG is the default/fallback). */
+export function getSiteAddress(locale: string): string {
+  return locale === "en" ? SITE.addressEn : SITE.address;
+}
 
 /**
  * Canonical origin of the site, used to build absolute URLs for Open Graph and
@@ -37,13 +50,10 @@ export const SITE_URL =
  * paint Sunday red, which would have silently stopped working in English.
  */
 export const WORKING_HOURS = [
-  { dayKey: "monday", hours: "11:00 – 22:30", closed: false },
-  { dayKey: "tuesdayToThursday", hours: "09:00 – 18:00", closed: false },
-  { dayKey: "friday", hours: "09:00 – 19:00", closed: false },
-  { dayKey: "saturday", hours: "10:00 – 16:00", closed: false },
-  { dayKey: "sunday", hours: null, closed: true },
+  { dayKey: "mondayToSaturday", hours: "11:00 – 23:00", closed: false },
+  { dayKey: "sunday", hours: "11:00 – 22:30", closed: false },
 ] as const satisfies readonly {
-  dayKey: "monday" | "tuesdayToThursday" | "friday" | "saturday" | "sunday";
+  dayKey: "mondayToSaturday" | "sunday";
   hours: string | null;
   closed: boolean;
 }[];

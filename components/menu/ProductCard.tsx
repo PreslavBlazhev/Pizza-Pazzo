@@ -16,7 +16,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article
       className={cn(
-        "group flex flex-col overflow-hidden rounded-3xl border border-pizza-cream-dark bg-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-soft",
+        "group flex h-full flex-col overflow-hidden rounded-3xl border border-pizza-cream-dark bg-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-soft",
         unavailable && "opacity-70"
       )}
     >
@@ -78,8 +78,10 @@ export function ProductCard({ product }: { product: Product }) {
           </p>
         )}
 
-        {/* Allergens */}
-        <div className="mt-4 flex flex-wrap gap-1.5">
+        {/* Allergens — pb-5 keeps the old fixed gap to the price zone below,
+            which now uses mt-auto so it sits at the card bottom in a grid row
+            of equal-height cards. */}
+        <div className="mt-4 flex flex-wrap gap-1.5 pb-5">
           {allergens.map((id) => (
             <span
               key={id}
@@ -101,13 +103,8 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
 
         {/* Price + CTA */}
-        <div className="mt-5 flex items-end justify-between gap-3 border-t border-pizza-cream-dark pt-4">
+        <div className="mt-auto flex items-end justify-between gap-3 border-t border-pizza-cream-dark pt-4">
           <div className="leading-none">
-            {product.variants && product.variants.length > 0 && (
-              <span className="mb-1 block text-[11px] text-pizza-muted">
-                {t("from")}
-              </span>
-            )}
             <span className="font-display text-xl font-bold text-brand">
               {formatEurPrice(product.priceEur)}
             </span>

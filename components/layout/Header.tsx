@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Logo } from "./Logo";
+import { HeaderShell } from "./HeaderShell";
 import { MobileNav } from "./MobileNav";
 import { HeaderAuth } from "./HeaderAuth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -22,13 +23,25 @@ export const NAV_LINKS = [
  * Note the desktop breakpoint is `lg`, not `md` — the auth controls added
  * enough width that the nav wrapped on tablets.
  */
-export function Header() {
+interface HeaderProps {
+  /**
+   * "home": transparent over the hero until the first scroll, and no brand
+   * logo in the bar — the hero right below shows the big one. Every other
+   * page uses "default": solid background and the logo from the start.
+   */
+  variant?: "default" | "home";
+}
+
+export function Header({ variant = "default" }: HeaderProps) {
   const t = useTranslations("nav");
+  const isHome = variant === "home";
 
   return (
-    <header className="sticky top-0 z-40">
+    <HeaderShell transparentAtTop={isHome}>
       <div className="container flex h-20 items-center justify-between gap-4">
-        <Logo className="h-12 sm:h-14" priority />
+        {/* On the homepage the logo is hidden; the empty span keeps
+            justify-between so the nav stays pinned to the right. */}
+        {isHome ? <span aria-hidden /> : <Logo className="h-12 sm:h-14" priority />}
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-6 lg:flex" aria-label={t("mainNav")}>
@@ -70,6 +83,6 @@ export function Header() {
           <MobileNav />
         </div>
       </div>
-    </header>
+    </HeaderShell>
   );
 }

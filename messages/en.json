@@ -1,7 +1,7 @@
 {
   "meta": {
-    "tagline": "Authentic Italian pizza",
-    "description": "Authentic Italian pizza delivered — order online from Pizza Pazzo.",
+    "tagline": "Authentic Italian pizzas",
+    "description": "Authentic Italian pizzas delivered — order online from Pizza Pazzo.",
     "menu": {
       "title": "Digital menu",
       "description": "Choose from our pizzas, burgers, starters, salads and desserts. Prices are shown in euro and leva."
@@ -87,20 +87,17 @@
 
   "hours": {
     "title": "Opening hours",
-    "monday": "Monday",
-    "tuesdayToThursday": "Tuesday – Thursday",
-    "friday": "Friday",
-    "saturday": "Saturday",
+    "mondayToSaturday": "Monday – Saturday",
     "sunday": "Sunday",
     "closed": "Closed"
   },
 
   "home": {
     "hero": {
-      "badge": "Authentic Italian pizza",
+      "badge": "Authentic Italian pizzas",
       "titleLead": "Deliciously",
       "titleAccent": "Different",
-      "subtitle": "Fresh dough, quality ingredients and recipes with character. Browse our menu and order your favourite dish.",
+      "subtitle": "Fresh dough and quality ingredients. Browse our menu and order your favourite dish.",
       "ctaMenu": "Browse the menu",
       "ctaPopular": "Most ordered 🍕",
       "trustDelivery": "🚗 Fast delivery",
@@ -140,7 +137,7 @@
   },
 
   "footer": {
-    "about": "Authentic Italian pizza delivered to your door. Made with care since {year}.",
+    "about": "Authentic Italian pizzas delivered to your door. Made with care since {year}.",
     "navigation": "Navigation",
     "contacts": "Contact",
     "legal": "Legal",

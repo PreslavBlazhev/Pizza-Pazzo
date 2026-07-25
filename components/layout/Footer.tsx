@@ -1,8 +1,8 @@
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Logo } from "./Logo";
 import { NAV_LINKS } from "./Header";
-import { SITE, WORKING_HOURS } from "@/lib/constants";
+import { getSiteAddress, SITE, WORKING_HOURS } from "@/lib/constants";
 
 const LEGAL_LINKS = [
   { href: "/terms", labelKey: "terms" },
@@ -16,6 +16,7 @@ export function Footer() {
   const t = useTranslations();
   const tHours = useTranslations("hours");
   const tLegal = useTranslations("legal");
+  const locale = useLocale();
 
   return (
     <footer className="border-t border-pizza-cream-dark bg-white">
@@ -51,7 +52,7 @@ export function Footer() {
           </h3>
           <ul className="mt-4 space-y-2 text-sm text-pizza-muted">
             <li className="flex items-start gap-2">
-              <span aria-hidden>📍</span> {SITE.address}
+              <span aria-hidden>📍</span> {getSiteAddress(locale)}
             </li>
             {SITE.phones.map((p) => (
               <li key={p} className="flex items-start gap-2">

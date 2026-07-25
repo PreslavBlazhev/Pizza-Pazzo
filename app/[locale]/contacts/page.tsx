@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHero } from "@/components/ui/PageHero";
 import { Card } from "@/components/ui/Card";
-import { SITE, WORKING_HOURS } from "@/lib/constants";
+import { getSiteAddress, SITE, WORKING_HOURS } from "@/lib/constants";
 import { routing, type Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -23,11 +23,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const t = await getTranslations({ locale, namespace: "meta.contacts" });
   return {
     title: t("title"),
-    description: t("description", { address: SITE.address, phone: SITE.phone }),
+    description: t("description", {
+      address: getSiteAddress(locale),
+      phone: SITE.phone,
+    }),
   };
 }
 
-const mapsQuery = encodeURIComponent(`${SITE.name}, ${SITE.address}`);
+// Street + city without the "(Срещу Технополис)" hint — cleaner Maps match.
+const mapsQuery = encodeURIComponent(
+  `${SITE.name}, ${SITE.city}, ${SITE.streetAddress}`
+);
 
 export default function ContactsPage({ params }: PageProps) {
   const { locale } = use(params);
@@ -79,7 +85,9 @@ export default function ContactsPage({ params }: PageProps) {
               <h2 className="mt-4 font-display text-xl font-semibold text-pizza-ink">
                 {t("addressAndEmail")}
               </h2>
-              <p className="mt-3 text-sm text-pizza-muted">{SITE.address}</p>
+              <p className="mt-3 text-sm text-pizza-muted">
+                {getSiteAddress(locale)}
+              </p>
               <a
                 href={`mailto:${SITE.email}`}
                 className="mt-2 inline-block text-sm font-medium text-pizza-ink transition hover:text-brand"
