@@ -190,13 +190,24 @@
     "new": "New",
     "from": "from",
     "imageSoon": "Photo coming soon",
-    "backToMenu": "← Back to the menu",
+    "backToMenu": "Back to menu",
     "details": "Details",
     "fallbackTitle": "Product",
     "viewDetailsFor": "View details for {name}",
     "addToCart": "Add to cart",
     "added": "Added ✓",
     "addToCartSoon": "Add to cart — coming soon"
+  },
+
+  "extras": {
+    "title": "Choose add-ons",
+    "crustTitle": "Choose a crust",
+    "saucesTitle": "Sauces",
+    "unavailableForSize": "Unavailable for this size",
+    "decreaseQuantity": "Decrease quantity of {name}",
+    "increaseQuantity": "Increase quantity of {name}",
+    "maxQuantityReached": "Maximum quantity reached",
+    "invalidSelection": "One of the chosen add-ons is unavailable for this size. Remove it to continue."
   },
 
   "gallery": {

@@ -1,13 +1,18 @@
 "use client";
 
 import { useActionState, useEffect, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { FormAlert } from "@/components/ui/FormAlert";
 import { CartSummary } from "@/components/cart/CartSummary";
-import { useCartStore, useCartHydrated } from "@/store/cart-store";
+import {
+  linePreviewTotalEur,
+  useCartHydrated,
+  useCartStore,
+} from "@/store/cart-store";
+import { formatEurPrice } from "@/lib/format-price";
 import { createOrder, type CheckoutResult } from "@/app/actions/checkout";
 
 interface Props {
@@ -19,6 +24,7 @@ export function CheckoutForm({ defaults }: Props) {
   const t = useTranslations("checkout");
   const tCart = useTranslations("cart");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const router = useRouter();
 
   const hydrated = useCartHydrated();
@@ -178,13 +184,33 @@ export function CheckoutForm({ defaults }: Props) {
       {/* Order summary */}
       <aside className="h-fit rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
         <h2 className="mb-4 text-lg font-semibold text-pizza-ink">{t("orderSummary")}</h2>
-        <ul className="mb-4 space-y-2 text-sm">
+        <ul className="mb-4 space-y-2.5 text-sm">
           {items.map((i) => (
-            <li key={i.lineId} className="flex justify-between gap-2 text-pizza-muted">
-              <span className="min-w-0 truncate">
-                {i.quantity}× {i.product.name}
-                {i.selectedVariant ? ` (${i.selectedVariant.name})` : ""}
-              </span>
+            <li key={i.lineId} className="text-pizza-muted">
+              <div className="flex justify-between gap-2">
+                <span className="min-w-0">
+                  {i.quantity}× {i.product.name}
+                  {i.selectedVariant ? ` (${i.selectedVariant.name})` : ""}
+                </span>
+                {/* Preview line total incl. extras — server recomputes it. */}
+                <span className="shrink-0 font-medium text-pizza-ink">
+                  {formatEurPrice(linePreviewTotalEur(i))}
+                </span>
+              </div>
+              {(i.extras ?? []).length > 0 && (
+                <ul className="mt-0.5 space-y-0.5 pl-4 text-xs">
+                  {(i.extras ?? []).map((e) => (
+                    <li key={e.key} className="break-words">
+                      + {e.quantity > 1 ? `${e.quantity}× ` : ""}
+                      {e.display
+                        ? locale === "en"
+                          ? e.display.nameEn
+                          : e.display.nameBg
+                        : e.key}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>

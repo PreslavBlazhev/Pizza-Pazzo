@@ -190,13 +190,24 @@
     "new": "Ново",
     "from": "от",
     "imageSoon": "Снимка скоро",
-    "backToMenu": "← Обратно към менюто",
+    "backToMenu": "Обратно към менюто",
     "details": "Детайли",
     "fallbackTitle": "Продукт",
     "viewDetailsFor": "Виж детайли за {name}",
     "addToCart": "Добави в количката",
     "added": "Добавено ✓",
     "addToCartSoon": "Добавяне в количка — скоро"
+  },
+
+  "extras": {
+    "title": "Изберете добавки",
+    "crustTitle": "Изберете борд",
+    "saucesTitle": "Сосове",
+    "unavailableForSize": "Недостъпно за този размер",
+    "decreaseQuantity": "Намали количеството на {name}",
+    "increaseQuantity": "Увеличи количеството на {name}",
+    "maxQuantityReached": "Достигнато е максималното количество",
+    "invalidSelection": "Някоя от избраните добавки не е налична за този размер. Премахнете я, за да продължите."
   },
 
   "gallery": {

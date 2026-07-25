@@ -33,6 +33,34 @@ function bgnUnit(item: CartItem): number {
   return item.selectedVariant?.priceBgn ?? item.product.priceBgn;
 }
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * PREVIEW extras total per one main unit, from the display snapshots captured
+ * at add time. UI-only — the checkout server re-derives real prices from the
+ * database; an extra without a display snapshot simply previews as 0.
+ */
+export function extrasPreviewUnitEur(item: CartItem): number {
+  return round2(
+    (item.extras ?? []).reduce((s, e) => s + (e.display?.unitPriceEur ?? 0) * e.quantity, 0)
+  );
+}
+
+export function extrasPreviewUnitBgn(item: CartItem): number {
+  return round2(
+    (item.extras ?? []).reduce((s, e) => s + (e.display?.unitPriceBgn ?? 0) * e.quantity, 0)
+  );
+}
+
+/** PREVIEW line totals including extras: (base unit + extras unit) × quantity. */
+export function linePreviewTotalEur(item: CartItem): number {
+  return round2(round2(item.unitPrice + extrasPreviewUnitEur(item)) * item.quantity);
+}
+
+export function linePreviewTotalBgn(item: CartItem): number {
+  return round2(round2(bgnUnit(item) + extrasPreviewUnitBgn(item)) * item.quantity);
+}
+
 // ── Persist migration (unknown → PersistedCart, never throws) ───────────────
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -161,8 +189,10 @@ export const useCartStore = create<CartState>()(
       totals: () => {
         const items = get().items;
         const itemsCount = items.reduce((n, i) => n + i.quantity, 0);
-        const subtotal = items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-        const subtotalBgn = items.reduce((s, i) => s + bgnUnit(i) * i.quantity, 0);
+        // Line totals include the extras PREVIEW prices (display snapshots);
+        // the authoritative totals are recomputed server-side at checkout.
+        const subtotal = items.reduce((s, i) => round2(s + linePreviewTotalEur(i)), 0);
+        const subtotalBgn = items.reduce((s, i) => round2(s + linePreviewTotalBgn(i)), 0);
         const deliveryFee = itemsCount > 0 ? DELIVERY_FEE : 0;
         const deliveryFeeBgn = itemsCount > 0 ? DELIVERY_FEE * EUR_TO_BGN : 0;
         return {

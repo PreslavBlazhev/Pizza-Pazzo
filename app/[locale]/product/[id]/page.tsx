@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductDetails } from "@/components/menu/ProductDetails";
-import { findProduct, getCategoryById } from "@/lib/menu-data";
+import { findProduct, getCategoryById, getExtrasForProduct } from "@/lib/menu-data";
 import { type Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -30,25 +29,19 @@ export default async function ProductPage({ params }: PageProps) {
   const { id, locale } = await params;
   setRequestLocale(locale);
 
-  const t = await getTranslations({ locale, namespace: "product" });
   const product = await findProduct(id, locale);
   if (!product) notFound();
 
   const category = await getCategoryById(product.categoryId, locale);
+  // The extras offer (crusts/addons/sauces) for this product's category — null
+  // for drinks/desserts, which render no picker at all.
+  const extras = await getExtrasForProduct(product.categoryId);
 
   return (
     <>
       <Header />
       <main className="container py-10 sm:py-14">
-        <Link
-          href="/menu"
-          className="inline-flex items-center gap-1 text-sm font-medium text-pizza-muted transition hover:text-brand"
-        >
-          {t("backToMenu")}
-        </Link>
-        <div className="mt-8">
-          <ProductDetails product={product} category={category} />
-        </div>
+        <ProductDetails product={product} category={category} extras={extras} />
       </main>
       <Footer />
     </>

@@ -23,6 +23,24 @@ import type {
   RawProduct,
   RawProductVariant,
 } from "@/types/product";
+import type {
+  ProductExtraOption,
+  ProductExtraOptionSizePrice,
+  ProductExtrasData,
+} from "@/types/cart";
+import {
+  BURGER_ADDONS_CATEGORY_ID,
+  EXTRAS_LIMITS,
+  PIZZA_ADDONS_CATEGORY_ID,
+  PIZZA_SELECTIONS,
+  SAUCES_CATEGORY_ID,
+  burgerAddonKeyFor,
+  isBurgerCategory,
+  isPizzaCategory,
+  parseVariantSize,
+  sauceKeyFor,
+  saucesAllowedForCategory,
+} from "@/lib/extras-rules";
 import type { LocalizedText } from "@/types/i18n";
 import { routing, type Locale } from "@/i18n/routing";
 
@@ -249,4 +267,100 @@ export async function getPopularProducts(locale: Locale): Promise<Product[]> {
   return products
     .filter((p) => p.isPopular)
     .map((p) => resolveProduct(p, locale));
+}
+
+// ── Product-page extras offer ───────────────────────────────────────────────
+
+/** Sizes a variant-priced addon can be bought in, parsed from variant names. */
+function sizePricesOf(raw: RawProduct): ProductExtraOptionSizePrice[] {
+  return (raw.variants ?? []).flatMap((v) => {
+    const size = parseVariantSize(v.name.bg) ?? parseVariantSize(v.name.en);
+    return size === null
+      ? []
+      : [{ variantId: v.id, size, priceEur: v.priceEur, priceBgn: v.priceBgn }];
+  });
+}
+
+/**
+ * The extras a product page may offer, per the rules in lib/extras-rules.ts:
+ * pizzas → crusts + generic addons + sauces; burgers → burger addons + sauces;
+ * other food → sauces only; drinks/desserts (the sauce deny list) → null, no
+ * picker at all. Only available source products are offered; prices are plain
+ * numbers in both currencies and both languages (client-safe).
+ *
+ * This is a superset of what the server will accept at checkout — the resolver
+ * in lib/extras-resolve.ts stays the only pricing authority.
+ */
+export async function getExtrasForProduct(
+  categoryId: string
+): Promise<ProductExtrasData | null> {
+  if (!saucesAllowedForCategory(categoryId)) return null;
+
+  const { products } = await loadMenu();
+  const crusts: ProductExtraOption[] = [];
+  const addons: ProductExtraOption[] = [];
+  const sauces: ProductExtraOption[] = [];
+
+  if (isPizzaCategory(categoryId)) {
+    const sources = new Map(
+      products
+        .filter((p) => p.categoryId === PIZZA_ADDONS_CATEGORY_ID && p.isAvailable)
+        .map((p) => [p.id, p])
+    );
+    for (const [key, def] of Object.entries(PIZZA_SELECTIONS)) {
+      const src = sources.get(def.sourceProductId);
+      if (!src) continue; // hidden/unavailable in the admin → not offered
+      const option: ProductExtraOption = {
+        key,
+        sourceProductId: src.id,
+        type: def.type,
+        nameBg: def.nameBg,
+        nameEn: def.nameEn,
+        sizePrices: sizePricesOf(src),
+        maxQuantity: 1,
+      };
+      (def.type === "pizza_crust" ? crusts : addons).push(option);
+    }
+  }
+
+  if (isBurgerCategory(categoryId)) {
+    const burgerAddons = products
+      .filter((p) => p.categoryId === BURGER_ADDONS_CATEGORY_ID && p.isAvailable)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    for (const p of burgerAddons) {
+      addons.push({
+        key: burgerAddonKeyFor(p.id),
+        sourceProductId: p.id,
+        type: "burger_addon",
+        nameBg: p.name.bg,
+        nameEn: p.name.en,
+        priceEur: p.priceEur,
+        priceBgn: p.priceBgn,
+        sizeLabelBg: p.size?.bg,
+        sizeLabelEn: p.size?.en,
+        maxQuantity: 1,
+      });
+    }
+  }
+
+  const sauceProducts = products
+    .filter((p) => p.categoryId === SAUCES_CATEGORY_ID && p.isAvailable)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  for (const p of sauceProducts) {
+    sauces.push({
+      key: sauceKeyFor(p.id),
+      sourceProductId: p.id,
+      type: "sauce",
+      nameBg: p.name.bg,
+      nameEn: p.name.en,
+      priceEur: p.priceEur,
+      priceBgn: p.priceBgn,
+      sizeLabelBg: p.size?.bg,
+      sizeLabelEn: p.size?.en,
+      maxQuantity: EXTRAS_LIMITS.maxSauceQuantity,
+    });
+  }
+
+  if (crusts.length === 0 && addons.length === 0 && sauces.length === 0) return null;
+  return { crusts, addons, sauces };
 }

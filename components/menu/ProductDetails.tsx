@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
+import type { ProductExtrasData } from "@/types/cart";
 import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
 import { isAllergenId, orderedAllergens } from "@/lib/allergens";
 import { AddToCart } from "@/components/cart/AddToCart";
@@ -9,10 +10,12 @@ import { ProductImage } from "./ProductImage";
 interface ProductDetailsProps {
   product: Product;
   category?: Category;
+  /** Extras offer for the picker; null → no picker (drinks/desserts). */
+  extras?: ProductExtrasData | null;
 }
 
-/** Full product view. Add-to-cart controls arrive in Stage 2 (Количка). */
-export function ProductDetails({ product, category }: ProductDetailsProps) {
+/** Full product view with purchase controls. */
+export function ProductDetails({ product, category, extras = null }: ProductDetailsProps) {
   const t = useTranslations("product");
   const tAllergens = useTranslations("allergens");
   const allergens = orderedAllergens(product.allergens);
@@ -127,8 +130,8 @@ export function ProductDetails({ product, category }: ProductDetailsProps) {
           )}
         </div>
 
-        {/* Add to cart */}
-        <AddToCart product={product} />
+        {/* Add to cart (+ extras picker + back-to-menu link) */}
+        <AddToCart product={product} extras={extras} />
       </div>
     </div>
   );
