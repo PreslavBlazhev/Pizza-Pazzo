@@ -7,6 +7,7 @@
  */
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { parseOrderItemExtras } from "@/lib/extras-rules";
 import { ACTIVE_ORDER_STATUSES } from "@/lib/order-status";
 import type { AdminDashboardStats } from "@/types/admin";
 import {
@@ -34,6 +35,8 @@ function mapItem(i: PrismaOrderWithItems["items"][number]): OrderItem {
     unitPriceEur: Number(i.unitPriceEur),
     totalPriceBgn: Number(i.totalPriceBgn),
     totalPriceEur: Number(i.totalPriceEur),
+    // Defensive parse: legacy "[]" rows and any corrupted JSON both map to [].
+    extras: parseOrderItemExtras(i.extrasJson),
     itemNote: i.itemNote,
   };
 }

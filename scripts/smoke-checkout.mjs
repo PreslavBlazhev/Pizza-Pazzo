@@ -13,6 +13,11 @@
  *
  * Usage: npm run smoke   (alias for: node scripts/smoke-checkout.mjs)
  */
+import { execSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -179,6 +184,273 @@ if (Math.round(subBgn * 100) !== expectBgn || Math.round(subEur * 100) !== expec
 } else {
   ok(`sample cart (${sample.map((l) => `${l.qty}× ${l.slug}`).join(" + ")}) = ${subEur} € / ${subBgn} лв., no rounding drift`);
 }
+
+// ── 4. Extras resolution & pricing (lib/extras-rules + lib/extras-resolve) ──
+//
+// The two extras modules are dependency-free TypeScript by design, so this
+// script compiles them standalone into a temp dir and unit-tests the REAL
+// resolver — no re-implementation drift. Pure functions + read-only menu data;
+// nothing is written to the database.
+console.log("4) Extras resolution & pricing");
+
+const buildDir = mkdtempSync(join(tmpdir(), "pp-extras-smoke-"));
+let rules;
+let resolveOrderItemExtras;
+try {
+  execSync(
+    `npx tsc lib/extras-rules.ts lib/extras-resolve.ts --outDir "${buildDir}" --module commonjs --target es2020 --strict --skipLibCheck`,
+    { stdio: "pipe" }
+  );
+  const requireCjs = createRequire(import.meta.url);
+  rules = requireCjs(join(buildDir, "extras-rules.js"));
+  ({ resolveOrderItemExtras } = requireCjs(join(buildDir, "extras-resolve.js")));
+} catch (e) {
+  fail(`extras modules failed to compile standalone: ${e.message}`);
+}
+
+if (rules && resolveOrderItemExtras) {
+  // DB rows → the resolver's ExtraSourceProduct shape.
+  const srcShape = (p) => ({
+    id: p.id,
+    categoryId: p.categoryId,
+    isAvailable: p.isAvailable,
+    nameBg: p.name.bg,
+    nameEn: p.name.en,
+    priceEur: p.priceEur,
+    priceBgn: p.priceBgn,
+    variants: (p.variants ?? []).map((v) => ({
+      id: v.id,
+      nameBg: v.name.bg,
+      nameEn: v.name.en,
+      priceEur: v.priceEur,
+      priceBgn: v.priceBgn,
+    })),
+  });
+  const byId = new Map(products.map((p) => [p.id, p]));
+  const firstOf = (categoryId) =>
+    products.find((p) => p.categoryId === categoryId && p.isAvailable);
+
+  const pizza = products.find(
+    (p) =>
+      rules.PIZZA_CATEGORY_IDS.includes(p.categoryId) &&
+      p.isAvailable &&
+      (p.variants?.length ?? 0) >= 2
+  );
+  const burger = firstOf(rules.BURGER_CATEGORY_ID);
+  const drink = firstOf("cat_drinks");
+  const dessert = firstOf("cat_desserts");
+  const crustProduct = byId.get(rules.PIZZA_CRUST_SOURCE_PRODUCT_ID);
+  const genericAddon = byId.get(rules.PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID);
+  const vegetableAddon = byId.get(rules.PIZZA_VEGETABLE_ADDON_SOURCE_PRODUCT_ID);
+  const sauce = firstOf(rules.SAUCES_CATEGORY_ID);
+  const burgerAddon = firstOf(rules.BURGER_ADDONS_CATEGORY_ID);
+
+  if (!pizza || !burger || !drink || !dessert || !crustProduct || !genericAddon || !vegetableAddon || !sauce || !burgerAddon) {
+    fail("extras smoke: required test products are missing from the menu data");
+  } else {
+    const sources = new Map(
+      [crustProduct, genericAddon, vegetableAddon, sauce, burgerAddon].map((p) => [
+        p.id,
+        srcShape(p),
+      ])
+    );
+    const sizeOf = (v) => rules.parseVariantSize(v.name.bg);
+    const pizza30 = pizza.variants.find((v) => sizeOf(v) === 30);
+    const pizza40 = pizza.variants.find((v) => sizeOf(v) === 40);
+    const crust30 = crustProduct.variants.find((v) => sizeOf(v) === 30);
+    const crust40 = crustProduct.variants.find((v) => sizeOf(v) === 40);
+    const veg30 = vegetableAddon.variants.find((v) => sizeOf(v) === 30);
+    const generic30 = genericAddon.variants.find((v) => sizeOf(v) === 30);
+
+    const resolveFor = (main, variantName, selections) =>
+      resolveOrderItemExtras({
+        mainProduct: { id: main.id, categoryId: main.categoryId },
+        mainVariantName: variantName,
+        selections,
+        sourceProducts: sources,
+      });
+    const sel = (key, sourceProductId, quantity = 1) => ({ key, sourceProductId, quantity });
+    const crustSel = (key = "cheese_crust") => sel(key, crustProduct.id);
+    const expectOk = (label, r, checkFn) => {
+      if (!r.ok) return fail(`${label}: rejected (${r.code})`);
+      const problem = checkFn ? checkFn(r) : null;
+      if (problem) return fail(`${label}: ${problem}`);
+      ok(label);
+    };
+    const expectFail = (label, r, code) => {
+      if (r.ok) return fail(`${label}: was ACCEPTED — must be rejected`);
+      if (code && r.code !== code) return fail(`${label}: rejected with '${r.code}', expected '${code}'`);
+      ok(`${label} (${r.code})`);
+    };
+
+    if (!pizza30 || !pizza40 || !crust30 || !crust40 || !veg30 || !generic30) {
+      fail("extras smoke: 30/40 см variants not found on pizza/addon products");
+    } else {
+      // 1) Pizza 30 см + cheese crust → the crust's 30 см variant + price.
+      expectOk("pizza 30 см + cheese_crust uses the 30 см addon variant", resolveFor(pizza, pizza30.name.bg, [crustSel()]), (r) => {
+        const e = r.extras[0];
+        if (r.extras.length !== 1) return `expected 1 extra, got ${r.extras.length}`;
+        if (e.sourceVariantId !== crust30.id) return `matched variant ${e.sourceVariantId}, expected ${crust30.id}`;
+        if (e.unitPriceEur !== crust30.priceEur || e.unitPriceBgn !== crust30.priceBgn) return "crust 30 price mismatch";
+        if (e.nameBg !== "Кашкавален борд" || e.nameEn !== "Cheese crust") return "snapshot label wrong";
+        if (r.extrasUnitTotalEur !== round2(crust30.priceEur)) return "unit total wrong";
+        return null;
+      });
+
+      // 2) Pizza 40 см + cheese crust → the 40 см variant.
+      expectOk("pizza 40 см + cheese_crust uses the 40 см addon variant", resolveFor(pizza, pizza40.name.bg, [crustSel()]), (r) => {
+        const e = r.extras[0];
+        if (e.sourceVariantId !== crust40.id) return `matched ${e.sourceVariantId}, expected ${crust40.id}`;
+        if (e.unitPriceEur !== crust40.priceEur) return "crust 40 price mismatch";
+        if (e.sizeContext !== crust40.name.bg) return `sizeContext '${e.sizeContext}'`;
+        return null;
+      });
+
+      // 3) Pizza 30 см + meat + vegetable addons.
+      expectOk("pizza 30 см + meat_addon + vegetable_addon", resolveFor(pizza, pizza30.name.bg, [sel("meat_addon", genericAddon.id), sel("vegetable_addon", vegetableAddon.id)]), (r) => {
+        if (r.extras.length !== 2) return `expected 2 extras, got ${r.extras.length}`;
+        const meat = r.extras.find((e) => e.key === "meat_addon");
+        const veg = r.extras.find((e) => e.key === "vegetable_addon");
+        if (!meat || meat.unitPriceEur !== generic30.priceEur) return "meat addon 30 price mismatch";
+        if (!veg || veg.unitPriceEur !== veg30.priceEur) return "vegetable addon 30 price mismatch";
+        if (meat.nameBg !== "Месна добавка" || veg.nameBg !== "Зеленчукова добавка") return "labels wrong";
+        if (r.extrasUnitTotalEur !== round2(round2(generic30.priceEur) + veg30.priceEur)) return "unit total wrong";
+        return null;
+      });
+
+      // 4) Sauce quantity 2 → unit × 2.
+      expectOk("pizza + sauce ×2 totals unit × 2", resolveFor(pizza, pizza30.name.bg, [sel(`sauce:${sauce.id}`, sauce.id, 2)]), (r) => {
+        const e = r.extras[0];
+        if (e.quantity !== 2) return `quantity ${e.quantity}`;
+        if (e.totalPriceEur !== round2(sauce.priceEur * 2)) return "sauce total mismatch";
+        if (e.totalPriceBgn !== round2(sauce.priceBgn * 2)) return "sauce BGN total mismatch";
+        return null;
+      });
+
+      // 5) Main quantity 2 — the checkout line-total formula multiplies the
+      //    per-unit extras (documented semantics: extras apply to every unit).
+      {
+        const r = resolveFor(pizza, pizza30.name.bg, [sel(`sauce:${sauce.id}`, sauce.id, 2)]);
+        if (!r.ok) fail("line total with main qty 2: resolver rejected");
+        else {
+          const mainQty = 2;
+          const perUnit = round2(pizza30.priceEur + r.extrasUnitTotalEur);
+          const line = round2(perUnit * mainQty);
+          const expectedCents =
+            (Math.round(pizza30.priceEur * 100) + Math.round(sauce.priceEur * 100) * 2) * mainQty;
+          if (Math.round(line * 100) !== expectedCents) {
+            fail(`line total drift: ${line} € vs ${expectedCents} cents`);
+          } else {
+            ok(`main qty 2 line total = (base + extras) × 2 = ${line} € (no drift)`);
+          }
+        }
+      }
+
+      // 6) Same extras, different click order → identical lineId.
+      {
+        const a = [crustSel(), sel(`sauce:${sauce.id}`, sauce.id, 2), sel("meat_addon", genericAddon.id)];
+        const b = [sel("meat_addon", genericAddon.id), crustSel(), sel(`sauce:${sauce.id}`, sauce.id, 2)];
+        const idA = rules.lineIdFor(pizza.id, pizza30.id, a);
+        const idB = rules.lineIdFor(pizza.id, pizza30.id, b);
+        if (idA !== idB) fail("lineId differs for the same extras in different order");
+        else ok("lineId is order-independent for identical extras");
+      }
+
+      // 7) Different crust → different lineId.  8) Sauce qty 1 vs 2 → different.
+      if (rules.lineIdFor(pizza.id, pizza30.id, [crustSel("cheese_crust")]) === rules.lineIdFor(pizza.id, pizza30.id, [crustSel("pepperoni_crust")])) {
+        fail("different crusts produced the same lineId");
+      } else ok("different crusts produce different lineIds");
+      if (rules.lineIdFor(pizza.id, pizza30.id, [sel(`sauce:${sauce.id}`, sauce.id, 1)]) === rules.lineIdFor(pizza.id, pizza30.id, [sel(`sauce:${sauce.id}`, sauce.id, 2)])) {
+        fail("sauce qty 1 and 2 merged into the same lineId");
+      } else ok("sauce quantity is part of the lineId");
+      if (rules.lineIdFor(pizza.id, pizza30.id, []) !== `${pizza.id}::${pizza30.id}`) {
+        fail("legacy lineId format changed for items without extras");
+      } else ok("no-extras lineId keeps the legacy format");
+
+      // 9) Fake source product id → rejected.
+      expectFail("fake sourceProductId", resolveFor(pizza, pizza30.name.bg, [sel("sauce:prod_no_such", "prod_no_such", 1)]), "unknown-product");
+
+      // 10) Real product, wrong source category (a burger addon posing as sauce).
+      expectFail("sauce key pointing at a burger-addon product", resolveFor(pizza, pizza30.name.bg, [sel(`sauce:${burgerAddon.id}`, burgerAddon.id, 1)]), "wrong-category");
+
+      // 11) Burger addon on a pizza → rejected.
+      expectFail("burger addon on a pizza", resolveFor(pizza, pizza30.name.bg, [sel(`burger_addon:${burgerAddon.id}`, burgerAddon.id, 1)]), "not-allowed-for-product");
+
+      // 12) Pizza addon on a burger → rejected.
+      expectFail("pizza addon on a burger", resolveFor(burger, undefined, [sel("meat_addon", genericAddon.id)]), "not-allowed-for-product");
+      expectFail("crust on a burger", resolveFor(burger, undefined, [crustSel()]), "not-allowed-for-product");
+
+      // 13) Sauce on a drink / dessert → rejected (deny list).
+      expectFail("sauce on a drink", resolveFor(drink, undefined, [sel(`sauce:${sauce.id}`, sauce.id, 1)]), "not-allowed-for-product");
+      expectFail("sauce on a dessert", resolveFor(dessert, undefined, [sel(`sauce:${sauce.id}`, sauce.id, 1)]), "not-allowed-for-product");
+
+      // 14) More than one crust → rejected; duplicate same crust too.
+      expectFail("two different crusts", resolveFor(pizza, pizza30.name.bg, [crustSel("cheese_crust"), crustSel("pepperoni_crust")]), "multiple-crusts");
+      expectFail("the same crust twice", resolveFor(pizza, pizza30.name.bg, [crustSel(), crustSel()]), "duplicate-selection");
+      expectFail("crust key with mismatched sourceProductId", resolveFor(pizza, pizza30.name.bg, [sel("cheese_crust", sauce.id)]), "key-product-mismatch");
+
+      // 15) Size cannot be determined / addon has no matching size variant.
+      expectFail("main variant without a parsable size", resolveFor(pizza, "Фамилна", [crustSel()]), "no-main-size");
+      expectFail("no addon variant for size 50", resolveFor(pizza, "50 см", [crustSel()]), "no-size-variant");
+      expectFail("variant-based addon without a main variant", resolveFor(pizza, undefined, [crustSel()]), "no-main-size");
+
+      // 16) Sauce quantity over the cap — direct and via duplicate merging.
+      expectFail("sauce quantity 11", resolveFor(pizza, pizza30.name.bg, [sel(`sauce:${sauce.id}`, sauce.id, 11)]), "sauce-quantity");
+      expectFail("duplicate sauces merging to 12", resolveFor(pizza, pizza30.name.bg, [sel(`sauce:${sauce.id}`, sauce.id, 6), sel(`sauce:${sauce.id}`, sauce.id, 6)]), "sauce-quantity");
+      expectOk("duplicate sauces merging to 4 are combined into one entry", resolveFor(pizza, pizza30.name.bg, [sel(`sauce:${sauce.id}`, sauce.id, 1), sel(`sauce:${sauce.id}`, sauce.id, 3)]), (r) => {
+        if (r.extras.length !== 1) return `expected 1 merged entry, got ${r.extras.length}`;
+        if (r.extras[0].quantity !== 4) return `merged quantity ${r.extras[0].quantity}, expected 4`;
+        return null;
+      });
+
+      // 17) More than 15 extras entries → rejected.
+      expectFail("16 extras entries", resolveFor(pizza, pizza30.name.bg, Array.from({ length: 16 }, () => sel(`sauce:${sauce.id}`, sauce.id, 1))), "too-many-extras");
+
+      // Unknown key + burger addon happy path.
+      expectFail("unknown selection key", resolveFor(pizza, pizza30.name.bg, [sel("golden_truffle", crustProduct.id)]), "unknown-key");
+      expectOk("burger + burger addon uses the addon's base price", resolveFor(burger, undefined, [sel(`burger_addon:${burgerAddon.id}`, burgerAddon.id, 1)]), (r) => {
+        const e = r.extras[0];
+        if (e.unitPriceEur !== burgerAddon.priceEur) return "price mismatch";
+        if (e.nameBg !== burgerAddon.name.bg) return "snapshot name should come from the product";
+        return null;
+      });
+    }
+  }
+
+  // ── 5. extrasJson snapshot parsing (order mapper contract) ──
+  console.log("5) extrasJson parsing (mapper contract)");
+  {
+    const p = rules.parseOrderItemExtras;
+    const validExtra = {
+      key: "sauce:prod_ketchup",
+      sourceProductId: "prod_ketchup",
+      type: "sauce",
+      nameBg: "Кетчуп",
+      nameEn: "Ketchup",
+      quantity: 2,
+      unitPriceEur: 1.02,
+      unitPriceBgn: 2,
+      totalPriceEur: 2.04,
+      totalPriceBgn: 4,
+    };
+    const checks = [
+      [p("[]").length === 0, 'legacy "[]" → []'],
+      [p("").length === 0 && p(null).length === 0 && p(undefined).length === 0, "empty/null/undefined → []"],
+      [p("{ broken json").length === 0, "invalid JSON → [] (no throw)"],
+      [p('{"a":1}').length === 0, "non-array JSON → []"],
+      [p(JSON.stringify([validExtra])).length === 1, "valid snapshot entry parses"],
+      [p(JSON.stringify([validExtra, { garbage: true }, 42])).length === 1, "malformed entries are dropped, valid ones kept"],
+      [p(JSON.stringify([{ ...validExtra, quantity: -1 }])).length === 0, "negative quantity entry dropped"],
+      [p(JSON.stringify([{ ...validExtra, unitPriceEur: "1.02" }])).length === 0, "string price entry dropped"],
+    ];
+    for (const [passed, label] of checks) {
+      if (passed) ok(label);
+      else fail(`extrasJson parsing: ${label}`);
+    }
+  }
+}
+
+rmSync(buildDir, { recursive: true, force: true });
 
 // ── Result ────────────────────────────────────────────────────────────────
 await prisma.$disconnect();

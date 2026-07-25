@@ -32,6 +32,7 @@ export function CheckoutForm({ defaults }: Props) {
   );
 
   // Minimal cart payload sent to the server (prices are recomputed there).
+  // Extras travel as identifiers + quantity only — never names or prices.
   const itemsPayload = useMemo(
     () =>
       JSON.stringify(
@@ -39,6 +40,11 @@ export function CheckoutForm({ defaults }: Props) {
           productId: i.product.id,
           variantId: i.selectedVariant?.id,
           quantity: i.quantity,
+          extras: (i.extras ?? []).map((e) => ({
+            key: e.key,
+            sourceProductId: e.sourceProductId,
+            quantity: e.quantity,
+          })),
         }))
       ),
     [items]

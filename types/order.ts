@@ -30,6 +30,13 @@ export function isOrderStatus(value: unknown): value is OrderStatus {
   return typeof value === "string" && (ORDER_STATUSES as readonly string[]).includes(value);
 }
 
+/**
+ * Snapshot of one extra (crust/addon/sauce) on an order line — see
+ * lib/extras-rules.ts for the shape and the per-unit price semantics.
+ */
+export type { OrderItemExtra } from "@/lib/extras-rules";
+import type { OrderItemExtra as ItemExtra } from "@/lib/extras-rules";
+
 /** One line of an order (a snapshot taken at checkout). Money in `number`. */
 export interface OrderItem {
   id: string;
@@ -46,10 +53,15 @@ export interface OrderItem {
 
   quantity: number;
 
+  /** Base product/variant unit price — extras are NOT folded in here. */
   unitPriceBgn: number;
   unitPriceEur: number;
+  /** Full line total INCLUDING extras: (base unit + extras per unit) × quantity. */
   totalPriceBgn: number;
   totalPriceEur: number;
+
+  /** Extras snapshot parsed from extrasJson; [] for legacy/extra-less rows. */
+  extras: ItemExtra[];
 
   itemNote: string | null;
 }

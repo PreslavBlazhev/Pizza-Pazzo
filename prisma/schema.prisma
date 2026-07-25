@@ -205,10 +205,17 @@ model OrderItem {
 
   quantity        Int
 
+  // Unit price of the BASE product/variant (extras are NOT folded in here —
+  // totalPrice* carries the full line total including extras).
   unitPriceBgn    Decimal
   unitPriceEur    Decimal
   totalPriceBgn   Decimal
   totalPriceEur   Decimal
+
+  // Immutable snapshot of the chosen extras (crust/addons/sauces) as a JSON
+  // array of OrderItemExtra (see lib/extras-rules.ts). SQLite has no JSON
+  // column type; "[]" means no extras. Never read live menu data for this.
+  extrasJson      String   @default("[]")
 
   itemNote        String?
 

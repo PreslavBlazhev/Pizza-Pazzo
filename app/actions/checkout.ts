@@ -6,26 +6,41 @@ import { getSessionUser } from "@/lib/auth";
 import { getProductById } from "@/lib/menu-data";
 import { checkoutSchema } from "@/lib/validators/checkout";
 import { DELIVERY_FEE, EUR_TO_BGN } from "@/lib/constants";
+import {
+  resolveOrderItemExtras,
+  type ExtraSourceProduct,
+} from "@/lib/extras-resolve";
+import { EXTRAS_LIMITS, type OrderItemExtra } from "@/lib/extras-rules";
 import { sendNewOrderNotification } from "@/lib/email/resend";
 
 /**
  * Checkout — creates an Order + OrderItems in SQLite.
  *
  * Security: prices are re-derived ON THE SERVER from the menu data. The client
- * only sends { productId, variantId?, quantity }; whatever price it might claim
- * is ignored. `userId` comes from the session, never the form.
+ * only sends { productId, variantId?, quantity, extras: [{key, sourceProductId,
+ * quantity}] }; whatever price or name it might claim is ignored. `userId`
+ * comes from the session, never the form.
  */
+
+/** One chosen extra — identifiers and quantity only, never prices. */
+const extraSchema = z.strictObject({
+  key: z.string().min(1).max(120),
+  sourceProductId: z.string().min(1).max(120),
+  quantity: z.number().int().min(1).max(EXTRAS_LIMITS.maxSauceQuantity),
+});
 
 /** Minimal cart payload the client sends (prices are recomputed server-side). */
 const itemsSchema = z
   .array(
-    z.object({
-      productId: z.string().min(1),
-      variantId: z.string().min(1).optional(),
+    z.strictObject({
+      productId: z.string().min(1).max(120),
+      variantId: z.string().min(1).max(120).optional(),
       quantity: z.number().int().min(1).max(99),
+      extras: z.array(extraSchema).max(EXTRAS_LIMITS.maxExtrasPerItem).optional(),
     })
   )
-  .min(1);
+  .min(1)
+  .max(EXTRAS_LIMITS.maxOrderItems);
 
 export interface CheckoutResult {
   ok: boolean;
@@ -87,6 +102,7 @@ export async function createOrder(
     unitPriceEur: number;
     totalPriceBgn: number;
     totalPriceEur: number;
+    extrasJson: string;
   }[] = [];
 
   let subtotalBgn = 0;
@@ -103,6 +119,7 @@ export async function createOrder(
     let unitEur = pBg.priceEur;
     let variantId: string | null = null;
     let variantName: string | null = null;
+    let mainVariantNameBg: string | undefined;
 
     if (it.variantId) {
       const vBg = pBg.variants?.find((v) => v.id === it.variantId);
@@ -114,10 +131,64 @@ export async function createOrder(
       unitEur = vBg.priceEur;
       variantId = it.variantId;
       variantName = vEn ? `${vBg.name} / ${vEn.name}` : vBg.name;
+      mainVariantNameBg = vBg.name;
     }
 
-    const lineBgn = round2(unitBgn * it.quantity);
-    const lineEur = round2(unitEur * it.quantity);
+    // ── Extras: resolved and priced ONLY from the database (see
+    //    lib/extras-resolve.ts). The client's copy of names/prices is ignored.
+    let extras: OrderItemExtra[] = [];
+    let extrasUnitEur = 0;
+    let extrasUnitBgn = 0;
+
+    if (it.extras && it.extras.length > 0) {
+      const sourceProducts = new Map<string, ExtraSourceProduct>();
+      for (const sourceId of new Set(it.extras.map((e) => e.sourceProductId))) {
+        const sBg = await getProductById(sourceId, "bg");
+        if (!sBg) continue; // resolver rejects the selection as unknown-product
+        const sEn = await getProductById(sourceId, "en");
+        sourceProducts.set(sourceId, {
+          id: sBg.id,
+          categoryId: sBg.categoryId,
+          isAvailable: sBg.isAvailable,
+          nameBg: sBg.name,
+          nameEn: sEn?.name ?? sBg.name,
+          priceEur: sBg.priceEur,
+          priceBgn: sBg.priceBgn,
+          variants: (sBg.variants ?? []).map((v) => ({
+            id: v.id,
+            nameBg: v.name,
+            nameEn: sEn?.variants?.find((x) => x.id === v.id)?.name ?? v.name,
+            priceEur: v.priceEur,
+            priceBgn: v.priceBgn,
+          })),
+        });
+      }
+
+      const resolved = resolveOrderItemExtras({
+        mainProduct: { id: pBg.id, categoryId: pBg.categoryId },
+        mainVariantName: mainVariantNameBg,
+        selections: it.extras,
+        sourceProducts,
+      });
+      if (!resolved.ok) {
+        // Deliberately generic for the customer; the code stays server-side.
+        return {
+          ok: false,
+          error: "Невалидни добавки в количката. Обновете количката и опитайте отново.",
+        };
+      }
+      extras = resolved.extras;
+      extrasUnitEur = resolved.extrasUnitTotalEur;
+      extrasUnitBgn = resolved.extrasUnitTotalBgn;
+    }
+
+    // Line total semantics: the extras set applies to EVERY unit of the line —
+    // (base unit + extras per unit) × quantity. unitPrice* stays the BASE price;
+    // the extras' own prices live in the snapshot.
+    const perUnitBgn = round2(unitBgn + extrasUnitBgn);
+    const perUnitEur = round2(unitEur + extrasUnitEur);
+    const lineBgn = round2(perUnitBgn * it.quantity);
+    const lineEur = round2(perUnitEur * it.quantity);
     subtotalBgn = round2(subtotalBgn + lineBgn);
     subtotalEur = round2(subtotalEur + lineEur);
 
@@ -134,6 +205,7 @@ export async function createOrder(
       unitPriceEur: unitEur,
       totalPriceBgn: lineBgn,
       totalPriceEur: lineEur,
+      extrasJson: JSON.stringify(extras),
     });
   }
 

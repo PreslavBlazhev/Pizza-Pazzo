@@ -1,14 +1,25 @@
 import type { Product, ProductVariant } from "@/types/product";
+import type { ExtraSelection } from "@/lib/extras-rules";
+
+/**
+ * One chosen extra on a cart line — identifiers and quantity ONLY. Any name or
+ * price a UI may cache alongside is display sugar; the server re-derives both
+ * from the database at checkout and never trusts the client's copy.
+ */
+export type CartExtraSelection = ExtraSelection;
 
 /** One line in the cart: a product (with an optional chosen variant) and quantity. */
 export interface CartItem {
-  /** Unique line id (product id + selected variant id). */
+  /** Unique line id (product id + variant id + extras signature). */
   lineId: string;
   product: Product;
   /** Chosen size/variant, if the product has variants. */
   selectedVariant?: ProductVariant;
+  /** Chosen extras (crust/addons/sauces); [] when none — never undefined in
+   *  new records (the persist migration normalizes legacy rows). */
+  extras: CartExtraSelection[];
   quantity: number;
-  /** Unit price in EUR (variant price or product base price). */
+  /** Unit price in EUR (variant price or product base price, WITHOUT extras). */
   unitPrice: number;
   note?: string;
 }

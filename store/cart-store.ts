@@ -3,28 +3,110 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { CartItem, CartTotals } from "@/types/cart";
+import type { CartExtraSelection, CartItem, CartTotals } from "@/types/cart";
 import type { Product, ProductVariant } from "@/types/product";
+import { lineIdFor } from "@/lib/extras-rules";
 import { DELIVERY_FEE, EUR_TO_BGN } from "@/lib/constants";
 
 interface CartState {
   items: CartItem[];
-  /** Adds a product (optionally a chosen variant). Merges by line, bumping qty. */
-  addProduct: (product: Product, variant?: ProductVariant, quantity?: number) => void;
+  /** Adds a product (optionally a chosen variant + extras). Merges by line, bumping qty. */
+  addProduct: (
+    product: Product,
+    variant?: ProductVariant,
+    quantity?: number,
+    extras?: CartExtraSelection[]
+  ) => void;
   removeItem: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
   clear: () => void;
   totals: () => CartTotals;
 }
 
-/** A cart line is unique per product + chosen variant. */
-function lineIdFor(productId: string, variantId?: string): string {
-  return variantId ? `${productId}::${variantId}` : productId;
+/** The slice of the state that actually goes to localStorage (see partialize). */
+interface PersistedCart {
+  items: CartItem[];
 }
 
 /** BGN unit price for a line: the variant's price, or the product base price. */
 function bgnUnit(item: CartItem): number {
   return item.selectedVariant?.priceBgn ?? item.product.priceBgn;
+}
+
+// ── Persist migration (unknown → PersistedCart, never throws) ───────────────
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Keeps only well-formed extra selections; anything else is dropped. */
+function normalizeExtras(value: unknown): CartExtraSelection[] {
+  if (!Array.isArray(value)) return [];
+  const out: CartExtraSelection[] = [];
+  for (const raw of value) {
+    if (!isRecord(raw)) continue;
+    const { key, sourceProductId, quantity } = raw;
+    if (
+      typeof key === "string" &&
+      key.length > 0 &&
+      typeof sourceProductId === "string" &&
+      sourceProductId.length > 0 &&
+      typeof quantity === "number" &&
+      Number.isInteger(quantity) &&
+      quantity >= 1
+    ) {
+      out.push({ key, sourceProductId, quantity });
+    }
+  }
+  return out;
+}
+
+/**
+ * Migrates any persisted "pp-cart" payload (including the unversioned pre-1
+ * format, which had no `extras` field) to the current shape. Structurally
+ * broken items are dropped rather than crashing the store; a completely
+ * invalid payload yields an empty cart.
+ */
+function migratePersistedCart(persisted: unknown): PersistedCart {
+  if (!isRecord(persisted) || !Array.isArray(persisted.items)) return { items: [] };
+
+  const items: CartItem[] = [];
+  for (const raw of persisted.items) {
+    if (!isRecord(raw) || !isRecord(raw.product)) continue;
+    const product = raw.product;
+    if (
+      typeof product.id !== "string" ||
+      product.id.length === 0 ||
+      typeof product.priceEur !== "number" ||
+      typeof product.priceBgn !== "number"
+    ) {
+      continue;
+    }
+    const quantity =
+      typeof raw.quantity === "number" && Number.isInteger(raw.quantity) && raw.quantity >= 1
+        ? raw.quantity
+        : 1;
+    const variant =
+      isRecord(raw.selectedVariant) && typeof raw.selectedVariant.id === "string"
+        ? (raw.selectedVariant as unknown as ProductVariant)
+        : undefined;
+    const extras = normalizeExtras(raw.extras);
+    const typedProduct = product as unknown as Product;
+
+    items.push({
+      lineId: lineIdFor(typedProduct.id, variant?.id, extras),
+      product: typedProduct,
+      selectedVariant: variant,
+      extras,
+      quantity,
+      unitPrice:
+        typeof raw.unitPrice === "number" && Number.isFinite(raw.unitPrice)
+          ? raw.unitPrice
+          : variant?.priceEur ?? typedProduct.priceEur,
+      note: typeof raw.note === "string" ? raw.note : undefined,
+    });
+  }
+  return { items };
 }
 
 /**
@@ -40,9 +122,9 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
 
-      addProduct: (product, variant, quantity = 1) =>
+      addProduct: (product, variant, quantity = 1, extras = []) =>
         set((state) => {
-          const lineId = lineIdFor(product.id, variant?.id);
+          const lineId = lineIdFor(product.id, variant?.id, extras);
           const existing = state.items.find((i) => i.lineId === lineId);
           if (existing) {
             return {
@@ -57,6 +139,7 @@ export const useCartStore = create<CartState>()(
             lineId,
             product,
             selectedVariant: variant,
+            extras,
             quantity,
             unitPrice: variant?.priceEur ?? product.priceEur,
           };
@@ -95,9 +178,13 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "pp-cart",
+      version: 1,
       storage: createJSONStorage(() => localStorage),
       // Persist only the items; methods are recreated on each load.
       partialize: (state) => ({ items: state.items }),
+      // Runs for every persisted payload with version < 1 — i.e. all carts
+      // saved before the extras feature (they were stored without a version).
+      migrate: (persistedState) => migratePersistedCart(persistedState),
     }
   )
 );
