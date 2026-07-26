@@ -403,6 +403,7 @@
     "orderTitle": "Поръчка #{number}",
     "orderAddress": "Адрес",
     "orderItemsCount": "{count, plural, one {# продукт} other {# продукта}}",
+    "orderPerItem": "за всяка бройка",
     "saved": "Промените са запазени.",
     "address": {
       "sectionTitle": "Адреси за доставка",

@@ -14,10 +14,11 @@
  * Usage: npm run smoke   (alias for: node scripts/smoke-checkout.mjs)
  */
 import { execSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
-import { createRequire } from "node:module";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire, Module } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -194,19 +195,79 @@ if (Math.round(subBgn * 100) !== expectBgn || Math.round(subEur * 100) !== expec
 console.log("4) Extras resolution & pricing");
 
 const buildDir = mkdtempSync(join(tmpdir(), "pp-extras-smoke-"));
-let rules;
-let resolveOrderItemExtras;
+const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+/**
+ * Compiles the order-facing modules into the temp dir and returns `require`d
+ * handles to them. They are all free of Next.js/React runtime imports, so they
+ * run under plain Node — but they DO use the "@/..." alias, hence a generated
+ * tsconfig rather than a bare `tsc file.ts` invocation.
+ */
+let mods = null;
 try {
-  execSync(
-    `npx tsc lib/extras-rules.ts lib/extras-resolve.ts --outDir "${buildDir}" --module commonjs --target es2020 --strict --skipLibCheck`,
-    { stdio: "pipe" }
+  const entryPoints = [
+    "lib/extras-rules.ts",
+    "lib/extras-resolve.ts",
+    "lib/order-extras-display.ts",
+    "lib/email-templates/new-order.ts",
+    "lib/email-templates/customer-order-accepted.ts",
+    "lib/printer/ticket-template.ts",
+    "lib/android-printer.ts",
+  ];
+  const tsconfigPath = join(buildDir, "tsconfig.smoke.json");
+  writeFileSync(
+    tsconfigPath,
+    JSON.stringify({
+      compilerOptions: {
+        target: "es2020",
+        module: "commonjs",
+        moduleResolution: "node",
+        strict: true,
+        skipLibCheck: true,
+        esModuleInterop: true,
+        forceConsistentCasingInFileNames: true,
+        baseUrl: projectRoot,
+        paths: { "@/*": ["./*"] },
+        rootDir: projectRoot,
+        outDir: join(buildDir, "out"),
+        // Node only: lib/constants.ts reads process.env; nothing here needs
+        // the DOM or React type packages. typeRoots must be absolute — the
+        // generated tsconfig lives in a temp dir, far from node_modules.
+        types: ["node"],
+        typeRoots: [join(projectRoot, "node_modules", "@types")],
+      },
+      files: entryPoints.map((f) => join(projectRoot, f)),
+    })
   );
+  execSync(`npx tsc -p "${tsconfigPath}"`, { stdio: "pipe" });
+
+  // tsc resolves "@/..." for type-checking but emits it verbatim, so teach
+  // Node's CJS loader the same alias, pointed at the compiled output.
+  const outRoot = join(buildDir, "out");
+  const resolveFilename = Module._resolveFilename;
+  Module._resolveFilename = function (request, ...args) {
+    const target = request.startsWith("@/") ? join(outRoot, request.slice(2)) : request;
+    return resolveFilename.call(this, target, ...args);
+  };
+
   const requireCjs = createRequire(import.meta.url);
-  rules = requireCjs(join(buildDir, "extras-rules.js"));
-  ({ resolveOrderItemExtras } = requireCjs(join(buildDir, "extras-resolve.js")));
+  const load = (rel) => requireCjs(join(outRoot, rel));
+  mods = {
+    rules: load("lib/extras-rules.js"),
+    resolve: load("lib/extras-resolve.js"),
+    display: load("lib/order-extras-display.js"),
+    newOrderEmail: load("lib/email-templates/new-order.js"),
+    acceptedEmail: load("lib/email-templates/customer-order-accepted.js"),
+    ticket: load("lib/printer/ticket-template.js"),
+    android: load("lib/android-printer.js"),
+  };
 } catch (e) {
-  fail(`extras modules failed to compile standalone: ${e.message}`);
+  const detail = e.stdout ? e.stdout.toString().slice(0, 1500) : e.message;
+  fail(`order modules failed to compile standalone:\n${detail}`);
 }
+
+const rules = mods?.rules;
+const resolveOrderItemExtras = mods?.resolve?.resolveOrderItemExtras;
 
 if (rules && resolveOrderItemExtras) {
   // DB rows → the resolver's ExtraSourceProduct shape.
@@ -447,6 +508,220 @@ if (rules && resolveOrderItemExtras) {
       if (passed) ok(label);
       else fail(`extrasJson parsing: ${label}`);
     }
+  }
+}
+
+// ── 6-9. Order display surfaces (admin/emails/ticket/Android) ──────────────
+//
+// Everything below renders from an immutable OrderItem.extras snapshot — the
+// same shape lib/orders.ts produces. No database reads, no emails sent.
+if (mods) {
+  const {
+    display,
+    newOrderEmail: { newOrderEmail },
+    acceptedEmail: { customerOrderAcceptedEmail },
+    ticket: { buildTicketText },
+    android: { buildPrintableOrderJson },
+  } = mods;
+
+  /** Snapshot fixtures mirroring what checkout writes. */
+  const crust = {
+    key: "cheese_crust",
+    sourceProductId: "prod_kashkavalen_filadelfiya_krenvirsh_peperoni_bord",
+    sourceVariantId: "var_kashkavalen_filadelfiya_krenvirsh_peperoni_bord_1",
+    type: "pizza_crust",
+    nameBg: "Кашкавален борд",
+    nameEn: "Cheese crust",
+    quantity: 1,
+    sizeContext: "30 см",
+    unitPriceEur: 3.58,
+    unitPriceBgn: 7,
+    totalPriceEur: 3.58,
+    totalPriceBgn: 7,
+  };
+  const sauceX2 = {
+    key: "sauce:prod_chesnov_sos",
+    sourceProductId: "prod_chesnov_sos",
+    type: "sauce",
+    nameBg: "Чеснов сос",
+    nameEn: "Garlic sauce",
+    quantity: 2,
+    unitPriceEur: 1.02,
+    unitPriceBgn: 2,
+    totalPriceEur: 2.04,
+    totalPriceBgn: 4,
+  };
+  const item = (over = {}) => ({
+    id: "oi_1",
+    orderId: "o_1",
+    productId: "prod_margarita",
+    productSlug: "margarita",
+    productNameBg: "Маргарита",
+    productNameEn: "Margherita",
+    productImageUrl: null,
+    variantId: "var_margarita_1",
+    variantName: "30 см / 30 cm",
+    quantity: 1,
+    unitPriceBgn: 13.01,
+    unitPriceEur: 6.65,
+    totalPriceBgn: 20.01,
+    totalPriceEur: 10.23,
+    extras: [],
+    itemNote: null,
+    ...over,
+  });
+  const order = (items) => ({
+    id: "o_1",
+    orderNumber: 1234,
+    userId: null,
+    customerName: "Иван Петров",
+    customerEmail: "ivan@example.com",
+    customerPhone: "0888123456",
+    deliveryAddress: "ул. Тестова 1",
+    deliveryCity: "Плевен",
+    deliveryNote: null,
+    paymentMethod: "CASH_ON_DELIVERY",
+    deliveryMethod: "DELIVERY",
+    status: "ACCEPTED",
+    subtotalBgn: 20.01,
+    subtotalEur: 10.23,
+    deliveryFeeBgn: 4.89,
+    deliveryFeeEur: 2.5,
+    totalBgn: 24.9,
+    totalEur: 12.73,
+    estimatedTimeMinutes: 30,
+    adminNote: null,
+    acceptedAt: "2026-07-26T10:00:00.000Z",
+    cancelledAt: null,
+    completedAt: null,
+    createdAt: "2026-07-26T09:50:00.000Z",
+    updatedAt: "2026-07-26T10:00:00.000Z",
+    items,
+  });
+
+  const check = (label, condition) => (condition ? ok(label) : fail(label));
+
+  // ── 6. Display formatter ──
+  console.log("6) Extras display formatter");
+  {
+    const [bg] = display.toOrderExtrasDisplay([crust], "bg");
+    const [en] = display.toOrderExtrasDisplay([crust], "en");
+    check("BG locale uses nameBg", bg.name === "Кашкавален борд");
+    check("EN locale uses nameEn", en.name === "Cheese crust");
+    check("sizeContext is carried through", bg.sizeContext === "30 см");
+    check("prices are carried through", bg.totalPriceEur === 3.58 && bg.totalPriceBgn === 7);
+    check(
+      "internal identifiers are not exposed",
+      !("key" in bg) && !("sourceProductId" in bg) && !("sourceVariantId" in bg)
+    );
+    const [noEn] = display.toOrderExtrasDisplay([{ ...crust, nameEn: "" }], "en");
+    check("EN falls back to BG when missing", noEn.name === "Кашкавален борд");
+    const [noBg] = display.toOrderExtrasDisplay([{ ...crust, nameBg: "" }], "bg");
+    check("BG falls back to EN when missing", noBg.name === "Cheese crust");
+    check("empty/missing extras → []", display.toOrderExtrasDisplay([], "bg").length === 0 && display.toOrderExtrasDisplay(undefined, "bg").length === 0);
+    const [s2] = display.toOrderExtrasDisplay([sauceX2], "bg");
+    check("quantity >1 is prefixed", display.extraLabel(s2) === "2× Чеснов сос");
+    check("quantity 1 has no prefix", display.extraLabel(bg) === "Кашкавален борд");
+    check(
+      "per-unit hint only for multi-quantity lines",
+      display.extraKitchenLabel(s2, 2) === "2x Чеснов сос / всяка" &&
+        display.extraKitchenLabel(s2, 1) === "2x Чеснов сос"
+    );
+  }
+
+  // ── 7. Emails ──
+  console.log("7) Order emails with extras");
+  {
+    const withExtras = newOrderEmail({
+      orderNumber: 1234,
+      customerName: "Иван",
+      customerPhone: "0888",
+      customerEmail: "i@e.com",
+      deliveryCity: "Плевен",
+      deliveryAddress: "ул. Тестова 1",
+      totalBgn: 24.9,
+      totalEur: 12.73,
+      items: [
+        { nameBg: "Маргарита", variantName: "30 см", quantity: 2, totalPriceBgn: 53.6, totalPriceEur: 27.64, extras: [crust, sauceX2] },
+      ],
+    });
+    check("new-order text lists the crust", withExtras.text.includes("+ Кашкавален борд / всяка"));
+    check("new-order text lists the sauce with quantity", withExtras.text.includes("+ 2x Чеснов сос / всяка"));
+    check("new-order HTML lists the extras", withExtras.html.includes("Кашкавален борд / всяка") && withExtras.html.includes("2x Чеснов сос / всяка"));
+    check("new-order HTML keeps the line total", withExtras.html.includes("27.64 €"));
+    check("new-order leaks no internal keys", !withExtras.text.includes("cheese_crust") && !withExtras.html.includes("prod_chesnov_sos"));
+
+    const noExtras = newOrderEmail({
+      orderNumber: 1235,
+      customerName: "Иван",
+      customerPhone: "0888",
+      customerEmail: "",
+      deliveryCity: "Плевен",
+      deliveryAddress: "ул. Тестова 1",
+      totalBgn: 20.01,
+      totalEur: 10.23,
+      items: [{ nameBg: "Маргарита", variantName: null, quantity: 1, totalPriceBgn: 20.01, totalPriceEur: 10.23 }],
+    });
+    check("new-order without extras still renders (legacy item)", noExtras.text.includes("1× Маргарита") && !noExtras.text.includes("+ "));
+
+    const accepted = customerOrderAcceptedEmail(
+      order([item({ quantity: 2, totalPriceEur: 27.64, totalPriceBgn: 53.6, extras: [crust, sauceX2] })])
+    );
+    check("accepted text lists extras with prices", accepted.text.includes("+ Кашкавален борд (за всяка бройка) — 3.58 €") && accepted.text.includes("+ 2× Чеснов сос (за всяка бройка) — 2.04 €"));
+    check("accepted HTML lists extras", accepted.html.includes("Кашкавален борд") && accepted.html.includes("2× Чеснов сос"));
+    const acceptedPlain = customerOrderAcceptedEmail(order([item()]));
+    check("accepted without extras still renders", acceptedPlain.text.includes("1 × Маргарита") && !acceptedPlain.text.includes("+ "));
+    check("accepted single unit omits the per-item hint", customerOrderAcceptedEmail(order([item({ extras: [sauceX2] })])).text.includes("+ 2× Чеснов сос — "));
+  }
+
+  // ── 8. Web ticket ──
+  console.log("8) Web ticket with extras");
+  {
+    const width = 42; // PRINT_CONFIG.charsPerLine
+    const t1 = buildTicketText(order([item({ extras: [crust] })]));
+    check("ticket prints the size line", t1.includes("Размер: 30 см / 30 cm"));
+    check("ticket prints the crust", t1.includes("+ Кашкавален борд"));
+    check("ticket keeps the line total", t1.includes("10.23 €"));
+
+    const t2 = buildTicketText(order([item({ quantity: 2, totalPriceEur: 27.64, extras: [crust, sauceX2] })]));
+    check("ticket marks extras as per-unit on multi-quantity lines", t2.includes("+ 2x Чеснов сос / всяка"));
+    check("ticket shows the main quantity", t2.includes("2x Маргарита"));
+
+    const t3 = buildTicketText(order([item()]));
+    check("ticket without extras prints no + lines", !t3.split("\n").some((l) => l.trim().startsWith("+ ")));
+
+    const longName = "Кашкавален борд с допълнително синьо сирене и печени чушки";
+    const t4 = buildTicketText(order([item({ extras: [{ ...crust, nameBg: longName }] })]));
+    const overLong = t4.split("\n").filter((l) => l.length > width);
+    check(`ticket wraps long extra names within ${width} chars`, overLong.length === 0);
+    check("ticket loses no characters when wrapping", t4.replace(/\s+/g, "").includes(longName.replace(/\s+/g, "")));
+
+    const t5 = buildTicketText(order([item({ extras: [{ ...sauceX2, quantity: 10, totalPriceEur: 10.2, totalPriceBgn: 20 }] })]));
+    check("ticket handles sauce quantity 10", t5.includes("+ 10x Чеснов сос"));
+  }
+
+  // ── 9. Android adapter serialization ──
+  console.log("9) Android printer adapter");
+  {
+    const json = JSON.parse(
+      buildPrintableOrderJson(order([
+        item({ quantity: 2, totalPriceEur: 27.64, extras: [crust, sauceX2] }),
+        item({ id: "oi_2", productNameBg: "Кока-Кола", variantId: null, variantName: null, extras: [] }),
+      ]))
+    );
+    const [pizza, cola] = json.items;
+    check("extras array is present on the item", Array.isArray(pizza.extras) && pizza.extras.length === 2);
+    check("extra name carries the per-unit hint", pizza.extras[0].name === "Кашкавален борд / всяка");
+    check("extra quantity stays its own field", pizza.extras[1].quantity === 2 && !pizza.extras[1].name.startsWith("2"));
+    check("extra price is the per-unit total", pizza.extras[1].price === 2.04);
+    check("item without extras serializes to []", Array.isArray(cola.extras) && cola.extras.length === 0);
+    check(
+      "no internal identifiers are sent",
+      !JSON.stringify(json).includes("cheese_crust") &&
+        !JSON.stringify(json).includes("prod_chesnov_sos") &&
+        !JSON.stringify(json).includes("sourceVariantId")
+    );
+    check("payload stays far below the 100KB bridge limit", Buffer.byteLength(JSON.stringify(json), "utf8") < 100_000);
   }
 }
 

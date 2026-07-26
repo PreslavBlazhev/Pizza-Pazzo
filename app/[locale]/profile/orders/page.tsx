@@ -7,6 +7,7 @@ import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { requireUser } from "@/lib/auth";
 import { getOrdersForUser } from "@/lib/orders";
 import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatDateTime } from "@/lib/utils";
 import type { Locale } from "@/i18n/routing";
 
@@ -93,16 +94,34 @@ export default async function ProfileOrdersPage({ params }: PageProps) {
                     </p>
                   </div>
 
-                  <ul className="mt-3 space-y-1 text-sm text-pizza-ink">
+                  <ul className="mt-3 space-y-1.5 text-sm text-pizza-ink">
                     {items.map((item) => {
                       const name =
                         locale === "en"
                           ? item.productNameEn ?? item.productNameBg
                           : item.productNameBg;
+                      // From the order's own snapshot — the menu may have
+                      // changed since, the order must not.
+                      const extras = toOrderExtrasDisplay(item.extras, locale);
                       return (
                         <li key={item.id}>
                           {item.quantity}× {name}
                           {item.variantName ? ` (${item.variantName})` : ""}
+                          {extras.length > 0 && (
+                            <ul className="mt-0.5 space-y-0.5 pl-4 text-xs text-pizza-muted">
+                              {extras.map((e, n) => (
+                                <li key={`${item.id}-x${n}`} className="break-words">
+                                  + {extraLabel(e)}
+                                  {item.quantity > 1 ? ` (${t("orderPerItem")})` : ""}
+                                  {" — "}
+                                  <span className="whitespace-nowrap">
+                                    {formatEurPrice(e.totalPriceEur)} /{" "}
+                                    {formatBgnPrice(e.totalPriceBgn)}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </li>
                       );
                     })}

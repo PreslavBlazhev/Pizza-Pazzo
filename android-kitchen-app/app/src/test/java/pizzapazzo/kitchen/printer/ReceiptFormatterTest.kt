@@ -210,4 +210,153 @@ class ReceiptFormatterTest {
         assertTrue(lines.all { it.length <= 8 })
         assertEquals("абвгдежзийклмнопрст", lines.joinToString(""))
     }
+
+    // ── Extras (добавки/сосове) ─────────────────────────────────────────────
+    // The web adapter (lib/android-printer.ts) sends one Extra per chosen
+    // add-on: `quantity` stays its own field, `price` is that extra's total for
+    // ONE unit of the dish, and multi-quantity lines carry a "/ всяка" hint in
+    // the name. These tests pin that rendering contract.
+
+    private fun itemWith(
+        extras: List<PrintableOrder.Extra>,
+        name: String = "Маргарита",
+        quantity: Int = 1,
+        size: String? = "30 см",
+    ) = PrintableOrder.Item(
+        name = name,
+        quantity = quantity,
+        size = size,
+        unitPrice = 6.65,
+        totalPrice = 6.65 * quantity,
+        extras = extras,
+        removedIngredients = emptyList(),
+        note = null,
+    )
+
+    @Test
+    fun `item without extras prints no plus lines`() {
+        val text = textOf(order(items = listOf(itemWith(emptyList()))), settings80)
+        assertTrue(text.contains("1 x МАРГАРИТА"))
+        assertTrue(text.contains("Размер: 30 см"))
+        assertFalse(text.lines().any { it.trimStart().startsWith("+ ") })
+    }
+
+    @Test
+    fun `empty extras array formats like a plain item`() {
+        val withEmpty = textOf(order(items = listOf(itemWith(emptyList()))), settings58)
+        assertTrue(withEmpty.contains("1 x МАРГАРИТА"))
+    }
+
+    @Test
+    fun `single crust prints without a quantity prefix`() {
+        val text = textOf(
+            order(items = listOf(itemWith(listOf(PrintableOrder.Extra("Кашкавален борд", 1, 3.58))))),
+            settings80,
+        )
+        assertTrue(text.contains("+ Кашкавален борд (3.58)"))
+        assertFalse(text.contains("1x Кашкавален борд"))
+    }
+
+    @Test
+    fun `sauce quantity two prints the quantity prefix and its total price`() {
+        val text = textOf(
+            order(items = listOf(itemWith(listOf(PrintableOrder.Extra("Чеснов сос", 2, 2.04))))),
+            settings80,
+        )
+        assertTrue(text.contains("+ 2x Чеснов сос (2.04)"))
+    }
+
+    @Test
+    fun `burger addon prints with its price`() {
+        val text = textOf(
+            order(
+                items = listOf(
+                    itemWith(
+                        extras = listOf(PrintableOrder.Extra("Чедър", 1, 0.77)),
+                        name = "Пилешки",
+                        size = null,
+                    )
+                )
+            ),
+            settings80,
+        )
+        assertTrue(text.contains("1 x ПИЛЕШКИ"))
+        assertTrue(text.contains("+ Чедър (0.77)"))
+        assertFalse(text.contains("Размер:"))
+    }
+
+    @Test
+    fun `main quantity two keeps the per-unit hint from the adapter`() {
+        val text = textOf(
+            order(
+                items = listOf(
+                    itemWith(
+                        extras = listOf(
+                            PrintableOrder.Extra("Кашкавален борд / всяка", 1, 3.58),
+                            PrintableOrder.Extra("Чеснов сос / всяка", 2, 2.04),
+                        ),
+                        quantity = 2,
+                    )
+                )
+            ),
+            settings80,
+        )
+        assertTrue(text.contains("2 x МАРГАРИТА"))
+        assertTrue(text.contains("+ Кашкавален борд / всяка (3.58)"))
+        assertTrue(text.contains("+ 2x Чеснов сос / всяка (2.04)"))
+    }
+
+    @Test
+    fun `long bulgarian extra name wraps without losing text`() {
+        val longBg = "Кашкавален борд с допълнително синьо сирене и печени чушки"
+        val lines = ReceiptFormatter.format(
+            order(items = listOf(itemWith(listOf(PrintableOrder.Extra(longBg, 1, 4.60))))),
+            settings58,
+        )
+        for (line in lines) {
+            val visual = if (line.big) line.text.length * 2 else line.text.length
+            assertTrue("Too long: '${line.text}'", visual <= settings58.charsPerLine)
+        }
+        val squashed = ReceiptFormatter.toPlainText(lines, settings58).replace(Regex("\\s+"), "")
+        assertTrue(squashed.contains(longBg.replace(Regex("\\s+"), "")))
+    }
+
+    @Test
+    fun `long english extra name wraps without losing text`() {
+        val longEn = "Philadelphia crust with extra blue cheese and roasted peppers"
+        val lines = ReceiptFormatter.format(
+            order(items = listOf(itemWith(listOf(PrintableOrder.Extra(longEn, 1, 4.60))))),
+            settings58,
+        )
+        for (line in lines) {
+            assertTrue("Too long: '${line.text}'", line.text.length <= settings58.charsPerLine)
+        }
+        val squashed = ReceiptFormatter.toPlainText(lines, settings58).replace(Regex("\\s+"), "")
+        assertTrue(squashed.contains(longEn.replace(Regex("\\s+"), "")))
+    }
+
+    @Test
+    fun `extra without a price prints just the name`() {
+        val text = textOf(
+            order(items = listOf(itemWith(listOf(PrintableOrder.Extra("Месна добавка", 1, null))))),
+            settings80,
+        )
+        assertTrue(text.contains("+ Месна добавка"))
+        assertFalse(text.contains("+ Месна добавка ("))
+    }
+
+    @Test
+    fun `ten sauces still fit the 58mm width`() {
+        val lines = ReceiptFormatter.format(
+            order(items = listOf(itemWith(listOf(PrintableOrder.Extra("Млечно-чеснов сос", 10, 10.20))))),
+            settings58,
+        )
+        for (line in lines) {
+            val visual = if (line.big) line.text.length * 2 else line.text.length
+            assertTrue("Too long: '${line.text}'", visual <= settings58.charsPerLine)
+        }
+        assertTrue(
+            ReceiptFormatter.toPlainText(lines, settings58).contains("10x Млечно-чеснов сос")
+        )
+    }
 }

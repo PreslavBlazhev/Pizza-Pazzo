@@ -4,12 +4,17 @@
  * this is read by staff.
  */
 
+import type { OrderItemExtra } from "@/lib/extras-rules";
+import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
+
 export interface NewOrderEmailItem {
   nameBg: string;
   variantName?: string | null;
   quantity: number;
   totalPriceBgn: number;
   totalPriceEur: number;
+  /** Chosen extras (order snapshot). Optional so legacy callers keep working. */
+  extras?: OrderItemExtra[];
 }
 
 export interface NewOrderEmailData {
@@ -35,12 +40,17 @@ export function newOrderEmail(data: NewOrderEmailData): {
 } {
   const subject = `Нова поръчка #${data.orderNumber} — Pizza Pazzo`;
 
-  const itemLines = data.items.map(
-    (i) =>
-      `${i.quantity}× ${i.nameBg}${i.variantName ? ` (${i.variantName})` : ""} — ${eur(
-        i.totalPriceEur
-      )} / ${bgn(i.totalPriceBgn)}`
-  );
+  // Extras go on their own indented lines under the dish; "/ всяка" marks that
+  // they apply to every unit of a multi-quantity line (staff read this).
+  const itemLines = data.items.flatMap((i) => {
+    const head = `${i.quantity}× ${i.nameBg}${
+      i.variantName ? ` (${i.variantName})` : ""
+    } — ${eur(i.totalPriceEur)} / ${bgn(i.totalPriceBgn)}`;
+    const extras = toOrderExtrasDisplay(i.extras, "bg").map(
+      (e) => `    + ${extraKitchenLabel(e, i.quantity)}`
+    );
+    return [head, ...extras];
+  });
 
   const text = [
     `Нова поръчка #${data.orderNumber}`,
@@ -61,16 +71,28 @@ export function newOrderEmail(data: NewOrderEmailData): {
     .join("\n");
 
   const itemRows = data.items
-    .map(
-      (i) => `<tr>
+    .map((i) => {
+      const extras = toOrderExtrasDisplay(i.extras, "bg");
+      // Simple nested <div>s inside the same cell — no extra tables or CSS
+      // that Outlook/Gmail could break.
+      const extraLines = extras
+        .map(
+          (e) =>
+            `<div style="padding-left:14px;font-size:13px;color:#555;">+ ${extraKitchenLabel(
+              e,
+              i.quantity
+            )}</div>`
+        )
+        .join("");
+      return `<tr>
       <td style="padding:6px 0;border-bottom:1px solid #eee;">${i.quantity}× ${i.nameBg}${
         i.variantName ? ` <span style="color:#888;">(${i.variantName})</span>` : ""
-      }</td>
-      <td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right;white-space:nowrap;">${eur(
+      }${extraLines}</td>
+      <td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right;vertical-align:top;white-space:nowrap;">${eur(
         i.totalPriceEur
       )} <span style="color:#888;">${bgn(i.totalPriceBgn)}</span></td>
-    </tr>`
-    )
+    </tr>`;
+    })
     .join("");
 
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#222;">

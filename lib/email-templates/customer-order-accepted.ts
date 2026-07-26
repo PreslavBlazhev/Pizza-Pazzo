@@ -4,6 +4,7 @@
  * restaurant's customers order in BG and the order itself stores no locale.
  */
 import { SITE } from "@/lib/constants";
+import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import type { OrderWithItems } from "@/types/order";
 
 const bgn = (n: number) => `${n.toFixed(2)} лв.`;
@@ -24,11 +25,22 @@ export function customerOrderAcceptedEmail(order: OrderWithItems): {
 } {
   const subject = `Поръчката ви е приета — Pizza Pazzo #${order.orderNumber}`;
 
-  const textItems = order.items.map(
-    (i) =>
+  // The customer email is Bulgarian (the order stores no locale), so extras use
+  // their BG snapshot names; "за всяка бройка" clarifies multi-quantity lines.
+  const perItemHint = (quantity: number) =>
+    quantity > 1 ? " (за всяка бройка)" : "";
+
+  const textItems = order.items.flatMap((i) => {
+    const head =
       `  ${i.quantity} × ${itemLabel(i.productNameBg, i.variantName)} — ` +
-      `${eur(i.totalPriceEur)} / ${bgn(i.totalPriceBgn)}`
-  );
+      `${eur(i.totalPriceEur)} / ${bgn(i.totalPriceBgn)}`;
+    const extras = toOrderExtrasDisplay(i.extras, "bg").map(
+      (e) =>
+        `      + ${extraLabel(e)}${perItemHint(i.quantity)} — ` +
+        `${eur(e.totalPriceEur)} / ${bgn(e.totalPriceBgn)}`
+    );
+    return [head, ...extras];
+  });
 
   const text = [
     `Здравейте, ${order.customerName}!`,
@@ -53,16 +65,26 @@ export function customerOrderAcceptedEmail(order: OrderWithItems): {
   ].join("\n");
 
   const htmlRows = order.items
-    .map(
-      (i) => `    <tr>
+    .map((i) => {
+      const extraLines = toOrderExtrasDisplay(i.extras, "bg")
+        .map(
+          (e) =>
+            `<div style="padding-left:14px;font-size:13px;color:#555;">+ ${esc(
+              extraLabel(e)
+            )}${esc(perItemHint(i.quantity))} — ${eur(e.totalPriceEur)} / ${bgn(
+              e.totalPriceBgn
+            )}</div>`
+        )
+        .join("");
+      return `    <tr>
       <td style="padding:6px 8px;border-bottom:1px solid #eee;">${i.quantity} × ${esc(
         itemLabel(i.productNameBg, i.variantName)
-      )}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap;">${eur(
+      )}${extraLines}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;vertical-align:top;white-space:nowrap;">${eur(
         i.totalPriceEur
       )} <span style="color:#888;">/ ${bgn(i.totalPriceBgn)}</span></td>
-    </tr>`
-    )
+    </tr>`;
+    })
     .join("\n");
 
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#222;">

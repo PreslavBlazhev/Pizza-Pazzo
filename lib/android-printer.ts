@@ -10,6 +10,7 @@
  * components, never during SSR (there is no `window` on the server).
  */
 
+import { toOrderExtrasDisplay, withPerUnitHint } from "@/lib/order-extras-display";
 import type { OrderWithItems } from "@/types/order";
 
 /** UI lifecycle of one print attempt. */
@@ -54,6 +55,14 @@ export function isAndroidPrinterAvailable(): boolean {
  * Adapts the site's real order shape to the JSON the Android app's
  * PrintableOrder parser expects. Prices are sent in EUR (primary) with the BGN
  * total as secondary — same convention as the on-screen UI.
+ *
+ * Extras map onto the app's existing `Item.extras` array (see
+ * android-kitchen-app/.../models/PrintableOrder.kt: `Extra(name, quantity,
+ * price)`). ReceiptFormatter already prints `+ {quantity}x {name} ({price})`,
+ * so the quantity stays in its own field — never baked into the name — and
+ * `price` is the extra's total for that quantity on ONE unit of the dish,
+ * matching what the parenthesised amount means on the receipt. Internal
+ * identifiers (key, sourceProductId, sourceVariantId) are never sent.
  */
 export function buildPrintableOrderJson(order: OrderWithItems, isReprint = false): string {
   return JSON.stringify({
@@ -78,6 +87,12 @@ export function buildPrintableOrderJson(order: OrderWithItems, isReprint = false
       size: item.variantName,
       unitPrice: item.unitPriceEur,
       totalPrice: item.totalPriceEur,
+      // Always an array (never undefined) — the Kotlin parser expects one.
+      extras: toOrderExtrasDisplay(item.extras, "bg").map((e) => ({
+        name: withPerUnitHint(e.name, item.quantity),
+        quantity: e.quantity,
+        price: e.totalPriceEur,
+      })),
       note: item.itemNote,
     })),
     paymentMethod: order.paymentMethod,

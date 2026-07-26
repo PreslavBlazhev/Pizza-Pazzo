@@ -10,7 +10,11 @@ import {
   resolveOrderItemExtras,
   type ExtraSourceProduct,
 } from "@/lib/extras-resolve";
-import { EXTRAS_LIMITS, type OrderItemExtra } from "@/lib/extras-rules";
+import {
+  EXTRAS_LIMITS,
+  parseOrderItemExtras,
+  type OrderItemExtra,
+} from "@/lib/extras-rules";
 import { sendNewOrderNotification } from "@/lib/email/resend";
 
 /**
@@ -267,6 +271,9 @@ export async function createOrder(
         quantity: i.quantity,
         totalPriceBgn: i.totalPriceBgn,
         totalPriceEur: i.totalPriceEur,
+        // Same snapshot that went into extrasJson — parsed back rather than
+        // re-derived, so the email can never disagree with the order.
+        extras: parseOrderItemExtras(i.extrasJson),
       })),
     });
 

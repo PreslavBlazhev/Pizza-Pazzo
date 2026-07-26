@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { updateOrderStatusAction } from "@/app/actions/order-admin";
 import { formatDualPrice } from "@/lib/format-price";
+import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { PrintOrderButton } from "./PrintOrderButton";
 import type { Order, OrderWithItems } from "@/types/order";
 
@@ -278,18 +279,34 @@ function LiveOrderCard({
           )}
         </div>
         <div>
-          <ul className="space-y-1">
-            {(order.items ?? []).map((i) => (
-              <li key={i.id} className="flex justify-between gap-3">
-                <span>
-                  <strong>{i.quantity}×</strong> {i.productNameBg}
-                  {i.variantName ? ` (${i.variantName})` : ""}
-                </span>
-                <span className="whitespace-nowrap text-neutral-600">
-                  {formatDualPrice(i.totalPriceEur, i.totalPriceBgn)}
-                </span>
-              </li>
-            ))}
+          <ul className="space-y-1.5">
+            {(order.items ?? []).map((i) => {
+              // Kitchen-facing: extras are listed under the dish and marked
+              // "/ всяка" when the line has more than one unit.
+              const extras = toOrderExtrasDisplay(i.extras, "bg");
+              return (
+                <li key={i.id}>
+                  <div className="flex justify-between gap-3">
+                    <span>
+                      <strong>{i.quantity}×</strong> {i.productNameBg}
+                      {i.variantName ? ` (${i.variantName})` : ""}
+                    </span>
+                    <span className="whitespace-nowrap text-neutral-600">
+                      {formatDualPrice(i.totalPriceEur, i.totalPriceBgn)}
+                    </span>
+                  </div>
+                  {extras.length > 0 && (
+                    <ul className="mt-0.5 space-y-0.5 pl-4 font-semibold text-pizza-green-dark">
+                      {extras.map((e, n) => (
+                        <li key={`${i.id}-x${n}`} className="break-words">
+                          + {extraKitchenLabel(e, i.quantity)}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
           </ul>
           <p className="mt-2 border-t pt-2 text-xl font-bold">
             Общо: {formatDualPrice(order.totalEur, order.totalBgn)}

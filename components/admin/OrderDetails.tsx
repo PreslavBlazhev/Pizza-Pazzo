@@ -1,5 +1,6 @@
 import type { Order } from "@/types/order";
 import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatDateTime } from "@/lib/utils";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusControl } from "./OrderStatusControl";
@@ -82,22 +83,53 @@ export function OrderDetails({ order }: { order: Order }) {
       <section>
         <h2 className="mb-2 text-sm font-semibold text-neutral-600">Продукти</h2>
         <ul className="divide-y divide-neutral-100">
-          {items.map((item) => (
-            <li key={item.id} className="flex items-start justify-between gap-4 py-2">
-              <span className="text-sm text-neutral-700">
-                {item.quantity}× {item.productNameBg}
-                {item.variantName ? (
-                  <span className="text-neutral-400"> ({item.variantName})</span>
-                ) : null}
-              </span>
-              <span className="shrink-0 text-sm font-medium text-neutral-700">
-                {formatEurPrice(item.totalPriceEur)}{" "}
-                <span className="text-xs text-neutral-400">
-                  {formatBgnPrice(item.totalPriceBgn)}
-                </span>
-              </span>
-            </li>
-          ))}
+          {items.map((item) => {
+            // Extras come from the order's immutable snapshot — never from the
+            // live menu, so an edited product cannot rewrite an old order.
+            const extras = toOrderExtrasDisplay(item.extras, "bg");
+            return (
+              <li key={item.id} className="py-2">
+                <div className="flex items-start justify-between gap-4">
+                  <span className="text-sm text-neutral-700">
+                    {item.quantity}× {item.productNameBg}
+                    {item.variantName ? (
+                      <span className="text-neutral-400"> ({item.variantName})</span>
+                    ) : null}
+                  </span>
+                  <span className="shrink-0 text-sm font-medium text-neutral-700">
+                    {formatEurPrice(item.totalPriceEur)}{" "}
+                    <span className="text-xs text-neutral-400">
+                      {formatBgnPrice(item.totalPriceBgn)}
+                    </span>
+                  </span>
+                </div>
+
+                {extras.length > 0 && (
+                  <div className="mt-1.5 border-l-2 border-neutral-200 pl-3">
+                    <p className="text-xs font-medium text-neutral-500">
+                      {item.quantity > 1 ? "Добавки за всяка бройка:" : "Добавки:"}
+                    </p>
+                    <ul className="mt-0.5 space-y-0.5">
+                      {extras.map((e, n) => (
+                        <li
+                          key={`${item.id}-${n}`}
+                          className="flex items-start justify-between gap-3 text-xs text-neutral-600"
+                        >
+                          <span className="break-words">+ {extraLabel(e)}</span>
+                          <span className="shrink-0 whitespace-nowrap">
+                            {formatEurPrice(e.totalPriceEur)}{" "}
+                            <span className="text-neutral-400">
+                              {formatBgnPrice(e.totalPriceBgn)}
+                            </span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
 

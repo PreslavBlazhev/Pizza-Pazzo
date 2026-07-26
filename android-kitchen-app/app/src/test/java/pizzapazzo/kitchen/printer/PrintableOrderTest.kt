@@ -127,6 +127,97 @@ class PrintableOrderTest {
         assertEquals(1, order.items[0].quantity)
     }
 
+    /**
+     * Byte-for-byte shape of what lib/android-printer.ts sends for an order
+     * with extras (Phase 2C): one Extra per chosen add-on, `quantity` in its
+     * own field, `price` = that extra's total for ONE unit of the dish, and a
+     * "/ всяка" hint appended to the name on multi-quantity lines. No internal
+     * identifiers (key/sourceProductId/sourceVariantId) are ever sent.
+     */
+    @Test
+    fun `parses the web adapter payload with extras`() {
+        val order = PrintableOrder.fromJson(
+            """
+            {
+              "orderId": "cms101fok0002lp63rigjdcls",
+              "orderNumber": "1009",
+              "createdAt": "2026-07-25T23:27:28.675Z",
+              "acceptedAt": null,
+              "estimatedMinutes": null,
+              "customer": { "name": "Преслав Блажев", "phone": "0877364001", "email": null },
+              "delivery": { "type": "DELIVERY", "address": "ул. Тестова 1", "city": "Плевен" },
+              "items": [
+                {
+                  "name": "Маргарита", "quantity": 2, "size": "30 см / 30 cm",
+                  "unitPrice": 6.65, "totalPrice": 27.64,
+                  "extras": [
+                    { "name": "Месна добавка / всяка", "quantity": 1, "price": 2.56 },
+                    { "name": "Чеснов сос / всяка", "quantity": 2, "price": 2.04 }
+                  ],
+                  "note": null
+                },
+                {
+                  "name": "Кока-Кола", "quantity": 1, "size": null,
+                  "unitPrice": 1.53, "totalPrice": 1.53,
+                  "extras": [],
+                  "note": null
+                }
+              ],
+              "paymentMethod": "CASH_ON_DELIVERY",
+              "customerNote": null,
+              "subtotal": 29.17, "deliveryFee": 2.50, "discount": 0, "total": 31.67,
+              "currency": "EUR", "totalSecondary": 61.94, "secondaryCurrency": "лв",
+              "isReprint": false
+            }
+            """.trimIndent()
+        ).getOrThrow()
+
+        assertEquals(2, order.items.size)
+
+        val pizza = order.items[0]
+        assertEquals(2, pizza.quantity)
+        assertEquals(2, pizza.extras.size)
+        assertEquals("Месна добавка / всяка", pizza.extras[0].name)
+        assertEquals(1, pizza.extras[0].quantity)
+        assertEquals(2.56, pizza.extras[0].price!!, 0.001)
+        assertEquals("Чеснов сос / всяка", pizza.extras[1].name)
+        assertEquals(2, pizza.extras[1].quantity)
+        assertEquals(2.04, pizza.extras[1].price!!, 0.001)
+
+        // An item the customer ordered without extras must arrive as an empty
+        // list, not null — the formatter iterates it unconditionally.
+        assertTrue(order.items[1].extras.isEmpty())
+
+        // The receipt renders it all, per-unit hints included.
+        val settings = PrinterSettings(paperWidth = PaperWidth.MM80, charsPerLine = 48)
+        val text = ReceiptFormatter.toPlainText(
+            ReceiptFormatter.format(order, settings),
+            settings,
+        )
+        assertTrue(text.contains("2 x МАРГАРИТА"))
+        assertTrue(text.contains("+ Месна добавка / всяка (2.56)"))
+        assertTrue(text.contains("+ 2x Чеснов сос / всяка (2.04)"))
+        assertTrue(text.contains("1 x КОКА-КОЛА"))
+    }
+
+    @Test
+    fun `extras entries without a name are skipped, valid ones kept`() {
+        val order = PrintableOrder.fromJson(
+            """
+            {
+              "orderId": "1",
+              "items": [ { "name": "Пица", "quantity": 1, "extras": [
+                { "quantity": 1, "price": 1.0 },
+                { "name": "Кетчуп", "quantity": 3, "price": 3.06 }
+              ] } ]
+            }
+            """.trimIndent()
+        ).getOrThrow()
+        assertEquals(1, order.items[0].extras.size)
+        assertEquals("Кетчуп", order.items[0].extras[0].name)
+        assertEquals(3, order.items[0].extras[0].quantity)
+    }
+
     @Test
     fun `reprint flag and secondary currency are parsed`() {
         val order = PrintableOrder.fromJson(

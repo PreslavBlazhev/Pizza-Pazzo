@@ -403,6 +403,7 @@
     "orderTitle": "Order #{number}",
     "orderAddress": "Address",
     "orderItemsCount": "{count, plural, one {# item} other {# items}}",
+    "orderPerItem": "per item",
     "saved": "Your changes have been saved.",
     "address": {
       "sectionTitle": "Delivery addresses",
