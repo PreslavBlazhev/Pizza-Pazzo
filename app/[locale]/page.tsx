@@ -7,6 +7,11 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ProductCard } from "@/components/menu/ProductCard";
 import { GallerySection } from "@/components/home/GallerySection";
 import { ReviewsSection } from "@/components/home/ReviewsSection";
+import {
+  PizzaMathPromo,
+  PromoBannersCarousel,
+  TwoToppingsPromo,
+} from "@/components/home/PromoBanners";
 import { getCategories, getPopularProducts } from "@/lib/menu-data";
 import { SITE } from "@/lib/constants";
 import type { Locale } from "@/i18n/routing";
@@ -48,58 +53,93 @@ export default async function HomePage({
         {/* No decorative colour blobs here on purpose: the hero sits directly
             on the cream + food-doodle page background, evenly, with no tinted
             glow at the edges. */}
-        <section>
-          <div className="container flex flex-col items-center py-16 text-center sm:py-24">
-            {/* The bar above hides its logo on this page, so this is the only
-                (and therefore bigger) brand mark above the fold. Height-based
-                sizing + w-auto keeps the PNG's aspect ratio; at h-40 the logo
-                is ~283px wide and still fits a 360px viewport with the
-                container padding. */}
-            <Logo className="h-40 sm:h-56" linked={false} priority />
+        {/* Decorative assets pending: <HeroDecorations /> (herbs on the left,
+            tomatoes on the right) is written and ready in
+            components/home/HeroDecorations.tsx, but it is deliberately NOT
+            rendered yet — the two cutout images it points at do not exist, and
+            shipping it would make the homepage request two 404s. Re-enable by
+            importing it and dropping it in here, once
+            public/images/decor/herbs-left.webp and tomatoes-right.webp land.
 
-            {/* Slogan — font-slogan (Yeseva One) echoes the carved-serif "PIZZA
-                PAZZO" lettering in the logo above; tracking is deliberately
-                lighter than a sans-serif badge would use, since the display
-                face is already wide and dense at small sizes. */}
-            <span className="mt-8 inline-block rounded-full border border-pizza-green/30 bg-white/70 px-5 py-2 font-slogan text-sm uppercase leading-none tracking-wide text-pizza-green sm:text-base">
-              {t("hero.badge")}
-            </span>
+            The classes below are the layering context that component needs:
+            `isolate` keeps its negative z-index inside this section — above the
+            page's doodle background, below the boards and the central column —
+            and `overflow-clip` swallows artwork running past the viewport edge
+            without ever creating a scrollbar. Both are inert until then. */}
+        <section className="relative isolate overflow-clip">
+          {/* Desktop puts a promo board on each side of the hero; below `lg`
+              the middle column is the whole row and the boards move under it
+              as a swipeable carousel. Vertical rhythm tightens on `lg` so the
+              logo, heading, badge, CTAs and both boards fit a 1366×768 screen
+              without scrolling. */}
+          <div className="container py-16 sm:py-20 lg:grid lg:grid-cols-[minmax(180px,240px)_minmax(0,1fr)_minmax(180px,240px)] lg:items-center lg:gap-8 lg:py-10">
+            <TwoToppingsPromo className="hidden lg:block" />
 
-            {/* font-slogan (Yeseva One, single 400 weight — no font-bold, it
-                would only synthesize a faux bold) matches the carved-serif
-                "PIZZA PAZZO" lettering of the logo and covers Cyrillic. */}
-            <h1 className="mt-5 max-w-3xl font-slogan text-4xl leading-tight text-pizza-ink sm:text-6xl">
-              {t("hero.titleLead")}{" "}
-              <span className="text-brand">{t("hero.titleAccent")}</span>
-            </h1>
+            <div className="flex flex-col items-center text-center">
+              {/* The bar above hides its logo on this page, so this is the only
+                  (and therefore bigger) brand mark above the fold. Height-based
+                  sizing + w-auto keeps the PNG's aspect ratio; at h-40 the logo
+                  is ~283px wide and still fits a 360px viewport with the
+                  container padding. */}
+              <Logo className="h-40 sm:h-56 lg:h-44" linked={false} priority />
 
-            <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-pizza-muted">
-              {t("hero.subtitle")}
-            </p>
+              {/* Slogan — font-slogan (Yeseva One) echoes the carved-serif "PIZZA
+                  PAZZO" lettering in the logo above; tracking is deliberately
+                  lighter than a sans-serif badge would use, since the display
+                  face is already wide and dense at small sizes. */}
+              <span className="mt-8 inline-block rounded-full border border-pizza-green/30 bg-white/70 px-5 py-2 font-slogan text-sm uppercase leading-none tracking-wide text-pizza-green sm:text-base lg:mt-6">
+                {t("hero.badge")}
+              </span>
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/menu"
-                className="rounded-full bg-brand px-8 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 focus:ring-offset-2"
-              >
-                {t("hero.ctaMenu")}
-              </Link>
-              <Link
-                href="/popular"
-                className="rounded-full border border-pizza-green bg-white px-8 py-3.5 font-semibold text-pizza-green transition hover:bg-pizza-green hover:text-white"
-              >
-                {t("hero.ctaPopular")}
-              </Link>
+              {/* font-slogan (Yeseva One, single 400 weight — no font-bold, it
+                  would only synthesize a faux bold) matches the carved-serif
+                  "PIZZA PAZZO" lettering of the logo and covers Cyrillic. */}
+              <h1 className="mt-5 max-w-3xl font-slogan text-4xl leading-tight text-pizza-ink sm:text-6xl lg:mt-4 lg:text-5xl">
+                {t("hero.titleLead")}{" "}
+                <span className="text-brand">{t("hero.titleAccent")}</span>
+              </h1>
+
+              {/* Standing promotional line — a fixed message, not a day-of-week
+                  check: it reads louder than the subtitle, quieter than the H1.
+                  brand-dark on the tinted fill clears AA comfortably, where the
+                  lighter brand red sat close to the 4.5:1 floor. */}
+              <p className="mt-4 inline-flex items-center gap-2.5 rounded-full border-2 border-brand/55 bg-brand/15 px-6 py-2 text-sm font-bold uppercase tracking-wide text-brand-dark sm:text-base lg:mt-3">
+                <span aria-hidden className="h-2 w-2 rounded-full bg-brand" />
+                {t("pizzaThursday")}
+              </p>
+
+              <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-pizza-muted lg:mt-3 lg:text-base">
+                {t("hero.subtitle")}
+              </p>
+
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row lg:mt-6">
+                <Link
+                  href="/menu"
+                  className="rounded-full bg-brand px-8 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 focus:ring-offset-2"
+                >
+                  {t("hero.ctaMenu")}
+                </Link>
+                <Link
+                  href="/popular"
+                  className="rounded-full border border-pizza-green bg-white px-8 py-3.5 font-semibold text-pizza-green transition hover:bg-pizza-green hover:text-white"
+                >
+                  {t("hero.ctaPopular")}
+                </Link>
+              </div>
+
+              {/* Trust strip */}
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-pizza-muted lg:mt-6">
+                <span>{t("hero.trustDelivery")}</span>
+                <span className="hidden text-pizza-cream-dark sm:inline">•</span>
+                <span>{t("hero.trustSince", { year: SITE.foundedYear })}</span>
+                <span className="hidden text-pizza-cream-dark sm:inline">•</span>
+                <span>{t("hero.trustDough")}</span>
+              </div>
+
+              <PromoBannersCarousel />
             </div>
 
-            {/* Trust strip */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-pizza-muted">
-              <span>{t("hero.trustDelivery")}</span>
-              <span className="hidden text-pizza-cream-dark sm:inline">•</span>
-              <span>{t("hero.trustSince", { year: SITE.foundedYear })}</span>
-              <span className="hidden text-pizza-cream-dark sm:inline">•</span>
-              <span>{t("hero.trustDough")}</span>
-            </div>
+            <PizzaMathPromo className="hidden lg:block" />
           </div>
         </section>
 

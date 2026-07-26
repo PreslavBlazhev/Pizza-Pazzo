@@ -98,6 +98,28 @@
   },
 
   "home": {
+    "pizzaThursday": "Every Thursday is pizza day",
+    "promos": {
+      "twoToppings": {
+        "ariaLabel": "Promotion: pizza with 2 toppings — 30 cm for 10 BGN / €5.11, 40 cm for 15 BGN / €7.67, collection only. View the menu.",
+        "title": "Pizza with 2 toppings",
+        "medium": "30 cm · medium",
+        "mediumPrice": "10 BGN / €5.11",
+        "large": "40 cm · large",
+        "largePrice": "15 BGN / €7.67",
+        "collectionOnly": "Collection only"
+      },
+      "pizzaMath": {
+        "ariaLabel": "Promotion: wrong maths, right offers — 30 + 30 for 33 BGN, 40 + 30 for 38 BGN, 40 + 40 for 45 BGN. View the menu.",
+        "titleLine1": "Wrong maths",
+        "titleLine2": "right offers",
+        "offer3030": "30 + 30 = 33 BGN / €16.87",
+        "offer4030": "40 + 30 = 38 BGN / €19.43",
+        "offer4040": "40 + 40 = 45 BGN / €23.01",
+        "noteLine1": "You add the pizzas up in centimetres, and the result is the price of the combination.",
+        "noteLine2": "This offer does not include the speciality pizzas!"
+      }
+    },
     "hero": {
       "badge": "Authentic Italian pizzas",
       "titleLead": "Deliciously",
