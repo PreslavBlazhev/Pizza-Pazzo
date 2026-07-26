@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
+import { getLocale } from "next-intl/server";
 import { z } from "zod";
+import { redirect } from "@/i18n/navigation";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MENU_CACHE_TAG } from "@/lib/menu-data";
@@ -194,7 +196,12 @@ export async function updateProductAction(
 
   revalidateMenu();
   revalidatePath(`/admin/products/${id}`);
-  return { ok: true, message: "Продуктът е запазен. Сайтът е обновен." };
+
+  // Success → back to the product list. `redirect` throws (NEXT_REDIRECT), so
+  // it must stay outside any try/catch — and it is deliberately the last
+  // statement: every failure path above returns an ActionResult instead, which
+  // keeps the admin on the form with the error shown.
+  redirect({ href: "/admin/products", locale: await getLocale() });
 }
 
 /** ADMIN+: category edit (slug stays fixed — it is a public URL). */

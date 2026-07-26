@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
-import { FormAlert } from "@/components/ui/FormAlert";
 import { SITE, WORKING_HOURS } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Настройки" };
 
 /**
- * Restaurant settings. Read-only for now: the values live in
- * `lib/constants.ts`, so editing them here means moving them into the database
- * first. Shown rather than hidden so staff can verify what the site publishes.
+ * Restaurant settings — the contact details and opening hours exactly as the
+ * public site publishes them, so staff can verify them at a glance.
+ *
+ * Read-only: the values live in `lib/constants.ts`. Editing them from here
+ * needs a settings table first (a separate phase), which is why there are no
+ * edit controls rather than disabled ones.
  *
  * The admin panel stays Bulgarian-only on purpose (see docs/project-scope.md):
- * it is staff-facing, and every page here is a Stage 5 placeholder. Only the
- * day names are translated, because they are shared with the public site.
+ * it is staff-facing. Only the day names are translated, because they are
+ * shared with the public site.
  */
 export default function AdminSettingsPage() {
   const tHours = useTranslations("hours");
@@ -25,12 +27,6 @@ export default function AdminSettingsPage() {
       <p className="mt-1.5 text-sm text-pizza-muted">
         Данни на ресторанта, както се показват на сайта.
       </p>
-
-      <FormAlert tone="info" className="mt-6">
-        Данните се четат от <code>lib/constants.ts</code> и засега се променят
-        само от разработчик. Редакцията оттук ще се активира, когато настройките
-        се преместят в базата.
-      </FormAlert>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <section className="rounded-2xl border border-pizza-cream-dark bg-white p-5">
@@ -77,11 +73,6 @@ export default function AdminSettingsPage() {
           </dl>
         </section>
       </div>
-
-      <p className="mt-6 text-sm text-pizza-muted">
-        Зони и цени за доставка, данни за печат и имейл известия ще се добавят
-        заедно с модула за поръчки.
-      </p>
     </div>
   );
 }

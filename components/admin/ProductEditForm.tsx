@@ -34,10 +34,9 @@ export function ProductEditForm({
 
   return (
     <form action={formAction} className="space-y-8" noValidate>
+      {/* Only errors surface here: a successful save redirects to the product
+          list, so the action never returns an ok result to this form. */}
       {state?.error && <FormAlert tone="error">{state.error}</FormAlert>}
-      {state?.ok && state.message && (
-        <FormAlert tone="success">{state.message}</FormAlert>
-      )}
 
       <input type="hidden" name="productId" value={product.id} />
 
@@ -264,9 +263,6 @@ export function ProductEditForm({
         >
           {isPending ? "Запазване…" : imageUploading ? "Изчакайте качването…" : "Запази продукта"}
         </button>
-        <span className="text-xs text-pizza-muted">
-          Адрес на сайта: /product/{product.slug} (не се променя)
-        </span>
       </div>
     </form>
   );

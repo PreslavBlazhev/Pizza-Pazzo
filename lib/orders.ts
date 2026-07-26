@@ -83,11 +83,28 @@ function mapOrder(o: PrismaOrderWithItems): Order {
   return { ...mapOrderRow(o), items: o.items.map(mapItem) };
 }
 
-/** All orders, newest first, with their line items. */
-export async function getOrders(): Promise<Order[]> {
+/** Hard ceiling for the admin order list — a screen never needs more, and it
+ *  keeps the query bounded as the order history grows. Older orders stay in
+ *  the database and remain reachable through /admin/reports. */
+export const MAX_ADMIN_ORDERS = 200;
+
+/**
+ * Orders newest first, with their line items.
+ *
+ * `limit` is optional for backward compatibility and is clamped to
+ * [1, MAX_ADMIN_ORDERS] — callers pass a fixed number, never a user-supplied
+ * one. Omitting it keeps the previous "everything" behaviour.
+ */
+export async function getOrders(limit?: number): Promise<Order[]> {
+  const take =
+    limit === undefined
+      ? undefined
+      : Math.min(Math.max(1, Math.trunc(limit)), MAX_ADMIN_ORDERS);
+
   const rows = await db.order.findMany({
     orderBy: { createdAt: "desc" },
     include: { items: true },
+    ...(take !== undefined && { take }),
   });
   return rows.map(mapOrder);
 }

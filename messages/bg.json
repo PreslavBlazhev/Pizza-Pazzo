@@ -440,6 +440,7 @@
 
   "admin": {
     "title": "Админ панел",
+    "openOrder": "Отвори поръчка №{number}",
     "nav": {
       "dashboard": "Табло",
       "orders": "Поръчки",

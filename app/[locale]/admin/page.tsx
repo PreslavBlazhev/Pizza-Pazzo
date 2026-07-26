@@ -15,7 +15,9 @@ export default async function AdminDashboardPage() {
   const [sessionUser, stats, latestOrders] = await Promise.all([
     getSessionUser(),
     getAdminDashboardStats(),
-    getLatestOrders(5),
+    // The dashboard shows a short digest — the full list lives in "Поръчки",
+    // everything older in "Отчет".
+    getLatestOrders(10),
   ]);
   const firstName = sessionUser?.fullName?.split(" ")[0];
 
