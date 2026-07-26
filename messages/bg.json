@@ -207,7 +207,12 @@
   "extras": {
     "title": "Изберете добавки",
     "crustTitle": "Изберете борд",
-    "saucesTitle": "Сосове",
+    "crustGroup": "Борд",
+    "otherAddons": "Други добавки",
+    "saucesTitle": "Изберете сосове",
+    "noneSelected": "Няма избрани",
+    "selectedCount": "{count, plural, one {# избрана} other {# избрани}}",
+    "saucesCount": "{count, plural, one {# брой} other {# броя}}",
     "unavailableForSize": "Недостъпно за този размер",
     "decreaseQuantity": "Намали количеството на {name}",
     "increaseQuantity": "Увеличи количеството на {name}",

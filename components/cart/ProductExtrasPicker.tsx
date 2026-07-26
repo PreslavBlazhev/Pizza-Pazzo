@@ -1,15 +1,20 @@
 "use client";
 
+import { useEffect, useId, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ProductExtraOption, ProductExtrasData } from "@/types/cart";
 import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
 
 /**
- * Extras picker on the product page: crust single-select, independent addon
- * checkboxes, sauce quantity steppers. Pure presentation — the selection state
- * lives in <AddToCart /> (the owner), which also derives per-size prices and
- * writes to the cart store on submit.
+ * Extras picker on the product page: two compact dropdowns side by side —
+ * add-ons (crust + the rest) on the left, sauces on the right. Each is a
+ * disclosure (button + panel), not a native <select>, because the panels hold
+ * checkboxes, quantity steppers and dual prices.
+ *
+ * Pure presentation: the selection state lives in <AddToCart /> (the owner),
+ * which derives per-size prices and writes to the cart store on submit. The
+ * props contract is unchanged from the previous always-open list.
  */
 
 /** Selection state: option key → quantity (1 for crust/addons, 1–10 sauces). */
@@ -41,6 +46,95 @@ interface ProductExtrasPickerProps {
   onSauceChange: (option: ProductExtraOption, delta: 1 | -1) => void;
 }
 
+/**
+ * One collapsible section. Closing on Escape and on an outside click is done
+ * with a ref plus two listeners — no dropdown library, and the panel stays in
+ * the normal flow so opening it just expands the section.
+ */
+function ExtrasDisclosure({
+  title,
+  summary,
+  children,
+}: {
+  title: string;
+  summary: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      const node = wrapperRef.current;
+      if (node && e.target instanceof Node && !node.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("mousedown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("mousedown", onPointerDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapperRef} className="self-start">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex w-full items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-left shadow-sm transition",
+          "hover:border-pizza-green/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-2",
+          open ? "border-pizza-green" : "border-pizza-cream-dark"
+        )}
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-pizza-ink">{title}</span>
+          <span className="block text-xs text-pizza-muted">{summary}</span>
+        </span>
+        <span
+          aria-hidden
+          className={cn(
+            "shrink-0 text-pizza-muted transition-transform duration-200",
+            open && "rotate-180"
+          )}
+        >
+          ▾
+        </span>
+      </button>
+
+      {/* Height/opacity transition on a wrapper keeps the open/close smooth
+          without measuring the content. */}
+      <div
+        className={cn(
+          "grid transition-all duration-200 ease-out",
+          open ? "mt-2 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        )}
+      >
+        <div className="overflow-hidden">
+          <div
+            id={panelId}
+            hidden={!open}
+            className="max-h-80 space-y-2 overflow-y-auto rounded-2xl border border-pizza-cream-dark bg-pizza-cream/40 p-3 shadow-sm"
+          >
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ProductExtrasPicker({
   extras,
   mainSize,
@@ -63,9 +157,9 @@ export function ProductExtrasPicker({
     </span>
   );
 
-  /** Checkbox-style card for crusts and addons (crust exclusivity is enforced
-   *  by the owner; re-clicking a selected card deselects it). */
-  const toggleCard = (option: ProductExtraOption) => {
+  /** Checkbox-style row for crusts and addons (crust exclusivity is enforced
+   *  by the owner; re-clicking a selected row deselects it). */
+  const toggleRow = (option: ProductExtraOption) => {
     const isSelected = (selected[option.key] ?? 0) > 0;
     const price = optionPriceFor(option, mainSize);
     const unavailable = price === null;
@@ -80,7 +174,7 @@ export function ProductExtrasPicker({
         disabled={disabled}
         onClick={() => onToggle(option)}
         className={cn(
-          "flex w-full items-center justify-between gap-3 rounded-2xl border px-3.5 py-2.5 text-left shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-2",
+          "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-1",
           isSelected
             ? "border-pizza-green bg-pizza-green-light"
             : "border-pizza-cream-dark bg-white hover:border-pizza-green/50",
@@ -130,7 +224,7 @@ export function ProductExtrasPicker({
       <div
         key={option.key}
         className={cn(
-          "flex items-center justify-between gap-3 rounded-2xl border px-3.5 py-2 shadow-sm transition",
+          "flex items-center justify-between gap-3 rounded-xl border px-3 py-2 transition",
           qty > 0 ? "border-pizza-green bg-pizza-green-light" : "border-pizza-cream-dark bg-white"
         )}
       >
@@ -179,40 +273,55 @@ export function ProductExtrasPicker({
     );
   };
 
-  const hasLeftColumn = extras.crusts.length > 0 || extras.addons.length > 0;
+  const hasAddons = extras.crusts.length > 0 || extras.addons.length > 0;
   const hasSauces = extras.sauces.length > 0;
+
+  // Closed-state summaries. Add-ons count distinct choices; sauces count total
+  // units, because "3 sauces" means three jars, not three kinds.
+  const addonCount = [...extras.crusts, ...extras.addons].filter(
+    (o) => (selected[o.key] ?? 0) > 0
+  ).length;
+  const sauceUnits = extras.sauces.reduce((sum, o) => sum + (selected[o.key] ?? 0), 0);
+
+  const addonSummary =
+    addonCount === 0 ? t("noneSelected") : t("selectedCount", { count: addonCount });
+  const sauceSummary =
+    sauceUnits === 0 ? t("noneSelected") : t("saucesCount", { count: sauceUnits });
 
   return (
     <div
       className={cn(
-        "grid gap-6 text-left",
-        hasLeftColumn && hasSauces ? "md:grid-cols-2" : "md:grid-cols-1"
+        "grid gap-4 text-left",
+        hasAddons && hasSauces ? "md:grid-cols-2" : "md:grid-cols-1"
       )}
     >
-      {hasLeftColumn && (
-        <div className="space-y-5 self-start">
+      {hasAddons && (
+        <ExtrasDisclosure title={t("title")} summary={addonSummary}>
           {extras.crusts.length > 0 && (
-            <div>
-              <h3 className="mb-2.5 text-sm font-semibold text-pizza-ink">
-                {t("crustTitle")}
-              </h3>
-              <div className="space-y-2">{extras.crusts.map(toggleCard)}</div>
-            </div>
+            <>
+              <p className="px-1 text-xs font-semibold uppercase tracking-wide text-pizza-muted">
+                {t("crustGroup")}
+              </p>
+              {extras.crusts.map(toggleRow)}
+            </>
           )}
           {extras.addons.length > 0 && (
-            <div>
-              <h3 className="mb-2.5 text-sm font-semibold text-pizza-ink">{t("title")}</h3>
-              <div className="space-y-2">{extras.addons.map(toggleCard)}</div>
-            </div>
+            <>
+              {extras.crusts.length > 0 && (
+                <p className="px-1 pt-1 text-xs font-semibold uppercase tracking-wide text-pizza-muted">
+                  {t("otherAddons")}
+                </p>
+              )}
+              {extras.addons.map(toggleRow)}
+            </>
           )}
-        </div>
+        </ExtrasDisclosure>
       )}
 
       {hasSauces && (
-        <div className="self-start">
-          <h3 className="mb-2.5 text-sm font-semibold text-pizza-ink">{t("saucesTitle")}</h3>
-          <div className="space-y-2">{extras.sauces.map(sauceRow)}</div>
-        </div>
+        <ExtrasDisclosure title={t("saucesTitle")} summary={sauceSummary}>
+          {extras.sauces.map(sauceRow)}
+        </ExtrasDisclosure>
       )}
     </div>
   );

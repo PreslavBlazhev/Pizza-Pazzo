@@ -45,12 +45,11 @@ export default async function HomePage({
       <Header variant="home" />
       <main>
         {/* ── Hero ─────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden">
-          {/* soft decorative blobs */}
-          <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-pizza-green-light blur-3xl" />
-          <div className="pointer-events-none absolute -right-24 top-10 h-72 w-72 rounded-full bg-pizza-red-light blur-3xl" />
-
-          <div className="container relative flex flex-col items-center py-16 text-center sm:py-24">
+        {/* No decorative colour blobs here on purpose: the hero sits directly
+            on the cream + food-doodle page background, evenly, with no tinted
+            glow at the edges. */}
+        <section>
+          <div className="container flex flex-col items-center py-16 text-center sm:py-24">
             {/* The bar above hides its logo on this page, so this is the only
                 (and therefore bigger) brand mark above the fold. Height-based
                 sizing + w-auto keeps the PNG's aspect ratio; at h-40 the logo

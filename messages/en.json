@@ -207,7 +207,12 @@
   "extras": {
     "title": "Choose add-ons",
     "crustTitle": "Choose a crust",
-    "saucesTitle": "Sauces",
+    "crustGroup": "Crust",
+    "otherAddons": "Other add-ons",
+    "saucesTitle": "Choose sauces",
+    "noneSelected": "None selected",
+    "selectedCount": "{count, plural, one {# selected} other {# selected}}",
+    "saucesCount": "{count, plural, one {# item} other {# items}}",
     "unavailableForSize": "Unavailable for this size",
     "decreaseQuantity": "Decrease quantity of {name}",
     "increaseQuantity": "Increase quantity of {name}",
