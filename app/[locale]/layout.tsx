@@ -110,7 +110,7 @@ export default async function LocaleLayout({
   // Required for the pages below to stay statically rendered.
   setRequestLocale(locale);
 
-  const restaurantJsonLd = getRestaurantJsonLd(locale);
+  const restaurantJsonLd = await getRestaurantJsonLd(locale);
 
   return (
     <html lang={locale} className={`${display.variable} ${sans.variable} ${slogan.variable}`}>

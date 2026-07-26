@@ -3,9 +3,18 @@
  * accepts their order with an estimated delivery time. Bulgarian — the
  * restaurant's customers order in BG and the order itself stores no locale.
  */
-import { SITE } from "@/lib/constants";
 import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import type { OrderWithItems } from "@/types/order";
+
+/**
+ * The contact details printed in the signature. Passed in by the sender
+ * (lib/email/resend.ts), which reads them from the admin-editable settings —
+ * the template stays a pure function with no database or constants access, so
+ * an edited phone number reaches the next email without a deploy.
+ */
+export interface AcceptedEmailContact {
+  phone: string;
+}
 
 const bgn = (n: number) => `${n.toFixed(2)} лв.`;
 const eur = (n: number) => `${n.toFixed(2)} €`;
@@ -18,7 +27,10 @@ const esc = (s: string) =>
 const itemLabel = (name: string, variant: string | null) =>
   variant ? `${name} (${variant})` : name;
 
-export function customerOrderAcceptedEmail(order: OrderWithItems): {
+export function customerOrderAcceptedEmail(
+  order: OrderWithItems,
+  contact: AcceptedEmailContact
+): {
   subject: string;
   html: string;
   text: string;
@@ -61,7 +73,7 @@ export function customerOrderAcceptedEmail(order: OrderWithItems): {
     ``,
     `Ще се свържем с вас при нужда.`,
     ``,
-    `Pizza Pazzo · ${SITE.phone}`,
+    `Pizza Pazzo · ${contact.phone}`,
   ].join("\n");
 
   const htmlRows = order.items
@@ -111,7 +123,7 @@ ${htmlRows}
   </table>
   <p style="margin:4px 0;"><strong>Адрес за доставка:</strong> ${esc(order.deliveryAddress)}, ${esc(order.deliveryCity)}</p>
 ${order.deliveryNote ? `  <p style="margin:4px 0;"><strong>Бележка:</strong> ${esc(order.deliveryNote)}</p>\n` : ""}  <p>Ще се свържем с вас при нужда.</p>
-  <p style="color:#888;">Pizza Pazzo · тел. ${SITE.phone}</p>
+  <p style="color:#888;">Pizza Pazzo · тел. ${contact.phone}</p>
 </div>`;
 
   return { subject, html, text };

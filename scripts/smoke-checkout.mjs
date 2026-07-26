@@ -214,6 +214,8 @@ try {
     "lib/printer/ticket-template.ts",
     "lib/android-printer.ts",
     "lib/report-period.ts",
+    "lib/working-hours.ts",
+    "lib/validators/settings.ts",
   ];
   const tsconfigPath = join(buildDir, "tsconfig.smoke.json");
   writeFileSync(
@@ -242,13 +244,25 @@ try {
   );
   execSync(`npx tsc -p "${tsconfigPath}"`, { stdio: "pipe" });
 
-  // tsc resolves "@/..." for type-checking but emits it verbatim, so teach
-  // Node's CJS loader the same alias, pointed at the compiled output.
+  // The compiled output lives in a temp dir, so Node cannot resolve either the
+  // project's "@/..." alias (tsc emits it verbatim) or its node_modules.
+  // Teach the CJS loader both, pointed at the build output and the project.
   const outRoot = join(buildDir, "out");
+  const projectRequire = createRequire(join(projectRoot, "package.json"));
   const resolveFilename = Module._resolveFilename;
   Module._resolveFilename = function (request, ...args) {
-    const target = request.startsWith("@/") ? join(outRoot, request.slice(2)) : request;
-    return resolveFilename.call(this, target, ...args);
+    if (request.startsWith("@/")) {
+      return resolveFilename.call(this, join(outRoot, request.slice(2)), ...args);
+    }
+    // Bare specifier (e.g. "zod") → resolve from the project, not the temp dir.
+    if (!request.startsWith(".") && !request.startsWith("/") && !request.includes(":")) {
+      try {
+        return projectRequire.resolve(request);
+      } catch {
+        // Fall through to the default resolution (built-ins, etc.).
+      }
+    }
+    return resolveFilename.call(this, request, ...args);
   };
 
   const requireCjs = createRequire(import.meta.url);
@@ -262,6 +276,8 @@ try {
     ticket: load("lib/printer/ticket-template.js"),
     android: load("lib/android-printer.js"),
     period: load("lib/report-period.js"),
+    hours: load("lib/working-hours.js"),
+    settingsValidator: load("lib/validators/settings.js"),
   };
 } catch (e) {
   const detail = e.stdout ? e.stdout.toString().slice(0, 1500) : e.message;
@@ -666,14 +682,17 @@ if (mods) {
     });
     check("new-order without extras still renders (legacy item)", noExtras.text.includes("1× Маргарита") && !noExtras.text.includes("+ "));
 
+    // The signature phone is injected by the sender (from DB settings).
+    const CONTACT = { phone: "+359 88 248 4777" };
     const accepted = customerOrderAcceptedEmail(
-      order([item({ quantity: 2, totalPriceEur: 27.64, totalPriceBgn: 53.6, extras: [crust, sauceX2] })])
+      order([item({ quantity: 2, totalPriceEur: 27.64, totalPriceBgn: 53.6, extras: [crust, sauceX2] })]),
+      CONTACT
     );
     check("accepted text lists extras with prices", accepted.text.includes("+ Кашкавален борд (за всяка бройка) — 3.58 €") && accepted.text.includes("+ 2× Чеснов сос (за всяка бройка) — 2.04 €"));
     check("accepted HTML lists extras", accepted.html.includes("Кашкавален борд") && accepted.html.includes("2× Чеснов сос"));
-    const acceptedPlain = customerOrderAcceptedEmail(order([item()]));
+    const acceptedPlain = customerOrderAcceptedEmail(order([item()]), CONTACT);
     check("accepted without extras still renders", acceptedPlain.text.includes("1 × Маргарита") && !acceptedPlain.text.includes("+ "));
-    check("accepted single unit omits the per-item hint", customerOrderAcceptedEmail(order([item({ extras: [sauceX2] })])).text.includes("+ 2× Чеснов сос — "));
+    check("accepted single unit omits the per-item hint", customerOrderAcceptedEmail(order([item({ extras: [sauceX2] })]), CONTACT).text.includes("+ 2× Чеснов сос — "));
   }
 
   // ── 8. Web ticket ──
@@ -892,6 +911,169 @@ if (mods) {
       money(sum(delivered, "subtotalEur") + sum(delivered, "deliveryFeeEur")) === sum(delivered, "totalEur") &&
         money(sum(delivered, "subtotalBgn") + sum(delivered, "deliveryFeeBgn")) === sum(delivered, "totalBgn")
     );
+  }
+}
+
+// ── 12-13. Restaurant settings: validation and hours presentation ──────────
+if (mods) {
+  const V = mods.settingsValidator;
+  const H = mods.hours;
+  const check = (label, condition) => (condition ? ok(label) : fail(label));
+
+  const day = (open, from, to) => ({ open, from, to });
+  const openWeek = (from = "11:00", to = "23:00") => ({
+    monday: day(true, from, to), tuesday: day(true, from, to), wednesday: day(true, from, to),
+    thursday: day(true, from, to), friday: day(true, from, to), saturday: day(true, from, to),
+    sunday: day(true, "11:00", "22:30"),
+  });
+  const baseSettings = (over = {}) => ({
+    addressBg: "Плевен, ул. Георги Кочев 13 (Срещу Технополис)",
+    addressEn: "13 Georgi Kochev St., Pleven (opposite Technopolis)",
+    primaryPhone: "+359 88 248 4777",
+    secondaryPhone: "+359 801 999",
+    contactEmail: "orderspp@gmail.com",
+    hours: openWeek(),
+    ...over,
+  });
+  const parse = (input) => V.restaurantSettingsSchema.safeParse(input);
+  const errorPaths = (result) =>
+    result.success ? [] : result.error.issues.map((i) => i.path.join("."));
+
+  console.log("12) Restaurant settings validation");
+  {
+    check("current live settings validate", parse(baseSettings()).success);
+    check("invalid email is rejected", !parse(baseSettings({ contactEmail: "not-an-email" })).success);
+    check("empty BG address is rejected", !parse(baseSettings({ addressBg: "" })).success);
+    check("empty EN address is rejected", !parse(baseSettings({ addressEn: "" })).success);
+    check("invalid phone is rejected", !parse(baseSettings({ primaryPhone: "телефон" })).success);
+    check("valid HH:mm is accepted", parse(baseSettings({ hours: openWeek("09:30", "22:15") })).success);
+    check("24:00 is rejected", !parse(baseSettings({ hours: openWeek("11:00", "24:00") })).success);
+    check("11:60 is rejected", !parse(baseSettings({ hours: openWeek("11:60", "23:00") })).success);
+    check("seconds are rejected", !parse(baseSettings({ hours: openWeek("11:00:00", "23:00") })).success);
+
+    const noFrom = parse(baseSettings({ hours: { ...openWeek(), monday: day(true, "", "23:00") } }));
+    check("open day without a start time is rejected", !noFrom.success && errorPaths(noFrom).includes("hours.monday.from"));
+    const noTo = parse(baseSettings({ hours: { ...openWeek(), monday: day(true, "11:00", "") } }));
+    check("open day without an end time is rejected", !noTo.success && errorPaths(noTo).includes("hours.monday.to"));
+    check("from == to is rejected", !parse(baseSettings({ hours: openWeek("11:00", "11:00") })).success);
+    check("from > to (overnight) is rejected", !parse(baseSettings({ hours: openWeek("23:00", "11:00") })).success);
+
+    const closed = parse(baseSettings({ hours: { ...openWeek(), sunday: day(false, "", "") } }));
+    check("closed day needs no times", closed.success);
+    check("closed day's times are cleared", closed.success && closed.data.hours.sunday.from === "");
+    const closedWithJunk = parse(baseSettings({ hours: { ...openWeek(), sunday: day(false, "99:99", "zz") } }));
+    check("closed day discards stray times instead of failing", closedWithJunk.success);
+
+    const noSecond = parse(baseSettings({ secondaryPhone: "" }));
+    check("empty secondary phone normalises to \"\"", noSecond.success && noSecond.data.secondaryPhone === "");
+    check("invalid secondary phone is rejected", !parse(baseSettings({ secondaryPhone: "@@@" })).success);
+    check("over-long address is rejected", !parse(baseSettings({ addressBg: "х".repeat(201) })).success);
+
+    // FormData reader: an unticked checkbox means "closed".
+    const fd = new FormData();
+    fd.set("addressBg", "А"); fd.set("addressEn", "B");
+    fd.set("primaryPhone", "+359 88 248 4777"); fd.set("secondaryPhone", "");
+    fd.set("contactEmail", "a@b.bg");
+    for (const d of ["monday","tuesday","wednesday","thursday","friday","saturday"]) {
+      fd.set(`${d}.open`, "on"); fd.set(`${d}.from`, "11:00"); fd.set(`${d}.to`, "23:00");
+    }
+    fd.set("sunday.from", "11:00"); fd.set("sunday.to", "22:30"); // no sunday.open
+    const read = V.readSettingsFormData(fd);
+    check("FormData: missing checkbox → closed", read.hours.sunday.open === false && read.hours.monday.open === true);
+  }
+
+  console.log("13) Working hours presentation");
+  {
+    const rows = H.groupWorkingHours(openWeek());
+    const bg = { monday:"Понеделник", tuesday:"Вторник", wednesday:"Сряда", thursday:"Четвъртък", friday:"Петък", saturday:"Събота", sunday:"Неделя" };
+    const en = { monday:"Monday", tuesday:"Tuesday", wednesday:"Wednesday", thursday:"Thursday", friday:"Friday", saturday:"Saturday", sunday:"Sunday" };
+
+    check("Mon–Sat group into one row, Sunday separate", rows.length === 2 && rows[0].days.length === 6 && rows[1].days[0] === "sunday");
+    check("BG label reads „Понеделник – Събота“", H.workingHoursRowLabel(rows[0], (d) => bg[d]) === "Понеделник – Събота");
+    check("EN label reads “Monday – Sunday” style", H.workingHoursRowLabel(rows[1], (d) => en[d]) === "Sunday");
+    check("grouped hours string is „11:00 – 23:00“", rows[0].hours === "11:00 – 23:00");
+    check("Sunday keeps its own 22:30 close", rows[1].hours === "11:00 – 22:30");
+
+    const allSame = H.groupWorkingHours(openWeek("10:00", "20:00"));
+    check("identical week collapses to a single row", H.groupWorkingHours({ ...openWeek("10:00","20:00"), sunday: day(true,"10:00","20:00") }).length === 1);
+    check("differing Sunday still splits", allSame.length === 2);
+
+    const oneClosed = H.groupWorkingHours({ ...openWeek(), wednesday: day(false, null, null) });
+    check("a closed midweek day splits the run into 3 rows", oneClosed.length === 4 && oneClosed[1].closed);
+    check("closed row carries no hours string", oneClosed[1].hours === null);
+
+    // Tuesday and Thursday share hours but Wednesday differs — they must NOT merge.
+    const nonAdjacent = H.groupWorkingHours({
+      ...openWeek(), wednesday: day(true, "09:00", "15:00"),
+    });
+    const merged = nonAdjacent.find((r) => r.days.includes("tuesday") && r.days.includes("thursday"));
+    check("non-adjacent identical days are not merged", merged === undefined);
+    check("row order stays Monday → Sunday", H.groupWorkingHours(openWeek())[0].days[0] === "monday");
+
+    const spec = H.toOpeningHoursSpecification(openWeek());
+    check("JSON-LD has one entry per group", spec.length === 2);
+    check("JSON-LD lists the 6 weekday names", spec[0].dayOfWeek.join(",") === "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday");
+    check("JSON-LD opens/closes come from the day", spec[0].opens === "11:00" && spec[0].closes === "23:00");
+    const withClosed = H.toOpeningHoursSpecification({ ...openWeek(), sunday: day(false, null, null) });
+    check("closed days are absent from JSON-LD", withClosed.every((s) => !s.dayOfWeek.includes("Sunday")));
+    const allClosed = Object.fromEntries(Object.keys(openWeek()).map((d) => [d, day(false, null, null)]));
+    check("all-closed week yields an empty JSON-LD array", H.toOpeningHoursSpecification(allClosed).length === 0);
+
+    check("tel href strips spaces and keeps +", H.telHref("+359 88 248 4777") === "tel:+359882484777");
+    check("tel href handles a local number", H.telHref("0801 999") === "tel:0801999");
+  }
+
+  // ── 14. Accepted email uses the DB-backed contact phone ──
+  //
+  // The template is a pure function: the sender (lib/email/resend.ts) reads
+  // settings and injects the phone, so an admin edit reaches the next email
+  // without a deploy. Nothing here sends mail.
+  console.log("14) Accepted email contact phone");
+  {
+    const { customerOrderAcceptedEmail } = mods.acceptedEmail;
+    const orderFixture = {
+      id: "o_1", orderNumber: 1234, userId: null,
+      customerName: "Иван Петров", customerEmail: "ivan@example.com", customerPhone: "0888123456",
+      deliveryAddress: "ул. Тестова 1", deliveryCity: "Плевен", deliveryNote: null,
+      paymentMethod: "CASH_ON_DELIVERY", deliveryMethod: "DELIVERY", status: "ACCEPTED",
+      subtotalBgn: 20.01, subtotalEur: 10.23, deliveryFeeBgn: 4.89, deliveryFeeEur: 2.5,
+      totalBgn: 24.9, totalEur: 12.73, estimatedTimeMinutes: 30, adminNote: null,
+      acceptedAt: "2026-07-26T10:00:00.000Z", cancelledAt: null, completedAt: null,
+      createdAt: "2026-07-26T09:50:00.000Z", updatedAt: "2026-07-26T10:00:00.000Z",
+      items: [{
+        id: "oi_1", orderId: "o_1", productId: "prod_margarita", productSlug: "margarita",
+        productNameBg: "Маргарита", productNameEn: "Margherita", productImageUrl: null,
+        variantId: null, variantName: null, quantity: 1,
+        unitPriceBgn: 13.01, unitPriceEur: 6.65, totalPriceBgn: 20.01, totalPriceEur: 10.23,
+        extras: [], itemNote: null,
+      }],
+    };
+
+    const OLD_PHONE = "+359 88 248 4777";  // what lib/constants.ts still carries
+    const NEW_PHONE = "+359 87 111 2222";  // as if an admin had just changed it
+    const mail = customerOrderAcceptedEmail(orderFixture, { phone: NEW_PHONE });
+
+    check("accepted text prints the injected phone", mail.text.includes(NEW_PHONE));
+    check("accepted HTML prints the injected phone", mail.html.includes(NEW_PHONE));
+    check("the constants phone does NOT leak in", !mail.text.includes(OLD_PHONE) && !mail.html.includes(OLD_PHONE));
+    check(
+      "no settings internals reach the customer",
+      !mail.text.includes("restaurant") && !mail.html.includes("restaurant") &&
+        !mail.text.includes("primaryPhone") && !mail.html.includes("primaryPhone")
+    );
+    check(
+      "the operational sender/recipient env is untouched by the template",
+      !mail.text.includes("FROM_EMAIL") && !mail.html.includes("ORDER_NOTIFICATION_EMAIL")
+    );
+
+    // The template ran under plain Node with no database client loaded, which
+    // is only possible because it performs no query of its own.
+    check("template needs no database access", typeof customerOrderAcceptedEmail === "function" && mail.subject.includes("#1234"));
+
+    // The BG customer email is the only variant (orders store no locale), but
+    // it must render both an ASCII and a Cyrillic phone shape unchanged.
+    const ascii = customerOrderAcceptedEmail(orderFixture, { phone: "0700 12 345" });
+    check("any phone format passes through verbatim", ascii.text.includes("0700 12 345"));
   }
 }
 

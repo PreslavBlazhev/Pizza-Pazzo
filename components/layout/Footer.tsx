@@ -1,8 +1,15 @@
-import { useLocale, useTranslations } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Logo } from "./Logo";
 import { NAV_LINKS } from "./Header";
-import { getSiteAddress, SITE, WORKING_HOURS } from "@/lib/constants";
+import { SITE } from "@/lib/constants";
+import {
+  getRestaurantSettings,
+  settingsAddress,
+  settingsPhones,
+} from "@/lib/restaurant-settings";
+import { groupWorkingHours, telHref, workingHoursRowLabel } from "@/lib/working-hours";
+import type { Weekday } from "@/types/settings";
 
 const LEGAL_LINKS = [
   { href: "/terms", labelKey: "terms" },
@@ -12,11 +19,22 @@ const LEGAL_LINKS = [
   { href: "/refunds", labelKey: "refunds" },
 ] as const;
 
-export function Footer() {
-  const t = useTranslations();
-  const tHours = useTranslations("hours");
-  const tLegal = useTranslations("legal");
-  const locale = useLocale();
+/**
+ * Site footer. Async because the contact details and opening hours come from
+ * the database (admin-editable); the read is cached and tag-invalidated, so
+ * this costs one query per cache miss, not one per page.
+ */
+export async function Footer() {
+  const t = await getTranslations();
+  const tHours = await getTranslations("hours");
+  const tLegal = await getTranslations("legal");
+  const locale = await getLocale();
+
+  const settings = await getRestaurantSettings();
+  const address = settingsAddress(settings, locale);
+  const phones = settingsPhones(settings);
+  const hourRows = groupWorkingHours(settings.hours);
+  const dayName = (day: Weekday) => tHours(day);
 
   return (
     <footer className="border-t border-pizza-cream-dark bg-white">
@@ -52,23 +70,23 @@ export function Footer() {
           </h3>
           <ul className="mt-4 space-y-2 text-sm text-pizza-muted">
             <li className="flex items-start gap-2">
-              <span aria-hidden>📍</span> {getSiteAddress(locale)}
+              <span aria-hidden>📍</span> {address}
             </li>
-            {SITE.phones.map((p) => (
+            {phones.map((p) => (
               <li key={p} className="flex items-start gap-2">
                 <span aria-hidden>📞</span>
-                <a
-                  href={`tel:${p.replace(/\s/g, "")}`}
-                  className="transition hover:text-brand"
-                >
+                <a href={telHref(p)} className="transition hover:text-brand">
                   {p}
                 </a>
               </li>
             ))}
             <li className="flex items-start gap-2">
               <span aria-hidden>✉️</span>
-              <a href={`mailto:${SITE.email}`} className="transition hover:text-brand">
-                {SITE.email}
+              <a
+                href={`mailto:${settings.contactEmail}`}
+                className="transition hover:text-brand"
+              >
+                {settings.contactEmail}
               </a>
             </li>
           </ul>
@@ -80,9 +98,9 @@ export function Footer() {
             {tHours("title")}
           </h3>
           <ul className="mt-4 space-y-2 text-sm text-pizza-muted">
-            {WORKING_HOURS.map((row) => (
-              <li key={row.dayKey} className="flex flex-col">
-                <span>{tHours(row.dayKey)}</span>
+            {hourRows.map((row) => (
+              <li key={row.days[0]} className="flex flex-col">
+                <span>{workingHoursRowLabel(row, dayName)}</span>
                 <span
                   className={
                     row.closed

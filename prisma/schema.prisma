@@ -66,6 +66,59 @@ model UserAddress {
   @@index([userId])
 }
 
+/// Restaurant contact details + opening hours, editable from /admin/settings.
+///
+/// Exactly ONE row, with the fixed id "restaurant" — this is deliberately a
+/// typed table rather than a generic key/value store, so every field keeps its
+/// type and its validation. The initial row is written by the migration itself
+/// (not by the seed), so a production deploy always has valid settings.
+///
+/// Times are "HH:mm" strings (SQLite has no TIME type); a closed day keeps
+/// `*Open = false` and leaves its two time columns null. Anything operational —
+/// Resend sender/recipient, admin login — stays in environment variables and is
+/// NOT part of this table: `contactEmail` is the address shown to customers.
+model RestaurantSettings {
+  id             String  @id @default("restaurant")
+
+  addressBg      String
+  addressEn      String
+
+  primaryPhone   String
+  secondaryPhone String?
+  contactEmail   String
+
+  mondayOpen     Boolean @default(true)
+  mondayFrom     String?
+  mondayTo       String?
+
+  tuesdayOpen    Boolean @default(true)
+  tuesdayFrom    String?
+  tuesdayTo      String?
+
+  wednesdayOpen  Boolean @default(true)
+  wednesdayFrom  String?
+  wednesdayTo    String?
+
+  thursdayOpen   Boolean @default(true)
+  thursdayFrom   String?
+  thursdayTo     String?
+
+  fridayOpen     Boolean @default(true)
+  fridayFrom     String?
+  fridayTo       String?
+
+  saturdayOpen   Boolean @default(true)
+  saturdayFrom   String?
+  saturdayTo     String?
+
+  sundayOpen     Boolean @default(true)
+  sundayFrom     String?
+  sundayTo       String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 model Order {
   id                    String      @id @default(cuid())
   // Human-friendly sequential number shown to staff. SQLite only allows

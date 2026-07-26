@@ -8,6 +8,7 @@
 import { Resend } from "resend";
 import { newOrderEmail, type NewOrderEmailData } from "@/lib/email-templates/new-order";
 import { customerOrderAcceptedEmail } from "@/lib/email-templates/customer-order-accepted";
+import { getRestaurantSettings } from "@/lib/restaurant-settings";
 import type { Order, OrderWithItems } from "@/types/order";
 
 /** Just enough validation to skip obviously broken addresses before calling Resend. */
@@ -63,7 +64,16 @@ async function sendToCustomer(
  * the staff picked. Skipped silently when the customer gave no email.
  */
 export async function sendCustomerOrderAcceptedEmail(order: OrderWithItems): Promise<void> {
-  await sendToCustomer(order, customerOrderAcceptedEmail(order), "accepted");
+  // The signature phone comes from the admin-editable settings, read through
+  // the same cached helper the site uses — so changing it in Admin → Settings
+  // takes effect on the next email, with no deploy. Only the CONTENT is
+  // affected: the Resend sender and recipient stay environment-driven.
+  const settings = await getRestaurantSettings();
+  await sendToCustomer(
+    order,
+    customerOrderAcceptedEmail(order, { phone: settings.primaryPhone }),
+    "accepted"
+  );
 }
 
 /** Notifies the restaurant inbox about a newly placed order. */

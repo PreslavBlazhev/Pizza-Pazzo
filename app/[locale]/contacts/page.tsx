@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { use } from "react";
 import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHero } from "@/components/ui/PageHero";
 import { Card } from "@/components/ui/Card";
-import { getSiteAddress, SITE, WORKING_HOURS } from "@/lib/constants";
+import { SITE } from "@/lib/constants";
+import {
+  getRestaurantSettings,
+  settingsAddress,
+  settingsPhones,
+} from "@/lib/restaurant-settings";
+import { groupWorkingHours, telHref, workingHoursRowLabel } from "@/lib/working-hours";
+import type { Weekday } from "@/types/settings";
 import { routing, type Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -20,28 +25,35 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "meta.contacts" });
+  const [t, settings] = await Promise.all([
+    getTranslations({ locale, namespace: "meta.contacts" }),
+    getRestaurantSettings(),
+  ]);
   return {
     title: t("title"),
     description: t("description", {
-      address: getSiteAddress(locale),
-      phone: SITE.phone,
+      address: settingsAddress(settings, locale),
+      phone: settings.primaryPhone,
     }),
   };
 }
 
-// Street + city without the "(Срещу Технополис)" hint — cleaner Maps match.
-const mapsQuery = encodeURIComponent(
-  `${SITE.name}, ${SITE.city}, ${SITE.streetAddress}`
-);
-
-export default function ContactsPage({ params }: PageProps) {
-  const { locale } = use(params);
+export default async function ContactsPage({ params }: PageProps) {
+  const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = useTranslations("contacts");
-  const tHours = useTranslations("hours");
-  const tCommon = useTranslations("common");
+  const t = await getTranslations("contacts");
+  const tHours = await getTranslations("hours");
+  const tCommon = await getTranslations("common");
+
+  const settings = await getRestaurantSettings();
+  const address = settingsAddress(settings, locale);
+  const phones = settingsPhones(settings);
+  const hourRows = groupWorkingHours(settings.hours);
+  const dayName = (day: Weekday) => tHours(day);
+  // The admin-entered address already names the town, so it is the best Maps
+  // query we have — the restaurant is what should be found, not a street.
+  const mapsQuery = encodeURIComponent(`${SITE.name}, ${settings.addressBg}`);
 
   return (
     <>
@@ -64,10 +76,10 @@ export default function ContactsPage({ params }: PageProps) {
                 {t("phones")}
               </h2>
               <ul className="mt-3 space-y-2 text-sm text-pizza-muted">
-                {SITE.phones.map((p) => (
+                {phones.map((p) => (
                   <li key={p}>
                     <a
-                      href={`tel:${p.replace(/\s/g, "")}`}
+                      href={telHref(p)}
                       className="font-medium text-pizza-ink transition hover:text-brand"
                     >
                       {p}
@@ -85,14 +97,12 @@ export default function ContactsPage({ params }: PageProps) {
               <h2 className="mt-4 font-display text-xl font-semibold text-pizza-ink">
                 {t("addressAndEmail")}
               </h2>
-              <p className="mt-3 text-sm text-pizza-muted">
-                {getSiteAddress(locale)}
-              </p>
+              <p className="mt-3 text-sm text-pizza-muted">{address}</p>
               <a
-                href={`mailto:${SITE.email}`}
+                href={`mailto:${settings.contactEmail}`}
                 className="mt-2 inline-block text-sm font-medium text-pizza-ink transition hover:text-brand"
               >
-                {SITE.email}
+                {settings.contactEmail}
               </a>
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
@@ -113,9 +123,11 @@ export default function ContactsPage({ params }: PageProps) {
                 {tHours("title")}
               </h2>
               <ul className="mt-3 space-y-2 text-sm">
-                {WORKING_HOURS.map((row) => (
-                  <li key={row.dayKey} className="flex justify-between gap-4">
-                    <span className="text-pizza-muted">{tHours(row.dayKey)}</span>
+                {hourRows.map((row) => (
+                  <li key={row.days[0]} className="flex justify-between gap-4">
+                    <span className="text-pizza-muted">
+                      {workingHoursRowLabel(row, dayName)}
+                    </span>
                     <span
                       className={
                         row.closed

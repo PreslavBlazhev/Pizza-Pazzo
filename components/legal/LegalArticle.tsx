@@ -1,16 +1,27 @@
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { COMPANY } from "@/content/legal/company";
+import {
+  getRestaurantSettings,
+  settingsAddress,
+} from "@/lib/restaurant-settings";
+import { telHref } from "@/lib/working-hours";
 import { pickL, type LegalBlock, type LegalDoc } from "@/content/legal/types";
 import type { Locale } from "@/i18n/routing";
 
 /**
  * Renders one legal document (terms / privacy / cookies / delivery) for a
  * locale. Layout only — every word of content lives in `content/legal/*.ts`.
+ *
+ * Async because the company box prints the live contact details: the merchant
+ * address, email and phone a customer would use to reach us must match what
+ * the rest of the site publishes. The registry fields (ЕИК, управител, …)
+ * still come from `content/legal/company.ts`.
  */
-export function LegalArticle({ doc, locale }: { doc: LegalDoc; locale: Locale }) {
-  const t = useTranslations("legal");
-  const tCommon = useTranslations("common");
+export async function LegalArticle({ doc, locale }: { doc: LegalDoc; locale: Locale }) {
+  const t = await getTranslations("legal");
+  const tCommon = await getTranslations("common");
+  const settings = await getRestaurantSettings();
 
   const renderBlock = (block: LegalBlock, key: number) =>
     "p" in block ? (
@@ -44,8 +55,7 @@ export function LegalArticle({ doc, locale }: { doc: LegalDoc; locale: Locale })
               </li>
             )}
             <li>
-              {t("addressLabel")}: {COMPANY.address}
-              {COMPANY.city ? `, ${COMPANY.city}` : ""}
+              {t("addressLabel")}: {settingsAddress(settings, locale)}
             </li>
             {COMPANY.registeredAddress && (
               <li>
@@ -59,17 +69,20 @@ export function LegalArticle({ doc, locale }: { doc: LegalDoc; locale: Locale })
             )}
             <li>
               {t("emailLabel")}:{" "}
-              <a href={`mailto:${COMPANY.email}`} className="underline transition hover:text-brand">
-                {COMPANY.email}
+              <a
+                href={`mailto:${settings.contactEmail}`}
+                className="underline transition hover:text-brand"
+              >
+                {settings.contactEmail}
               </a>
             </li>
             <li>
               {t("phoneLabel")}:{" "}
               <a
-                href={`tel:${COMPANY.phone.replace(/\s/g, "")}`}
+                href={telHref(settings.primaryPhone)}
                 className="underline transition hover:text-brand"
               >
-                {COMPANY.phone}
+                {settings.primaryPhone}
               </a>
             </li>
           </ul>

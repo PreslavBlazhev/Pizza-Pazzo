@@ -30,7 +30,14 @@ export const COMPANY = {
   uic: "",
   /** ДДС номер — only applicable once/if VAT-registered. */
   vatNumber: "",
-  /** Restaurant / service address (already confirmed by the client). */
+  /**
+   * Restaurant / service address.
+   *
+   * ⚠️ FALLBACK ONLY since the settings table exists: the address, email and
+   * phone the legal pages actually print come from the admin-editable
+   * RestaurantSettings row and are passed into <LegalArticle /> by each legal
+   * page. These values are what renders if that read fails.
+   */
   address: SITE.address,
   city: "Плевен",
   /** Адрес на управление, if it differs from `address`. */

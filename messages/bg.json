@@ -87,7 +87,12 @@
 
   "hours": {
     "title": "Работно време",
-    "mondayToSaturday": "Понеделник – Събота",
+    "monday": "Понеделник",
+    "tuesday": "Вторник",
+    "wednesday": "Сряда",
+    "thursday": "Четвъртък",
+    "friday": "Петък",
+    "saturday": "Събота",
     "sunday": "Неделя",
     "closed": "Затворено"
   },

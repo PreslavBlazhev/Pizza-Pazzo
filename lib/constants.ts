@@ -6,6 +6,15 @@ import type { UserRole } from "@/types/auth";
  *
  * Anything a visitor reads as a sentence (taglines, descriptions, day names)
  * lives in `messages/*.json` instead — it has to exist in both languages.
+ *
+ * ⚠️ CONTACT DATA IS NO LONGER READ DIRECTLY BY THE PUBLIC SITE.
+ * `address`, `addressEn`, `phones`, `phone` and `email` are now only the
+ * FALLBACK behind the admin-editable settings row — see
+ * lib/restaurant-settings.ts, which the footer, contacts page, legal pages and
+ * JSON-LD read instead. They stay here because they seeded the database and
+ * because they are what renders if that read ever fails. `name`, `legalName`,
+ * `foundedYear`, `website`, `city` and `streetAddress` are NOT editable and
+ * remain the real source.
  */
 export const SITE = {
   name: "Pizza Pazzo",
@@ -28,10 +37,10 @@ export const SITE = {
   website: "www.pizzapazzo.bg",
 } as const;
 
-/** Display address in the visitor's language (BG is the default/fallback). */
-export function getSiteAddress(locale: string): string {
-  return locale === "en" ? SITE.addressEn : SITE.address;
-}
+// `getSiteAddress(locale)` used to live here. It was removed with the settings
+// table: the live address comes from the database, and leaving a constants-only
+// helper around invited callers to quietly bypass it. Use
+// `settingsAddress(settings, locale)` from lib/restaurant-settings.ts instead.
 
 /**
  * Canonical origin of the site, used to build absolute URLs for Open Graph and
@@ -42,7 +51,12 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.pizzapazzo.bg";
 
 /**
- * Working hours, grouped for display. Source: client intake.
+ * Working hours, grouped for display.
+ *
+ * ⚠️ FALLBACK ONLY — the live hours come from the settings row (per weekday,
+ * admin-editable). This grouped shape seeded that row and is expanded back
+ * into the per-day structure by `fallbackSettings()` when the database is
+ * unavailable.
  *
  * `dayKey` indexes the `hours` namespace in the message catalogues rather than
  * naming the days here, and `closed` is a flag instead of the literal string
