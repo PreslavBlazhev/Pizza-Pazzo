@@ -104,6 +104,8 @@ export const ADMIN_NAV = [
   { href: "/admin", labelKey: "dashboard", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/orders", labelKey: "orders", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/orders/live", labelKey: "liveOrders", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
+  // Financial figures — ADMIN+ only, mirrored by the middleware rule.
+  { href: "/admin/reports", labelKey: "reports", allow: ["ADMIN", "SUPER_ADMIN"] },
   // /admin/menu is gone — /admin/products IS the menu management now.
   { href: "/admin/products", labelKey: "products", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/categories", labelKey: "categories", allow: ["ADMIN", "SUPER_ADMIN"] },

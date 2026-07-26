@@ -28,6 +28,7 @@ import { getPathname } from "@/i18n/navigation";
  *   /admin          → STAFF, ADMIN, SUPER_ADMIN
  *   /admin/users    → ADMIN, SUPER_ADMIN
  *   /admin/settings → ADMIN, SUPER_ADMIN
+ *   /admin/reports  → ADMIN, SUPER_ADMIN
  *   /admin/users/roles, /admin/roles → SUPER_ADMIN only
  */
 
@@ -45,6 +46,8 @@ const ADMIN_RULES: { prefix: string; allow: readonly UserRole[] }[] = [
   { prefix: "/admin/roles", allow: ["SUPER_ADMIN"] },
   { prefix: "/admin/users", allow: ["ADMIN", "SUPER_ADMIN"] },
   { prefix: "/admin/settings", allow: ["ADMIN", "SUPER_ADMIN"] },
+  // Revenue figures are not staff-facing.
+  { prefix: "/admin/reports", allow: ["ADMIN", "SUPER_ADMIN"] },
   // Product LIST is staff (availability toggle); product EDIT pages are not.
   { prefix: "/admin/products/", allow: ["ADMIN", "SUPER_ADMIN"] },
   { prefix: "/admin/categories", allow: ["ADMIN", "SUPER_ADMIN"] },

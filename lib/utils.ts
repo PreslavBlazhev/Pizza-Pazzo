@@ -19,7 +19,13 @@ export function uid(prefix = "id"): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** Format an ISO date string for display. */
+/**
+ * Format an ISO date string for display.
+ *
+ * Always rendered in **Europe/Sofia**, never in the runtime's timezone: the
+ * database stores UTC and Render runs UTC, so without this a 01:00 Sofia order
+ * would print as the previous day's 22:00 to the staff reading the admin.
+ */
 export function formatDateTime(iso: string, locale = "bg-BG"): string {
-  return new Date(iso).toLocaleString(locale);
+  return new Date(iso).toLocaleString(locale, { timeZone: "Europe/Sofia" });
 }

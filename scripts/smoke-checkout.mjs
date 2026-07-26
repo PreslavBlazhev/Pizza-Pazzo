@@ -213,6 +213,7 @@ try {
     "lib/email-templates/customer-order-accepted.ts",
     "lib/printer/ticket-template.ts",
     "lib/android-printer.ts",
+    "lib/report-period.ts",
   ];
   const tsconfigPath = join(buildDir, "tsconfig.smoke.json");
   writeFileSync(
@@ -260,6 +261,7 @@ try {
     acceptedEmail: load("lib/email-templates/customer-order-accepted.js"),
     ticket: load("lib/printer/ticket-template.js"),
     android: load("lib/android-printer.js"),
+    period: load("lib/report-period.js"),
   };
 } catch (e) {
   const detail = e.stdout ? e.stdout.toString().slice(0, 1500) : e.message;
@@ -722,6 +724,174 @@ if (mods) {
         !JSON.stringify(json).includes("sourceVariantId")
     );
     check("payload stays far below the 100KB bridge limit", Buffer.byteLength(JSON.stringify(json), "utf8") < 100_000);
+  }
+}
+
+// ── 10-11. Admin report: Europe/Sofia periods and money rounding ───────────
+//
+// Exercises the REAL lib/report-period.ts. Every assertion is expressed in UTC
+// instants, so the result does not depend on the machine's timezone — which is
+// the whole point: Render runs UTC, the restaurant thinks in Sofia days.
+if (mods) {
+  const P = mods.period;
+  const check = (label, condition) => (condition ? ok(label) : fail(label));
+  const iso = (d) => d.toISOString();
+
+  console.log("10) Report periods (Europe/Sofia)");
+  {
+    // 2026-07-26 00:30 Sofia (EEST, +03) = 2026-07-25 21:30 UTC — the exact
+    // case the old server-local midnight got wrong.
+    const summerNight = new Date("2026-07-25T21:30:00.000Z");
+    check(
+      "day starts at Sofia midnight, not UTC midnight",
+      iso(P.startOfSofiaDay(summerNight)) === "2026-07-25T21:00:00.000Z"
+    );
+    check(
+      "an order at 00:30 Sofia belongs to that Sofia day",
+      summerNight >= P.startOfSofiaDay(summerNight)
+    );
+
+    // Winter (EET, +02): 2026-01-15 00:30 Sofia = 2026-01-14 22:30 UTC.
+    const winterNight = new Date("2026-01-14T22:30:00.000Z");
+    check(
+      "winter day start uses +02",
+      iso(P.startOfSofiaDay(winterNight)) === "2026-01-14T22:00:00.000Z"
+    );
+
+    // 2026-07-26 is a Sunday → its ISO week started Monday 2026-07-20.
+    check(
+      "week starts on Monday 00:00 Sofia",
+      iso(P.startOfSofiaWeek(new Date("2026-07-26T10:00:00.000Z"))) ===
+        "2026-07-19T21:00:00.000Z"
+    );
+    // Monday itself must not roll back a week.
+    check(
+      "Monday is its own week start",
+      iso(P.startOfSofiaWeek(new Date("2026-07-20T10:00:00.000Z"))) ===
+        "2026-07-19T21:00:00.000Z"
+    );
+    check(
+      "month starts on the 1st 00:00 Sofia",
+      iso(P.startOfSofiaMonth(new Date("2026-07-26T10:00:00.000Z"))) ===
+        "2026-06-30T21:00:00.000Z"
+    );
+    check(
+      "year starts on 1 January 00:00 Sofia (+02 in winter)",
+      iso(P.startOfSofiaYear(new Date("2026-07-26T10:00:00.000Z"))) ===
+        "2025-12-31T22:00:00.000Z"
+    );
+
+    // ── DST: EU switches at 01:00 UTC. Sofia 2026: 29 March, 25 October. ──
+    const marchDay = P.startOfSofiaDay(new Date("2026-03-29T12:00:00.000Z"));
+    const marchNext = P.addSofiaDays(new Date("2026-03-29T12:00:00.000Z"), 1);
+    const marchHours = (marchNext - marchDay) / 3_600_000;
+    check(`spring-forward day has 23 hours (got ${marchHours})`, marchHours === 23);
+    check(
+      "spring-forward day still starts at local midnight",
+      iso(marchDay) === "2026-03-28T22:00:00.000Z"
+    );
+
+    const octDay = P.startOfSofiaDay(new Date("2026-10-25T12:00:00.000Z"));
+    const octNext = P.addSofiaDays(new Date("2026-10-25T12:00:00.000Z"), 1);
+    const octHours = (octNext - octDay) / 3_600_000;
+    check(`fall-back day has 25 hours (got ${octHours})`, octHours === 25);
+    check(
+      "fall-back day still starts at local midnight",
+      iso(octDay) === "2026-10-24T21:00:00.000Z"
+    );
+
+    // The week after the switch starts Monday 30 March 00:00 EEST (+03).
+    check(
+      "week just after the DST switch starts Monday 00:00 local",
+      iso(P.startOfSofiaWeek(new Date("2026-04-01T12:00:00.000Z"))) ===
+        "2026-03-29T21:00:00.000Z"
+    );
+    // The week CONTAINING the spring-forward is 7 local days but 167 hours.
+    {
+      const weekStart = P.startOfSofiaWeek(new Date("2026-03-25T12:00:00.000Z"));
+      const nextWeekStart = P.startOfSofiaWeek(new Date("2026-04-01T12:00:00.000Z"));
+      const hours = (nextWeekStart - weekStart) / 3_600_000;
+      check(
+        `week containing the spring-forward is 167 hours (got ${hours})`,
+        iso(weekStart) === "2026-03-22T22:00:00.000Z" && hours === 167
+      );
+    }
+
+    // ── Custom ranges ──
+    const r = P.resolveCustomRange("2026-07-01", "2026-07-31");
+    check("custom from is inclusive (00:00 Sofia)", r && iso(r.from) === "2026-06-30T21:00:00.000Z");
+    check(
+      "custom to is inclusive via next-day exclusive bound",
+      r && iso(r.toExclusive) === "2026-07-31T21:00:00.000Z"
+    );
+    check("custom range echoes its Sofia dates", r && r.fromDate === "2026-07-01" && r.toDate === "2026-07-31");
+    check("single-day custom range spans exactly 24h in summer", (() => {
+      const one = P.resolveCustomRange("2026-07-10", "2026-07-10");
+      return one && (one.toExclusive - one.from) / 3_600_000 === 24;
+    })());
+    check("from > to is rejected", P.resolveCustomRange("2026-07-31", "2026-07-01") === null);
+    check("impossible date 2026-02-31 is rejected", P.parseSofiaDateString("2026-02-31") === null);
+    check("month 13 is rejected", P.parseSofiaDateString("2026-13-01") === null);
+    check("garbage text is rejected", P.parseSofiaDateString("вчера") === null);
+    check("leap day 2028-02-29 is accepted", P.parseSofiaDateString("2028-02-29") !== null);
+    check(
+      `${P.MAX_REPORT_RANGE_DAYS} days is allowed`,
+      P.resolveCustomRange("2026-01-01", "2027-01-01") !== null
+    );
+    check(
+      `${P.MAX_REPORT_RANGE_DAYS + 1} days is rejected`,
+      P.resolveCustomRange("2026-01-01", "2027-01-02") === null
+    );
+    check(
+      "toSofiaDateString reads the Sofia calendar day",
+      P.toSofiaDateString(new Date("2026-07-25T21:30:00.000Z")) === "2026-07-26"
+    );
+
+    // Presets end at "now", never in the future.
+    const now = new Date("2026-07-26T09:00:00.000Z");
+    const preset = P.resolvePresetRange("day", now);
+    check("preset range ends exactly at now", preset.toExclusive.getTime() === now.getTime());
+    check("preset day range starts before now", preset.from < now);
+  }
+
+  // ── 11. Money normalisation used by lib/reports.ts ──
+  console.log("11) Report money rounding");
+  {
+    // Mirrors the `money()` helper: Number() + round2, null → 0.
+    const round2 = (n) => Math.round(n * 100) / 100;
+    const money = (v) => (v === null || v === undefined ? 0 : round2(Number(v)));
+
+    check("null aggregate sum → 0", money(null) === 0 && money(undefined) === 0);
+    check("float drift is rounded (95.48999999999999 → 95.49)", money(95.48999999999999) === 95.49);
+    check("23.02 + 2.5 float sum rounds to 25.52", money(23.02 + 2.5) === 25.52);
+    check("already-clean values pass through", money(25.52) === 25.52);
+
+    // Fixture: only delivered orders may contribute to revenue.
+    const fixture = [
+      { completedAt: "x", acceptedAt: "x", cancelledAt: null, totalEur: 25.52, totalBgn: 49.68, subtotalEur: 23.02, subtotalBgn: 44.79, deliveryFeeEur: 2.5, deliveryFeeBgn: 4.89 },
+      { completedAt: null, acceptedAt: "x", cancelledAt: null, totalEur: 12.21, totalBgn: 23.89, subtotalEur: 9.71, subtotalBgn: 19.0, deliveryFeeEur: 2.5, deliveryFeeBgn: 4.89 },
+      { completedAt: null, acceptedAt: null, cancelledAt: "x", totalEur: 99.99, totalBgn: 195.55, subtotalEur: 97.49, subtotalBgn: 190.66, deliveryFeeEur: 2.5, deliveryFeeBgn: 4.89 },
+      { completedAt: null, acceptedAt: null, cancelledAt: null, totalEur: 50.0, totalBgn: 97.79, subtotalEur: 47.5, subtotalBgn: 92.9, deliveryFeeEur: 2.5, deliveryFeeBgn: 4.89 },
+    ];
+    const delivered = fixture.filter((o) => o.completedAt !== null);
+    const accepted = fixture.filter((o) => o.acceptedAt !== null);
+    const cancelled = fixture.filter((o) => o.cancelledAt !== null);
+    const sum = (rows, f) => money(rows.reduce((s, r) => s + r[f], 0));
+
+    check("delivered count uses completedAt", delivered.length === 1);
+    check("accepted count uses acceptedAt and includes the delivered one", accepted.length === 2);
+    check("cancelled count uses cancelledAt", cancelled.length === 1);
+    check("revenue excludes cancelled and pending", sum(delivered, "totalEur") === 25.52);
+    check("revenue excludes accepted-but-not-delivered", sum(delivered, "totalEur") !== sum(accepted, "totalEur"));
+    check(
+      "EUR and BGN are summed independently (no conversion)",
+      sum(delivered, "totalEur") === 25.52 && sum(delivered, "totalBgn") === 49.68
+    );
+    check(
+      "food + delivery = total",
+      money(sum(delivered, "subtotalEur") + sum(delivered, "deliveryFeeEur")) === sum(delivered, "totalEur") &&
+        money(sum(delivered, "subtotalBgn") + sum(delivered, "deliveryFeeBgn")) === sum(delivered, "totalBgn")
+    );
   }
 }
 

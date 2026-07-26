@@ -9,6 +9,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { parseOrderItemExtras } from "@/lib/extras-rules";
 import { ACTIVE_ORDER_STATUSES } from "@/lib/order-status";
+import { startOfSofiaDay } from "@/lib/report-period";
 import type { AdminDashboardStats } from "@/types/admin";
 import {
   isOrderStatus,
@@ -41,7 +42,14 @@ function mapItem(i: PrismaOrderWithItems["items"][number]): OrderItem {
   };
 }
 
-function mapOrder(o: PrismaOrderWithItems): Order {
+/** Order row without its lines — `items` stays undefined (see `Order.items?`). */
+type PrismaOrderRow = Prisma.OrderGetPayload<Record<string, never>>;
+
+/**
+ * Maps an order row on its own. Used where the line items are not needed (the
+ * admin report list), so those queries can skip the `items` join entirely.
+ */
+export function mapOrderRow(o: PrismaOrderRow): Order {
   return {
     id: o.id,
     orderNumber: o.orderNumber,
@@ -68,8 +76,11 @@ function mapOrder(o: PrismaOrderWithItems): Order {
     completedAt: o.completedAt?.toISOString() ?? null,
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
-    items: o.items.map(mapItem),
   };
+}
+
+function mapOrder(o: PrismaOrderWithItems): Order {
+  return { ...mapOrderRow(o), items: o.items.map(mapItem) };
 }
 
 /** All orders, newest first, with their line items. */
@@ -112,12 +123,13 @@ export async function getLatestOrders(limit = 5): Promise<Order[]> {
 }
 
 /**
- * KPI figures for the admin dashboard. "Today" is the server's local calendar
- * day; today's revenue excludes cancelled orders.
+ * KPI figures for the admin dashboard. "Today" is the calendar day in
+ * **Europe/Sofia** — not the server's local day, which on Render (UTC) started
+ * three hours late and put early-morning orders on the wrong date. Today's
+ * revenue excludes cancelled orders.
  */
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  const startOfToday = startOfSofiaDay(new Date());
 
   const [ordersToday, pendingOrders, activeOrders, deliveredOrders, cancelledOrders, revenueToday] =
     await Promise.all([
