@@ -94,7 +94,6 @@ function toRawProduct(row: ProductRow): RawProduct {
     .map((v) => ({
       id: v.id,
       name: { bg: v.nameBg, en: v.nameEn },
-      priceBgn: Number(v.priceBgn),
       priceEur: Number(v.priceEur),
     }));
   return {
@@ -103,7 +102,6 @@ function toRawProduct(row: ProductRow): RawProduct {
     name: { bg: row.nameBg, en: row.nameEn },
     description: { bg: row.descriptionBg, en: row.descriptionEn },
     categoryId: row.categoryId,
-    priceBgn: Number(row.priceBgn),
     priceEur: Number(row.priceEur),
     imageUrl: row.imageUrl ?? "",
     allergens: parseAllergens(row.allergens, row.id),
@@ -277,7 +275,7 @@ function sizePricesOf(raw: RawProduct): ProductExtraOptionSizePrice[] {
     const size = parseVariantSize(v.name.bg) ?? parseVariantSize(v.name.en);
     return size === null
       ? []
-      : [{ variantId: v.id, size, priceEur: v.priceEur, priceBgn: v.priceBgn }];
+      : [{ variantId: v.id, size, priceEur: v.priceEur }];
   });
 }
 
@@ -286,7 +284,7 @@ function sizePricesOf(raw: RawProduct): ProductExtraOptionSizePrice[] {
  * pizzas → crusts + generic addons + sauces; burgers → burger addons + sauces;
  * other food → sauces only; drinks/desserts (the sauce deny list) → null, no
  * picker at all. Only available source products are offered; prices are plain
- * numbers in both currencies and both languages (client-safe).
+ * euro numbers in both languages (client-safe).
  *
  * This is a superset of what the server will accept at checkout — the resolver
  * in lib/extras-resolve.ts stays the only pricing authority.
@@ -335,7 +333,6 @@ export async function getExtrasForProduct(
         nameBg: p.name.bg,
         nameEn: p.name.en,
         priceEur: p.priceEur,
-        priceBgn: p.priceBgn,
         sizeLabelBg: p.size?.bg,
         sizeLabelEn: p.size?.en,
         maxQuantity: 1,
@@ -354,7 +351,6 @@ export async function getExtrasForProduct(
       nameBg: p.name.bg,
       nameEn: p.name.en,
       priceEur: p.priceEur,
-      priceBgn: p.priceBgn,
       sizeLabelBg: p.size?.bg,
       sizeLabelEn: p.size?.en,
       maxQuantity: EXTRAS_LIMITS.maxSauceQuantity,

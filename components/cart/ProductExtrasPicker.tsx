@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ProductExtraOption, ProductExtrasData } from "@/types/cart";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
 
 /**
@@ -20,17 +20,21 @@ import { cn } from "@/lib/utils";
 /** Selection state: option key → quantity (1 for crust/addons, 1–10 sauces). */
 export type ExtrasSelectionState = Record<string, number>;
 
-/** Resolves the price an option carries for the current pizza size. */
+/**
+ * Resolves the EUR price an option carries for the current pizza size.
+ * `null` means "not orderable at this size" — callers must test against null,
+ * never truthiness, since 0 is a legitimate price.
+ */
 export function optionPriceFor(
   option: ProductExtraOption,
   mainSize: number | null
-): { eur: number; bgn: number } | null {
+): number | null {
   if (option.sizePrices) {
     if (mainSize === null) return null;
     const match = option.sizePrices.find((p) => p.size === mainSize);
-    return match ? { eur: match.priceEur, bgn: match.priceBgn } : null;
+    return match ? match.priceEur : null;
   }
-  return { eur: option.priceEur ?? 0, bgn: option.priceBgn ?? 0 };
+  return option.priceEur ?? 0;
 }
 
 interface ProductExtrasPickerProps {
@@ -150,10 +154,9 @@ export function ProductExtrasPicker({
   const sizeLabelOf = (o: ProductExtraOption) =>
     locale === "en" ? o.sizeLabelEn : o.sizeLabelBg;
 
-  const priceTag = (eur: number, bgn: number) => (
+  const priceTag = (eur: number) => (
     <span className="shrink-0 whitespace-nowrap text-right">
       <span className="text-sm font-semibold text-brand">+{formatEurPrice(eur)}</span>
-      <span className="ml-1 text-xs text-pizza-muted">{formatBgnPrice(bgn)}</span>
     </span>
   );
 
@@ -206,7 +209,7 @@ export function ProductExtrasPicker({
             {t("unavailableForSize")}
           </span>
         ) : (
-          priceTag(price.eur, price.bgn)
+          priceTag(price)
         )}
       </button>
     );
@@ -235,10 +238,8 @@ export function ProductExtrasPicker({
               <span className="ml-1.5 text-xs font-normal text-pizza-muted">({label})</span>
             )}
           </p>
-          {price && (
-            <p className="text-xs text-pizza-muted">
-              +{formatEurPrice(price.eur)} <span>{formatBgnPrice(price.bgn)}</span>
-            </p>
+          {price !== null && (
+            <p className="text-xs text-pizza-muted">+{formatEurPrice(price)}</p>
           )}
         </div>
 

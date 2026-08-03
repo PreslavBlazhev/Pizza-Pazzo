@@ -2,12 +2,11 @@ import type { LocalizedText } from "./i18n";
 
 /**
  * A selectable variant of a product (e.g. pizza "30 см" / "40 см").
- * Prices are stored explicitly per variant in both currencies.
+ * Prices are stored explicitly per variant, in euro.
  */
 export interface ProductVariant {
   id: string;
   name: string;
-  priceBgn: number;
   priceEur: number;
 }
 
@@ -26,8 +25,6 @@ export interface Product {
   slug: string;
   description: string;
   categoryId: string;
-  /** Base price in BGN (лв.). For products with variants this is the "from" price. */
-  priceBgn: number;
   /** Base price in EUR (€). For products with variants this is the "from" price. */
   priceEur: number;
   /** Path to the product image. Always read the image from here (never hardcode). */

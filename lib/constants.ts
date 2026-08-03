@@ -85,21 +85,16 @@ export const PIZZA_PAZZO_BRAND = {
 
 export const RESTAURANT_NAME = PIZZA_PAZZO_BRAND.name;
 
-/** Currency labels used across the menu. */
+/** Currency label used across the menu — the euro is the only currency. */
 export const CURRENCY_LABELS = {
-  bgn: "лв.",
   eur: "€",
 } as const;
 
 /** Fallback image used when a product has no imageUrl or it fails to load. */
 export const DEFAULT_PRODUCT_IMAGE = "/images/products/placeholder-food.svg";
 
-/** Fixed BGN ↔ EUR rate (Bulgaria adopts the euro; kept for dual display). */
-export const EUR_TO_BGN = 1.95583;
-
 export const CURRENCY = {
   primary: "EUR",
-  secondary: "BGN",
 } as const;
 
 /** Default flat delivery fee in EUR (placeholder). */

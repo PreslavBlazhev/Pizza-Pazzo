@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
 import type { ProductExtrasData } from "@/types/cart";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { isAllergenId, orderedAllergens } from "@/lib/allergens";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { ProductImage } from "./ProductImage";
@@ -72,9 +72,7 @@ export function ProductDetails({ product, category, extras = null }: ProductDeta
             <span className="font-display text-3xl font-bold text-brand">
               {formatEurPrice(product.priceEur)}
             </span>
-            <span className="pb-1 text-pizza-muted">
-              {formatBgnPrice(product.priceBgn)}
-            </span>
+
           </div>
           {product.isAvailable ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-pizza-green-light px-3 py-1 text-sm font-medium text-pizza-green-dark">

@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { Order } from "@/types/order";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { formatDateTime } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { OrderStatusBadge } from "./OrderStatusBadge";
@@ -35,7 +35,6 @@ export function OrderCard({ order }: { order: Order }) {
         </div>
         <div className="shrink-0 text-right">
           <p className="font-medium text-brand">{formatEurPrice(order.totalEur)}</p>
-          <p className="text-xs text-neutral-400">{formatBgnPrice(order.totalBgn)}</p>
           {/* Affordance only — not a separate link, so the card stays one
               target. The arrow moves on hover/focus as a non-colour cue. */}
           <span

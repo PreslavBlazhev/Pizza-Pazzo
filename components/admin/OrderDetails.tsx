@@ -1,5 +1,5 @@
 import type { Order } from "@/types/order";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatDateTime } from "@/lib/utils";
 import { OrderStatusBadge } from "./OrderStatusBadge";
@@ -9,7 +9,7 @@ import { PrintOrderButton } from "./PrintOrderButton";
 export function OrderDetails({ order }: { order: Order }) {
   const items = order.items ?? [];
 
-  const priceRow = (label: string, bgn: number, eur: number, strong = false) => (
+  const priceRow = (label: string, eur: number, strong = false) => (
     <div
       className={`flex items-baseline justify-between ${
         strong
@@ -18,10 +18,7 @@ export function OrderDetails({ order }: { order: Order }) {
       }`}
     >
       <span>{label}</span>
-      <span>
-        {formatEurPrice(eur)}{" "}
-        <span className="text-xs text-neutral-400">{formatBgnPrice(bgn)}</span>
-      </span>
+      <span>{formatEurPrice(eur)}</span>
     </div>
   );
 
@@ -97,10 +94,7 @@ export function OrderDetails({ order }: { order: Order }) {
                     ) : null}
                   </span>
                   <span className="shrink-0 text-sm font-medium text-neutral-700">
-                    {formatEurPrice(item.totalPriceEur)}{" "}
-                    <span className="text-xs text-neutral-400">
-                      {formatBgnPrice(item.totalPriceBgn)}
-                    </span>
+                    {formatEurPrice(item.totalPriceEur)}
                   </span>
                 </div>
 
@@ -117,10 +111,7 @@ export function OrderDetails({ order }: { order: Order }) {
                         >
                           <span className="break-words">+ {extraLabel(e)}</span>
                           <span className="shrink-0 whitespace-nowrap">
-                            {formatEurPrice(e.totalPriceEur)}{" "}
-                            <span className="text-neutral-400">
-                              {formatBgnPrice(e.totalPriceBgn)}
-                            </span>
+                            {formatEurPrice(e.totalPriceEur)}
                           </span>
                         </li>
                       ))}
@@ -134,9 +125,9 @@ export function OrderDetails({ order }: { order: Order }) {
       </section>
 
       <section className="max-w-xs space-y-2 text-sm">
-        {priceRow("Междинна сума", order.subtotalBgn, order.subtotalEur)}
-        {priceRow("Доставка", order.deliveryFeeBgn, order.deliveryFeeEur)}
-        {priceRow("Общо", order.totalBgn, order.totalEur, true)}
+        {priceRow("Междинна сума", order.subtotalEur)}
+        {priceRow("Доставка", order.deliveryFeeEur)}
+        {priceRow("Общо", order.totalEur, true)}
       </section>
 
       <p className="text-xs text-neutral-400">Плащане: Наложен платеж</p>

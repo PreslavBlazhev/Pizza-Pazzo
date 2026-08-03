@@ -30,7 +30,6 @@ export const productUpdateSchema = z.object({
   descriptionBg: optionalText(600, "Описанието (BG)"),
   descriptionEn: optionalText(600, "Описанието (EN)"),
   categoryId: z.string().trim().min(1, "Изберете категория."),
-  priceBgn: priceField,
   priceEur: priceField,
   imageUrl: z
     .string()
@@ -59,7 +58,6 @@ export type ProductUpdateInput = z.infer<typeof productUpdateSchema>;
 export const variantUpdateSchema = z.object({
   nameBg: z.string().trim().min(1, "Името (BG) на варианта е задължително.").max(60, "Името (BG) на варианта е твърде дълго."),
   nameEn: optionalText(60, "Името (EN) на варианта"),
-  priceBgn: priceField,
   priceEur: priceField,
 });
 

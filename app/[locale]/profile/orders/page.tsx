@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { requireUser } from "@/lib/auth";
 import { getOrdersForUser } from "@/lib/orders";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatDateTime } from "@/lib/utils";
 import type { Locale } from "@/i18n/routing";
@@ -115,8 +115,7 @@ export default async function ProfileOrdersPage({ params }: PageProps) {
                                   {item.quantity > 1 ? ` (${t("orderPerItem")})` : ""}
                                   {" — "}
                                   <span className="whitespace-nowrap">
-                                    {formatEurPrice(e.totalPriceEur)} /{" "}
-                                    {formatBgnPrice(e.totalPriceBgn)}
+                                    {formatEurPrice(e.totalPriceEur)}
                                   </span>
                                 </li>
                               ))}
@@ -136,9 +135,6 @@ export default async function ProfileOrdersPage({ params }: PageProps) {
                     <p className="whitespace-nowrap">
                       <span className="font-semibold text-brand">
                         {formatEurPrice(order.totalEur)}
-                      </span>{" "}
-                      <span className="text-xs text-pizza-muted">
-                        / {formatBgnPrice(order.totalBgn)}
                       </span>
                     </p>
                   </div>

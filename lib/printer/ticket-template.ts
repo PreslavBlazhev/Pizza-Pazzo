@@ -1,6 +1,6 @@
 import type { Order } from "@/types/order";
 import { PRINT_CONFIG } from "./print-config";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 
 /**
@@ -67,11 +67,8 @@ export function buildTicketText(order: Order): string {
   }
 
   rows.push(line);
-  // EUR is the primary currency; the BGN equivalent prints right-aligned below.
   const totalEur = formatEurPrice(order.totalEur);
-  const totalBgn = formatBgnPrice(order.totalBgn);
   rows.push(`ОБЩО${" ".repeat(Math.max(1, width - 4 - totalEur.length))}${totalEur}`);
-  rows.push(" ".repeat(Math.max(0, width - totalBgn.length)) + totalBgn);
   rows.push(line);
   rows.push(`${order.deliveryAddress}, ${order.deliveryCity}`);
   rows.push(`Тел: ${order.customerPhone}`);

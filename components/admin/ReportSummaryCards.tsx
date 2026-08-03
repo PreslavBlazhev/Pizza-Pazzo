@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import type { ReportSummary } from "@/lib/reports";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { Card } from "@/components/ui/Card";
 
 /**
@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
  * in lib/reports.ts (already rounded), so nothing here does arithmetic.
  *
  * Revenue counts delivered orders only and is broken down into food and
- * delivery, both from their own stored columns — no currency conversion.
+ * delivery, both from their own stored euro columns.
  */
 export function ReportSummaryCards({ summary }: { summary: ReportSummary }) {
   const t = useTranslations("admin.reports");
@@ -31,26 +31,17 @@ export function ReportSummaryCards({ summary }: { summary: ReportSummary }) {
         <p className="mt-1 text-2xl font-bold text-brand">
           {formatEurPrice(summary.revenueEur)}
         </p>
-        <p className="text-xs text-neutral-400">
-          {formatBgnPrice(summary.revenueBgn)}
-        </p>
         <dl className="mt-3 space-y-1 border-t border-pizza-cream-dark pt-2 text-xs">
           <div className="flex items-baseline justify-between gap-2">
             <dt className="text-neutral-500">{t("foodRevenue")}</dt>
             <dd className="whitespace-nowrap font-medium text-neutral-700">
-              {formatEurPrice(summary.foodRevenueEur)}{" "}
-              <span className="font-normal text-neutral-400">
-                {formatBgnPrice(summary.foodRevenueBgn)}
-              </span>
+              {formatEurPrice(summary.foodRevenueEur)}
             </dd>
           </div>
           <div className="flex items-baseline justify-between gap-2">
             <dt className="text-neutral-500">{t("deliveryRevenue")}</dt>
             <dd className="whitespace-nowrap font-medium text-neutral-700">
-              {formatEurPrice(summary.deliveryRevenueEur)}{" "}
-              <span className="font-normal text-neutral-400">
-                {formatBgnPrice(summary.deliveryRevenueBgn)}
-              </span>
+              {formatEurPrice(summary.deliveryRevenueEur)}
             </dd>
           </div>
         </dl>

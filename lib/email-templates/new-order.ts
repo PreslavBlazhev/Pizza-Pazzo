@@ -11,7 +11,6 @@ export interface NewOrderEmailItem {
   nameBg: string;
   variantName?: string | null;
   quantity: number;
-  totalPriceBgn: number;
   totalPriceEur: number;
   /** Chosen extras (order snapshot). Optional so legacy callers keep working. */
   extras?: OrderItemExtra[];
@@ -25,12 +24,10 @@ export interface NewOrderEmailData {
   deliveryCity: string;
   deliveryAddress: string;
   deliveryNote?: string | null;
-  totalBgn: number;
   totalEur: number;
   items: NewOrderEmailItem[];
 }
 
-const bgn = (n: number) => `${n.toFixed(2)} лв.`;
 const eur = (n: number) => `${n.toFixed(2)} €`;
 
 export function newOrderEmail(data: NewOrderEmailData): {
@@ -45,7 +42,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
   const itemLines = data.items.flatMap((i) => {
     const head = `${i.quantity}× ${i.nameBg}${
       i.variantName ? ` (${i.variantName})` : ""
-    } — ${eur(i.totalPriceEur)} / ${bgn(i.totalPriceBgn)}`;
+    } — ${eur(i.totalPriceEur)}`;
     const extras = toOrderExtrasDisplay(i.extras, "bg").map(
       (e) => `    + ${extraKitchenLabel(e, i.quantity)}`
     );
@@ -64,7 +61,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
     `Поръчка:`,
     ...itemLines,
     ``,
-    `Общо: ${eur(data.totalEur)} / ${bgn(data.totalBgn)}`,
+    `Общо: ${eur(data.totalEur)}`,
     `Плащане: Наложен платеж`,
   ]
     .filter(Boolean)
@@ -90,7 +87,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
       }${extraLines}</td>
       <td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right;vertical-align:top;white-space:nowrap;">${eur(
         i.totalPriceEur
-      )} <span style="color:#888;">${bgn(i.totalPriceBgn)}</span></td>
+      )}</td>
     </tr>`;
     })
     .join("");
@@ -103,9 +100,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
   <p style="margin:4px 0;"><strong>Адрес:</strong> ${data.deliveryAddress}, ${data.deliveryCity}</p>
   ${data.deliveryNote ? `<p style="margin:4px 0;"><strong>Бележка:</strong> ${data.deliveryNote}</p>` : ""}
   <table style="width:100%;border-collapse:collapse;margin:16px 0;">${itemRows}</table>
-  <p style="font-size:18px;"><strong>Общо: ${eur(data.totalEur)}</strong> <span style="color:#888;">/ ${bgn(
-    data.totalBgn
-  )}</span></p>
+  <p style="font-size:18px;"><strong>Общо: ${eur(data.totalEur)}</strong></p>
   <p style="color:#888;">Плащане: Наложен платеж</p>
 </div>`;
 

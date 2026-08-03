@@ -32,9 +32,7 @@ function mapItem(i: PrismaOrderWithItems["items"][number]): OrderItem {
     variantId: i.variantId,
     variantName: i.variantName,
     quantity: i.quantity,
-    unitPriceBgn: Number(i.unitPriceBgn),
     unitPriceEur: Number(i.unitPriceEur),
-    totalPriceBgn: Number(i.totalPriceBgn),
     totalPriceEur: Number(i.totalPriceEur),
     // Defensive parse: legacy "[]" rows and any corrupted JSON both map to [].
     extras: parseOrderItemExtras(i.extrasJson),
@@ -63,11 +61,8 @@ export function mapOrderRow(o: PrismaOrderRow): Order {
     paymentMethod: "CASH_ON_DELIVERY",
     deliveryMethod: "DELIVERY",
     status: isOrderStatus(o.status) ? o.status : "PENDING",
-    subtotalBgn: Number(o.subtotalBgn),
     subtotalEur: Number(o.subtotalEur),
-    deliveryFeeBgn: Number(o.deliveryFeeBgn),
     deliveryFeeEur: Number(o.deliveryFeeEur),
-    totalBgn: Number(o.totalBgn),
     totalEur: Number(o.totalEur),
     estimatedTimeMinutes: o.estimatedTimeMinutes,
     adminNote: o.adminNote,
@@ -156,7 +151,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       db.order.count({ where: { status: "DELIVERED" } }),
       db.order.count({ where: { status: "CANCELLED" } }),
       db.order.aggregate({
-        _sum: { totalBgn: true, totalEur: true },
+        _sum: { totalEur: true },
         where: { createdAt: { gte: startOfToday }, status: { not: "CANCELLED" } },
       }),
     ]);
@@ -167,7 +162,6 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     activeOrders,
     deliveredOrders,
     cancelledOrders,
-    revenueTodayBgn: Number(revenueToday._sum.totalBgn ?? 0),
     revenueTodayEur: Number(revenueToday._sum.totalEur ?? 0),
   };
 }

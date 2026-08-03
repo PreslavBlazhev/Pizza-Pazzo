@@ -4,7 +4,7 @@
     "description": "Authentic Italian pizzas delivered — order online from Pizza Pazzo.",
     "menu": {
       "title": "Digital menu",
-      "description": "Choose from our pizzas, burgers, starters, salads and desserts. Prices are shown in euro and leva."
+      "description": "Choose from our pizzas, burgers, starters, salads and desserts. Prices are shown in euro."
     },
     "gallery": {
       "title": "Gallery",
@@ -101,22 +101,22 @@
     "pizzaThursday": "Every Thursday is pizza day",
     "promos": {
       "twoToppings": {
-        "ariaLabel": "Promotion: pizza with 2 toppings — 30 cm for 10 BGN / €5.11, 40 cm for 15 BGN / €7.67, collection only. View the menu.",
+        "ariaLabel": "Promotion: pizza with 2 toppings — 30 cm for 5.11 €, 40 cm for 7.67 €, collection only. View the menu.",
         "title": "Pizza with 2 toppings",
         "medium": "30 cm · medium",
-        "mediumPrice": "10 BGN / €5.11",
+        "mediumPrice": "5.11 €",
         "large": "40 cm · large",
-        "largePrice": "15 BGN / €7.67",
+        "largePrice": "7.67 €",
         "collectionOnly": "Collection only"
       },
       "pizzaMath": {
-        "ariaLabel": "Promotion: wrong maths, right offers — 30 + 30 for 33 BGN, 40 + 30 for 38 BGN, 40 + 40 for 45 BGN. View the menu.",
+        "ariaLabel": "Promotion: wrong maths, right offers — 30 + 30 for 16.87 €, 40 + 30 for 19.43 €, 40 + 40 for 23.01 €. View the menu.",
         "titleLine1": "Wrong maths",
         "titleLine2": "right offers",
-        "offer3030": "30 + 30 = 33 BGN / €16.87",
-        "offer4030": "40 + 30 = 38 BGN / €19.43",
-        "offer4040": "40 + 40 = 45 BGN / €23.01",
-        "noteLine1": "You add the pizzas up in centimetres, and the result is the price of the combination.",
+        "offer3030": "30 + 30 → 16.87 €",
+        "offer4030": "40 + 30 → 19.43 €",
+        "offer4040": "40 + 40 → 23.01 €",
+        "noteLine1": "You add the pizzas up in centimetres, and the arrow points to the price of the combination.",
         "noteLine2": "This offer does not include the speciality pizzas!"
       }
     },
@@ -193,7 +193,7 @@
     "hero": {
       "title": "Digital menu",
       "subtitle": "Choose from our pizzas, burgers, starters, salads and desserts.",
-      "priceNote": "Prices are shown in euro and leva."
+      "priceNote": "Prices are shown in euro."
     },
     "categoryNav": "Categories",
     "allCategories": "← All categories",

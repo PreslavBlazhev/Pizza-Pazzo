@@ -73,9 +73,7 @@ export interface OrderItemExtra {
   /** Size context the price was matched against, e.g. "30 см". */
   sizeContext?: string;
   unitPriceEur: number;
-  unitPriceBgn: number;
   totalPriceEur: number;
-  totalPriceBgn: number;
 }
 
 // ── Pizza selection definitions ─────────────────────────────────────────────
@@ -286,9 +284,7 @@ function isOrderItemExtra(value: unknown): value is OrderItemExtra {
     value.quantity >= 1 &&
     (value.sizeContext === undefined || isNonEmptyString(value.sizeContext)) &&
     isMoney(value.unitPriceEur) &&
-    isMoney(value.unitPriceBgn) &&
-    isMoney(value.totalPriceEur) &&
-    isMoney(value.totalPriceBgn)
+    isMoney(value.totalPriceEur)
   );
 }
 
@@ -297,6 +293,10 @@ function isOrderItemExtra(value: unknown): value is OrderItemExtra {
  * non-array roots and malformed entries all degrade to a (partial) empty
  * result — this NEVER throws, so one corrupted row can't take down an admin
  * page listing hundreds of orders.
+ *
+ * Snapshots written before the euro-only change still carry unitPriceBgn /
+ * totalPriceBgn keys; they are neither validated nor read, so those rows keep
+ * parsing unchanged and the extra keys are simply dropped from the result.
  */
 export function parseOrderItemExtras(json: string | null | undefined): OrderItemExtra[] {
   if (!json) return [];
@@ -307,5 +307,18 @@ export function parseOrderItemExtras(json: string | null | undefined): OrderItem
     return [];
   }
   if (!Array.isArray(data)) return [];
-  return data.filter(isOrderItemExtra);
+  // Rebuilt field by field (not just filtered) so that legacy BGN keys never
+  // travel any further than this function.
+  return data.filter(isOrderItemExtra).map((e) => ({
+    key: e.key,
+    sourceProductId: e.sourceProductId,
+    ...(e.sourceVariantId === undefined ? {} : { sourceVariantId: e.sourceVariantId }),
+    type: e.type,
+    nameBg: e.nameBg,
+    nameEn: e.nameEn,
+    quantity: e.quantity,
+    ...(e.sizeContext === undefined ? {} : { sizeContext: e.sizeContext }),
+    unitPriceEur: e.unitPriceEur,
+    totalPriceEur: e.totalPriceEur,
+  }));
 }

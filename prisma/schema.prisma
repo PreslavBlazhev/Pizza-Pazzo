@@ -5,7 +5,7 @@
 //
 // See docs/sqlite-prisma-setup.md and docs/render-sqlite-deploy.md.
 // This models the order system built in Parts 2–3. Prices always use Decimal —
-// never Float — and are stored in both BGN and EUR.
+// never Float — and the euro is the only currency stored anywhere.
 //
 // NOTE — SQLite has no native enum type, so "enum" columns below are TEXT
 // (String) whose allowed values are enforced at the application layer. The
@@ -146,11 +146,8 @@ model Order {
   //   | OUT_FOR_DELIVERY | DELIVERED | CANCELLED
   status                String      @default("PENDING")
 
-  subtotalBgn           Decimal
   subtotalEur           Decimal
-  deliveryFeeBgn        Decimal     @default(0)
   deliveryFeeEur        Decimal     @default(0)
-  totalBgn              Decimal
   totalEur              Decimal
 
   estimatedTimeMinutes  Int?
@@ -202,8 +199,7 @@ model MenuProduct {
   categoryId          String
   category            MenuCategory  @relation(fields: [categoryId], references: [id])
 
-  // Base price; for products with variants this is the "from" price.
-  priceBgn            Decimal
+  // Base price in EUR; for products with variants this is the "from" price.
   priceEur            Decimal
 
   imageUrl            String?
@@ -234,7 +230,6 @@ model MenuVariant {
 
   nameBg    String
   nameEn    String
-  priceBgn  Decimal
   priceEur  Decimal
   sortOrder Int         @default(0)
 
@@ -258,11 +253,9 @@ model OrderItem {
 
   quantity        Int
 
-  // Unit price of the BASE product/variant (extras are NOT folded in here —
-  // totalPrice* carries the full line total including extras).
-  unitPriceBgn    Decimal
+  // Unit price of the BASE product/variant in EUR (extras are NOT folded in
+  // here — totalPriceEur carries the full line total including extras).
   unitPriceEur    Decimal
-  totalPriceBgn   Decimal
   totalPriceEur   Decimal
 
   // Immutable snapshot of the chosen extras (crust/addons/sauces) as a JSON

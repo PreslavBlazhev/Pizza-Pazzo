@@ -97,20 +97,11 @@ export function ProductEditForm({
           )}
         </div>
         <Input
-          label={product.variants.length > 0 ? "Базова цена лв. („от“)" : "Цена лв."}
-          name="priceBgn"
-          defaultValue={product.priceBgn.toFixed(2)}
-          error={fieldError("priceBgn")}
-          inputMode="decimal"
-          required
-        />
-        <Input
           label={product.variants.length > 0 ? "Базова цена € („от“)" : "Цена €"}
           name="priceEur"
           defaultValue={product.priceEur.toFixed(2)}
           error={fieldError("priceEur")}
           inputMode="decimal"
-          hint="Курс: 1 € = 1.95583 лв."
           required
         />
         <Input
@@ -183,13 +174,6 @@ export function ProductEditForm({
                   label="Име (EN)"
                   name={`variant-${v.id}-nameEn`}
                   defaultValue={v.nameEn}
-                />
-                <Input
-                  label="Цена лв."
-                  name={`variant-${v.id}-priceBgn`}
-                  defaultValue={v.priceBgn.toFixed(2)}
-                  inputMode="decimal"
-                  required
                 />
                 <Input
                   label="Цена €"

@@ -16,7 +16,6 @@ export interface AcceptedEmailContact {
   phone: string;
 }
 
-const bgn = (n: number) => `${n.toFixed(2)} лв.`;
 const eur = (n: number) => `${n.toFixed(2)} €`;
 
 /** Minimal HTML escaping for customer-supplied strings. */
@@ -45,11 +44,11 @@ export function customerOrderAcceptedEmail(
   const textItems = order.items.flatMap((i) => {
     const head =
       `  ${i.quantity} × ${itemLabel(i.productNameBg, i.variantName)} — ` +
-      `${eur(i.totalPriceEur)} / ${bgn(i.totalPriceBgn)}`;
+      `${eur(i.totalPriceEur)}`;
     const extras = toOrderExtrasDisplay(i.extras, "bg").map(
       (e) =>
         `      + ${extraLabel(e)}${perItemHint(i.quantity)} — ` +
-        `${eur(e.totalPriceEur)} / ${bgn(e.totalPriceBgn)}`
+        `${eur(e.totalPriceEur)}`
     );
     return [head, ...extras];
   });
@@ -64,9 +63,9 @@ export function customerOrderAcceptedEmail(
     `Вашата поръчка:`,
     ...textItems,
     ``,
-    `Междинна сума: ${eur(order.subtotalEur)} / ${bgn(order.subtotalBgn)}`,
-    `Доставка: ${eur(order.deliveryFeeEur)} / ${bgn(order.deliveryFeeBgn)}`,
-    `Обща сума: ${eur(order.totalEur)} / ${bgn(order.totalBgn)} (наложен платеж)`,
+    `Междинна сума: ${eur(order.subtotalEur)}`,
+    `Доставка: ${eur(order.deliveryFeeEur)}`,
+    `Обща сума: ${eur(order.totalEur)} (наложен платеж)`,
     ``,
     `Адрес за доставка: ${order.deliveryAddress}, ${order.deliveryCity}`,
     ...(order.deliveryNote ? [`Бележка: ${order.deliveryNote}`] : []),
@@ -83,9 +82,7 @@ export function customerOrderAcceptedEmail(
           (e) =>
             `<div style="padding-left:14px;font-size:13px;color:#555;">+ ${esc(
               extraLabel(e)
-            )}${esc(perItemHint(i.quantity))} — ${eur(e.totalPriceEur)} / ${bgn(
-              e.totalPriceBgn
-            )}</div>`
+            )}${esc(perItemHint(i.quantity))} — ${eur(e.totalPriceEur)}</div>`
         )
         .join("");
       return `    <tr>
@@ -94,7 +91,7 @@ export function customerOrderAcceptedEmail(
       )}${extraLines}</td>
       <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;vertical-align:top;white-space:nowrap;">${eur(
         i.totalPriceEur
-      )} <span style="color:#888;">/ ${bgn(i.totalPriceBgn)}</span></td>
+      )}</td>
     </tr>`;
     })
     .join("\n");
@@ -110,15 +107,15 @@ export function customerOrderAcceptedEmail(
 ${htmlRows}
     <tr>
       <td style="padding:6px 8px;color:#555;">Междинна сума</td>
-      <td style="padding:6px 8px;text-align:right;white-space:nowrap;">${eur(order.subtotalEur)} <span style="color:#888;">/ ${bgn(order.subtotalBgn)}</span></td>
+      <td style="padding:6px 8px;text-align:right;white-space:nowrap;">${eur(order.subtotalEur)}</td>
     </tr>
     <tr>
       <td style="padding:6px 8px;color:#555;">Доставка</td>
-      <td style="padding:6px 8px;text-align:right;white-space:nowrap;">${eur(order.deliveryFeeEur)} <span style="color:#888;">/ ${bgn(order.deliveryFeeBgn)}</span></td>
+      <td style="padding:6px 8px;text-align:right;white-space:nowrap;">${eur(order.deliveryFeeEur)}</td>
     </tr>
     <tr>
       <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;">Обща сума (наложен платеж)</td>
-      <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;text-align:right;white-space:nowrap;">${eur(order.totalEur)} <span style="color:#888;">/ ${bgn(order.totalBgn)}</span></td>
+      <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;text-align:right;white-space:nowrap;">${eur(order.totalEur)}</td>
     </tr>
   </table>
   <p style="margin:4px 0;"><strong>Адрес за доставка:</strong> ${esc(order.deliveryAddress)}, ${esc(order.deliveryCity)}</p>

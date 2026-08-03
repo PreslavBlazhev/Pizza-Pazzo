@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { getProductById } from "@/lib/menu-data";
 import { checkoutSchema } from "@/lib/validators/checkout";
-import { DELIVERY_FEE, EUR_TO_BGN } from "@/lib/constants";
+import { DELIVERY_FEE } from "@/lib/constants";
 import {
   resolveOrderItemExtras,
   type ExtraSourceProduct,
@@ -102,14 +102,11 @@ export async function createOrder(
     variantId: string | null;
     variantName: string | null;
     quantity: number;
-    unitPriceBgn: number;
     unitPriceEur: number;
-    totalPriceBgn: number;
     totalPriceEur: number;
     extrasJson: string;
   }[] = [];
 
-  let subtotalBgn = 0;
   let subtotalEur = 0;
 
   for (const it of itemsParsed.data) {
@@ -119,7 +116,6 @@ export async function createOrder(
       return { ok: false, error: "Един от продуктите вече не е наличен. Обновете количката." };
     }
 
-    let unitBgn = pBg.priceBgn;
     let unitEur = pBg.priceEur;
     let variantId: string | null = null;
     let variantName: string | null = null;
@@ -131,7 +127,6 @@ export async function createOrder(
       if (!vBg) {
         return { ok: false, error: "Невалиден размер на продукт. Обновете количката." };
       }
-      unitBgn = vBg.priceBgn;
       unitEur = vBg.priceEur;
       variantId = it.variantId;
       variantName = vEn ? `${vBg.name} / ${vEn.name}` : vBg.name;
@@ -142,7 +137,6 @@ export async function createOrder(
     //    lib/extras-resolve.ts). The client's copy of names/prices is ignored.
     let extras: OrderItemExtra[] = [];
     let extrasUnitEur = 0;
-    let extrasUnitBgn = 0;
 
     if (it.extras && it.extras.length > 0) {
       const sourceProducts = new Map<string, ExtraSourceProduct>();
@@ -157,13 +151,11 @@ export async function createOrder(
           nameBg: sBg.name,
           nameEn: sEn?.name ?? sBg.name,
           priceEur: sBg.priceEur,
-          priceBgn: sBg.priceBgn,
           variants: (sBg.variants ?? []).map((v) => ({
             id: v.id,
             nameBg: v.name,
             nameEn: sEn?.variants?.find((x) => x.id === v.id)?.name ?? v.name,
             priceEur: v.priceEur,
-            priceBgn: v.priceBgn,
           })),
         });
       }
@@ -183,17 +175,13 @@ export async function createOrder(
       }
       extras = resolved.extras;
       extrasUnitEur = resolved.extrasUnitTotalEur;
-      extrasUnitBgn = resolved.extrasUnitTotalBgn;
     }
 
     // Line total semantics: the extras set applies to EVERY unit of the line —
-    // (base unit + extras per unit) × quantity. unitPrice* stays the BASE price;
-    // the extras' own prices live in the snapshot.
-    const perUnitBgn = round2(unitBgn + extrasUnitBgn);
+    // (base unit + extras per unit) × quantity. unitPriceEur stays the BASE
+    // price; the extras' own prices live in the snapshot.
     const perUnitEur = round2(unitEur + extrasUnitEur);
-    const lineBgn = round2(perUnitBgn * it.quantity);
     const lineEur = round2(perUnitEur * it.quantity);
-    subtotalBgn = round2(subtotalBgn + lineBgn);
     subtotalEur = round2(subtotalEur + lineEur);
 
     lineData.push({
@@ -205,17 +193,13 @@ export async function createOrder(
       variantId,
       variantName,
       quantity: it.quantity,
-      unitPriceBgn: unitBgn,
       unitPriceEur: unitEur,
-      totalPriceBgn: lineBgn,
       totalPriceEur: lineEur,
       extrasJson: JSON.stringify(extras),
     });
   }
 
   const deliveryFeeEur = DELIVERY_FEE;
-  const deliveryFeeBgn = round2(DELIVERY_FEE * EUR_TO_BGN);
-  const totalBgn = round2(subtotalBgn + deliveryFeeBgn);
   const totalEur = round2(subtotalEur + deliveryFeeEur);
 
   const sessionUser = await getSessionUser();
@@ -243,11 +227,8 @@ export async function createOrder(
           paymentMethod: "CASH_ON_DELIVERY",
           deliveryMethod: "DELIVERY",
           status: "PENDING",
-          subtotalBgn,
           subtotalEur,
-          deliveryFeeBgn,
           deliveryFeeEur,
-          totalBgn,
           totalEur,
           items: { create: lineData },
         },
@@ -263,13 +244,11 @@ export async function createOrder(
       deliveryCity: d.deliveryCity,
       deliveryAddress: d.deliveryAddress,
       deliveryNote: d.deliveryNote ?? null,
-      totalBgn,
       totalEur,
       items: lineData.map((i) => ({
         nameBg: i.productNameBg,
         variantName: i.variantName,
         quantity: i.quantity,
-        totalPriceBgn: i.totalPriceBgn,
         totalPriceEur: i.totalPriceEur,
         // Same snapshot that went into extrasJson — parsed back rather than
         // re-derived, so the email can never disagree with the order.

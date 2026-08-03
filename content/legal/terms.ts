@@ -3,7 +3,7 @@ import type { LegalDoc } from "./types";
 /**
  * Общи условия / Terms and Conditions — DRAFT for client + lawyer review.
  * Reflects how the system actually works today: online orders for delivery,
- * cash on delivery only, prices in EUR (primary) + BGN at the fixed rate.
+ * cash on delivery only, prices in EUR — the only currency used on the site.
  */
 export const termsDoc: LegalDoc = {
   slug: "terms",
@@ -34,8 +34,8 @@ export const termsDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Всички цени са в евро (EUR) като основна валута и в лева (BGN) по фиксирания курс 1 € = 1.95583 лв., с включен ДДС. Валидна е цената, показана в момента на подаване на поръчката. Таксата за доставка (ако има такава) се показва отделно в количката преди финализиране.",
-            en: "All prices are shown in euro (EUR) as the primary currency and in leva (BGN) at the fixed rate €1 = BGN 1.95583, VAT included. The price shown at the moment the order is placed applies. Any delivery fee is shown separately in the cart before you finalize.",
+            bg: "Всички цени са в евро (EUR), с включен ДДС. Валидна е цената, показана в момента на подаване на поръчката. Таксата за доставка (ако има такава) се показва отделно в количката преди финализиране.",
+            en: "All prices are shown in euro (EUR), VAT included. The price shown at the moment the order is placed applies. Any delivery fee is shown separately in the cart before you finalize.",
           },
         },
       ],

@@ -15,8 +15,8 @@
  * The period always filters on `createdAt` (the order belongs to the day it was
  * placed) using the half-open range built in lib/report-period.ts.
  *
- * EUR and BGN are summed independently from their stored columns — there is no
- * conversion anywhere.
+ * Every figure is summed straight from the stored euro columns — there is no
+ * currency conversion anywhere.
  *
  * ⚠️ Never import this from a Client Component — it reaches the database
  * through lib/db.ts. (The project marks server modules by convention; the
@@ -44,11 +44,8 @@ export interface ReportSummary {
   acceptedCount: number;
   cancelledCount: number;
   revenueEur: number;
-  revenueBgn: number;
   foodRevenueEur: number;
-  foodRevenueBgn: number;
   deliveryRevenueEur: number;
-  deliveryRevenueBgn: number;
 }
 
 export interface ReportPagination {
@@ -98,11 +95,8 @@ export async function getAdminReport({
         where: delivered,
         _sum: {
           totalEur: true,
-          totalBgn: true,
           subtotalEur: true,
-          subtotalBgn: true,
           deliveryFeeEur: true,
-          deliveryFeeBgn: true,
         },
       }),
       db.order.count({ where: { createdAt } }),
@@ -127,11 +121,8 @@ export async function getAdminReport({
       acceptedCount,
       cancelledCount,
       revenueEur: money(revenue._sum.totalEur),
-      revenueBgn: money(revenue._sum.totalBgn),
       foodRevenueEur: money(revenue._sum.subtotalEur),
-      foodRevenueBgn: money(revenue._sum.subtotalBgn),
       deliveryRevenueEur: money(revenue._sum.deliveryFeeEur),
-      deliveryRevenueBgn: money(revenue._sum.deliveryFeeBgn),
     },
     orders: rows.map(mapOrderRow),
     pagination: {

@@ -54,10 +54,8 @@ export interface OrderItem {
   quantity: number;
 
   /** Base product/variant unit price — extras are NOT folded in here. */
-  unitPriceBgn: number;
   unitPriceEur: number;
   /** Full line total INCLUDING extras: (base unit + extras per unit) × quantity. */
-  totalPriceBgn: number;
   totalPriceEur: number;
 
   /** Extras snapshot parsed from extrasJson; [] for legacy/extra-less rows. */
@@ -66,7 +64,7 @@ export interface OrderItem {
   itemNote: string | null;
 }
 
-/** An order. Timestamps are ISO strings; money is `number` (BGN + EUR). */
+/** An order. Timestamps are ISO strings; money is `number` (EUR). */
 export interface Order {
   id: string;
   orderNumber: number;
@@ -85,11 +83,8 @@ export interface Order {
   deliveryMethod: DeliveryMethod;
   status: OrderStatus;
 
-  subtotalBgn: number;
   subtotalEur: number;
-  deliveryFeeBgn: number;
   deliveryFeeEur: number;
-  totalBgn: number;
   totalEur: number;
 
   estimatedTimeMinutes: number | null;

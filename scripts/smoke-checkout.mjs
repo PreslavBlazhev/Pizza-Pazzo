@@ -23,9 +23,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const EUR_TO_BGN = 1.95583; // fixed conversion rate (lib/constants.ts)
-const RATE_TOLERANCE = 0.05; // docx source rounds some prices up ~2.3%
-
 let failures = 0;
 const fail = (msg) => {
   failures++;
@@ -45,7 +42,6 @@ const products = (
   slug: p.slug,
   name: { bg: p.nameBg, en: p.nameEn },
   categoryId: p.categoryId,
-  priceBgn: Number(p.priceBgn),
   priceEur: Number(p.priceEur),
   isAvailable: p.isAvailable,
   allergensJson: p.allergens,
@@ -53,7 +49,6 @@ const products = (
     ? p.variants.map((v) => ({
         id: v.id,
         name: { bg: v.nameBg, en: v.nameEn },
-        priceBgn: Number(v.priceBgn),
         priceEur: Number(v.priceEur),
       }))
     : undefined,
@@ -92,10 +87,15 @@ for (const p of products) {
   const pricePoints = p.variants?.length ? p.variants : [p];
   for (const v of pricePoints) {
     const label = v === p ? p.slug : `${p.slug}/${v.id}`;
-    if (!(v.priceBgn > 0) || !(v.priceEur > 0)) fail(`${label}: non-positive price`);
-    const ratio = v.priceBgn / v.priceEur;
-    if (Math.abs(ratio - EUR_TO_BGN) / EUR_TO_BGN > RATE_TOLERANCE) {
-      fail(`${label}: BGN/EUR ratio ${ratio.toFixed(3)} looks swapped or wrong`);
+    if (!(v.priceEur > 0)) fail(`${label}: non-positive price`);
+    // Guards the euro-only migration: a leftover лв. amount would show up here
+    // as an implausibly large "euro" price (the лв. figures are ~1.96× bigger).
+    if (v.priceEur > 200) fail(`${label}: price ${v.priceEur} € is implausibly high`);
+    // Epsilon-based: 9.71 * 100 is 970.9999999999999 in binary floating point,
+    // so an exact === comparison would flag every legitimate price.
+    const cents = v.priceEur * 100;
+    if (Math.abs(cents - Math.round(cents)) > 1e-6) {
+      fail(`${label}: price ${v.priceEur} € has sub-cent precision`);
     }
   }
 
@@ -121,9 +121,9 @@ function derivePrice(productId, variantId) {
   if (variantId) {
     const v = p.variants?.find((x) => x.id === variantId);
     if (!v) return { error: "bad-variant" };
-    return { unitBgn: v.priceBgn, unitEur: v.priceEur };
+    return { unitEur: v.priceEur };
   }
-  return { unitBgn: p.priceBgn, unitEur: p.priceEur };
+  return { unitEur: p.priceEur };
 }
 
 // Every product must be resolvable the way the cart sends it: with its first
@@ -143,14 +143,14 @@ for (const p of products.filter((x) => x.isAvailable && (x.variants?.length ?? 0
   for (const v of p.variants) {
     const r = derivePrice(p.id, v.id);
     if (r.error) fail(`${p.slug}/${v.id}: ${r.error}`);
-    else if (r.unitBgn !== v.priceBgn || r.unitEur !== v.priceEur) {
-      fail(`${p.slug}/${v.id}: derived ${r.unitBgn}/${r.unitEur}, stored ${v.priceBgn}/${v.priceEur}`);
+    else if (r.unitEur !== v.priceEur) {
+      fail(`${p.slug}/${v.id}: derived ${r.unitEur}, stored ${v.priceEur}`);
     } else {
       variantChecks++;
     }
   }
   const [a, b] = p.variants;
-  if (a.priceBgn === b.priceBgn && a.priceEur === b.priceEur) {
+  if (a.priceEur === b.priceEur) {
     console.warn(`  ⚠ ${p.slug}: first two variants have identical prices — check the data`);
   }
 }
@@ -170,20 +170,16 @@ const sample = products
   .filter((p) => p.isAvailable)
   .slice(0, 2)
   .map((p, i) => ({ ...derivePrice(p.id, p.variants?.[0]?.id), qty: i + 2, slug: p.slug }));
-let subBgn = 0;
 let subEur = 0;
-let expectBgn = 0;
 let expectEur = 0;
 for (const l of sample) {
-  subBgn = round2(subBgn + round2(l.unitBgn * l.qty));
   subEur = round2(subEur + round2(l.unitEur * l.qty));
-  expectBgn += Math.round(l.unitBgn * 100) * l.qty;
   expectEur += Math.round(l.unitEur * 100) * l.qty;
 }
-if (Math.round(subBgn * 100) !== expectBgn || Math.round(subEur * 100) !== expectEur) {
-  fail(`sample cart totals drift: got ${subBgn} лв. / ${subEur} € (integer check ${expectBgn}/${expectEur} stotinki)`);
+if (Math.round(subEur * 100) !== expectEur) {
+  fail(`sample cart totals drift: got ${subEur} € (integer check ${expectEur} cents)`);
 } else {
-  ok(`sample cart (${sample.map((l) => `${l.qty}× ${l.slug}`).join(" + ")}) = ${subEur} € / ${subBgn} лв., no rounding drift`);
+  ok(`sample cart (${sample.map((l) => `${l.qty}× ${l.slug}`).join(" + ")}) = ${subEur} €, no rounding drift`);
 }
 
 // ── 4. Extras resolution & pricing (lib/extras-rules + lib/extras-resolve) ──
@@ -296,13 +292,11 @@ if (rules && resolveOrderItemExtras) {
     nameBg: p.name.bg,
     nameEn: p.name.en,
     priceEur: p.priceEur,
-    priceBgn: p.priceBgn,
     variants: (p.variants ?? []).map((v) => ({
       id: v.id,
       nameBg: v.name.bg,
       nameEn: v.name.en,
       priceEur: v.priceEur,
-      priceBgn: v.priceBgn,
     })),
   });
   const byId = new Map(products.map((p) => [p.id, p]));
@@ -370,7 +364,7 @@ if (rules && resolveOrderItemExtras) {
         const e = r.extras[0];
         if (r.extras.length !== 1) return `expected 1 extra, got ${r.extras.length}`;
         if (e.sourceVariantId !== crust30.id) return `matched variant ${e.sourceVariantId}, expected ${crust30.id}`;
-        if (e.unitPriceEur !== crust30.priceEur || e.unitPriceBgn !== crust30.priceBgn) return "crust 30 price mismatch";
+        if (e.unitPriceEur !== crust30.priceEur) return "crust 30 price mismatch";
         if (e.nameBg !== "Кашкавален борд" || e.nameEn !== "Cheese crust") return "snapshot label wrong";
         if (r.extrasUnitTotalEur !== round2(crust30.priceEur)) return "unit total wrong";
         return null;
@@ -402,7 +396,6 @@ if (rules && resolveOrderItemExtras) {
         const e = r.extras[0];
         if (e.quantity !== 2) return `quantity ${e.quantity}`;
         if (e.totalPriceEur !== round2(sauce.priceEur * 2)) return "sauce total mismatch";
-        if (e.totalPriceBgn !== round2(sauce.priceBgn * 2)) return "sauce BGN total mismatch";
         return null;
       });
 
@@ -508,9 +501,7 @@ if (rules && resolveOrderItemExtras) {
       nameEn: "Ketchup",
       quantity: 2,
       unitPriceEur: 1.02,
-      unitPriceBgn: 2,
       totalPriceEur: 2.04,
-      totalPriceBgn: 4,
     };
     const checks = [
       [p("[]").length === 0, 'legacy "[]" → []'],
@@ -521,6 +512,23 @@ if (rules && resolveOrderItemExtras) {
       [p(JSON.stringify([validExtra, { garbage: true }, 42])).length === 1, "malformed entries are dropped, valid ones kept"],
       [p(JSON.stringify([{ ...validExtra, quantity: -1 }])).length === 0, "negative quantity entry dropped"],
       [p(JSON.stringify([{ ...validExtra, unitPriceEur: "1.02" }])).length === 0, "string price entry dropped"],
+      // Migration compatibility: snapshots written before the euro-only change
+      // still carry unitPriceBgn/totalPriceBgn. They must keep parsing, and the
+      // retired keys must not survive into the parsed result.
+      [
+        p(JSON.stringify([{ ...validExtra, unitPriceBgn: 2, totalPriceBgn: 4 }])).length === 1,
+        "legacy snapshot with BGN keys still parses",
+      ],
+      [
+        Object.keys(
+          p(JSON.stringify([{ ...validExtra, unitPriceBgn: 2, totalPriceBgn: 4 }]))[0]
+        ).every((k) => !/bgn/i.test(k)),
+        "legacy BGN keys are stripped from the parsed extra",
+      ],
+      [
+        p(JSON.stringify([{ ...validExtra, unitPriceBgn: 2, totalPriceBgn: 4 }]))[0].totalPriceEur === 2.04,
+        "legacy snapshot keeps its euro prices",
+      ],
     ];
     for (const [passed, label] of checks) {
       if (passed) ok(label);
@@ -553,9 +561,7 @@ if (mods) {
     quantity: 1,
     sizeContext: "30 см",
     unitPriceEur: 3.58,
-    unitPriceBgn: 7,
     totalPriceEur: 3.58,
-    totalPriceBgn: 7,
   };
   const sauceX2 = {
     key: "sauce:prod_chesnov_sos",
@@ -565,9 +571,7 @@ if (mods) {
     nameEn: "Garlic sauce",
     quantity: 2,
     unitPriceEur: 1.02,
-    unitPriceBgn: 2,
     totalPriceEur: 2.04,
-    totalPriceBgn: 4,
   };
   const item = (over = {}) => ({
     id: "oi_1",
@@ -580,9 +584,7 @@ if (mods) {
     variantId: "var_margarita_1",
     variantName: "30 см / 30 cm",
     quantity: 1,
-    unitPriceBgn: 13.01,
     unitPriceEur: 6.65,
-    totalPriceBgn: 20.01,
     totalPriceEur: 10.23,
     extras: [],
     itemNote: null,
@@ -601,11 +603,8 @@ if (mods) {
     paymentMethod: "CASH_ON_DELIVERY",
     deliveryMethod: "DELIVERY",
     status: "ACCEPTED",
-    subtotalBgn: 20.01,
     subtotalEur: 10.23,
-    deliveryFeeBgn: 4.89,
     deliveryFeeEur: 2.5,
-    totalBgn: 24.9,
     totalEur: 12.73,
     estimatedTimeMinutes: 30,
     adminNote: null,
@@ -627,7 +626,7 @@ if (mods) {
     check("BG locale uses nameBg", bg.name === "Кашкавален борд");
     check("EN locale uses nameEn", en.name === "Cheese crust");
     check("sizeContext is carried through", bg.sizeContext === "30 см");
-    check("prices are carried through", bg.totalPriceEur === 3.58 && bg.totalPriceBgn === 7);
+    check("prices are carried through", bg.totalPriceEur === 3.58);
     check(
       "internal identifiers are not exposed",
       !("key" in bg) && !("sourceProductId" in bg) && !("sourceVariantId" in bg)
@@ -657,10 +656,9 @@ if (mods) {
       customerEmail: "i@e.com",
       deliveryCity: "Плевен",
       deliveryAddress: "ул. Тестова 1",
-      totalBgn: 24.9,
       totalEur: 12.73,
       items: [
-        { nameBg: "Маргарита", variantName: "30 см", quantity: 2, totalPriceBgn: 53.6, totalPriceEur: 27.64, extras: [crust, sauceX2] },
+        { nameBg: "Маргарита", variantName: "30 см", quantity: 2, totalPriceEur: 27.64, extras: [crust, sauceX2] },
       ],
     });
     check("new-order text lists the crust", withExtras.text.includes("+ Кашкавален борд / всяка"));
@@ -676,16 +674,15 @@ if (mods) {
       customerEmail: "",
       deliveryCity: "Плевен",
       deliveryAddress: "ул. Тестова 1",
-      totalBgn: 20.01,
       totalEur: 10.23,
-      items: [{ nameBg: "Маргарита", variantName: null, quantity: 1, totalPriceBgn: 20.01, totalPriceEur: 10.23 }],
+      items: [{ nameBg: "Маргарита", variantName: null, quantity: 1, totalPriceEur: 10.23 }],
     });
     check("new-order without extras still renders (legacy item)", noExtras.text.includes("1× Маргарита") && !noExtras.text.includes("+ "));
 
     // The signature phone is injected by the sender (from DB settings).
     const CONTACT = { phone: "+359 88 248 4777" };
     const accepted = customerOrderAcceptedEmail(
-      order([item({ quantity: 2, totalPriceEur: 27.64, totalPriceBgn: 53.6, extras: [crust, sauceX2] })]),
+      order([item({ quantity: 2, totalPriceEur: 27.64, extras: [crust, sauceX2] })]),
       CONTACT
     );
     check("accepted text lists extras with prices", accepted.text.includes("+ Кашкавален борд (за всяка бройка) — 3.58 €") && accepted.text.includes("+ 2× Чеснов сос (за всяка бройка) — 2.04 €"));
@@ -717,7 +714,7 @@ if (mods) {
     check(`ticket wraps long extra names within ${width} chars`, overLong.length === 0);
     check("ticket loses no characters when wrapping", t4.replace(/\s+/g, "").includes(longName.replace(/\s+/g, "")));
 
-    const t5 = buildTicketText(order([item({ extras: [{ ...sauceX2, quantity: 10, totalPriceEur: 10.2, totalPriceBgn: 20 }] })]));
+    const t5 = buildTicketText(order([item({ extras: [{ ...sauceX2, quantity: 10, totalPriceEur: 10.2 }] })]));
     check("ticket handles sauce quantity 10", t5.includes("+ 10x Чеснов сос"));
   }
 
@@ -887,10 +884,10 @@ if (mods) {
 
     // Fixture: only delivered orders may contribute to revenue.
     const fixture = [
-      { completedAt: "x", acceptedAt: "x", cancelledAt: null, totalEur: 25.52, totalBgn: 49.68, subtotalEur: 23.02, subtotalBgn: 44.79, deliveryFeeEur: 2.5, deliveryFeeBgn: 4.89 },
-      { completedAt: null, acceptedAt: "x", cancelledAt: null, totalEur: 12.21, totalBgn: 23.89, subtotalEur: 9.71, subtotalBgn: 19.0, deliveryFeeEur: 2.5, deliveryFeeBgn: 4.89 },
-      { completedAt: null, acceptedAt: null, cancelledAt: "x", totalEur: 99.99, totalBgn: 195.55, subtotalEur: 97.49, subtotalBgn: 190.66, deliveryFeeEur: 2.5, deliveryFeeBgn: 4.89 },
-      { completedAt: null, acceptedAt: null, cancelledAt: null, totalEur: 50.0, totalBgn: 97.79, subtotalEur: 47.5, subtotalBgn: 92.9, deliveryFeeEur: 2.5, deliveryFeeBgn: 4.89 },
+      { completedAt: "x", acceptedAt: "x", cancelledAt: null, totalEur: 25.52, subtotalEur: 23.02, deliveryFeeEur: 2.5 },
+      { completedAt: null, acceptedAt: "x", cancelledAt: null, totalEur: 12.21, subtotalEur: 9.71, deliveryFeeEur: 2.5 },
+      { completedAt: null, acceptedAt: null, cancelledAt: "x", totalEur: 99.99, subtotalEur: 97.49, deliveryFeeEur: 2.5 },
+      { completedAt: null, acceptedAt: null, cancelledAt: null, totalEur: 50.0, subtotalEur: 47.5, deliveryFeeEur: 2.5 },
     ];
     const delivered = fixture.filter((o) => o.completedAt !== null);
     const accepted = fixture.filter((o) => o.acceptedAt !== null);
@@ -903,13 +900,8 @@ if (mods) {
     check("revenue excludes cancelled and pending", sum(delivered, "totalEur") === 25.52);
     check("revenue excludes accepted-but-not-delivered", sum(delivered, "totalEur") !== sum(accepted, "totalEur"));
     check(
-      "EUR and BGN are summed independently (no conversion)",
-      sum(delivered, "totalEur") === 25.52 && sum(delivered, "totalBgn") === 49.68
-    );
-    check(
       "food + delivery = total",
-      money(sum(delivered, "subtotalEur") + sum(delivered, "deliveryFeeEur")) === sum(delivered, "totalEur") &&
-        money(sum(delivered, "subtotalBgn") + sum(delivered, "deliveryFeeBgn")) === sum(delivered, "totalBgn")
+      money(sum(delivered, "subtotalEur") + sum(delivered, "deliveryFeeEur")) === sum(delivered, "totalEur")
     );
   }
 }
@@ -1036,15 +1028,15 @@ if (mods) {
       customerName: "Иван Петров", customerEmail: "ivan@example.com", customerPhone: "0888123456",
       deliveryAddress: "ул. Тестова 1", deliveryCity: "Плевен", deliveryNote: null,
       paymentMethod: "CASH_ON_DELIVERY", deliveryMethod: "DELIVERY", status: "ACCEPTED",
-      subtotalBgn: 20.01, subtotalEur: 10.23, deliveryFeeBgn: 4.89, deliveryFeeEur: 2.5,
-      totalBgn: 24.9, totalEur: 12.73, estimatedTimeMinutes: 30, adminNote: null,
+      subtotalEur: 10.23, deliveryFeeEur: 2.5,
+      totalEur: 12.73, estimatedTimeMinutes: 30, adminNote: null,
       acceptedAt: "2026-07-26T10:00:00.000Z", cancelledAt: null, completedAt: null,
       createdAt: "2026-07-26T09:50:00.000Z", updatedAt: "2026-07-26T10:00:00.000Z",
       items: [{
         id: "oi_1", orderId: "o_1", productId: "prod_margarita", productSlug: "margarita",
         productNameBg: "Маргарита", productNameEn: "Margherita", productImageUrl: null,
         variantId: null, variantName: null, quantity: 1,
-        unitPriceBgn: 13.01, unitPriceEur: 6.65, totalPriceBgn: 20.01, totalPriceEur: 10.23,
+        unitPriceEur: 6.65, totalPriceEur: 10.23,
         extras: [], itemNote: null,
       }],
     };

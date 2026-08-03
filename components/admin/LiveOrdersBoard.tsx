@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { updateOrderStatusAction } from "@/app/actions/order-admin";
-import { formatDualPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { PrintOrderButton } from "./PrintOrderButton";
 import type { Order, OrderWithItems } from "@/types/order";
@@ -292,7 +292,7 @@ function LiveOrderCard({
                       {i.variantName ? ` (${i.variantName})` : ""}
                     </span>
                     <span className="whitespace-nowrap text-neutral-600">
-                      {formatDualPrice(i.totalPriceEur, i.totalPriceBgn)}
+                      {formatEurPrice(i.totalPriceEur)}
                     </span>
                   </div>
                   {extras.length > 0 && (
@@ -309,7 +309,7 @@ function LiveOrderCard({
             })}
           </ul>
           <p className="mt-2 border-t pt-2 text-xl font-bold">
-            Общо: {formatDualPrice(order.totalEur, order.totalBgn)}
+            Общо: {formatEurPrice(order.totalEur)}
             <span className="ml-2 text-sm font-normal text-neutral-500">наложен платеж</span>
           </p>
         </div>

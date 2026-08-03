@@ -12,7 +12,6 @@ export interface AdminMenuVariant {
   id: string;
   nameBg: string;
   nameEn: string;
-  priceBgn: number;
   priceEur: number;
 }
 
@@ -24,7 +23,6 @@ export interface AdminMenuProduct {
   descriptionBg: string;
   descriptionEn: string;
   categoryId: string;
-  priceBgn: number;
   priceEur: number;
   imageUrl: string | null;
   allergens: string[];
@@ -69,7 +67,6 @@ function toAdminProduct(row: ProductRow): AdminMenuProduct {
     descriptionBg: row.descriptionBg,
     descriptionEn: row.descriptionEn,
     categoryId: row.categoryId,
-    priceBgn: Number(row.priceBgn),
     priceEur: Number(row.priceEur),
     imageUrl: row.imageUrl,
     allergens,
@@ -86,7 +83,6 @@ function toAdminProduct(row: ProductRow): AdminMenuProduct {
         id: v.id,
         nameBg: v.nameBg,
         nameEn: v.nameEn,
-        priceBgn: Number(v.priceBgn),
         priceEur: Number(v.priceEur),
       })),
   };

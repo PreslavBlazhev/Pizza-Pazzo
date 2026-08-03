@@ -2,12 +2,8 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import type { CartItem as CartItemType } from "@/types/cart";
-import {
-  linePreviewTotalBgn,
-  linePreviewTotalEur,
-  useCartStore,
-} from "@/store/cart-store";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { linePreviewTotalEur, useCartStore } from "@/store/cart-store";
+import { formatEurPrice } from "@/lib/format-price";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -45,10 +41,7 @@ export function CartItem({ item }: { item: CartItemType }) {
                   {e.display && (
                     <span className="whitespace-nowrap">
                       {" — "}
-                      {formatEurPrice(round2(e.display.unitPriceEur * e.quantity))}{" "}
-                      <span className="text-pizza-muted/80">
-                        {formatBgnPrice(round2(e.display.unitPriceBgn * e.quantity))}
-                      </span>
+                      {formatEurPrice(round2(e.display.unitPriceEur * e.quantity))}
                     </span>
                   )}
                 </li>
@@ -94,7 +87,6 @@ export function CartItem({ item }: { item: CartItemType }) {
       {/* Line total including the extras preview. */}
       <div className="shrink-0 text-right">
         <p className="font-semibold text-brand">{formatEurPrice(linePreviewTotalEur(item))}</p>
-        <p className="text-xs text-pizza-muted">{formatBgnPrice(linePreviewTotalBgn(item))}</p>
       </div>
     </div>
   );

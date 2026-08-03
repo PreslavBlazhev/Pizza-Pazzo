@@ -166,7 +166,7 @@ class PrintableOrderTest {
               "paymentMethod": "CASH_ON_DELIVERY",
               "customerNote": null,
               "subtotal": 29.17, "deliveryFee": 2.50, "discount": 0, "total": 31.67,
-              "currency": "EUR", "totalSecondary": 61.94, "secondaryCurrency": "лв",
+              "currency": "EUR",
               "isReprint": false
             }
             """.trimIndent()
@@ -219,19 +219,18 @@ class PrintableOrderTest {
     }
 
     @Test
-    fun `reprint flag and secondary currency are parsed`() {
+    fun `reprint flag is parsed`() {
         val order = PrintableOrder.fromJson(
             """
             {
               "orderId":"5","isReprint":true,
               "total": 25.50, "currency":"EUR",
-              "totalSecondary": 49.89, "secondaryCurrency":"лв",
               "items":[{"name":"Пица","quantity":1}]
             }
             """.trimIndent()
         ).getOrThrow()
         assertTrue(order.isReprint)
-        assertEquals(49.89, order.totalSecondary!!, 0.001)
-        assertEquals("лв", order.secondaryCurrency)
+        assertEquals(25.50, order.total!!, 0.001)
+        assertEquals("EUR", order.currency)
     }
 }

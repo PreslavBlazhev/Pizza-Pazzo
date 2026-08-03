@@ -6,7 +6,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { CartExtraSelection, CartItem, CartTotals } from "@/types/cart";
 import type { Product, ProductVariant } from "@/types/product";
 import { lineIdFor } from "@/lib/extras-rules";
-import { DELIVERY_FEE, EUR_TO_BGN } from "@/lib/constants";
+import { DELIVERY_FEE } from "@/lib/constants";
 
 interface CartState {
   items: CartItem[];
@@ -28,11 +28,6 @@ interface PersistedCart {
   items: CartItem[];
 }
 
-/** BGN unit price for a line: the variant's price, or the product base price. */
-function bgnUnit(item: CartItem): number {
-  return item.selectedVariant?.priceBgn ?? item.product.priceBgn;
-}
-
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
@@ -46,19 +41,9 @@ export function extrasPreviewUnitEur(item: CartItem): number {
   );
 }
 
-export function extrasPreviewUnitBgn(item: CartItem): number {
-  return round2(
-    (item.extras ?? []).reduce((s, e) => s + (e.display?.unitPriceBgn ?? 0) * e.quantity, 0)
-  );
-}
-
-/** PREVIEW line totals including extras: (base unit + extras unit) × quantity. */
+/** PREVIEW line total including extras: (base unit + extras unit) × quantity. */
 export function linePreviewTotalEur(item: CartItem): number {
   return round2(round2(item.unitPrice + extrasPreviewUnitEur(item)) * item.quantity);
-}
-
-export function linePreviewTotalBgn(item: CartItem): number {
-  return round2(round2(bgnUnit(item) + extrasPreviewUnitBgn(item)) * item.quantity);
 }
 
 // ── Persist migration (unknown → PersistedCart, never throws) ───────────────
@@ -89,11 +74,22 @@ function normalizeExtras(value: unknown): CartExtraSelection[] {
   return out;
 }
 
+/** Drops the retired `priceBgn` key from a persisted product/variant object. */
+function withoutBgn<T extends Record<string, unknown>>(value: T): T {
+  if (!("priceBgn" in value)) return value;
+  const rest = { ...value };
+  delete rest.priceBgn;
+  return rest;
+}
+
 /**
- * Migrates any persisted "pp-cart" payload (including the unversioned pre-1
- * format, which had no `extras` field) to the current shape. Structurally
- * broken items are dropped rather than crashing the store; a completely
- * invalid payload yields an empty cart.
+ * Migrates any persisted "pp-cart" payload to the current shape: the
+ * unversioned pre-1 format (no `extras` field) and version 1 (prices stored in
+ * both BGN and EUR) both land here. Structurally broken items are dropped
+ * rather than crashing the store; a completely invalid payload yields an empty
+ * cart. Retired BGN prices are stripped from the product and its variants, and
+ * extras lose their display snapshots (normalizeExtras keeps only the payload),
+ * so nothing carrying a лв. price survives the upgrade.
  */
 function migratePersistedCart(persisted: unknown): PersistedCart {
   if (!isRecord(persisted) || !Array.isArray(persisted.items)) return { items: [] };
@@ -105,8 +101,7 @@ function migratePersistedCart(persisted: unknown): PersistedCart {
     if (
       typeof product.id !== "string" ||
       product.id.length === 0 ||
-      typeof product.priceEur !== "number" ||
-      typeof product.priceBgn !== "number"
+      typeof product.priceEur !== "number"
     ) {
       continue;
     }
@@ -116,10 +111,15 @@ function migratePersistedCart(persisted: unknown): PersistedCart {
         : 1;
     const variant =
       isRecord(raw.selectedVariant) && typeof raw.selectedVariant.id === "string"
-        ? (raw.selectedVariant as unknown as ProductVariant)
+        ? (withoutBgn(raw.selectedVariant) as unknown as ProductVariant)
         : undefined;
     const extras = normalizeExtras(raw.extras);
-    const typedProduct = product as unknown as Product;
+    const typedProduct = {
+      ...withoutBgn(product),
+      variants: Array.isArray(product.variants)
+        ? product.variants.map((v) => (isRecord(v) ? withoutBgn(v) : v))
+        : product.variants,
+    } as unknown as Product;
 
     items.push({
       lineId: lineIdFor(typedProduct.id, variant?.id, extras),
@@ -192,28 +192,24 @@ export const useCartStore = create<CartState>()(
         // Line totals include the extras PREVIEW prices (display snapshots);
         // the authoritative totals are recomputed server-side at checkout.
         const subtotal = items.reduce((s, i) => round2(s + linePreviewTotalEur(i)), 0);
-        const subtotalBgn = items.reduce((s, i) => round2(s + linePreviewTotalBgn(i)), 0);
         const deliveryFee = itemsCount > 0 ? DELIVERY_FEE : 0;
-        const deliveryFeeBgn = itemsCount > 0 ? DELIVERY_FEE * EUR_TO_BGN : 0;
         return {
           itemsCount,
           subtotal,
           deliveryFee,
           total: subtotal + deliveryFee,
-          subtotalBgn,
-          deliveryFeeBgn,
-          totalBgn: subtotalBgn + deliveryFeeBgn,
         };
       },
     }),
     {
       name: "pp-cart",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       // Persist only the items; methods are recreated on each load.
       partialize: (state) => ({ items: state.items }),
-      // Runs for every persisted payload with version < 1 — i.e. all carts
-      // saved before the extras feature (they were stored without a version).
+      // Runs for every persisted payload with version < 2 — i.e. carts saved
+      // before the extras feature (unversioned) and version-1 carts, which
+      // still carried BGN prices.
       migrate: (persistedState) => migratePersistedCart(persistedState),
     }
   )

@@ -30,9 +30,6 @@ data class PrintableOrder(
     val discount: Double?,
     val total: Double?,
     val currency: String,
-    /** Secondary-currency total (BGN on the Pizza Pazzo site), if provided. */
-    val totalSecondary: Double?,
-    val secondaryCurrency: String?,
     /** True when the staff explicitly asked for a re-print; marked on paper. */
     val isReprint: Boolean,
 ) {
@@ -151,8 +148,6 @@ data class PrintableOrder(
                 discount = root.optDoubleOrNull("discount"),
                 total = root.optDoubleOrNull("total"),
                 currency = root.optStringOrNull("currency") ?: "EUR",
-                totalSecondary = root.optDoubleOrNull("totalSecondary"),
-                secondaryCurrency = root.optStringOrNull("secondaryCurrency"),
                 isReprint = root.optBoolean("isReprint", false),
             )
         }

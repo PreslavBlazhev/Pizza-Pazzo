@@ -43,8 +43,6 @@ class ReceiptFormatterTest {
         discount = 0.0,
         total = 25.50,
         currency = "EUR",
-        totalSecondary = 49.89,
-        secondaryCurrency = "лв",
         isReprint = isReprint,
     )
 
@@ -73,7 +71,6 @@ class ReceiptFormatterTest {
         assertTrue(text.contains("Междинна сума"))
         assertTrue(text.contains("Доставка"))
         assertTrue(text.contains("ОБЩО: 25.50 EUR"))
-        assertTrue(text.contains("(49.89 лв)"))
         assertTrue(text.contains("Бележка от клиента:"))
         assertTrue(text.contains("Да се звънне при пристигане"))
     }
@@ -182,8 +179,6 @@ class ReceiptFormatterTest {
             discount = null,
             total = null,
             currency = "EUR",
-            totalSecondary = null,
-            secondaryCurrency = null,
             isReprint = false,
         )
         val text = textOf(minimal, settings58)

@@ -53,7 +53,6 @@ model MenuProduct {
   descriptionEn String        @default("")
   categoryId    String
   category      MenuCategory  @relation(fields: [categoryId], references: [id])
-  priceBgn      Decimal
   priceEur      Decimal
   imageUrl      String?
   allergens     String        @default("[]") // JSON масив (SQLite няма arrays)
@@ -72,7 +71,6 @@ model MenuVariant {
   product   MenuProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   nameBg    String
   nameEn    String
-  priceBgn  Decimal
   priceEur  Decimal
   sortOrder Int         @default(0)
 }
@@ -93,7 +91,7 @@ repo-то като seed/backup; след миграцията истината �
 ## Admin CRUD (MVP обхват)
 
 - `/admin/products`: списък с търсене + филтър по категория; редакция на
-  BG/EN име и описание, категория, цени EUR/BGN (и по вариант),
+  BG/EN име и описание, категория, цена в EUR (и по вариант),
   наличност, популярен, imageUrl (текстово поле, напр.
   `/images/products/margarita.jpg`), алергени (checkbox-и от
   `lib/allergens.ts`). Server actions + zod, guard: STAFF+ (цени/изтриване

@@ -90,7 +90,6 @@ export async function updateProductAction(
     descriptionBg: String(formData.get("descriptionBg") ?? ""),
     descriptionEn: String(formData.get("descriptionEn") ?? ""),
     categoryId: String(formData.get("categoryId") ?? ""),
-    priceBgn: String(formData.get("priceBgn") ?? ""),
     priceEur: String(formData.get("priceEur") ?? ""),
     imageUrl: String(formData.get("imageUrl") ?? ""),
     sizeBg: String(formData.get("sizeBg") ?? ""),
@@ -124,22 +123,19 @@ export async function updateProductAction(
     id: string;
     nameBg: string;
     nameEn: string;
-    priceBgn: number;
     priceEur: number;
   }[] = [];
   for (const variant of existing.variants) {
     const raw = {
       nameBg: formData.get(`variant-${variant.id}-nameBg`),
       nameEn: formData.get(`variant-${variant.id}-nameEn`),
-      priceBgn: formData.get(`variant-${variant.id}-priceBgn`),
       priceEur: formData.get(`variant-${variant.id}-priceEur`),
     };
     // A variant absent from the form entirely (e.g. an older tab) is skipped.
-    if (raw.nameBg === null && raw.priceBgn === null) continue;
+    if (raw.nameBg === null && raw.priceEur === null) continue;
     const vParsed = variantUpdateSchema.safeParse({
       nameBg: String(raw.nameBg ?? ""),
       nameEn: String(raw.nameEn ?? ""),
-      priceBgn: String(raw.priceBgn ?? ""),
       priceEur: String(raw.priceEur ?? ""),
     });
     if (!vParsed.success) {
@@ -160,7 +156,6 @@ export async function updateProductAction(
         descriptionBg: data.descriptionBg,
         descriptionEn: data.descriptionEn,
         categoryId: data.categoryId,
-        priceBgn: data.priceBgn,
         priceEur: data.priceEur,
         imageUrl: data.imageUrl || null,
         sizeBg: data.sizeBg || null,
@@ -179,7 +174,6 @@ export async function updateProductAction(
         data: {
           nameBg: v.nameBg,
           nameEn: v.nameEn,
-          priceBgn: v.priceBgn,
           priceEur: v.priceEur,
         },
       })

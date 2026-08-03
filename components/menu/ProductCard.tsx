@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { Product } from "@/types/product";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { isAllergenId, orderedAllergens } from "@/lib/allergens";
 import { cn } from "@/lib/utils";
 import { ProductImage } from "./ProductImage";
@@ -108,9 +108,7 @@ export function ProductCard({ product }: { product: Product }) {
             <span className="font-display text-xl font-bold text-brand">
               {formatEurPrice(product.priceEur)}
             </span>
-            <span className="ml-1.5 text-sm text-pizza-muted">
-              {formatBgnPrice(product.priceBgn)}
-            </span>
+
           </div>
           <Link
             href={`/product/${product.slug}`}

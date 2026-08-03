@@ -48,6 +48,5 @@ export interface AdminDashboardStats {
   /** Cancelled orders, all time. */
   cancelledOrders: number;
   /** Revenue today, cancelled orders excluded. */
-  revenueTodayBgn: number;
   revenueTodayEur: number;
 }

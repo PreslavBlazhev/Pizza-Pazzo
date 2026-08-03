@@ -48,8 +48,8 @@ for (const m of MERGES) {
   }
 
   keep.variants = [
-    { id: `${m.varPrefix}_1`, name: keep.size, priceBgn: keep.priceBgn, priceEur: keep.priceEur },
-    { id: `${m.varPrefix}_2`, name: drop.size, priceBgn: drop.priceBgn, priceEur: drop.priceEur },
+    { id: `${m.varPrefix}_1`, name: keep.size, priceEur: keep.priceEur },
+    { id: `${m.varPrefix}_2`, name: drop.size, priceEur: drop.priceEur },
   ];
   delete keep.size; // the size now lives in the variant names
   products.splice(products.indexOf(drop), 1);

@@ -69,7 +69,6 @@ try {
       descriptionBg: description.bg,
       descriptionEn: description.en,
       categoryId: p.categoryId,
-      priceBgn: p.priceBgn,
       priceEur: p.priceEur,
       imageUrl: p.imageUrl ?? null,
       allergens: JSON.stringify(p.allergens ?? []),
@@ -100,7 +99,6 @@ try {
         productId: p.id,
         nameBg: vName.bg,
         nameEn: vName.en,
-        priceBgn: v.priceBgn,
         priceEur: v.priceEur,
         sortOrder: i,
       };

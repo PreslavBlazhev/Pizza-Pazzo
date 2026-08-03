@@ -26,10 +26,8 @@ export interface OrderExtraDisplay {
   /** Size the price was matched against ("30 см") — only for sized addons. */
   sizeContext?: string;
   unitPriceEur: number;
-  unitPriceBgn: number;
   /** Price for `quantity` of this extra, on ONE unit of the main item. */
   totalPriceEur: number;
-  totalPriceBgn: number;
   type: ExtraType;
 }
 
@@ -55,9 +53,7 @@ export function toOrderExtraDisplay(
     quantity: extra.quantity,
     sizeContext: extra.sizeContext,
     unitPriceEur: extra.unitPriceEur,
-    unitPriceBgn: extra.unitPriceBgn,
     totalPriceEur: extra.totalPriceEur,
-    totalPriceBgn: extra.totalPriceBgn,
     type: extra.type,
   };
 }

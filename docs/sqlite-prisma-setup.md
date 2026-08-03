@@ -55,9 +55,9 @@ key, so:
   `@default(...)` strings in the schema.
 - **`Order.orderNumber`** is a unique `Int` assigned by application logic in
   Part 2 (SQLite can only auto-increment the `@id` column).
-- **Money uses `Decimal`, never `Float`** — stored per currency (`*Bgn` /
-  `*Eur`). In TypeScript these are represented as `string` to preserve
-  precision.
+- **Money uses `Decimal`, never `Float`** — the euro is the only currency, so
+  every money column is named `*Eur`. In TypeScript these are represented as
+  `string` to preserve precision.
 
 ## Common commands
 

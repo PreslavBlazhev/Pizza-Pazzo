@@ -53,8 +53,8 @@ export function isAndroidPrinterAvailable(): boolean {
 
 /**
  * Adapts the site's real order shape to the JSON the Android app's
- * PrintableOrder parser expects. Prices are sent in EUR (primary) with the BGN
- * total as secondary — same convention as the on-screen UI.
+ * PrintableOrder parser expects. Prices are sent in EUR, the only currency —
+ * same convention as the on-screen UI.
  *
  * Extras map onto the app's existing `Item.extras` array (see
  * android-kitchen-app/.../models/PrintableOrder.kt: `Extra(name, quantity,
@@ -102,8 +102,6 @@ export function buildPrintableOrderJson(order: OrderWithItems, isReprint = false
     discount: 0,
     total: order.totalEur,
     currency: "EUR",
-    totalSecondary: order.totalBgn,
-    secondaryCurrency: "лв",
     isReprint,
   });
 }

@@ -35,7 +35,6 @@ export interface ExtraSourceVariant {
   nameBg: string;
   nameEn: string;
   priceEur: number;
-  priceBgn: number;
 }
 
 export interface ExtraSourceProduct {
@@ -45,7 +44,6 @@ export interface ExtraSourceProduct {
   nameBg: string;
   nameEn: string;
   priceEur: number;
-  priceBgn: number;
   variants: ExtraSourceVariant[];
 }
 
@@ -80,9 +78,8 @@ export type ResolveExtrasResult =
   | {
       ok: true;
       extras: OrderItemExtra[];
-      /** Totals for ONE unit of the main item (see OrderItemExtra semantics). */
+      /** EUR total for ONE unit of the main item (see OrderItemExtra semantics). */
       extrasUnitTotalEur: number;
-      extrasUnitTotalBgn: number;
     }
   | { ok: false; code: ResolveExtrasErrorCode };
 
@@ -98,7 +95,7 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
   const { mainProduct, mainVariantName, selections, sourceProducts } = input;
 
   if (selections.length === 0) {
-    return { ok: true, extras: [], extrasUnitTotalEur: 0, extrasUnitTotalBgn: 0 };
+    return { ok: true, extras: [], extrasUnitTotalEur: 0 };
   }
   if (selections.length > EXTRAS_LIMITS.maxExtrasPerItem) return fail("too-many-extras");
 
@@ -189,9 +186,7 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
         quantity: 1,
         sizeContext: variant.nameBg,
         unitPriceEur: variant.priceEur,
-        unitPriceBgn: variant.priceBgn,
         totalPriceEur: variant.priceEur,
-        totalPriceBgn: variant.priceBgn,
       });
     }
   }
@@ -209,9 +204,7 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
       nameEn: src.nameEn,
       quantity: 1,
       unitPriceEur: src.priceEur,
-      unitPriceBgn: src.priceBgn,
       totalPriceEur: src.priceEur,
-      totalPriceBgn: src.priceBgn,
     });
   }
 
@@ -229,9 +222,7 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
       nameEn: src.nameEn,
       quantity,
       unitPriceEur: src.priceEur,
-      unitPriceBgn: src.priceBgn,
       totalPriceEur: round2(src.priceEur * quantity),
-      totalPriceBgn: round2(src.priceBgn * quantity),
     });
   }
 
@@ -240,11 +231,9 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
   if (extras.length > EXTRAS_LIMITS.maxExtrasPerItem) return fail("too-many-extras");
 
   let extrasUnitTotalEur = 0;
-  let extrasUnitTotalBgn = 0;
   for (const e of extras) {
     extrasUnitTotalEur = round2(extrasUnitTotalEur + e.totalPriceEur);
-    extrasUnitTotalBgn = round2(extrasUnitTotalBgn + e.totalPriceBgn);
   }
 
-  return { ok: true, extras, extrasUnitTotalEur, extrasUnitTotalBgn };
+  return { ok: true, extras, extrasUnitTotalEur };
 }

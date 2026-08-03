@@ -11,7 +11,6 @@
       "en": "tomato sauce and kashkaval cheese"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 13.01,
     "priceEur": 6.65,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -28,7 +27,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 13.01,
         "priceEur": 6.65
       },
       {
@@ -37,7 +35,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 19.95,
         "priceEur": 10.23
       }
     ]
@@ -54,7 +51,6 @@
       "en": "garlic base and kashkaval cheese"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 13.01,
     "priceEur": 6.65,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -70,7 +66,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 13.01,
         "priceEur": 6.65
       },
       {
@@ -79,7 +74,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 19.95,
         "priceEur": 10.23
       }
     ]
@@ -96,7 +90,6 @@
       "en": "tomato sauce, kashkaval cheese, cherry tomatoes, rocket, sun-dried tomatoes and Grana Padano"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -113,7 +106,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -122,7 +114,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -139,7 +130,6 @@
       "en": "Margherita topped with fresh basil, tomatoes and red onion"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -155,7 +145,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -164,7 +153,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -181,7 +169,6 @@
       "en": "tomato sauce, kashkaval cheese, cherry tomatoes, mozzarella and fresh basil"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -197,7 +184,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -206,7 +192,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -223,7 +208,6 @@
       "en": "tomato sauce, kashkaval cheese, green and red peppers, white cheese, tomatoes and parsley"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -239,7 +223,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -248,7 +231,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -265,7 +247,6 @@
       "en": "tomato sauce, kashkaval cheese, mushrooms, olives, red peppers, tomatoes and basil"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -281,7 +262,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -290,7 +270,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -307,7 +286,6 @@
       "en": "tomato sauce, kashkaval cheese, green and red peppers and red onion"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -323,7 +301,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -332,7 +309,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -349,7 +325,6 @@
       "en": "tomato sauce, kashkaval cheese, green and red peppers, red onion and jalapeño"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -365,7 +340,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -374,7 +348,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -391,7 +364,6 @@
       "en": "tomato sauce, kashkaval cheese, red and green peppers, garlic and parsley"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -407,7 +379,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -416,7 +387,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -433,7 +403,6 @@
       "en": "tomato sauce, kashkaval cheese, white cheese, Gouda, mozzarella, Emmental"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -449,7 +418,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -458,7 +426,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -475,7 +442,6 @@
       "en": "tomato sauce, kashkaval cheese, pork ham and mushrooms"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -491,7 +457,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -500,7 +465,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -517,7 +481,6 @@
       "en": "tomato sauce, kashkaval cheese, pork ham and pineapple pieces"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -533,7 +496,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -542,7 +504,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -559,7 +520,6 @@
       "en": "red onion and a double layer of pepperoni"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -576,7 +536,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -585,7 +544,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -602,7 +560,6 @@
       "en": "tomato sauce, kashkaval cheese, grilled chicken, tavern sausage and bacon"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -618,7 +575,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -627,7 +583,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -644,7 +599,6 @@
       "en": "guacamole sauce, kashkaval cheese, smoked bacon and grilled chicken"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -661,7 +615,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -670,7 +623,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -687,7 +639,6 @@
       "en": "cream base, chicken fillet, Parmesan, Caesar sauce, rocket"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -703,7 +654,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -712,7 +662,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -729,7 +678,6 @@
       "en": "Hollandaise sauce, kashkaval cheese, mushrooms, smoked bacon and chicken fillet"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -746,7 +694,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -755,7 +702,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -772,7 +718,6 @@
       "en": "tomato sauce, kashkaval cheese, mushrooms, smoked bacon and egg"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -789,7 +734,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -798,7 +742,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -815,7 +758,6 @@
       "en": "tomato sauce, kashkaval cheese, pickles, beef patty and smoked bacon"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -832,7 +774,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -841,7 +782,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -858,7 +798,6 @@
       "en": "honey mustard base, red onion and frankfurter"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -875,7 +814,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -884,7 +822,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -901,7 +838,6 @@
       "en": "tomato sauce, kashkaval cheese, red onion, chicken ham, smoked bacon and BBQ sauce"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -918,7 +854,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -927,7 +862,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -944,7 +878,6 @@
       "en": "tomato sauce, kashkaval cheese, red onion, red pepper, spicy beef and jalapeño"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -960,7 +893,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -969,7 +901,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -986,7 +917,6 @@
       "en": "tomato sauce, kashkaval cheese, red onion, deli salami, pepperoni and lukanka"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1002,7 +932,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1011,7 +940,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1028,7 +956,6 @@
       "en": "tomato sauce, kashkaval cheese, ground dried chilli, pepperoni and jalapeño"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1044,7 +971,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1053,7 +979,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1070,7 +995,6 @@
       "en": "tomato sauce, kashkaval cheese, white cheese, lukanka and egg"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1087,7 +1011,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1096,7 +1019,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1113,7 +1035,6 @@
       "en": "tomato sauce, kashkaval cheese, sweet corn, chicken ham and BBQ sauce"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1130,7 +1051,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1139,7 +1059,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1156,7 +1075,6 @@
       "en": "tomato sauce, kashkaval cheese, sweet corn, chicken fillet with Indian spices"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1172,7 +1090,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1181,7 +1098,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1198,7 +1114,6 @@
       "en": "tomato sauce, kashkaval cheese, pickles, processed cheese and chicken ham"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1214,7 +1129,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1223,7 +1137,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1240,7 +1153,6 @@
       "en": "garlic base, kashkaval cheese, mushrooms and chicken ham"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1257,7 +1169,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1266,7 +1177,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1283,7 +1193,6 @@
       "en": "tomato sauce, kashkaval cheese, crab sticks, tuna and anchovies"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1301,7 +1210,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1310,7 +1218,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1327,7 +1234,6 @@
       "en": "tomato sauce, kashkaval cheese, red onion, olives, tuna, fresh basil and sun-dried tomatoes"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1345,7 +1251,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1354,7 +1259,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1371,7 +1275,6 @@
       "en": "Margherita with three toppings of your choice"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1387,7 +1290,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1396,7 +1298,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1413,7 +1314,6 @@
       "en": "tomato sauce, kashkaval cheese, pepperoni, grilled chicken, spicy beef, green peppers, onion"
     },
     "categoryId": "cat_pizzas_standard",
-    "priceBgn": 19,
     "priceEur": 9.71,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1430,7 +1330,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 19,
         "priceEur": 9.71
       },
       {
@@ -1439,7 +1338,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 25,
         "priceEur": 12.78
       }
     ]
@@ -1456,7 +1354,6 @@
       "en": "Philadelphia base and smoked salmon"
     },
     "categoryId": "cat_pizzas_special",
-    "priceBgn": 23,
     "priceEur": 11.76,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1473,7 +1370,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 23,
         "priceEur": 11.76
       },
       {
@@ -1482,7 +1378,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 29.92,
         "priceEur": 15.34
       }
     ]
@@ -1499,7 +1394,6 @@
       "en": "tomato sauce, kashkaval cheese, rocket, cherry tomatoes, prosciutto crudo, Grana Padano"
     },
     "categoryId": "cat_pizzas_special",
-    "priceBgn": 23,
     "priceEur": 11.76,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1516,7 +1410,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 23,
         "priceEur": 11.76
       },
       {
@@ -1525,7 +1418,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 29.92,
         "priceEur": 15.34
       }
     ]
@@ -1542,7 +1434,6 @@
       "en": "stuffed crust filling"
     },
     "categoryId": "cat_pizza_addons",
-    "priceBgn": 7,
     "priceEur": 3.58,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1557,7 +1448,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 7,
         "priceEur": 3.58
       },
       {
@@ -1566,7 +1456,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 9,
         "priceEur": 4.6
       }
     ]
@@ -1583,7 +1472,6 @@
       "en": "pizza toppings"
     },
     "categoryId": "cat_pizza_addons",
-    "priceBgn": 4.89,
     "priceEur": 2.56,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [
@@ -1598,7 +1486,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 4.89,
         "priceEur": 2.56
       },
       {
@@ -1607,7 +1494,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 6,
         "priceEur": 3.07
       }
     ]
@@ -1624,7 +1510,6 @@
       "en": "pizza toppings"
     },
     "categoryId": "cat_pizza_addons",
-    "priceBgn": 4.01,
     "priceEur": 2.05,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [],
@@ -1637,7 +1522,6 @@
           "bg": "30 см",
           "en": "30 cm"
         },
-        "priceBgn": 4.01,
         "priceEur": 2.05
       },
       {
@@ -1646,7 +1530,6 @@
           "bg": "40 см",
           "en": "40 cm"
         },
-        "priceBgn": 5.01,
         "priceEur": 2.56
       }
     ],
@@ -1664,7 +1547,6 @@
       "en": "made from pizza dough, with garlic sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 6,
     "priceEur": 3.07,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1690,7 +1572,6 @@
       "en": ""
     },
     "categoryId": "cat_starters",
-    "priceBgn": 6,
     "priceEur": 3.07,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1716,7 +1597,6 @@
       "en": ""
     },
     "categoryId": "cat_starters",
-    "priceBgn": 8.51,
     "priceEur": 4.35,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1742,7 +1622,6 @@
       "en": "with garlic sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 9,
     "priceEur": 4.6,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1767,7 +1646,6 @@
       "en": ""
     },
     "categoryId": "cat_starters",
-    "priceBgn": 6,
     "priceEur": 3.07,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [],
@@ -1791,7 +1669,6 @@
       "en": ""
     },
     "categoryId": "cat_starters",
-    "priceBgn": 7.5,
     "priceEur": 3.83,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1816,7 +1693,6 @@
       "en": "with vegetables, served with sweet chilli"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 8.51,
     "priceEur": 4.35,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1843,7 +1719,6 @@
       "en": "served with sweet chilli"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 12.01,
     "priceEur": 6.14,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1870,7 +1745,6 @@
       "en": "with BBQ sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 9,
     "priceEur": 4.6,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1895,7 +1769,6 @@
       "en": "served with creamy garlic sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 12.01,
     "priceEur": 6.14,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1922,7 +1795,6 @@
       "en": "roast chicken seasoned with honey mustard"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 9.78,
     "priceEur": 5.11,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1948,7 +1820,6 @@
       "en": "roast chicken seasoned with curry sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 9.78,
     "priceEur": 5.11,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1974,7 +1845,6 @@
       "en": "with creamy garlic sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 15,
     "priceEur": 7.67,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -1999,7 +1869,6 @@
       "en": "with creamy garlic sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 9.78,
     "priceEur": 5.11,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2024,7 +1893,6 @@
       "en": "with tomato sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 9.78,
     "priceEur": 5.11,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2049,7 +1917,6 @@
       "en": "with blueberry sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 9.78,
     "priceEur": 5.11,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2074,7 +1941,6 @@
       "en": "with blueberry sauce"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 9.78,
     "priceEur": 5.11,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2099,7 +1965,6 @@
       "en": "100% pork"
     },
     "categoryId": "cat_starters",
-    "priceBgn": 12.01,
     "priceEur": 6.14,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2125,7 +1990,6 @@
       "en": ""
     },
     "categoryId": "cat_starters",
-    "priceBgn": 5,
     "priceEur": 2.56,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [],
@@ -2138,7 +2002,6 @@
           "bg": "100 г",
           "en": "100 g"
         },
-        "priceBgn": 5,
         "priceEur": 2.56
       },
       {
@@ -2147,7 +2010,6 @@
           "bg": "200 г",
           "en": "200 g"
         },
-        "priceBgn": 8.5,
         "priceEur": 4.35
       }
     ],
@@ -2165,7 +2027,6 @@
       "en": "chicken patty, cheddar, pickles, onion, iceberg lettuce, BBQ sauce, mayonnaise"
     },
     "categoryId": "cat_burgers",
-    "priceBgn": 15,
     "priceEur": 7.67,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2192,7 +2053,6 @@
       "en": "chicken tenderloin, cheddar, spinach, honey mustard, tomato, pickles and ketchup"
     },
     "categoryId": "cat_burgers",
-    "priceBgn": 15,
     "priceEur": 7.67,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2219,7 +2079,6 @@
       "en": "2 potato patties, cheddar, iceberg lettuce, onion, mayonnaise, pickles, ketchup"
     },
     "categoryId": "cat_burgers",
-    "priceBgn": 12.01,
     "priceEur": 6.14,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2246,7 +2105,6 @@
       "en": "beef patty, cheddar, bacon, onion, pickles, tomato, iceberg lettuce"
     },
     "categoryId": "cat_burgers",
-    "priceBgn": 15.65,
     "priceEur": 8.18,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2274,7 +2132,6 @@
       "en": "Philadelphia, salmon patty, cucumber, dill, lemon dressing, iceberg lettuce"
     },
     "categoryId": "cat_burgers",
-    "priceBgn": 17,
     "priceEur": 8.69,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2301,7 +2158,6 @@
       "en": "burger sauce, iceberg lettuce, onion, pickles, bacon, cheddar"
     },
     "categoryId": "cat_burgers",
-    "priceBgn": 17,
     "priceEur": 8.69,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2327,7 +2183,6 @@
       "en": "mayonnaise, double egg, pickles, iceberg lettuce, bacon, cheddar"
     },
     "categoryId": "cat_burgers",
-    "priceBgn": 12.91,
     "priceEur": 6.65,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2354,7 +2209,6 @@
       "en": ""
     },
     "categoryId": "cat_burger_addons",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2379,7 +2233,6 @@
       "en": ""
     },
     "categoryId": "cat_burger_addons",
-    "priceBgn": 4,
     "priceEur": 2.05,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2406,7 +2259,6 @@
       "en": ""
     },
     "categoryId": "cat_burger_addons",
-    "priceBgn": 4,
     "priceEur": 2.05,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2432,7 +2284,6 @@
       "en": ""
     },
     "categoryId": "cat_burger_addons",
-    "priceBgn": 1.5,
     "priceEur": 0.77,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2457,7 +2308,6 @@
       "en": ""
     },
     "categoryId": "cat_burger_addons",
-    "priceBgn": 3,
     "priceEur": 1.53,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [],
@@ -2481,7 +2331,6 @@
       "en": ""
     },
     "categoryId": "cat_burger_addons",
-    "priceBgn": 1.5,
     "priceEur": 0.77,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [],
@@ -2505,7 +2354,6 @@
       "en": "tomatoes, cucumbers, green peppers, red onion, roasted red peppers, white cheese, parsley"
     },
     "categoryId": "cat_salads",
-    "priceBgn": 15.65,
     "priceEur": 8,
     "imageUrl": "/images/products/placeholder-salad.svg",
     "allergens": [
@@ -2530,7 +2378,6 @@
       "en": "cucumber, tomato, roasted pepper, onion, white cheese, kashkaval cheese, pork ham, olives"
     },
     "categoryId": "cat_salads",
-    "priceBgn": 15.65,
     "priceEur": 8,
     "imageUrl": "/images/products/placeholder-salad.svg",
     "allergens": [
@@ -2556,7 +2403,6 @@
       "en": "iceberg lettuce, cherry tomatoes, croutons, fried chicken tenderloin, Parmesan and Caesar dressing"
     },
     "categoryId": "cat_salads",
-    "priceBgn": 15.65,
     "priceEur": 8,
     "imageUrl": "/images/products/placeholder-salad.svg",
     "allergens": [
@@ -2584,7 +2430,6 @@
       "en": "iceberg lettuce, cucumbers, sweet corn, tuna, lemon, honey mustard"
     },
     "categoryId": "cat_salads",
-    "priceBgn": 15.65,
     "priceEur": 8,
     "imageUrl": "/images/products/placeholder-salad.svg",
     "allergens": [
@@ -2610,7 +2455,6 @@
       "en": "tomato slices, pesto genovese, white cheese, fresh basil leaves"
     },
     "categoryId": "cat_salads",
-    "priceBgn": 15.65,
     "priceEur": 8,
     "imageUrl": "/images/products/placeholder-salad.svg",
     "allergens": [
@@ -2635,7 +2479,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2660,7 +2503,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2685,7 +2527,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2710,7 +2551,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2735,7 +2575,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2760,7 +2599,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2785,7 +2623,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2810,7 +2647,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2835,7 +2671,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2860,7 +2695,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2885,7 +2719,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2910,7 +2743,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2935,7 +2767,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2960,7 +2791,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -2985,7 +2815,6 @@
       "en": "70 ml sauce"
     },
     "categoryId": "cat_sauces",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-food.svg",
     "allergens": [
@@ -3010,7 +2839,6 @@
       "en": "Nutella, walnuts, orange zest"
     },
     "categoryId": "cat_desserts",
-    "priceBgn": 6.5,
     "priceEur": 3.32,
     "imageUrl": "/images/products/placeholder-dessert.svg",
     "allergens": [
@@ -3035,7 +2863,6 @@
       "en": ""
     },
     "categoryId": "cat_desserts",
-    "priceBgn": 9.99,
     "priceEur": 5.11,
     "imageUrl": "/images/products/placeholder-dessert.svg",
     "allergens": [
@@ -3062,7 +2889,6 @@
       "en": ""
     },
     "categoryId": "cat_desserts",
-    "priceBgn": 7,
     "priceEur": 3.58,
     "imageUrl": "/images/products/placeholder-dessert.svg",
     "allergens": [
@@ -3088,7 +2914,6 @@
       "en": ""
     },
     "categoryId": "cat_drinks",
-    "priceBgn": 3.5,
     "priceEur": 1.79,
     "imageUrl": "/images/products/placeholder-drink.svg",
     "allergens": [],
@@ -3101,7 +2926,6 @@
           "bg": "330 мл",
           "en": "330 ml"
         },
-        "priceBgn": 3.5,
         "priceEur": 1.79
       },
       {
@@ -3110,7 +2934,6 @@
           "bg": "1 л",
           "en": "1 l"
         },
-        "priceBgn": 4.5,
         "priceEur": 2.3
       }
     ]
@@ -3127,7 +2950,6 @@
       "en": ""
     },
     "categoryId": "cat_drinks",
-    "priceBgn": 2,
     "priceEur": 1.02,
     "imageUrl": "/images/products/placeholder-drink.svg",
     "allergens": [],
@@ -3140,7 +2962,6 @@
           "bg": "500 мл",
           "en": "500 ml"
         },
-        "priceBgn": 2,
         "priceEur": 1.02
       },
       {
@@ -3149,7 +2970,6 @@
           "bg": "1.5 л",
           "en": "1.5 l"
         },
-        "priceBgn": 2.99,
         "priceEur": 1.53
       }
     ]
@@ -3166,7 +2986,6 @@
       "en": "beer"
     },
     "categoryId": "cat_drinks",
-    "priceBgn": 4.5,
     "priceEur": 2.3,
     "imageUrl": "/images/products/placeholder-drink.svg",
     "allergens": [
@@ -3191,7 +3010,6 @@
       "en": "beer"
     },
     "categoryId": "cat_drinks",
-    "priceBgn": 4.5,
     "priceEur": 2.3,
     "imageUrl": "/images/products/placeholder-drink.svg",
     "allergens": [

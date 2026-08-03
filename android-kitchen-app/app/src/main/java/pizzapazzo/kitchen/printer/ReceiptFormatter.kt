@@ -78,9 +78,6 @@ object ReceiptFormatter {
                 Line(t, bold = true, big = true)
             }
         }
-        if (order.totalSecondary != null && order.secondaryCurrency != null) {
-            out += Line("(${money(order.totalSecondary)} ${order.secondaryCurrency})")
-        }
 
         // ── Customer note ──
         order.customerNote?.let {
@@ -106,7 +103,7 @@ object ReceiptFormatter {
             Line("цчшщъьюя"),
             Line("0123456789"),
             Line("!?%&()*+,-./:;<=>@#"),
-            Line("Цена: 25.50 EUR / 49.89 лв"),
+            Line("Цена: 25.50 EUR"),
             divider,
             Line("2 x МАРГАРИТА", bold = true),
             Line("  Размер: Голяма"),

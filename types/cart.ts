@@ -12,7 +12,6 @@ export interface CartExtraDisplay {
   nameBg: string;
   nameEn: string;
   unitPriceEur: number;
-  unitPriceBgn: number;
   /** Size the preview price was matched against (e.g. "30 см"). */
   sizeContext?: string;
 }
@@ -33,14 +32,13 @@ export interface ProductExtraOptionSizePrice {
   /** Numeric size parsed from the variant name (30, 40, …). */
   size: number;
   priceEur: number;
-  priceBgn: number;
 }
 
 /**
  * One selectable extra option, shaped for the client picker: plain numbers,
  * both languages, nothing Prisma-specific. Flat-priced options (burger addons,
- * sauces) carry priceEur/priceBgn; pizza crust/addons carry sizePrices and the
- * UI shows the price matching the chosen pizza size.
+ * sauces) carry priceEur; pizza crust/addons carry sizePrices and the UI shows
+ * the price matching the chosen pizza size.
  */
 export interface ProductExtraOption {
   key: string;
@@ -49,7 +47,6 @@ export interface ProductExtraOption {
   nameBg: string;
   nameEn: string;
   priceEur?: number;
-  priceBgn?: number;
   sizePrices?: ProductExtraOptionSizePrice[];
   /** Discreet portion label shown next to the name (e.g. "70 мл.", "50 г"). */
   sizeLabelBg?: string;
@@ -84,16 +81,12 @@ export interface CartItem {
   note?: string;
 }
 
+/** Cart money totals — EUR amounts. */
 export interface CartTotals {
   itemsCount: number;
-  /** EUR amounts. */
   subtotal: number;
   deliveryFee: number;
   total: number;
-  /** BGN amounts (лв.), summed from each item's BGN price. */
-  subtotalBgn: number;
-  deliveryFeeBgn: number;
-  totalBgn: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

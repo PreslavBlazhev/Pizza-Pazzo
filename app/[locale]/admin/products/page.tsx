@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { getAdminCategories, getAdminProducts } from "@/lib/admin-menu";
 import { getCurrentRole } from "@/lib/auth";
-import { formatDualPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { Badge } from "@/components/ui/Badge";
 import { ProductAvailabilityToggle } from "@/components/admin/ProductAvailabilityToggle";
 
@@ -115,7 +115,7 @@ export default async function AdminProductsPage({
                   {categoryName.get(p.categoryId) ?? p.categoryId}
                 </td>
                 <td className="whitespace-nowrap px-4 py-2.5">
-                  {formatDualPrice(p.priceEur, p.priceBgn)}
+                  {formatEurPrice(p.priceEur)}
                   {p.variants.length > 0 && (
                     <span className="ml-1.5 text-xs text-pizza-muted">
                       · {p.variants.length} варианта

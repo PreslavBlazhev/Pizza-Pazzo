@@ -11,7 +11,7 @@ import type {
 } from "@/types/cart";
 import { useCartStore } from "@/store/cart-store";
 import { EXTRAS_LIMITS, parseVariantSize } from "@/lib/extras-rules";
-import { formatBgnPrice, formatEurPrice } from "@/lib/format-price";
+import { formatEurPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
 import {
   ProductExtrasPicker,
@@ -49,7 +49,6 @@ export function AddToCart({
   const [selectedExtras, setSelectedExtras] = useState<ExtrasSelectionState>({});
   const [justAdded, setJustAdded] = useState(false);
 
-  const priceBgn = variant?.priceBgn ?? product.priceBgn;
   const priceEur = variant?.priceEur ?? product.priceEur;
 
   // Numeric size of the chosen variant (30/40) — variant-priced extras follow it.
@@ -81,21 +80,13 @@ export function AddToCart({
   });
 
   // Preview extras total per ONE main unit (mirrors the server's semantics).
-  const extrasUnit = selectedEntries.reduce(
-    (acc, [key, qty]) => {
-      const option = optionsByKey.get(key);
-      const price = option ? optionPriceFor(option, mainSize) : null;
-      if (!price) return acc;
-      return {
-        eur: round2(acc.eur + price.eur * qty),
-        bgn: round2(acc.bgn + price.bgn * qty),
-      };
-    },
-    { eur: 0, bgn: 0 }
-  );
+  const extrasUnitEur = selectedEntries.reduce((acc, [key, qty]) => {
+    const option = optionsByKey.get(key);
+    const price = option ? optionPriceFor(option, mainSize) : null;
+    return price === null ? acc : round2(acc + price * qty);
+  }, 0);
 
-  const totalEur = round2(round2(priceEur + extrasUnit.eur) * quantity);
-  const totalBgn = round2(round2(priceBgn + extrasUnit.bgn) * quantity);
+  const totalEur = round2(round2(priceEur + extrasUnitEur) * quantity);
 
   /** Crusts are single-select (re-click deselects); addons toggle freely. */
   function handleToggle(option: ProductExtraOption) {
@@ -134,7 +125,7 @@ export function AddToCart({
       const qty = selectedExtras[option.key] ?? 0;
       if (qty < 1) continue;
       const price = optionPriceFor(option, mainSize);
-      if (!price) return; // guarded by invalidSelection, defensive here
+      if (price === null) return; // guarded by invalidSelection, defensive here
       list.push({
         key: option.key,
         sourceProductId: option.sourceProductId,
@@ -142,8 +133,7 @@ export function AddToCart({
         display: {
           nameBg: option.nameBg,
           nameEn: option.nameEn,
-          unitPriceEur: price.eur,
-          unitPriceBgn: price.bgn,
+          unitPriceEur: price,
           sizeContext:
             option.sizePrices && mainSize !== null ? `${mainSize} см` : undefined,
         },
@@ -199,9 +189,7 @@ export function AddToCart({
                   <span className="ml-2 font-semibold text-brand">
                     {formatEurPrice(v.priceEur)}
                   </span>
-                  <span className="ml-1.5 text-xs text-pizza-muted">
-                    {formatBgnPrice(v.priceBgn)}
-                  </span>
+
                 </button>
               );
             })}
@@ -267,9 +255,7 @@ export function AddToCart({
           <span className="font-display text-2xl font-bold text-brand">
             {formatEurPrice(totalEur)}
           </span>
-          <span className="pb-0.5 text-sm text-pizza-muted">
-            {formatBgnPrice(totalBgn)}
-          </span>
+
         </div>
       </div>
 
