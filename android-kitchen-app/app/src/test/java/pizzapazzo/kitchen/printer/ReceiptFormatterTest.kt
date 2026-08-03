@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import pizzapazzo.kitchen.models.PrintLayout
 import pizzapazzo.kitchen.models.PrintableOrder
 
 class ReceiptFormatterTest {
@@ -15,6 +16,7 @@ class ReceiptFormatterTest {
         deliveryType: String = "DELIVERY",
         payment: String = "CASH",
         isReprint: Boolean = false,
+        layout: PrintLayout = PrintLayout.DEFAULT,
         items: List<PrintableOrder.Item> = listOf(
             PrintableOrder.Item(
                 name = "Маргарита",
@@ -44,6 +46,7 @@ class ReceiptFormatterTest {
         total = 25.50,
         currency = "EUR",
         isReprint = isReprint,
+        layout = layout,
     )
 
     private fun textOf(order: PrintableOrder, settings: PrinterSettings): String =
@@ -70,7 +73,10 @@ class ReceiptFormatterTest {
         assertTrue(text.contains("В брой"))
         assertTrue(text.contains("Междинна сума"))
         assertTrue(text.contains("Доставка"))
-        assertTrue(text.contains("ОБЩО: 25.50 EUR"))
+        // The grand total is now a label/value row like the other money lines,
+        // so the amount is pushed to the right edge instead of following a colon.
+        assertTrue(text.contains("ОБЩО"))
+        assertTrue(text.contains("25.50 EUR"))
         assertTrue(text.contains("Бележка от клиента:"))
         assertTrue(text.contains("Да се звънне при пристигане"))
     }
@@ -338,6 +344,97 @@ class ReceiptFormatterTest {
         )
         assertTrue(text.contains("+ Месна добавка"))
         assertFalse(text.contains("+ Месна добавка ("))
+    }
+
+    // ── Website-driven layout (PrintLayout) ────────────────────────────────
+
+    private fun layoutWith(vararg sections: Pair<String, PrintLayout.SectionStyle>) =
+        PrintLayout(sections = sections.toMap())
+
+    @Test
+    fun `a hidden section is not printed at all`() {
+        val hidden = layoutWith("customerPhone" to PrintLayout.SectionStyle(visible = false))
+        val text = textOf(order(layout = hidden), settings80)
+        assertFalse(text.contains("0888123456"))
+        // Everything else survives.
+        assertTrue(text.contains("Иван Петров"))
+    }
+
+    @Test
+    fun `hiding prices removes the money column but keeps the dish`() {
+        val noPrices = layoutWith(
+            "itemPrice" to PrintLayout.SectionStyle(visible = false),
+            "totals" to PrintLayout.SectionStyle(visible = false),
+            "grandTotal" to PrintLayout.SectionStyle(visible = false),
+        )
+        val text = textOf(order(layout = noPrices), settings80)
+        assertTrue(text.contains("2 x МАРГАРИТА"))
+        assertFalse(text.contains("21.00"))
+        assertFalse(text.contains("25.50"))
+    }
+
+    @Test
+    fun `section scale reaches the line and shrinks its wrap width`() {
+        val big = layoutWith("items" to PrintLayout.SectionStyle(scale = 3))
+        val lines = ReceiptFormatter.format(order(layout = big), settings80)
+        val itemLine = lines.first { it.text.contains("МАРГАРИТА") }
+        assertEquals(3, itemLine.scale)
+        // At 3x each glyph is 3 columns wide, so the text must fit 48/3 = 16.
+        assertTrue("Too long: '${itemLine.text}'", itemLine.text.length <= 16)
+    }
+
+    @Test
+    fun `alignment from the layout reaches the line`() {
+        val aligned = layoutWith(
+            "customerName" to PrintLayout.SectionStyle(align = "right"),
+            "customerPhone" to PrintLayout.SectionStyle(align = "center"),
+        )
+        val lines = ReceiptFormatter.format(order(layout = aligned), settings80)
+        assertTrue(lines.first { it.text.contains("Иван Петров") }.right)
+        assertTrue(lines.first { it.text.contains("0888123456") }.center)
+    }
+
+    @Test
+    fun `header and footer text come from the layout`() {
+        val custom = PrintLayout(headerText = "КУХНЯ ПАЦО", footerText = "Благодарим!")
+        val text = textOf(order(layout = custom), settings80)
+        assertTrue(text.contains("КУХНЯ ПАЦО"))
+        assertTrue(text.contains("Благодарим!"))
+    }
+
+    @Test
+    fun `an empty footer prints nothing`() {
+        assertFalse(textOf(order(), settings80).trimEnd().endsWith("-"))
+    }
+
+    @Test
+    fun `dividers can be switched off`() {
+        val text = textOf(order(layout = PrintLayout(showDividers = false)), settings80)
+        assertFalse(text.contains("----"))
+    }
+
+    @Test
+    fun `charsPerLine from the layout overrides the tablet setting`() {
+        val narrow = PrintLayout(charsPerLine = 24)
+        val lines = ReceiptFormatter.format(order(layout = narrow), settings80)
+        val divider = lines.first { it.text.startsWith("----") }
+        assertEquals(24, divider.text.length)
+    }
+
+    @Test
+    fun `every line fits the paper at every scale`() {
+        val big = PrintLayout(
+            sections = mapOf(
+                "items" to PrintLayout.SectionStyle(scale = 4),
+                "itemExtras" to PrintLayout.SectionStyle(scale = 2),
+                "orderNumber" to PrintLayout.SectionStyle(scale = 3),
+            )
+        )
+        val lines = ReceiptFormatter.format(order(layout = big), settings58)
+        for (line in lines) {
+            val visual = line.text.length * line.scale
+            assertTrue("Too long: '${line.text}' at ${line.scale}x", visual <= settings58.charsPerLine)
+        }
     }
 
     @Test

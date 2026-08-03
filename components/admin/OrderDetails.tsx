@@ -4,9 +4,16 @@ import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatDateTime } from "@/lib/utils";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusControl } from "./OrderStatusControl";
-import { PrintOrderButton } from "./PrintOrderButton";
+import { PrintOrderButtons } from "./PrintOrderButton";
+import type { PrintTemplateData } from "@/types/print";
 
-export function OrderDetails({ order }: { order: Order }) {
+export function OrderDetails({
+  order,
+  printTemplates,
+}: {
+  order: Order;
+  printTemplates: PrintTemplateData[];
+}) {
   const items = order.items ?? [];
 
   const priceRow = (label: string, eur: number, strong = false) => (
@@ -54,8 +61,11 @@ export function OrderDetails({ order }: { order: Order }) {
           or cancelled ones. Real button only inside the Android kitchen app. */}
       {order.status !== "PENDING" && order.status !== "CANCELLED" && (
         <section className="rounded-2xl border border-neutral-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold text-neutral-600">Кухненска бележка</h2>
-          <PrintOrderButton order={{ ...order, items: order.items ?? [] }} />
+          <h2 className="mb-3 text-sm font-semibold text-neutral-600">Бележки за печат</h2>
+          <PrintOrderButtons
+            order={{ ...order, items: order.items ?? [] }}
+            templates={printTemplates}
+          />
         </section>
       )}
 

@@ -482,7 +482,8 @@
       "products": "Продукти",
       "categories": "Категории",
       "users": "Потребители",
-      "settings": "Настройки"
+      "settings": "Настройки",
+      "printSettings": "Печат 🖨"
     },
     "roles": {
       "customer": "Клиент",

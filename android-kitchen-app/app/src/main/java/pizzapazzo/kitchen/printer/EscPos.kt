@@ -28,11 +28,26 @@ class EscPos(private val settings: PrinterSettings) {
 
     fun alignLeft(): EscPos = apply { raw(0x1B, 0x61, 0) }
     fun alignCenter(): EscPos = apply { raw(0x1B, 0x61, 1) }
+    fun alignRight(): EscPos = apply { raw(0x1B, 0x61, 2) }
 
     fun bold(on: Boolean): EscPos = apply { raw(0x1B, 0x45, if (on) 1 else 0) }
 
+    /**
+     * GS ! n — character size. The high nibble is the width multiplier and the
+     * low nibble the height multiplier, both 0-based (0 = 1×, 3 = 4×), which is
+     * the entire size vocabulary an ESC/POS printer has. Points do not exist
+     * here; that is why the website stores a 1–4 scale alongside its pt value.
+     *
+     * The spec allows up to 8×, but 4× already fills 80mm paper with a handful
+     * of characters, so the range is clamped where it stays usable.
+     */
+    fun size(scale: Int): EscPos = apply {
+        val steps = (scale.coerceIn(1, 4) - 1)
+        raw(0x1D, 0x21, (steps shl 4) or steps)
+    }
+
     /** GS ! — double width + double height when [on]. */
-    fun doubleSize(on: Boolean): EscPos = apply { raw(0x1D, 0x21, if (on) 0x11 else 0x00) }
+    fun doubleSize(on: Boolean): EscPos = apply { size(if (on) 2 else 1) }
 
     fun feed(lines: Int): EscPos = apply {
         if (lines > 0) raw(0x1B, 0x64, lines.coerceAtMost(20)) // ESC d n

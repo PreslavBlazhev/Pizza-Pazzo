@@ -53,7 +53,13 @@ class EscPosPrinterService(
             )
         }
         val settings = settingsProvider()
-        return print(buildOrderBytes(order, settings), settings)
+        // The website's layout may override the paper feed / cut / copies the
+        // tablet is configured with, so the owner controls them in one place.
+        val effective = settings.copy(
+            feedLinesAfter = order.layout.feedLinesAfter ?: settings.feedLinesAfter,
+            autoCut = order.layout.autoCut ?: settings.autoCut,
+        )
+        return print(buildOrderBytes(order, effective), effective)
     }
 
     suspend fun printTestPage(): PrintResult {
@@ -194,8 +200,16 @@ class EscPosPrinterService(
 
     // ── Byte building (internal so tests can inspect output) ─────────────────
 
-    internal fun buildOrderBytes(order: PrintableOrder, settings: PrinterSettings): ByteArray =
-        renderLines(ReceiptFormatter.format(order, settings), settings)
+    internal fun buildOrderBytes(order: PrintableOrder, settings: PrinterSettings): ByteArray {
+        val lines = ReceiptFormatter.format(order, settings)
+        // `copies` repeats the whole ticket; each copy is cut separately so the
+        // kitchen and the driver can take one each.
+        val copies = order.layout.copies.coerceIn(1, 5)
+        if (copies == 1) return renderLines(lines, settings)
+        val out = java.io.ByteArrayOutputStream()
+        repeat(copies) { out.write(renderLines(lines, settings)) }
+        return out.toByteArray()
+    }
 
     internal fun buildTestPageBytes(settings: PrinterSettings): ByteArray =
         renderLines(ReceiptFormatter.formatTestPage(settings), settings)
@@ -203,26 +217,35 @@ class EscPosPrinterService(
     private fun renderLines(lines: List<ReceiptFormatter.Line>, settings: PrinterSettings): ByteArray {
         val esc = EscPos(settings).initialize()
         var bold = false
-        var big = false
-        var center = false
+        var scale = 1
+        var align = "left"
         for (line in lines) {
-            if (line.center != center) {
-                if (line.center) esc.alignCenter() else esc.alignLeft()
-                center = line.center
+            val lineAlign = when {
+                line.center -> "center"
+                line.right -> "right"
+                else -> "left"
+            }
+            if (lineAlign != align) {
+                when (lineAlign) {
+                    "center" -> esc.alignCenter()
+                    "right" -> esc.alignRight()
+                    else -> esc.alignLeft()
+                }
+                align = lineAlign
             }
             if (line.bold != bold) {
                 esc.bold(line.bold)
                 bold = line.bold
             }
-            if (line.big != big) {
-                esc.doubleSize(line.big)
-                big = line.big
+            if (line.scale != scale) {
+                esc.size(line.scale)
+                scale = line.scale
             }
             esc.line(line.text)
         }
         if (bold) esc.bold(false)
-        if (big) esc.doubleSize(false)
-        if (center) esc.alignLeft()
+        if (scale != 1) esc.size(1)
+        if (align != "left") esc.alignLeft()
         esc.feed(settings.feedLinesAfter)
         if (settings.autoCut) esc.cut()
         return esc.bytes()

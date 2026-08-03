@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { updateOrderStatusAction } from "@/app/actions/order-admin";
 import { formatEurPrice } from "@/lib/format-price";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
-import { PrintOrderButton } from "./PrintOrderButton";
+import { PrintOrderButtons } from "./PrintOrderButton";
 import type { Order, OrderWithItems } from "@/types/order";
+import { PRINT_TEMPLATE_IDS, defaultPrintTemplate, type PrintTemplateData } from "@/types/print";
 
 const POLL_INTERVAL_MS = 8_000;
 const QUICK_TIMES = [20, 30, 45, 60];
@@ -20,6 +21,11 @@ const QUICK_TIMES = [20, 30, 45, 60];
 export function LiveOrdersBoard() {
   const [shiftStarted, setShiftStarted] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
+  // Seeded from the defaults so the print buttons work on the very first paint;
+  // every poll replaces them with whatever /admin/settings/print holds now.
+  const [printTemplates, setPrintTemplates] = useState<PrintTemplateData[]>(() =>
+    PRINT_TEMPLATE_IDS.map(defaultPrintTemplate)
+  );
   const [connectionLost, setConnectionLost] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
@@ -35,8 +41,12 @@ export function LiveOrdersBoard() {
     try {
       const res = await fetch("/api/admin/pending-orders", { cache: "no-store" });
       if (!res.ok) throw new Error(String(res.status));
-      const data = (await res.json()) as { orders: Order[] };
+      const data = (await res.json()) as {
+        orders: Order[];
+        printTemplates?: PrintTemplateData[];
+      };
       setOrders(data.orders);
+      if (data.printTemplates?.length) setPrintTemplates(data.printTemplates);
       setConnectionLost(false);
       setLastCheck(new Date());
     } catch {
@@ -226,7 +236,7 @@ export function LiveOrdersBoard() {
                     {order.customerName} · {order.deliveryAddress}
                   </p>
                 </div>
-                <PrintOrderButton order={order} />
+                <PrintOrderButtons order={order} templates={printTemplates} compact />
               </div>
             ))}
           </div>

@@ -271,6 +271,7 @@ try {
     acceptedEmail: load("lib/email-templates/customer-order-accepted.js"),
     ticket: load("lib/printer/ticket-template.js"),
     android: load("lib/android-printer.js"),
+    printTypes: load("types/print.js"),
     period: load("lib/report-period.js"),
     hours: load("lib/working-hours.js"),
     settingsValidator: load("lib/validators/settings.js"),
@@ -546,9 +547,13 @@ if (mods) {
     display,
     newOrderEmail: { newOrderEmail },
     acceptedEmail: { customerOrderAcceptedEmail },
-    ticket: { buildTicketText },
+    ticket: { buildTicket, buildTicketText },
     android: { buildPrintableOrderJson },
+    printTypes: { defaultPrintTemplate, PRINT_SECTIONS },
   } = mods;
+
+  const kitchenTemplate = defaultPrintTemplate("KITCHEN");
+  const deliveryTemplate = defaultPrintTemplate("DELIVERY");
 
   /** Snapshot fixtures mirroring what checkout writes. */
   const crust = {
@@ -692,40 +697,118 @@ if (mods) {
     check("accepted single unit omits the per-item hint", customerOrderAcceptedEmail(order([item({ extras: [sauceX2] })]), CONTACT).text.includes("+ 2× Чеснов сос — "));
   }
 
-  // ── 8. Web ticket ──
-  console.log("8) Web ticket with extras");
+  // ── 8. Ticket rendering (template-driven) ──
+  console.log("8) Ticket rendering (template-driven)");
   {
-    const width = 42; // PRINT_CONFIG.charsPerLine
-    const t1 = buildTicketText(order([item({ extras: [crust] })]));
+    const width = deliveryTemplate.charsPerLine;
+    const t1 = buildTicketText(order([item({ extras: [crust] })]), deliveryTemplate);
     check("ticket prints the size line", t1.includes("Размер: 30 см / 30 cm"));
     check("ticket prints the crust", t1.includes("+ Кашкавален борд"));
     check("ticket keeps the line total", t1.includes("10.23 €"));
 
-    const t2 = buildTicketText(order([item({ quantity: 2, totalPriceEur: 27.64, extras: [crust, sauceX2] })]));
+    const t2 = buildTicketText(
+      order([item({ quantity: 2, totalPriceEur: 27.64, extras: [crust, sauceX2] })]),
+      deliveryTemplate
+    );
     check("ticket marks extras as per-unit on multi-quantity lines", t2.includes("+ 2x Чеснов сос / всяка"));
-    check("ticket shows the main quantity", t2.includes("2x Маргарита"));
+    check("ticket shows the main quantity", t2.includes("2 x Маргарита"));
 
-    const t3 = buildTicketText(order([item()]));
+    const t3 = buildTicketText(order([item()]), deliveryTemplate);
     check("ticket without extras prints no + lines", !t3.split("\n").some((l) => l.trim().startsWith("+ ")));
 
     const longName = "Кашкавален борд с допълнително синьо сирене и печени чушки";
-    const t4 = buildTicketText(order([item({ extras: [{ ...crust, nameBg: longName }] })]));
+    const t4 = buildTicketText(order([item({ extras: [{ ...crust, nameBg: longName }] })]), deliveryTemplate);
     const overLong = t4.split("\n").filter((l) => l.length > width);
     check(`ticket wraps long extra names within ${width} chars`, overLong.length === 0);
     check("ticket loses no characters when wrapping", t4.replace(/\s+/g, "").includes(longName.replace(/\s+/g, "")));
 
-    const t5 = buildTicketText(order([item({ extras: [{ ...sauceX2, quantity: 10, totalPriceEur: 10.2 }] })]));
+    const t5 = buildTicketText(order([item({ extras: [{ ...sauceX2, quantity: 10, totalPriceEur: 10.2 }] })]), deliveryTemplate);
     check("ticket handles sauce quantity 10", t5.includes("+ 10x Чеснов сос"));
+  }
+
+  // ── 8b. The template actually drives what comes out ──
+  console.log("8b) Print templates drive the ticket");
+  {
+    const kitchen = buildTicketText(order([item({ extras: [crust] })]), kitchenTemplate);
+    check("kitchen ticket hides every price", !kitchen.includes("€"));
+    check("kitchen ticket still lists the dish", kitchen.includes("Маргарита"));
+    check("kitchen ticket still lists the extras", kitchen.includes("Кашкавален борд"));
+    check("delivery ticket does show prices", buildTicketText(order([item()]), deliveryTemplate).includes("€"));
+
+    const hidePhone = {
+      ...deliveryTemplate,
+      sections: {
+        ...deliveryTemplate.sections,
+        customerPhone: { ...deliveryTemplate.sections.customerPhone, visible: false },
+      },
+    };
+    check("a hidden section disappears", !buildTicketText(order([item()]), hidePhone).includes("0888"));
+
+    const noDividers = { ...deliveryTemplate, showDividers: false };
+    check("dividers can be switched off", !buildTicketText(order([item()]), noDividers).includes("----"));
+
+    const footer = { ...deliveryTemplate, footerText: "Благодарим Ви!" };
+    check("footer text is printed", buildTicketText(order([item()]), footer).includes("Благодарим Ви!"));
+    check(
+      "an empty footer prints nothing extra",
+      !buildTicketText(order([item()]), { ...deliveryTemplate, footerText: "" }).includes("Благодарим")
+    );
+
+    const header = { ...deliveryTemplate, headerText: "КУХНЯ ПАЦО" };
+    check("header text comes from the template", buildTicketText(order([item()]), header).includes("КУХНЯ ПАЦО"));
+
+    // Scale shrinks the usable column count; nothing may run off the paper.
+    const bigItems = {
+      ...deliveryTemplate,
+      charsPerLine: 32,
+      sections: {
+        ...deliveryTemplate.sections,
+        items: { ...deliveryTemplate.sections.items, scale: 3 },
+        itemExtras: { ...deliveryTemplate.sections.itemExtras, scale: 2 },
+      },
+    };
+    const scaled = buildTicket(order([item({ quantity: 2, extras: [crust, sauceX2] })]), bigItems);
+    const tooWide = scaled.filter(
+      (l) => (l.text.length + (l.right ? l.right.length + 1 : 0)) * l.scale > 32
+    );
+    check("scaled sections still fit the paper", tooWide.length === 0);
+    check("scale reaches the built line", scaled.some((l) => l.section === "items" && l.scale === 3));
+
+    // Alignment and weight travel with the line.
+    const aligned = {
+      ...deliveryTemplate,
+      sections: {
+        ...deliveryTemplate.sections,
+        customerName: { ...deliveryTemplate.sections.customerName, align: "right", bold: true },
+      },
+    };
+    const nameLine = buildTicket(order([item()]), aligned).find((l) => l.section === "customerName");
+    check("alignment reaches the built line", nameLine && nameLine.align === "right");
+    check("bold reaches the built line", nameLine && nameLine.bold === true);
+
+    // Turning EVERY section off must not throw and must not leave stray rules.
+    const allOff = {
+      ...deliveryTemplate,
+      footerText: "",
+      sections: Object.fromEntries(
+        PRINT_SECTIONS.map((s) => [s.id, { ...deliveryTemplate.sections[s.id], visible: false }])
+      ),
+    };
+    const empty = buildTicketText(order([item()]), allOff);
+    check("everything hidden yields no content lines", empty.replace(/[-\s]/g, "") === "");
   }
 
   // ── 9. Android adapter serialization ──
   console.log("9) Android printer adapter");
   {
     const json = JSON.parse(
-      buildPrintableOrderJson(order([
-        item({ quantity: 2, totalPriceEur: 27.64, extras: [crust, sauceX2] }),
-        item({ id: "oi_2", productNameBg: "Кока-Кола", variantId: null, variantName: null, extras: [] }),
-      ]))
+      buildPrintableOrderJson(
+        order([
+          item({ quantity: 2, totalPriceEur: 27.64, extras: [crust, sauceX2] }),
+          item({ id: "oi_2", productNameBg: "Кока-Кола", variantId: null, variantName: null, extras: [] }),
+        ]),
+        { template: kitchenTemplate }
+      )
     );
     const [pizza, cola] = json.items;
     check("extras array is present on the item", Array.isArray(pizza.extras) && pizza.extras.length === 2);

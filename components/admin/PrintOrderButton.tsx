@@ -9,18 +9,34 @@ import {
   type PrintState,
 } from "@/lib/android-printer";
 import type { OrderWithItems } from "@/types/order";
+import { printTemplateLabel, type PrintTemplateData, type PrintTemplateId } from "@/types/print";
 
 /** If the app never reports back (e.g. it was killed mid-job), unlock the UI. */
 const RESULT_TIMEOUT_MS = 45_000;
 
 /**
- * "Принтирай поръчката" for an ACCEPTED order. Renders a real button only
- * inside the Pizza Pazzo Kitchen Android app (where window.AndroidPrinter
- * exists); in a normal browser it shows a short hint instead. Printing is
- * never automatic — it starts only on tap, and repeat prints are explicit
- * re-taps marked as reprints on the receipt.
+ * Prints one ticket for an order.
+ *
+ * Inside the Pizza Pazzo Kitchen Android app it drives the Bluetooth thermal
+ * printer; in an ordinary browser it links to the print page instead, so the
+ * owner is never left without a way to get the ticket out. Both paths use the
+ * same template from /admin/settings/print.
+ *
+ * Printing is never automatic — it starts only on tap, and repeat prints are
+ * explicit re-taps marked as reprints on the ticket.
  */
-export function PrintOrderButton({ order }: { order: OrderWithItems }) {
+export function PrintOrderButton({
+  order,
+  templateId,
+  template,
+  compact = false,
+}: {
+  order: OrderWithItems;
+  templateId: PrintTemplateId;
+  /** Resolved layout. Absent → the app falls back to its built-in layout. */
+  template?: PrintTemplateData;
+  compact?: boolean;
+}) {
   // Bridge detection must happen after mount: during SSR (and the first client
   // render) there is no `window`, and the markup must match.
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -28,6 +44,8 @@ export function PrintOrderButton({ order }: { order: OrderWithItems }) {
   const [message, setMessage] = useState<string | null>(null);
   const [printedOnce, setPrintedOnce] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const ticketLabel = printTemplateLabel(templateId);
 
   useEffect(() => {
     setAvailable(isAndroidPrinterAvailable());
@@ -56,11 +74,21 @@ export function PrintOrderButton({ order }: { order: OrderWithItems }) {
 
   if (available === null) return null;
 
+  // Plain browser: open the print page for this template.
   if (!available) {
     return (
-      <p className="text-sm text-neutral-500">
-        🖨 Принтирането е достъпно през приложението Pizza Pazzo Kitchen.
-      </p>
+      <a
+        href={`/admin/orders/${order.id}/print?t=${templateId.toLowerCase()}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={
+          compact
+            ? "inline-block rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100"
+            : "inline-block rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-100"
+        }
+      >
+        🖨 Бележка: {ticketLabel}
+      </a>
     );
   }
 
@@ -70,7 +98,7 @@ export function PrintOrderButton({ order }: { order: OrderWithItems }) {
     if (busy) return; // double-tap guard (the app has its own lock as well)
     setState("CONNECTING");
     setMessage("Свързване с принтера…");
-    const sent = requestOrderPrint(order, printedOnce);
+    const sent = requestOrderPrint(order, { isReprint: printedOnce, template });
     if (!sent) {
       setState("ERROR");
       setMessage("Принтерът не е достъпен.");
@@ -84,12 +112,12 @@ export function PrintOrderButton({ order }: { order: OrderWithItems }) {
   };
 
   const label = busy
-    ? "Свързване с принтера…"
+    ? "Свързване…"
     : state === "ERROR"
-      ? "ОПИТАЙ ОТНОВО"
+      ? `ОПИТАЙ ОТНОВО (${ticketLabel})`
       : printedOnce
-        ? "ПРИНТИРАЙ ОТНОВО"
-        : "🖨 ПРИНТИРАЙ ПОРЪЧКАТА";
+        ? `ПРИНТИРАЙ ОТНОВО: ${ticketLabel.toUpperCase()}`
+        : `🖨 ${ticketLabel.toUpperCase()}`;
 
   return (
     <div className="space-y-1.5">
@@ -97,11 +125,9 @@ export function PrintOrderButton({ order }: { order: OrderWithItems }) {
         type="button"
         disabled={busy}
         onClick={handlePrint}
-        className={`w-full rounded-2xl px-6 py-3.5 text-lg font-extrabold text-white shadow-md transition disabled:opacity-60 sm:w-auto ${
-          state === "ERROR"
-            ? "bg-red-600 hover:bg-red-700"
-            : "bg-pizza-ink hover:bg-neutral-700"
-        }`}
+        className={`rounded-2xl font-extrabold text-white shadow-md transition disabled:opacity-60 ${
+          compact ? "px-4 py-2 text-sm" : "w-full px-6 py-3.5 text-lg sm:w-auto"
+        } ${state === "ERROR" ? "bg-red-600 hover:bg-red-700" : "bg-pizza-ink hover:bg-neutral-700"}`}
       >
         {label}
       </button>
@@ -116,6 +142,31 @@ export function PrintOrderButton({ order }: { order: OrderWithItems }) {
           ✕ Принтирането неуспешно{message ? `: ${message}` : ""}
         </p>
       )}
+    </div>
+  );
+}
+
+/** Both tickets side by side — the kitchen slip and the delivery slip. */
+export function PrintOrderButtons({
+  order,
+  templates,
+  compact = false,
+}: {
+  order: OrderWithItems;
+  templates: PrintTemplateData[];
+  compact?: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap items-start gap-2">
+      {templates.map((template) => (
+        <PrintOrderButton
+          key={template.id}
+          order={order}
+          templateId={template.id}
+          template={template}
+          compact={compact}
+        />
+      ))}
     </div>
   );
 }

@@ -12,6 +12,7 @@
 
 import { toOrderExtrasDisplay, withPerUnitHint } from "@/lib/order-extras-display";
 import type { OrderWithItems } from "@/types/order";
+import { PRINT_SECTIONS, type PrintTemplateData } from "@/types/print";
 
 /** UI lifecycle of one print attempt. */
 export type PrintState = "IDLE" | "CONNECTING" | "PRINTING" | "SUCCESS" | "ERROR";
@@ -63,8 +64,53 @@ export function isAndroidPrinterAvailable(): boolean {
  * `price` is the extra's total for that quantity on ONE unit of the dish,
  * matching what the parenthesised amount means on the receipt. Internal
  * identifiers (key, sourceProductId, sourceVariantId) are never sent.
+ *
+ * The `print` block carries the layout the owner configured in
+ * /admin/settings/print. It is OPTIONAL on the wire: an older build of the
+ * kitchen app ignores the extra key and keeps printing its built-in layout,
+ * and a newer app falls back to that layout when the block is absent. Note
+ * that `fontPt` is deliberately NOT sent — a thermal printer has no points,
+ * only the 1×–4× `scale`.
  */
-export function buildPrintableOrderJson(order: OrderWithItems, isReprint = false): string {
+export interface PrintableOrderOptions {
+  isReprint?: boolean;
+  /** Layout for this ticket; omitted → the app's built-in layout. */
+  template?: PrintTemplateData;
+}
+
+function buildPrintBlock(template: PrintTemplateData) {
+  return {
+    templateId: template.id,
+    name: template.name,
+    charsPerLine: template.charsPerLine,
+    showDividers: template.showDividers,
+    feedLinesAfter: template.feedLinesAfter,
+    autoCut: template.autoCut,
+    copies: template.copies,
+    headerText: template.headerText,
+    footerText: template.footerText,
+    sections: Object.fromEntries(
+      PRINT_SECTIONS.map((section) => {
+        const style = template.sections[section.id];
+        return [
+          section.id,
+          {
+            visible: style.visible,
+            scale: style.scale,
+            align: style.align,
+            bold: style.bold,
+          },
+        ];
+      })
+    ),
+  };
+}
+
+export function buildPrintableOrderJson(
+  order: OrderWithItems,
+  options: PrintableOrderOptions = {}
+): string {
+  const { isReprint = false, template } = options;
   return JSON.stringify({
     orderId: order.id,
     orderNumber: String(order.orderNumber),
@@ -103,12 +149,16 @@ export function buildPrintableOrderJson(order: OrderWithItems, isReprint = false
     total: order.totalEur,
     currency: "EUR",
     isReprint,
+    ...(template ? { print: buildPrintBlock(template) } : {}),
   });
 }
 
 /** Requests a print; the result arrives via PRINT_RESULT_EVENT. */
-export function requestOrderPrint(order: OrderWithItems, isReprint = false): boolean {
+export function requestOrderPrint(
+  order: OrderWithItems,
+  options: PrintableOrderOptions = {}
+): boolean {
   if (!isAndroidPrinterAvailable()) return false;
-  window.AndroidPrinter!.printOrder(buildPrintableOrderJson(order, isReprint));
+  window.AndroidPrinter!.printOrder(buildPrintableOrderJson(order, options));
   return true;
 }

@@ -120,6 +120,7 @@ export const ADMIN_NAV = [
   { href: "/admin/categories", labelKey: "categories", allow: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/users", labelKey: "users", allow: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/settings", labelKey: "settings", allow: ["ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/settings/print", labelKey: "printSettings", allow: ["ADMIN", "SUPER_ADMIN"] },
 ] as const satisfies readonly {
   href: string;
   labelKey: string;

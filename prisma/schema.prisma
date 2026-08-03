@@ -119,6 +119,43 @@ model RestaurantSettings {
   updatedAt      DateTime @updatedAt
 }
 
+/// One printable ticket layout, editable from /admin/settings/print.
+///
+/// Exactly TWO rows, ids "KITCHEN" and "DELIVERY" — an order prints a
+/// preparation slip and a delivery slip, and the owner styles them separately.
+/// Both rows are written by the migration itself, so a production deploy has
+/// working templates without a seed step.
+///
+/// `sectionsJson` is the one deliberate exception to this project's
+/// typed-column rule: the per-section style set is 21 sections × 5 attributes,
+/// which as columns would be unmaintainable and would need a migration every
+/// time a section is added. It is a JSON object validated by
+/// lib/validators/print-template.ts on write and merged over the defaults in
+/// types/print.ts on read, so unknown or missing sections degrade to the
+/// default instead of breaking a ticket.
+model PrintTemplate {
+  id             String   @id // "KITCHEN" | "DELIVERY"
+  name           String
+
+  paperWidthMm   Int      @default(80)
+  charsPerLine   Int      @default(42)
+  marginMm       Float    @default(3)
+  lineHeight     Float    @default(1.25)
+
+  headerText     String   @default("PIZZA PAZZO")
+  footerText     String   @default("")
+  showDividers   Boolean  @default(true)
+
+  feedLinesAfter Int      @default(4)
+  autoCut        Boolean  @default(true)
+  copies         Int      @default(1)
+
+  sectionsJson   String   @default("{}")
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 model Order {
   id                    String      @id @default(cuid())
   // Human-friendly sequential number shown to staff. SQLite only allows

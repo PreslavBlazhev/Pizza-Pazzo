@@ -482,7 +482,8 @@
       "products": "Products",
       "categories": "Categories",
       "users": "Users",
-      "settings": "Settings"
+      "settings": "Settings",
+      "printSettings": "Printing 🖨"
     },
     "roles": {
       "customer": "Customer",

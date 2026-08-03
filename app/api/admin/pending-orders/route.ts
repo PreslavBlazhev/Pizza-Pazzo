@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getPendingOrders } from "@/lib/orders";
+import { getPrintTemplates } from "@/lib/print-templates";
 
 /**
  * Pending orders for the live board (`/admin/orders/live`), which polls this
@@ -17,9 +18,14 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const orders = await getPendingOrders();
+  // Templates ride along with every poll so a layout edit reaches the kitchen
+  // tablet within one interval — the board can stay open for a whole shift.
+  const [orders, printTemplates] = await Promise.all([
+    getPendingOrders(),
+    getPrintTemplates(),
+  ]);
   return NextResponse.json(
-    { orders, serverTime: new Date().toISOString() },
+    { orders, printTemplates, serverTime: new Date().toISOString() },
     { headers: { "Cache-Control": "no-store" } }
   );
 }

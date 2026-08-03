@@ -1,5 +1,6 @@
 package pizzapazzo.kitchen.printer
 
+import pizzapazzo.kitchen.models.PrintLayout
 import pizzapazzo.kitchen.models.PrintableOrder
 import java.time.Instant
 import java.time.ZoneId
@@ -10,80 +11,182 @@ import java.util.Locale
  * Turns a [PrintableOrder] into a list of styled receipt lines. Pure Kotlin —
  * no Android, no ESC/POS bytes — so it is fully unit-testable; the byte
  * encoding happens afterwards in [EscPosPrinterService] via [EscPos].
+ *
+ * WHAT prints and HOW BIG is not decided here: every block asks the order's
+ * [PrintLayout] (configured by the owner in /admin/settings/print) whether its
+ * section is visible and what scale, alignment and weight it carries. A job
+ * that arrives without a layout gets [PrintLayout.DEFAULT], which reproduces
+ * the layout this app shipped with.
  */
 object ReceiptFormatter {
 
-    /** One printable line. `big` text is double width, so it wraps at width/2. */
+    /** One printable line. `scale` is the ESC/POS size multiplier, 1–4. */
     data class Line(
         val text: String,
         val bold: Boolean = false,
-        val big: Boolean = false,
+        val scale: Int = 1,
         val center: Boolean = false,
-    )
+        val right: Boolean = false,
+    ) {
+        /** Kept so existing callers/tests that think in "double size" still work. */
+        val big: Boolean get() = scale >= 2
+    }
 
     private val dateFormat: DateTimeFormatter =
         DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", Locale.forLanguageTag("bg"))
 
     fun format(order: PrintableOrder, settings: PrinterSettings): List<Line> {
-        val w = settings.charsPerLine.coerceAtLeast(20)
+        val layout = order.layout
+        val w = (layout.charsPerLine ?: settings.charsPerLine).coerceAtLeast(20)
         val out = mutableListOf<Line>()
-        val divider = Line("-".repeat(w))
+
+        /** Emits a section's lines, wrapped at its own scaled column count. */
+        fun push(
+            section: String,
+            text: String?,
+            right: String? = null,
+            indent: String = "",
+            fallback: PrintLayout.SectionStyle = PrintLayout.SectionStyle(),
+        ) {
+            if (text.isNullOrBlank()) return
+            val style = layout.style(section, fallback)
+            if (!style.visible) return
+
+            // A glyph at scale N occupies N columns, so the usable width shrinks.
+            // Continuation lines repeat the same indent (no hanging indent) so
+            // that `avail` is exact and NO emitted line can exceed the paper.
+            val columns = (w / style.scale).coerceAtLeast(8)
+            val avail = (columns - indent.length).coerceAtLeast(4)
+
+            fun emit(body: String) {
+                out += Line(
+                    text = body,
+                    bold = style.bold,
+                    scale = style.scale,
+                    center = style.align == "center",
+                    right = style.align == "right",
+                )
+            }
+
+            val wrapped = wrap(text, avail)
+
+            if (right == null) {
+                wrapped.forEach { emit(indent + it) }
+                return
+            }
+
+            // The value joins the LAST label line when it fits there; otherwise
+            // it gets a line of its own, right-aligned. Never inserted in the
+            // middle of a wrapped name, and never pushed past the paper edge.
+            val last = wrapped.last()
+            wrapped.dropLast(1).forEach { emit(indent + it) }
+            if (indent.length + last.length + 1 + right.length <= columns) {
+                val pad = columns - indent.length - last.length - right.length
+                emit(indent + last + " ".repeat(pad) + right)
+            } else {
+                emit(indent + last)
+                emit(" ".repeat((columns - right.length).coerceAtLeast(0)) + right)
+            }
+        }
+
+        fun divider() {
+            if (!layout.showDividers) return
+            // Never two in a row and never a leading one — hiding the sections
+            // between two dividers must not leave a stray rule behind.
+            if (out.isEmpty() || out.last().text.startsWith("-".repeat(4))) return
+            out += Line("-".repeat(w))
+        }
 
         // ── Header ──
-        out += Line("PIZZA PAZZO", bold = true, center = true)
-        out += wrap("ПОРЪЧКА #${order.orderNumber}", w / 2).map {
-            Line(it, bold = true, big = true, center = true)
-        }
+        push("header", layout.headerText.ifBlank { "PIZZA PAZZO" },
+            fallback = PrintLayout.SectionStyle(bold = true, align = "center"))
+        push("ticketType", layout.name.ifBlank { null },
+            fallback = PrintLayout.SectionStyle(bold = true, scale = 2, align = "center"))
+        push("orderNumber", "ПОРЪЧКА #${order.orderNumber}",
+            fallback = PrintLayout.SectionStyle(bold = true, scale = 2, align = "center"))
         if (order.isReprint) {
-            out += Line("*** ПОВТОРЕН ПЕЧАТ ***", bold = true, center = true)
+            push("reprint", "*** ПОВТОРЕН ПЕЧАТ ***",
+                fallback = PrintLayout.SectionStyle(bold = true, align = "center"))
         }
-        formatTimestamp(order.createdAt)?.let { out += Line(it, center = true) }
-        formatTimestamp(order.acceptedAt)?.let { out += Line("ПРИЕТА: $it", center = true) }
+        push("createdAt", formatTimestamp(order.createdAt),
+            fallback = PrintLayout.SectionStyle(align = "center"))
+        formatTimestamp(order.acceptedAt)?.let {
+            push("acceptedAt", "ПРИЕТА: $it", fallback = PrintLayout.SectionStyle(align = "center"))
+        }
         order.estimatedMinutes?.let {
-            out += Line("Готова за: $it минути", bold = true, center = true)
+            push("eta", "Готова за: $it минути",
+                fallback = PrintLayout.SectionStyle(bold = true, align = "center"))
         }
-        out += divider
+        divider()
 
         // ── Customer & delivery ──
-        order.customer.name?.let { out += wrapLines(it, w) }
-        order.customer.phone?.let { out += wrapLines("Тел: $it", w) }
-        out += Line(deliveryLabel(order.delivery.type), bold = true)
-        buildAddress(order.delivery)?.let { out += wrapLines(it, w) }
-        out += divider
+        push("customerName", order.customer.name)
+        push("customerPhone", order.customer.phone?.let { "Тел: $it" })
+        push("deliveryType", deliveryLabel(order.delivery.type),
+            fallback = PrintLayout.SectionStyle(bold = true))
+        push("address", buildAddress(order.delivery))
+        divider()
 
         // ── Items ──
+        val showPrice = layout.visible("itemPrice")
         for (item in order.items) {
-            val title = "${item.quantity} x ${item.name.uppercase()}"
-            out += rowLines(title, formatMoney(item.totalPrice), w, bold = true)
-            item.size?.let { out += wrapLines("  Размер: $it", w) }
+            push(
+                "items",
+                "${item.quantity} x ${item.name.uppercase()}",
+                right = if (showPrice) formatMoney(item.totalPrice).ifBlank { null } else null,
+                fallback = PrintLayout.SectionStyle(bold = true),
+            )
+            push("itemSize", item.size?.let { "Размер: $it" }, indent = "  ")
             for (extra in item.extras) {
                 val qty = if (extra.quantity > 1) "${extra.quantity}x " else ""
-                val price = extra.price?.let { " (${money(it)})" } ?: ""
-                out += wrapLines("  + $qty${extra.name}$price", w)
+                val price = if (showPrice) extra.price?.let { " (${money(it)})" } ?: "" else ""
+                push("itemExtras", "+ $qty${extra.name}$price", indent = "  ")
             }
             if (item.removedIngredients.isNotEmpty()) {
-                out += wrapLines("  БЕЗ: ${item.removedIngredients.joinToString(", ")}", w, bold = true)
+                push(
+                    "itemNote",
+                    "БЕЗ: ${item.removedIngredients.joinToString(", ")}",
+                    indent = "  ",
+                    fallback = PrintLayout.SectionStyle(bold = true),
+                )
             }
-            item.note?.let { out += wrapLines("  Бележка: $it", w, bold = true) }
+            push(
+                "itemNote",
+                item.note?.let { "Бележка: $it" },
+                indent = "  ",
+                fallback = PrintLayout.SectionStyle(bold = true),
+            )
         }
-        out += divider
+        divider()
 
         // ── Totals ──
-        out += wrapLines("Начин на плащане: ${paymentLabel(order.paymentMethod)}", w)
-        order.subtotal?.let { out += rowLines("Междинна сума", money(it), w) }
-        order.deliveryFee?.let { out += rowLines("Доставка", money(it), w) }
-        order.discount?.takeIf { it > 0 }?.let { out += rowLines("Отстъпка", "-${money(it)}", w) }
+        push("payment", "Начин на плащане: ${paymentLabel(order.paymentMethod)}")
+        order.subtotal?.let { push("totals", "Междинна сума", right = money(it)) }
+        order.deliveryFee?.let { push("totals", "Доставка", right = money(it)) }
+        order.discount?.takeIf { it > 0 }?.let {
+            push("totals", "Отстъпка", right = "-${money(it)}")
+        }
         order.total?.let {
-            out += wrap("ОБЩО: ${money(it)} ${order.currency}", w / 2).map { t ->
-                Line(t, bold = true, big = true)
-            }
+            push(
+                "grandTotal",
+                "ОБЩО",
+                right = "${money(it)} ${order.currency}",
+                fallback = PrintLayout.SectionStyle(bold = true, scale = 2),
+            )
         }
 
         // ── Customer note ──
         order.customerNote?.let {
-            out += divider
-            out += Line("Бележка от клиента:", bold = true)
-            out += wrapLines(it, w)
+            divider()
+            push("customerNote", "Бележка от клиента: $it",
+                fallback = PrintLayout.SectionStyle(bold = true))
+        }
+
+        // ── Footer ──
+        if (layout.footerText.isNotBlank()) {
+            divider()
+            push("footer", layout.footerText,
+                fallback = PrintLayout.SectionStyle(align = "center"))
         }
 
         return out
@@ -95,7 +198,7 @@ object ReceiptFormatter {
         val divider = Line("-".repeat(w))
         return listOf(
             Line("PIZZA PAZZO", bold = true, center = true),
-            Line("ТЕСТОВА СТРАНИЦА", bold = true, big = true, center = true),
+            Line("ТЕСТОВА СТРАНИЦА", bold = true, scale = 2, center = true),
             divider,
             Line("АБВГДЕЖЗИЙКЛМНОПРСТУФХ"),
             Line("ЦЧШЩЪЬЮЯ"),
@@ -104,6 +207,10 @@ object ReceiptFormatter {
             Line("0123456789"),
             Line("!?%&()*+,-./:;<=>@#"),
             Line("Цена: 25.50 EUR"),
+            divider,
+            Line("Размер 1x — нормален"),
+            Line("Размер 2x", scale = 2),
+            Line("Размер 3x", scale = 3),
             divider,
             Line("2 x МАРГАРИТА", bold = true),
             Line("  Размер: Голяма"),
@@ -120,12 +227,17 @@ object ReceiptFormatter {
     fun toPlainText(lines: List<Line>, settings: PrinterSettings): String {
         val w = settings.charsPerLine.coerceAtLeast(20)
         return lines.joinToString("\n") { line ->
-            if (line.center) {
-                val visual = if (line.big) line.text.length * 2 else line.text.length
-                val pad = ((w - visual) / 2).coerceAtLeast(0)
-                " ".repeat(if (line.big) pad / 2 else pad) + line.text
-            } else {
-                line.text
+            val columns = (w / line.scale).coerceAtLeast(4)
+            when {
+                line.center -> {
+                    val pad = ((columns - line.text.length) / 2).coerceAtLeast(0)
+                    " ".repeat(pad) + line.text
+                }
+                line.right -> {
+                    val pad = (columns - line.text.length).coerceAtLeast(0)
+                    " ".repeat(pad) + line.text
+                }
+                else -> line.text
             }
         }
     }
@@ -168,28 +280,6 @@ object ReceiptFormatter {
     private fun money(value: Double): String = String.format(Locale.US, "%.2f", value)
 
     private fun formatMoney(value: Double?): String = value?.let(::money) ?: ""
-
-    private fun wrapLines(text: String, width: Int, bold: Boolean = false): List<Line> =
-        wrap(text, width).map { Line(it, bold = bold) }
-
-    /**
-     * Label left, value right on the same line when they fit; otherwise the
-     * label wraps and the value gets its own right-aligned line. Nothing is
-     * ever truncated.
-     */
-    private fun rowLines(left: String, right: String, width: Int, bold: Boolean = false): List<Line> {
-        if (right.isBlank()) return wrapLines(left, width, bold)
-        val leftLines = wrap(left, width)
-        val last = leftLines.last()
-        return if (last.length + 1 + right.length <= width) {
-            val pad = width - last.length - right.length
-            leftLines.dropLast(1).map { Line(it, bold = bold) } +
-                Line(last + " ".repeat(pad) + right, bold = bold)
-        } else {
-            leftLines.map { Line(it, bold = bold) } +
-                Line(" ".repeat((width - right.length).coerceAtLeast(0)) + right, bold = bold)
-        }
-    }
 
     /** Word wrap that hard-breaks words longer than one line. Never truncates. */
     internal fun wrap(text: String, width: Int): List<String> {

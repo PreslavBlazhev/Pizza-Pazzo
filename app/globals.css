@@ -58,12 +58,16 @@
   .no-print {
     display: none !important;
   }
+  /* Width, padding and line-height are set inline from the print template
+     (/admin/settings/print) — only the page chrome is stripped here, so the
+     owner's paper size and margins are never overridden. */
   .print-ticket {
-    width: 80mm;
     margin: 0;
-    padding: 0;
     color: #000;
     background: #fff;
+  }
+  @page {
+    margin: 0;
   }
 }
 

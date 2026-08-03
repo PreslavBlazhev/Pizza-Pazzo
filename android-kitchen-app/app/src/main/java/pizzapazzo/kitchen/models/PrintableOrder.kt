@@ -32,6 +32,8 @@ data class PrintableOrder(
     val currency: String,
     /** True when the staff explicitly asked for a re-print; marked on paper. */
     val isReprint: Boolean,
+    /** Layout chosen by the owner on the website; DEFAULT when not sent. */
+    val layout: PrintLayout = PrintLayout.DEFAULT,
 ) {
     data class Customer(
         val name: String?,
@@ -149,6 +151,7 @@ data class PrintableOrder(
                 total = root.optDoubleOrNull("total"),
                 currency = root.optStringOrNull("currency") ?: "EUR",
                 isReprint = root.optBoolean("isReprint", false),
+                layout = PrintLayout.fromJson(root.optJSONObject("print")),
             )
         }
 
