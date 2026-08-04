@@ -353,8 +353,7 @@
     "closedHoursDate": "We are open again on {date} from {time}.",
     "closedUnknown": "We are not taking online orders at the moment.",
     "ordersPaused": "Online ordering is paused right now.",
-    "closedShort": "Closed",
-    "understood": "Got it"
+    "closedShort": "Closed"
   },
   "checkout": {
     "title": "Checkout",

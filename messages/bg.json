@@ -353,8 +353,7 @@
     "closedHoursDate": "Работим отново на {date} от {time} ч.",
     "closedUnknown": "В момента не приемаме онлайн поръчки.",
     "ordersPaused": "В момента не приемаме поръчки през сайта.",
-    "closedShort": "Затворено",
-    "understood": "Разбрах"
+    "closedShort": "Затворено"
   },
   "checkout": {
     "title": "Завършване на поръчката",
