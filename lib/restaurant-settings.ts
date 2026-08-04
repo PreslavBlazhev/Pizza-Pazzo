@@ -24,9 +24,11 @@ import {
   WEEKDAYS,
   type RestaurantHours,
   type RestaurantSettingsData,
+  type RestaurantState,
   type Weekday,
   type WorkingHoursDay,
 } from "@/types/settings";
+import type { ManualClosure } from "@/types/store-status";
 
 /** Invalidated by the admin settings save. */
 export const SETTINGS_CACHE_TAG = "restaurant-settings";
@@ -105,28 +107,60 @@ function mapSettings(row: SettingsRow): RestaurantSettingsData {
   };
 }
 
-const loadSettings = unstable_cache(
-  async (): Promise<RestaurantSettingsData> => {
+/** The "nothing is closed" closure — used for a missing row and on read errors. */
+function openClosure(): ManualClosure {
+  return { active: false, until: null, closedAt: null, closedByEmail: null };
+}
+
+/**
+ * Prisma row → the closure snapshot.
+ *
+ * Instants become ISO strings here because this value crosses
+ * `unstable_cache`, a JSON route and the server→client boundary, none of which
+ * preserves a `Date`.
+ */
+function mapClosure(row: SettingsRow): ManualClosure {
+  return {
+    active: row.manuallyClosed,
+    until: row.closedUntil ? row.closedUntil.toISOString() : null,
+    closedAt: row.closedAt ? row.closedAt.toISOString() : null,
+    closedByEmail: row.closedByEmail,
+  };
+}
+
+const loadState = unstable_cache(
+  async (): Promise<RestaurantState> => {
     const row = await db.restaurantSettings.findUnique({ where: { id: SETTINGS_ROW_ID } });
     // Deliberately does NOT create the row: a GET stays read-only. The
     // migration seeds it; this is only the safety net.
-    return row ? mapSettings(row) : fallbackSettings();
+    return row
+      ? { settings: mapSettings(row), closure: mapClosure(row) }
+      : { settings: fallbackSettings(), closure: openClosure() };
   },
-  ["restaurant-settings"],
+  ["restaurant-state"],
   { tags: [SETTINGS_CACHE_TAG], revalidate: SETTINGS_REVALIDATE_SECONDS }
 );
+
+/**
+ * Settings and closure in one read. Never throws: a database failure logs and
+ * falls back to the shipped constants with the shop OPEN — a database hiccup
+ * must not silently stop the restaurant from taking orders.
+ */
+export async function getRestaurantState(): Promise<RestaurantState> {
+  try {
+    return await loadState();
+  } catch (error) {
+    console.error("[settings] read failed, using constants fallback:", error);
+    return { settings: fallbackSettings(), closure: openClosure() };
+  }
+}
 
 /**
  * The current settings. Never throws: a database failure logs and falls back
  * to the shipped constants, so the public site keeps rendering.
  */
 export async function getRestaurantSettings(): Promise<RestaurantSettingsData> {
-  try {
-    return await loadSettings();
-  } catch (error) {
-    console.error("[settings] read failed, using constants fallback:", error);
-    return fallbackSettings();
-  }
+  return (await getRestaurantState()).settings;
 }
 
 /** Address in the reader's language (Bulgarian is the fallback). */
@@ -141,14 +175,10 @@ export function settingsPhones(settings: RestaurantSettingsData): string[] {
   );
 }
 
-/**
- * Writes the canonical row (create-or-update in one statement, so a missing
- * row recovers instead of erroring). Callers must validate first — see
- * `lib/validators/settings.ts`.
- */
-export async function updateRestaurantSettings(
+/** The settings half of the row, as database columns. */
+function settingsColumns(
   data: RestaurantSettingsData
-): Promise<void> {
+): Prisma.RestaurantSettingsUncheckedCreateInput {
   const dayColumns = Object.fromEntries(
     WEEKDAYS.flatMap((d) => [
       [`${d}Open`, data.hours[d].open],
@@ -157,7 +187,7 @@ export async function updateRestaurantSettings(
     ])
   );
 
-  const values = {
+  return {
     addressBg: data.addressBg,
     addressEn: data.addressEn,
     primaryPhone: data.primaryPhone,
@@ -165,10 +195,69 @@ export async function updateRestaurantSettings(
     contactEmail: data.contactEmail,
     ...dayColumns,
   } as Prisma.RestaurantSettingsUncheckedCreateInput;
+}
+
+/**
+ * Writes the canonical row (create-or-update in one statement, so a missing
+ * row recovers instead of erroring). Callers must validate first — see
+ * `lib/validators/settings.ts`.
+ *
+ * The closure columns are deliberately absent from the update: saving the
+ * contact form must never reopen a shop that staff had just closed.
+ */
+export async function updateRestaurantSettings(
+  data: RestaurantSettingsData
+): Promise<void> {
+  const values = settingsColumns(data);
 
   await db.restaurantSettings.upsert({
     where: { id: SETTINGS_ROW_ID },
     create: { ...values, id: SETTINGS_ROW_ID },
     update: values,
+  });
+}
+
+/** The closure half of the row, as database columns. */
+type ClosureColumns = Pick<
+  Prisma.RestaurantSettingsUncheckedCreateInput,
+  "manuallyClosed" | "closedUntil" | "closedAt" | "closedByEmail"
+>;
+
+/**
+ * Writes only the closure columns, creating the row from the shipped constants
+ * if it is somehow missing — closing the shop must work even on a database
+ * that never got its settings row.
+ */
+async function writeClosure(closure: ClosureColumns): Promise<void> {
+  await db.restaurantSettings.upsert({
+    where: { id: SETTINGS_ROW_ID },
+    create: { ...settingsColumns(fallbackSettings()), ...closure, id: SETTINGS_ROW_ID },
+    update: closure,
+  });
+}
+
+/**
+ * Closes the restaurant. `until: null` means "until someone reopens by hand";
+ * a timestamp means it reopens on its own once that moment passes.
+ */
+export async function setManualClosure(input: {
+  until: Date | null;
+  byEmail: string | null;
+}): Promise<void> {
+  await writeClosure({
+    manuallyClosed: true,
+    closedUntil: input.until,
+    closedAt: new Date(),
+    closedByEmail: input.byEmail,
+  });
+}
+
+/** Reopens the restaurant, clearing every trace of the previous closure. */
+export async function clearManualClosure(): Promise<void> {
+  await writeClosure({
+    manuallyClosed: false,
+    closedUntil: null,
+    closedAt: null,
+    closedByEmail: null,
   });
 }

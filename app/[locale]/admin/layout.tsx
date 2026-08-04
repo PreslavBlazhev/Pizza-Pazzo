@@ -1,5 +1,6 @@
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { requireRole } from "@/lib/auth";
+import { getStoreStatus } from "@/lib/store-status";
 
 export const metadata = {
   robots: { index: false, follow: false },
@@ -22,10 +23,14 @@ export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const sessionUser = await requireRole(["STAFF", "ADMIN", "SUPER_ADMIN"]);
+  // The layout is already force-dynamic, so this is re-read on every admin
+  // navigation and after `router.refresh()` — which is how the closure button
+  // updates itself without any client-side polling.
+  const storeStatus = await getStoreStatus();
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row bg-pizza-cream">
-      <AdminSidebar sessionUser={sessionUser} />
+      <AdminSidebar sessionUser={sessionUser} storeStatus={storeStatus} />
       <div className="flex-1 overflow-x-auto p-4 sm:p-8">{children}</div>
     </div>
   );

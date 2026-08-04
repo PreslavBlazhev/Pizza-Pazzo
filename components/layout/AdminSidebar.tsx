@@ -1,17 +1,28 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ADMIN_NAV } from "@/lib/constants";
+import { StoreClosureControl } from "@/components/admin/StoreClosureControl";
 import { UserRoleBadge } from "@/components/admin/UserRoleBadge";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import type { SessionUser } from "@/types/auth";
+import type { StoreStatus } from "@/types/store-status";
 
 /**
  * Admin navigation.
  *
  * Links the current role may not open are hidden — but that is only tidiness.
  * The enforcement lives in `middleware.ts` and in each action's role guard.
+ *
+ * "Затвори заведението" closes the list on both layouts — it is an action, not
+ * a page, so it sits below the links rather than among them.
  */
-export function AdminSidebar({ sessionUser }: { sessionUser: SessionUser }) {
+export function AdminSidebar({
+  sessionUser,
+  storeStatus,
+}: {
+  sessionUser: SessionUser;
+  storeStatus: StoreStatus;
+}) {
   const t = useTranslations("admin");
   const links = ADMIN_NAV.filter((item) =>
     (item.allow as readonly string[]).includes(sessionUser.role)
@@ -37,6 +48,7 @@ export function AdminSidebar({ sessionUser }: { sessionUser: SessionUser }) {
               {t(`nav.${item.labelKey}`)}
             </Link>
           ))}
+          <StoreClosureControl status={storeStatus} variant="bar" />
         </nav>
       </header>
 
@@ -62,6 +74,8 @@ export function AdminSidebar({ sessionUser }: { sessionUser: SessionUser }) {
           </Link>
         ))}
       </nav>
+
+      <StoreClosureControl status={storeStatus} />
 
       <div className="border-t border-pizza-cream-dark p-4">
         <p className="truncate text-sm font-medium text-pizza-ink">

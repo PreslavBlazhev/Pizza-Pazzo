@@ -8,6 +8,7 @@
  * Times are "HH:mm" strings in the restaurant's local time. A closed day has
  * `open: false` and both bounds null.
  */
+import type { ManualClosure } from "./store-status";
 
 /** Weekday keys, always in display order: Monday → Sunday. */
 export const WEEKDAYS = [
@@ -54,4 +55,16 @@ export interface RestaurantContact {
 /** Everything the admin settings page reads and writes. */
 export interface RestaurantSettingsData extends RestaurantContact {
   hours: RestaurantHours;
+}
+
+/**
+ * The whole settings row: the editable settings plus the manual-closure state.
+ *
+ * They live in one database row but are edited by two different screens, so
+ * they are kept apart here — saving the contact form must never touch the
+ * closure, and closing the shop must never rewrite the address.
+ */
+export interface RestaurantState {
+  settings: RestaurantSettingsData;
+  closure: ManualClosure;
 }

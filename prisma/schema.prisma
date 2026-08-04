@@ -115,6 +115,23 @@ model RestaurantSettings {
   sundayFrom     String?
   sundayTo       String?
 
+  /// Manual closure, set from the "Затвори заведението" button in the admin
+  /// panel. It overrides the opening hours above: while it is active the site
+  /// refuses new orders even inside working hours.
+  ///
+  /// `closedUntil` is the whole difference between the two closure modes:
+  ///   - a timestamp → the shop reopens BY ITSELF once that moment passes
+  ///     (nothing writes to this row at expiry; the state is derived at read
+  ///     time, so no cron job is needed);
+  ///   - null while `manuallyClosed` is true → closed until a human presses
+  ///     "Отвори заведението".
+  manuallyClosed Boolean  @default(false)
+  closedUntil    DateTime?
+  /// When the current closure was started, and by whom — shown to the staff so
+  /// they know who paused the shift.
+  closedAt       DateTime?
+  closedByEmail  String?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

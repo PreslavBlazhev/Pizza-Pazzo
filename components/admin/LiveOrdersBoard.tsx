@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { updateOrderStatusAction } from "@/app/actions/order-admin";
+import { openStoreAction } from "@/app/actions/store-closure";
 import { formatEurPrice } from "@/lib/format-price";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
+import { formatSofiaTime, sofiaDayOffset } from "@/lib/store-hours";
 import { PrintOrderButtons } from "./PrintOrderButton";
 import type { Order, OrderWithItems } from "@/types/order";
 import { PRINT_TEMPLATE_IDS, defaultPrintTemplate, type PrintTemplateData } from "@/types/print";
+import type { StoreStatus } from "@/types/store-status";
 
 const POLL_INTERVAL_MS = 8_000;
 const QUICK_TIMES = [20, 30, 45, 60];
@@ -29,6 +32,9 @@ export function LiveOrdersBoard() {
   const [connectionLost, setConnectionLost] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
+  // Null until the first poll answers — the banner stays away rather than
+  // flashing "открито"/"затворено" on load.
+  const [storeStatus, setStoreStatus] = useState<StoreStatus | null>(null);
   // Orders accepted this shift stay listed below the pending ones so the staff
   // can print the kitchen ticket (via the Android app) after accepting.
   const [acceptedOrders, setAcceptedOrders] = useState<OrderWithItems[]>([]);
@@ -44,9 +50,13 @@ export function LiveOrdersBoard() {
       const data = (await res.json()) as {
         orders: Order[];
         printTemplates?: PrintTemplateData[];
+        storeStatus?: StoreStatus;
       };
       setOrders(data.orders);
       if (data.printTemplates?.length) setPrintTemplates(data.printTemplates);
+      // A timed closure ends here: the poll after the deadline simply reports
+      // the shop open again, and the banner disappears on its own.
+      if (data.storeStatus) setStoreStatus(data.storeStatus);
       setConnectionLost(false);
       setLastCheck(new Date());
     } catch {
@@ -192,6 +202,8 @@ export function LiveOrdersBoard() {
           </p>
         )}
       </div>
+
+      <StoreClosedNotice status={storeStatus} onReopened={fetchPending} />
 
       {!hasPending && (
         <div className="flex min-h-[50vh] items-center justify-center rounded-3xl border-2 border-dashed border-pizza-green/40 bg-pizza-green/5">
@@ -391,6 +403,92 @@ function LiveOrderCard({
           ✕ Откажи
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The board's own view of the shop being closed.
+ *
+ * It shows what will happen next, because that is the difference the staff
+ * care about: a timed pause clears itself and the board resumes on the next
+ * poll, while "до ръчно отваряне" waits for the button below — this is the
+ * "започни смяната на ръка" case.
+ *
+ * Closing is deliberately NOT offered here; that switch lives in one place,
+ * at the bottom of the admin navigation.
+ */
+function StoreClosedNotice({
+  status,
+  onReopened,
+}: {
+  status: StoreStatus | null;
+  onReopened: () => void | Promise<void>;
+}) {
+  const [reopening, startReopen] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  if (!status || status.isOpen) return null;
+
+  const manual =
+    status.reason === "manual_timed" || status.reason === "manual_indefinite";
+
+  const when = status.reopensAt
+    ? (() => {
+        const at = new Date(status.reopensAt);
+        const time = formatSofiaTime(at);
+        const offset = sofiaDayOffset(new Date(status.serverTime), at);
+        if (offset <= 0) return `в ${time}`;
+        if (offset === 1) return `утре в ${time}`;
+        const date = new Intl.DateTimeFormat("bg-BG", {
+          timeZone: "Europe/Sofia",
+          day: "2-digit",
+          month: "2-digit",
+        }).format(at);
+        return `на ${date} в ${time}`;
+      })()
+    : null;
+
+  const line =
+    status.reason === "manual_indefinite"
+      ? "Заведението е затворено до ръчно отваряне. Няма да постъпват нови поръчки, докато не натиснете бутона."
+      : status.reason === "manual_timed"
+        ? when
+          ? `Заведението е затворено. Отваря се автоматично ${when} — не е нужно да правите нищо.`
+          : "Заведението е затворено."
+        : when
+          ? `Извън работно време. Поръчките тръгват отново ${when}.`
+          : "Извън работно време.";
+
+  function handleReopen() {
+    setError(null);
+    startReopen(async () => {
+      const result = await openStoreAction();
+      if (!result.ok) {
+        setError(result.error ?? "Неуспешно отваряне.");
+        return;
+      }
+      await onReopened();
+    });
+  }
+
+  return (
+    <div className="mb-4 rounded-2xl border-2 border-amber-400 bg-amber-50 px-5 py-4">
+      <p className="text-lg font-bold text-amber-900">🔒 Затворено</p>
+      <p className="mt-1 text-amber-900">{line}</p>
+
+      {manual && (
+        <button
+          type="button"
+          onClick={handleReopen}
+          disabled={reopening}
+          className="mt-4 rounded-2xl bg-pizza-green px-6 py-3 text-lg font-bold text-white transition hover:bg-pizza-green-dark disabled:opacity-60"
+        >
+          {reopening ? "Отваря се…" : "▶ Отвори заведението"}
+        </button>
+      )}
+
+      {error && <p className="mt-2 font-semibold text-red-600">{error}</p>}
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
 import { SITE, SITE_URL } from "@/lib/constants";
+import { StoreClosedDialog } from "@/components/store/StoreClosedDialog";
+import { StoreStatusProvider } from "@/components/store/StoreStatusProvider";
 import { getRestaurantJsonLd } from "@/lib/seo/structured-data";
 import { routing, type Locale } from "@/i18n/routing";
 
@@ -123,7 +125,16 @@ export default async function LocaleLayout({
             __html: JSON.stringify(restaurantJsonLd).replace(/</g, "\\u003c"),
           }}
         />
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          {/* Whether the restaurant is taking orders — fetched in the browser,
+              because these pages are prerendered and the answer changes during
+              the day. Wraps everything so the cart, the product page and the
+              checkout all read one shared answer. */}
+          <StoreStatusProvider>
+            {children}
+            <StoreClosedDialog />
+          </StoreStatusProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

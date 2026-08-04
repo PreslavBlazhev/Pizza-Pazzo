@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getPendingOrders } from "@/lib/orders";
 import { getPrintTemplates } from "@/lib/print-templates";
+import { getStoreStatus } from "@/lib/store-status";
 
 /**
  * Pending orders for the live board (`/admin/orders/live`), which polls this
@@ -20,12 +21,17 @@ export async function GET() {
 
   // Templates ride along with every poll so a layout edit reaches the kitchen
   // tablet within one interval — the board can stay open for a whole shift.
-  const [orders, printTemplates] = await Promise.all([
+  //
+  // So does the open/closed state: that is what makes a timed closure resume
+  // the board by itself. Nobody writes anything when the timer expires; the
+  // next poll simply comes back with `isOpen: true`.
+  const [orders, printTemplates, storeStatus] = await Promise.all([
     getPendingOrders(),
     getPrintTemplates(),
+    getStoreStatus(),
   ]);
   return NextResponse.json(
-    { orders, printTemplates, serverTime: new Date().toISOString() },
+    { orders, printTemplates, storeStatus, serverTime: new Date().toISOString() },
     { headers: { "Cache-Control": "no-store" } }
   );
 }

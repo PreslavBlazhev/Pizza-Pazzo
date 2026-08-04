@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { FormAlert } from "@/components/ui/FormAlert";
 import { CartSummary } from "@/components/cart/CartSummary";
+import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
+import { useStoreClosed } from "@/components/store/StoreStatusProvider";
 import {
   linePreviewTotalEur,
   useCartHydrated,
@@ -31,6 +33,7 @@ export function CheckoutForm({ defaults }: Props) {
   const items = useCartStore((s) => s.items);
   const totalsFn = useCartStore((s) => s.totals);
   const clear = useCartStore((s) => s.clear);
+  const storeClosed = useStoreClosed();
 
   const [state, formAction, isPending] = useActionState<CheckoutResult | null, FormData>(
     createOrder,
@@ -149,9 +152,13 @@ export function CheckoutForm({ defaults }: Props) {
           <p className="mt-2 text-sm text-pizza-muted">💵 {t("paymentCod")}</p>
         </section>
 
+        {/* `createOrder` refuses a closed shop on its own — this only spares
+            the customer filling the whole form to be told no at the end. */}
+        <StoreClosedBanner />
+
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || storeClosed}
           className="w-full rounded-full bg-brand px-6 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark disabled:opacity-60"
         >
           {isPending ? t("placing") : t("submit")}

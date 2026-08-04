@@ -211,6 +211,7 @@ try {
     "lib/android-printer.ts",
     "lib/report-period.ts",
     "lib/working-hours.ts",
+    "lib/store-hours.ts",
     "lib/validators/settings.ts",
   ];
   const tsconfigPath = join(buildDir, "tsconfig.smoke.json");
@@ -274,6 +275,7 @@ try {
     printTypes: load("types/print.js"),
     period: load("lib/report-period.js"),
     hours: load("lib/working-hours.js"),
+    storeHours: load("lib/store-hours.js"),
     settingsValidator: load("lib/validators/settings.js"),
   };
 } catch (e) {
@@ -1150,6 +1152,178 @@ if (mods) {
     const ascii = customerOrderAcceptedEmail(orderFixture, { phone: "0700 12 345" });
     check("any phone format passes through verbatim", ascii.text.includes("0700 12 345"));
   }
+}
+
+// ── 12) Open / closed ─────────────────────────────────────────────────────
+// Exercises the REAL lib/store-hours.ts: the opening-hours arithmetic and the
+// manual-closure precedence that decide whether the site takes orders.
+// Instants are written in UTC — Sofia is UTC+3 in August and UTC+2 in January,
+// so 11:00 local is 08:00Z in summer and 09:00Z in winter, and the two DST
+// cases below are the point of using both months.
+console.log("\n12) Open / closed (opening hours + manual closure)");
+
+if (mods?.storeHours) {
+  const check = (label, condition) => (condition ? ok(label) : fail(label));
+  const { resolveHoursStatus, nextOpeningAfter, resolveStoreStatus, formatSofiaTime, sofiaDayOffset } =
+    mods.storeHours;
+
+  /** The restaurant's real week: Mon–Sat 11:00–23:00, Sun 11:00–22:30. */
+  const day = (open, from, to) => ({ open, from: open ? from : null, to: open ? to : null });
+  const WEEK = {
+    monday: day(true, "11:00", "23:00"),
+    tuesday: day(true, "11:00", "23:00"),
+    wednesday: day(true, "11:00", "23:00"),
+    thursday: day(true, "11:00", "23:00"),
+    friday: day(true, "11:00", "23:00"),
+    saturday: day(true, "11:00", "23:00"),
+    sunday: day(true, "11:00", "22:30"),
+  };
+  const CLOSED_WEEK = Object.fromEntries(
+    Object.keys(WEEK).map((k) => [k, day(false)])
+  );
+  const at = (iso) => new Date(iso);
+  const iso = (d) => (d ? d.toISOString() : null);
+
+  // ── Opening hours alone ──
+  check("midday Tuesday is open", resolveHoursStatus(WEEK, at("2026-08-04T09:00:00Z")).open);
+  check(
+    "closing time is exclusive — 23:00 sharp is already closed",
+    !resolveHoursStatus(WEEK, at("2026-08-04T20:00:00Z")).open
+  );
+  check(
+    "opening time is inclusive — 11:00 sharp is open",
+    resolveHoursStatus(WEEK, at("2026-08-04T08:00:00Z")).open
+  );
+
+  const beforeOpening = resolveHoursStatus(WEEK, at("2026-08-04T05:00:00Z")); // 08:00 Sofia
+  check("early morning is closed", !beforeOpening.open);
+  check(
+    "…and reopens the same day at 11:00 Sofia",
+    iso(beforeOpening.nextOpenAt) === "2026-08-04T08:00:00.000Z"
+  );
+
+  const afterMidnight = resolveHoursStatus(WEEK, at("2026-08-04T21:30:00Z")); // 00:30 Sofia Wed
+  check("after midnight is closed", !afterMidnight.open);
+  check(
+    "…and reopens the NEXT day, not the one that just ended",
+    iso(afterMidnight.nextOpenAt) === "2026-08-05T08:00:00.000Z"
+  );
+
+  // Sunday closes half an hour earlier — the grouped display must not blur it.
+  check(
+    "Sunday 22:45 Sofia is closed (Sunday ends at 22:30)",
+    !resolveHoursStatus(WEEK, at("2026-08-09T19:45:00Z")).open
+  );
+  check(
+    "…and the next opening is Monday 11:00 Sofia",
+    iso(resolveHoursStatus(WEEK, at("2026-08-09T19:45:00Z")).nextOpenAt) ===
+      "2026-08-10T08:00:00.000Z"
+  );
+
+  // Winter: the same wall-clock hours sit one hour later in UTC.
+  check(
+    "DST — 11:00 Sofia in January is 09:00Z and is open",
+    resolveHoursStatus(WEEK, at("2026-01-06T09:00:00Z")).open
+  );
+  check(
+    "DST — 08:00Z in January is 10:00 Sofia and is still closed",
+    !resolveHoursStatus(WEEK, at("2026-01-06T08:00:00Z")).open
+  );
+
+  const allClosed = resolveHoursStatus(CLOSED_WEEK, at("2026-08-04T09:00:00Z"));
+  check("a week with no open day reports closed", !allClosed.open);
+  check("…with no next opening to promise", allClosed.nextOpenAt === null);
+
+  // A malformed row must degrade to "closed", never to "11:00 – null".
+  const BROKEN = { ...WEEK, tuesday: { open: true, from: "25:00", to: "99:99" } };
+  check(
+    "an unparsable time closes the day instead of throwing",
+    !resolveHoursStatus(BROKEN, at("2026-08-04T09:00:00Z")).open
+  );
+  const INVERTED = { ...WEEK, tuesday: { open: true, from: "23:00", to: "11:00" } };
+  check(
+    "a backwards window (to <= from) closes the day",
+    !resolveHoursStatus(INVERTED, at("2026-08-04T09:00:00Z")).open
+  );
+
+  // ── nextOpeningAfter ──
+  check(
+    "an instant already inside a window returns itself",
+    iso(nextOpeningAfter(WEEK, at("2026-08-04T09:00:00Z"))) === "2026-08-04T09:00:00.000Z"
+  );
+  check(
+    "an instant after closing rolls to the next day's opening",
+    iso(nextOpeningAfter(WEEK, at("2026-08-04T20:30:00Z"))) === "2026-08-05T08:00:00.000Z"
+  );
+
+  // ── Manual closure vs. hours ──
+  const open = { active: false, until: null };
+  const midday = at("2026-08-04T09:00:00Z");
+
+  const normal = resolveStoreStatus(WEEK, open, midday);
+  check("no closure at midday → open", normal.isOpen && normal.reason === null);
+  check("an open shop promises no reopening time", normal.reopensAt === null);
+
+  const indefinite = resolveStoreStatus(WEEK, { active: true, until: null }, midday);
+  check("indefinite closure closes an otherwise open shop", !indefinite.isOpen);
+  check("…is labelled manual_indefinite", indefinite.reason === "manual_indefinite");
+  check("…and demands a human to reopen", indefinite.needsManualReopen);
+  check("…with no reopening time to show", indefinite.reopensAt === null);
+
+  const timed = resolveStoreStatus(
+    WEEK,
+    { active: true, until: at("2026-08-04T09:30:00Z") },
+    midday
+  );
+  check("a 30-minute pause closes the shop", !timed.isOpen && timed.reason === "manual_timed");
+  check("…reopens exactly when the timer runs out", timed.reopensAt === "2026-08-04T09:30:00.000Z");
+  check("…and needs nobody to press anything", !timed.needsManualReopen);
+
+  // The timer outliving the working day is the case that must not promise
+  // orders at 01:00.
+  const pastClosing = resolveStoreStatus(
+    WEEK,
+    { active: true, until: at("2026-08-04T22:00:00Z") }, // 01:00 Sofia, Wednesday
+    at("2026-08-04T19:00:00Z")
+  );
+  check(
+    "a timer ending after closing reopens at the next opening, not at the timer",
+    pastClosing.reopensAt === "2026-08-05T08:00:00.000Z"
+  );
+
+  const expired = resolveStoreStatus(
+    WEEK,
+    { active: true, until: at("2026-08-04T08:30:00Z") },
+    midday
+  );
+  check("an expired timer reopens the shop with no write", expired.isOpen);
+  check("…and stops calling itself closed", expired.reason === null);
+
+  // A manual closure can only close; it can never open outside the hours.
+  const nightWithExpiredClosure = resolveStoreStatus(
+    WEEK,
+    { active: true, until: at("2026-08-04T21:00:00Z") },
+    at("2026-08-04T21:30:00Z")
+  );
+  check(
+    "an expired closure at night still reads closed — by hours",
+    !nightWithExpiredClosure.isOpen && nightWithExpiredClosure.reason === "hours"
+  );
+
+  check("the status always carries the server clock", normal.serverTime === midday.toISOString());
+
+  // ── Presentation helpers ──
+  check("11:00 Sofia formats as 11:00 in summer", formatSofiaTime(at("2026-08-04T08:00:00Z")) === "11:00");
+  check("11:00 Sofia formats as 11:00 in winter", formatSofiaTime(at("2026-01-06T09:00:00Z")) === "11:00");
+  check("midnight formats as 00:00, never 24:00", formatSofiaTime(at("2026-08-03T21:00:00Z")) === "00:00");
+  check(
+    "same Sofia day → offset 0",
+    sofiaDayOffset(at("2026-08-04T09:00:00Z"), at("2026-08-04T19:00:00Z")) === 0
+  );
+  check(
+    "23:00 Sofia → 01:00 Sofia is 'tomorrow', not 'in two hours'",
+    sofiaDayOffset(at("2026-08-04T20:00:00Z"), at("2026-08-04T22:00:00Z")) === 1
+  );
 }
 
 rmSync(buildDir, { recursive: true, force: true });

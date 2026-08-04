@@ -40,7 +40,6 @@
       }
     }
   },
-
   "nav": {
     "home": "Home",
     "menu": "Menu",
@@ -59,7 +58,6 @@
     "closeMenu": "Close menu",
     "languageSwitcher": "Change language"
   },
-
   "common": {
     "viewAll": "View all",
     "viewAllArrow": "View all →",
@@ -75,16 +73,13 @@
     "delete": "Delete",
     "required": "required"
   },
-
   "promo": {
     "message": "🎉 Special weekly offers — take a look at our menu!",
     "dismiss": "Dismiss this message"
   },
-
   "logo": {
     "home": "Pizza Pazzo — home"
   },
-
   "hours": {
     "title": "Opening hours",
     "monday": "Monday",
@@ -96,7 +91,6 @@
     "sunday": "Sunday",
     "closed": "Closed"
   },
-
   "home": {
     "pizzaThursday": "Every Thursday is pizza day",
     "promos": {
@@ -162,7 +156,6 @@
       "button": "Go to the menu"
     }
   },
-
   "footer": {
     "about": "Authentic Italian pizzas delivered to your door. Made with care since {year}.",
     "navigation": "Navigation",
@@ -171,7 +164,6 @@
     "rights": "© {year} {legalName}. All rights reserved.",
     "madeWith": "Made with ❤️ and plenty of mozzarella."
   },
-
   "legal": {
     "eyebrow": "Legal information",
     "terms": "Terms and Conditions",
@@ -188,7 +180,6 @@
     "emailLabel": "Email",
     "phoneLabel": "Phone"
   },
-
   "menu": {
     "hero": {
       "title": "Digital menu",
@@ -200,7 +191,6 @@
     "categoryFallback": "Category",
     "empty": "There are no products in this category."
   },
-
   "product": {
     "allergens": "Allergens",
     "allergensNone": "No allergens listed",
@@ -225,7 +215,6 @@
     "added": "Added ✓",
     "addToCartSoon": "Add to cart — coming soon"
   },
-
   "extras": {
     "title": "Choose add-ons",
     "crustTitle": "Choose a crust",
@@ -241,7 +230,6 @@
     "maxQuantityReached": "Maximum quantity reached",
     "invalidSelection": "One of the chosen add-ons is unavailable for this size. Remove it to continue."
   },
-
   "gallery": {
     "eyebrow": "Appetising",
     "title": "Gallery",
@@ -252,7 +240,6 @@
     "homeSubtitle": "A few shots of what we make every day.",
     "viewAll": "View the full gallery"
   },
-
   "reviews": {
     "eyebrow": "Guest opinions",
     "title": "What our customers say",
@@ -266,7 +253,6 @@
     "source": "Source: {source}",
     "rating": "{rating} out of 5 stars"
   },
-
   "popular": {
     "eyebrow": "Guest favourites",
     "title": "Most ordered",
@@ -274,7 +260,6 @@
     "empty": "We'll highlight our guests' favourites here soon.",
     "viewFullMenu": "View the full menu"
   },
-
   "contacts": {
     "eyebrow": "We're here",
     "title": "Contact",
@@ -284,25 +269,65 @@
     "openInMaps": "Open in Google Maps →",
     "mapTitle": "Map — {name}"
   },
-
   "allergens": {
     "title": "Allergens",
-    "gluten": { "name": "Gluten", "description": "Cereals containing gluten" },
-    "crustaceans": { "name": "Crustaceans", "description": "Crustaceans and products thereof" },
-    "eggs": { "name": "Eggs", "description": "Eggs and products thereof" },
-    "fish": { "name": "Fish", "description": "Fish and products thereof" },
-    "peanuts": { "name": "Peanuts", "description": "Peanuts and products thereof" },
-    "soybeans": { "name": "Soya", "description": "Soybeans and products thereof" },
-    "milk": { "name": "Milk", "description": "Milk and dairy products (incl. lactose)" },
-    "nuts": { "name": "Nuts", "description": "Tree nuts and products thereof" },
-    "celery": { "name": "Celery", "description": "Celery and products thereof" },
-    "mustard": { "name": "Mustard", "description": "Mustard and products thereof" },
-    "sesame": { "name": "Sesame", "description": "Sesame seeds and products thereof" },
-    "sulphites": { "name": "Sulphites", "description": "Sulphur dioxide and sulphites" },
-    "lupin": { "name": "Lupin", "description": "Lupin and products thereof" },
-    "molluscs": { "name": "Molluscs", "description": "Molluscs and products thereof" }
+    "gluten": {
+      "name": "Gluten",
+      "description": "Cereals containing gluten"
+    },
+    "crustaceans": {
+      "name": "Crustaceans",
+      "description": "Crustaceans and products thereof"
+    },
+    "eggs": {
+      "name": "Eggs",
+      "description": "Eggs and products thereof"
+    },
+    "fish": {
+      "name": "Fish",
+      "description": "Fish and products thereof"
+    },
+    "peanuts": {
+      "name": "Peanuts",
+      "description": "Peanuts and products thereof"
+    },
+    "soybeans": {
+      "name": "Soya",
+      "description": "Soybeans and products thereof"
+    },
+    "milk": {
+      "name": "Milk",
+      "description": "Milk and dairy products (incl. lactose)"
+    },
+    "nuts": {
+      "name": "Nuts",
+      "description": "Tree nuts and products thereof"
+    },
+    "celery": {
+      "name": "Celery",
+      "description": "Celery and products thereof"
+    },
+    "mustard": {
+      "name": "Mustard",
+      "description": "Mustard and products thereof"
+    },
+    "sesame": {
+      "name": "Sesame",
+      "description": "Sesame seeds and products thereof"
+    },
+    "sulphites": {
+      "name": "Sulphites",
+      "description": "Sulphur dioxide and sulphites"
+    },
+    "lupin": {
+      "name": "Lupin",
+      "description": "Lupin and products thereof"
+    },
+    "molluscs": {
+      "name": "Molluscs",
+      "description": "Molluscs and products thereof"
+    }
   },
-
   "cart": {
     "title": "Cart",
     "comingSoon": "Online ordering is on its way. Very soon you'll be able to add dishes here and order straight from the site. Until then, give us a call — we take orders by phone.",
@@ -317,7 +342,20 @@
     "continueShopping": "Continue browsing",
     "clear": "Clear cart"
   },
-
+  "store": {
+    "closedTitle": "The restaurant is closed",
+    "closedTemporaryToday": "We start taking orders again today at {time}.",
+    "closedTemporaryTomorrow": "We start taking orders again tomorrow at {time}.",
+    "closedTemporaryDate": "We start taking orders again on {date} at {time}.",
+    "closedIndefinite": "We will be open again soon. Thank you for your patience!",
+    "closedHoursToday": "We are open again today from {time}.",
+    "closedHoursTomorrow": "We are open again tomorrow from {time}.",
+    "closedHoursDate": "We are open again on {date} from {time}.",
+    "closedUnknown": "We are not taking online orders at the moment.",
+    "ordersPaused": "Online ordering is paused right now.",
+    "closedShort": "Closed",
+    "understood": "Got it"
+  },
   "checkout": {
     "title": "Checkout",
     "comingSoon": "Placing orders online isn't live yet. Please call us to order.",
@@ -349,7 +387,6 @@
     "agreeTerms": "By placing your order you agree to the <terms>Terms and Conditions</terms> and the <privacy>Privacy Policy</privacy>.",
     "placing": "Placing…"
   },
-
   "orderSuccess": {
     "metaTitle": "Order placed",
     "title": "Thank you for your order!",
@@ -357,7 +394,6 @@
     "orderNumber": "Order number: #{number}",
     "backToMenu": "Back to the menu"
   },
-
   "auth": {
     "notConfigured": "This section will be enabled once Supabase is configured.",
     "login": {
@@ -408,7 +444,6 @@
     "logout": "Sign out",
     "loggingOut": "Signing out…"
   },
-
   "profile": {
     "metaTitle": "My profile",
     "title": "Profile",
@@ -469,7 +504,6 @@
       "deleteConfirm": "Are you sure?"
     }
   },
-
   "admin": {
     "title": "Admin panel",
     "openOrder": "Open order #{number}",
@@ -521,7 +555,6 @@
       "maxRange": "The range cannot be longer than 366 days. Showing today instead."
     }
   },
-
   "validation": {
     "phoneMin": "The phone number must be at least 8 characters.",
     "phoneInvalid": "Enter a valid Bulgarian phone number, e.g. 0888123456.",
@@ -545,7 +578,6 @@
     "roleStaffOrAdmin": "The role must be staff or admin.",
     "defaultAddressLabel": "Default address"
   },
-
   "actions": {
     "mustBeSignedIn": "You need to be signed in.",
     "authError": {
@@ -569,7 +601,6 @@
       "deleted": "The address has been deleted."
     }
   },
-
   "errors": {
     "notFound": {
       "title": "Page not found",

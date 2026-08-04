@@ -10,6 +10,8 @@ import type {
   ProductExtrasData,
 } from "@/types/cart";
 import { useCartStore } from "@/store/cart-store";
+import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
+import { useStoreClosed } from "@/components/store/StoreStatusProvider";
 import { EXTRAS_LIMITS, parseVariantSize } from "@/lib/extras-rules";
 import { formatEurPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
@@ -38,7 +40,9 @@ export function AddToCart({
   const t = useTranslations("product");
   const tCart = useTranslations("cart");
   const tExtras = useTranslations("extras");
+  const tStore = useTranslations("store");
   const addProduct = useCartStore((s) => s.addProduct);
+  const storeClosed = useStoreClosed();
 
   const variants = product.variants ?? [];
   const hasVariants = variants.length > 0;
@@ -117,7 +121,7 @@ export function AddToCart({
   }
 
   function handleAdd() {
-    if (invalidSelection) return;
+    if (invalidSelection || storeClosed) return;
     // Build the cart selections in option render order (deterministic); the
     // display block is UI preview only — the checkout serializer drops it.
     const list: CartExtraSelection[] = [];
@@ -214,6 +218,9 @@ export function AddToCart({
         </p>
       )}
 
+      {/* Says why the button below will not work; renders nothing while open. */}
+      <StoreClosedBanner />
+
       <div className="flex flex-wrap items-center gap-4">
         {/* Quantity stepper */}
         <div className="inline-flex items-center rounded-full border border-pizza-cream-dark bg-white">
@@ -241,14 +248,18 @@ export function AddToCart({
         <button
           type="button"
           onClick={handleAdd}
-          disabled={invalidSelection}
+          disabled={invalidSelection || storeClosed}
           className={cn(
             "flex-1 rounded-full px-6 py-3.5 text-sm font-semibold text-white shadow-soft transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 sm:flex-none sm:px-10",
             justAdded ? "bg-pizza-green" : "bg-brand hover:bg-brand-dark",
-            invalidSelection && "cursor-not-allowed opacity-60 hover:bg-brand"
+            (invalidSelection || storeClosed) && "cursor-not-allowed opacity-60 hover:bg-brand"
           )}
         >
-          {justAdded ? t("added") : `🛒 ${t("addToCart")}`}
+          {storeClosed
+            ? tStore("closedShort")
+            : justAdded
+              ? t("added")
+              : `🛒 ${t("addToCart")}`}
         </button>
 
         <div className="flex items-end gap-2">

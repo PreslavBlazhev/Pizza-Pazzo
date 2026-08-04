@@ -3,6 +3,8 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useCartStore, useCartHydrated } from "@/store/cart-store";
+import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
+import { useStoreClosed } from "@/components/store/StoreStatusProvider";
 import { CartItem } from "./CartItem";
 import { CartSummary } from "./CartSummary";
 
@@ -14,6 +16,7 @@ export function CartView() {
   const items = useCartStore((s) => s.items);
   const totalsFn = useCartStore((s) => s.totals);
   const clear = useCartStore((s) => s.clear);
+  const storeClosed = useStoreClosed();
 
   // Until the persisted cart is read, render a stable placeholder so the server
   // and first client paint match.
@@ -57,12 +60,27 @@ export function CartView() {
       {/* Summary */}
       <aside className="h-fit rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
         <CartSummary totals={totals} />
-        <Link
-          href="/checkout"
-          className="mt-6 block rounded-full bg-brand px-6 py-3.5 text-center font-semibold text-white shadow-soft transition hover:bg-brand-dark"
-        >
-          {t("checkout")}
-        </Link>
+
+        <StoreClosedBanner className="mt-6" />
+
+        {/* Closed: the cart is kept (nothing is thrown away) but the way
+            forward is a dead button rather than a link into a checkout that
+            would only be refused on submit. */}
+        {storeClosed ? (
+          <span
+            aria-disabled
+            className="mt-6 block cursor-not-allowed rounded-full bg-pizza-cream-dark px-6 py-3.5 text-center font-semibold text-pizza-muted"
+          >
+            {t("checkout")}
+          </span>
+        ) : (
+          <Link
+            href="/checkout"
+            className="mt-6 block rounded-full bg-brand px-6 py-3.5 text-center font-semibold text-white shadow-soft transition hover:bg-brand-dark"
+          >
+            {t("checkout")}
+          </Link>
+        )}
         <Link
           href="/menu"
           className="mt-3 block text-center text-sm font-medium text-pizza-green transition hover:underline"

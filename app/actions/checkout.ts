@@ -16,6 +16,7 @@ import {
   type OrderItemExtra,
 } from "@/lib/extras-rules";
 import { sendNewOrderNotification } from "@/lib/email/resend";
+import { getStoreStatus } from "@/lib/store-status";
 
 /**
  * Checkout — creates an Order + OrderItems in SQLite.
@@ -59,6 +60,19 @@ export async function createOrder(
   _prev: CheckoutResult | null,
   formData: FormData
 ): Promise<CheckoutResult> {
+  // ── 0. Is the restaurant taking orders at all? ──
+  // The authoritative check. The buttons and the dialog in the browser are a
+  // courtesy; this is what makes a closed shop actually closed, including for
+  // a stale tab, a resubmitted form or a crafted request.
+  const storeStatus = await getStoreStatus();
+  if (!storeStatus.isOpen) {
+    return {
+      ok: false,
+      error:
+        "Заведението в момента е затворено и не приема поръчки. Опитайте отново, когато отворим.",
+    };
+  }
+
   // ── 1. Validate contact + delivery ──
   const parsed = checkoutSchema.safeParse({
     customerName: formData.get("customerName"),
