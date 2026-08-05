@@ -21,11 +21,11 @@ export function ProductCard({ product }: { product: Product }) {
       )}
     >
       {/* Image + badges — the image itself opens the product (same route as
-          the "details" button below); badges/overlay stay pointer-events-none
-          so they never intercept the click. */}
+          the "Поръчай сега" button below); badges/overlay stay
+          pointer-events-none so they never intercept the click. */}
       <ProductImageLink
         href={`/product/${product.slug}`}
-        ariaLabel={t("viewDetailsFor", { name: product.name })}
+        ariaLabel={t("orderNowFor", { name: product.name })}
         className="relative block aspect-[4/3] cursor-pointer overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-2"
       >
         <ProductImage
@@ -113,9 +113,9 @@ export function ProductCard({ product }: { product: Product }) {
           <Link
             href={`/product/${product.slug}`}
             className="shrink-0 rounded-full bg-pizza-green px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pizza-green-dark focus:outline-none focus:ring-2 focus:ring-pizza-green/40 focus:ring-offset-2"
-            aria-label={t("viewDetailsFor", { name: product.name })}
+            aria-label={t("orderNowFor", { name: product.name })}
           >
-            {t("details")}
+            {t("orderNow")}
           </Link>
         </div>
       </div>

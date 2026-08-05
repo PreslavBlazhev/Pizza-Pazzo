@@ -208,9 +208,9 @@
     "from": "from",
     "imageSoon": "Photo coming soon",
     "backToMenu": "Back to menu",
-    "details": "Details",
+    "orderNow": "Order now",
     "fallbackTitle": "Product",
-    "viewDetailsFor": "View details for {name}",
+    "orderNowFor": "Order now: {name}",
     "addToCart": "Add to cart",
     "added": "Added ✓",
     "addToCartSoon": "Add to cart — coming soon"

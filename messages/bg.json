@@ -208,9 +208,9 @@
     "from": "от",
     "imageSoon": "Снимка скоро",
     "backToMenu": "Обратно към менюто",
-    "details": "Детайли",
+    "orderNow": "Поръчай сега",
     "fallbackTitle": "Продукт",
-    "viewDetailsFor": "Виж детайли за {name}",
+    "orderNowFor": "Поръчай сега: {name}",
     "addToCart": "Добави в количката",
     "added": "Добавено ✓",
     "addToCartSoon": "Добавяне в количка — скоро"
