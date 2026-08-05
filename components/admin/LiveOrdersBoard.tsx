@@ -1,272 +1,60 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { updateOrderStatusAction } from "@/app/actions/order-admin";
+import { useState, useTransition } from "react";
 import { openStoreAction } from "@/app/actions/store-closure";
 import { formatEurPrice } from "@/lib/format-price";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
-import {
-  clearStoredShift,
-  getAudioContext,
-  isAudioRunning,
-  readStoredShift,
-  releaseAudio,
-  storeShift,
-  unlockAudio,
-} from "@/lib/shift-session";
 import { formatSofiaTime, sofiaDayOffset } from "@/lib/store-hours";
 import { PrintOrderButtons } from "./PrintOrderButton";
-import type { Order, OrderWithItems } from "@/types/order";
-import { PRINT_TEMPLATE_IDS, defaultPrintTemplate, type PrintTemplateData } from "@/types/print";
+import { closureEndsShift, useShift } from "./ShiftProvider";
+import type { Order } from "@/types/order";
 import type { StoreStatus } from "@/types/store-status";
 
-const POLL_INTERVAL_MS = 8_000;
 const QUICK_TIMES = [20, 30, 45, 60];
 
-/** How often we re-check whether the browser is really letting sound out. */
-const AUDIO_CHECK_MS = 1_500;
-
 /**
- * Does this closure end the shift?
+ * The tablet screen: the pending orders, big enough to read across a kitchen,
+ * with one tap to accept and one to refuse.
  *
- * Closing the restaurant ends the shift — but a timed pause is not "closing",
- * it is the kitchen catching its breath, and it reopens on its own with
- * nobody touching the tablet. Ending the shift there would leave the board
- * silent at the exact moment orders start arriving again, because the alarm
- * needs a fresh tap to make sound. So a timed pause keeps the shift; the end
- * of the working day and "до ръчно отваряне" end it.
- */
-function closureEndsShift(status: StoreStatus | null): boolean {
-  if (!status || status.isOpen) return false;
-  return status.reason !== "manual_timed";
-}
-
-/**
- * The tablet screen: after "Начало на смяната" it polls for PENDING orders and
- * sounds a looping alarm (Web Audio — no sound file, so nothing to preload)
- * until every order on screen is accepted or cancelled. The start button is
- * mandatory: browsers only allow audio after a user gesture, and it also lets
- * us grab a screen wake lock so the tablet never sleeps mid-shift.
- *
- * The shift belongs to the device, not to the component: it is remembered in
- * localStorage and the audio permission lives at module scope (see
- * `lib/shift-session.ts`), so walking over to Табло and back no longer drops
- * it. Exactly two things end a shift — "Приключи смяна", and the restaurant
- * being closed (by the hours or by the switch in the nav).
- *
- * Polling runs even before the shift starts. It costs one request per interval
- * and it is what lets this screen show the closed state and its "Отвори
- * заведението" button while the shift is off.
+ * It owns none of the shift any more. Polling, the siren, the wake lock and
+ * the "am I on shift" flag live in `ShiftProvider`, mounted by the admin
+ * layout, because the owner wants the alarm to ring on EVERY admin screen —
+ * Табло, Продукти, anywhere — not only while this page happens to be open.
+ * What is left here is presentation plus the two shift buttons, which belong
+ * on the screen the staff start their day from.
  */
 export function LiveOrdersBoard() {
-  // The stored shift can only be read in the browser, so the first paint is
-  // deliberately blank rather than a start screen that flips a frame later.
-  const [hydrated, setHydrated] = useState(false);
-  const [shiftStarted, setShiftStarted] = useState(false);
-  const [audioBlocked, setAudioBlocked] = useState(false);
-  const [confirmingEnd, setConfirmingEnd] = useState(false);
-  const [orders, setOrders] = useState<Order[]>([]);
-  // Seeded from the defaults so the print buttons work on the very first paint;
-  // every poll replaces them with whatever /admin/settings/print holds now.
-  const [printTemplates, setPrintTemplates] = useState<PrintTemplateData[]>(() =>
-    PRINT_TEMPLATE_IDS.map(defaultPrintTemplate)
-  );
-  const [connectionLost, setConnectionLost] = useState(false);
-  const [lastCheck, setLastCheck] = useState<Date | null>(null);
-  const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
-  // Null until the first poll answers — the banner stays away rather than
-  // flashing "открито"/"затворено" on load.
-  const [storeStatus, setStoreStatus] = useState<StoreStatus | null>(null);
-  // Orders accepted this shift stay listed below the pending ones so the staff
-  // can print the kitchen ticket (via the Android app) after accepting.
-  const [acceptedOrders, setAcceptedOrders] = useState<OrderWithItems[]>([]);
+  const {
+    hydrated,
+    shiftStarted,
+    audioBlocked,
+    orders,
+    acceptedOrders,
+    printTemplates,
+    storeStatus,
+    connectionLost,
+    lastCheck,
+    busyOrderId,
+    startShift,
+    endShift,
+    unlockSound,
+    refresh,
+    submitStatus,
+  } = useShift();
 
-  const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
+  // The only state that is genuinely this screen's: the second tap on
+  // "Приключи смяна".
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
+
   const hasPending = orders.length > 0;
   const closingDown = closureEndsShift(storeStatus);
   // Closed for good, but orders are still on screen: the shift has to outlive
   // the closing time until the last one is dealt with.
   const closingAfterLastOrder = shiftStarted && closingDown && hasPending;
 
-  /**
-   * Ends the shift on this device: forget it, hand the speaker back, drop the
-   * confirmation. Idempotent — the poll calls it on every closed answer.
-   */
-  const endShift = useCallback(() => {
-    setShiftStarted(false);
+  const finishShift = () => {
     setConfirmingEnd(false);
-    setAudioBlocked(false);
-    // The print list belongs to the shift that accepted those orders; older
-    // tickets are still reachable from Поръчки.
-    setAcceptedOrders((prev) => (prev.length ? [] : prev));
-    clearStoredShift();
-    releaseAudio();
-  }, []);
-
-  const fetchPending = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/pending-orders", { cache: "no-store" });
-      if (!res.ok) throw new Error(String(res.status));
-      const data = (await res.json()) as {
-        orders: Order[];
-        printTemplates?: PrintTemplateData[];
-        storeStatus?: StoreStatus;
-      };
-      setOrders(data.orders);
-      if (data.printTemplates?.length) setPrintTemplates(data.printTemplates);
-      // A timed closure ends here: the poll after the deadline simply reports
-      // the shop open again, and the banner disappears on its own.
-      if (data.storeStatus) setStoreStatus(data.storeStatus);
-
-      // The second way a shift ends. Waiting for the board to be empty is not
-      // politeness: an order placed at 22:58 still has to be accepted at
-      // 23:01, and ending the shift hides it and silences the alarm.
-      if (closureEndsShift(data.storeStatus ?? null) && data.orders.length === 0) {
-        endShift();
-      }
-
-      setConnectionLost(false);
-      setLastCheck(new Date());
-    } catch {
-      setConnectionLost(true);
-    }
-  }, [endShift]);
-
-  // Bring back the shift this device was left in — same day only.
-  useEffect(() => {
-    if (readStoredShift()) {
-      setShiftStarted(true);
-      // After an in-app navigation the audio context is still alive at module
-      // scope; after a real reload it is not, and the prompt below appears.
-      setAudioBlocked(!isAudioRunning());
-    }
-    setHydrated(true);
-  }, []);
-
-  // Polling runs whether or not the shift is on — the closed notice and the
-  // reopen button need the status too.
-  useEffect(() => {
-    void fetchPending();
-    const id = setInterval(() => void fetchPending(), POLL_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [fetchPending]);
-
-  // Is sound actually coming out? A resumed shift after a page reload has no
-  // audio permission until someone touches the screen once more, and a silent
-  // alarm is worse than no alarm — so we watch the context, not our intent.
-  useEffect(() => {
-    if (!shiftStarted) return;
-
-    const sync = () => setAudioBlocked(!isAudioRunning());
-    const onGesture = () => {
-      unlockAudio();
-      window.setTimeout(sync, 100);
-    };
-
-    sync();
-    const id = setInterval(sync, AUDIO_CHECK_MS);
-    // Any tap anywhere counts as the gesture the browser is waiting for.
-    document.addEventListener("pointerdown", onGesture);
-    return () => {
-      clearInterval(id);
-      document.removeEventListener("pointerdown", onGesture);
-    };
-  }, [shiftStarted]);
-
-  // Alarm loop: a near-continuous two-tone siren (sawtooth, full volume) plus
-  // vibration on devices that support it — deliberately obnoxious, it must cut
-  // through kitchen noise until every order is handled.
-  useEffect(() => {
-    if (!shiftStarted || !hasPending) return;
-
-    const siren = () => {
-      const ctx = getAudioContext();
-      if (!ctx || ctx.state !== "running") return;
-      const t0 = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sawtooth";
-      // Alternate high/low every 150 ms for one second — classic alarm wail.
-      for (let i = 0; i < 7; i++) {
-        osc.frequency.setValueAtTime(i % 2 === 0 ? 1600 : 950, t0 + i * 0.15);
-      }
-      gain.gain.setValueAtTime(0.9, t0);
-      gain.gain.setValueAtTime(0.9, t0 + 1.0);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 1.08);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t0);
-      osc.stop(t0 + 1.1);
-
-      navigator.vibrate?.([400, 100, 400]);
-    };
-
-    siren();
-    const id = setInterval(siren, 1200);
-    return () => {
-      clearInterval(id);
-      navigator.vibrate?.(0);
-    };
-  }, [shiftStarted, hasPending]);
-
-  // Keep the screen awake; reacquire when the tab becomes visible again.
-  useEffect(() => {
-    if (!shiftStarted) return;
-
-    const acquire = async () => {
-      try {
-        wakeLockRef.current = await navigator.wakeLock?.request("screen");
-      } catch {
-        // Not supported / not allowed — the tablet's own display settings apply.
-      }
-    };
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void acquire();
-    };
-
-    void acquire();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisible);
-      void wakeLockRef.current?.release().catch(() => {});
-      wakeLockRef.current = null;
-    };
-  }, [shiftStarted]);
-
-  const startShift = () => {
-    // The click is the user gesture that unlocks audio for the rest of the day.
-    unlockAudio();
-    storeShift();
-    setAudioBlocked(false); // the interval above corrects us if it lied
-    setShiftStarted(true);
-    void fetchPending();
-  };
-
-  const submitStatus = async (orderId: string, fields: Record<string, string>) => {
-    setBusyOrderId(orderId);
-    try {
-      const fd = new FormData();
-      fd.set("orderId", orderId);
-      for (const [k, v] of Object.entries(fields)) fd.set(k, v);
-      const result = await updateOrderStatusAction(null, fd);
-      // Keep the just-accepted order around (with the ETA the staff picked) so
-      // its print button is available. Printing is NEVER automatic.
-      if (result?.ok && fields.status === "ACCEPTED") {
-        const accepted = orders.find((o) => o.id === orderId);
-        if (accepted) {
-          const withItems: OrderWithItems = {
-            ...accepted,
-            items: accepted.items ?? [],
-            status: "ACCEPTED",
-            estimatedTimeMinutes: Number(fields.estimatedTimeMinutes) || null,
-            acceptedAt: new Date().toISOString(),
-          };
-          setAcceptedOrders((prev) => [withItems, ...prev.filter((o) => o.id !== orderId)].slice(0, 8));
-        }
-      }
-      await fetchPending();
-    } finally {
-      setBusyOrderId(null);
-    }
+    endShift();
   };
 
   // Nothing until we know whether a shift is already running: rendering the
@@ -279,9 +67,10 @@ export function LiveOrdersBoard() {
     <div className={shiftStarted && hasPending ? "animate-pulse-bg" : undefined}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-neutral-500">
-          {shiftStarted ? "Смяната е започната" : "Смяната не е започната"} · проверка
-          на всеки {POLL_INTERVAL_MS / 1000} сек
-          {lastCheck && ` · последна: ${lastCheck.toLocaleTimeString("bg-BG")}`}
+          {shiftStarted
+            ? "Смяната е започната · алармата звъни във всички менюта"
+            : "Смяната не е започната"}
+          {lastCheck && ` · последна проверка: ${lastCheck.toLocaleTimeString("bg-BG")}`}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           {connectionLost && (
@@ -295,7 +84,7 @@ export function LiveOrdersBoard() {
               pendingCount={orders.length}
               onAsk={() => setConfirmingEnd(true)}
               onCancel={() => setConfirmingEnd(false)}
-              onConfirm={endShift}
+              onConfirm={finishShift}
             />
           )}
         </div>
@@ -304,10 +93,7 @@ export function LiveOrdersBoard() {
       {shiftStarted && audioBlocked && (
         <button
           type="button"
-          onClick={() => {
-            unlockAudio();
-            window.setTimeout(() => setAudioBlocked(!isAudioRunning()), 100);
-          }}
+          onClick={unlockSound}
           className="mb-4 w-full rounded-2xl border-2 border-red-500 bg-red-50 px-5 py-4 text-left"
         >
           <span className="block text-lg font-bold text-red-700">
@@ -320,7 +106,7 @@ export function LiveOrdersBoard() {
         </button>
       )}
 
-      <StoreClosedNotice status={storeStatus} onReopened={fetchPending} />
+      <StoreClosedNotice status={storeStatus} onReopened={refresh} />
 
       {closingAfterLastOrder && (
         <p className="mb-4 rounded-2xl border-2 border-amber-400 bg-white px-5 py-3 font-semibold text-amber-900">
