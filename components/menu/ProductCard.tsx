@@ -112,7 +112,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
           <Link
             href={`/product/${product.slug}`}
-            className="shrink-0 rounded-full bg-pizza-green px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pizza-green-dark focus:outline-none focus:ring-2 focus:ring-pizza-green/40 focus:ring-offset-2"
+            className="shrink-0 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 focus:ring-offset-2"
             aria-label={t("orderNowFor", { name: product.name })}
           >
             {t("orderNow")}
