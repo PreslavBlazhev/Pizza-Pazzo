@@ -384,7 +384,13 @@
     "payment": "Payment",
     "paymentCod": "Cash on delivery",
     "agreeTerms": "By placing your order you agree to the <terms>Terms and Conditions</terms> and the <privacy>Privacy Policy</privacy>.",
-    "placing": "Placing…"
+    "placing": "Placing…",
+    "required": "REQUIRED",
+    "optional": "optional",
+    "fieldRequired": "This field is required.",
+    "missingFieldsTitle": "Please fill in the required fields",
+    "missingFieldsKept": "Your order was NOT sent. Everything you already entered has been kept.",
+    "goToField": "Go to the field →"
   },
   "orderSuccess": {
     "metaTitle": "Order placed",
