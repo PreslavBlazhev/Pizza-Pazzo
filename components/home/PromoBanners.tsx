@@ -64,7 +64,11 @@ function PromoBanner({
         className
       )}
     >
-      <div className="flex aspect-[1/2] flex-col items-center justify-between rounded-xl border border-white/45 px-4 py-5 text-center text-white">
+      {/* Padding tightens below `sm` only: on a phone the two boards sit side
+          by side, roughly half the width they have anywhere else. Every size
+          in these boards follows the same rule — a small base value, then the
+          original from `sm` up, so tablets and desktop are untouched. */}
+      <div className="flex aspect-[1/2] flex-col items-center justify-between rounded-xl border border-white/45 px-2.5 py-3.5 text-center text-white sm:px-4 sm:py-5">
         {children}
       </div>
     </Link>
@@ -77,28 +81,28 @@ export function TwoToppingsPromo({ className }: { className?: string }) {
 
   const size = (label: string, price: string) => (
     <div>
-      <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-white/85 sm:text-xs">
+      <p className="text-[0.5rem] font-semibold uppercase tracking-[0.1em] text-white/85 sm:text-xs sm:tracking-[0.16em]">
         {label}
       </p>
-      <p className="mt-1 font-slogan text-xl leading-none sm:text-2xl">{price}</p>
+      <p className="mt-0.5 font-slogan text-base leading-none sm:mt-1 sm:text-2xl">{price}</p>
     </div>
   );
 
   return (
     <PromoBanner tone="red" ariaLabel={t("ariaLabel")} className={className}>
-      <BannerLogo className="max-w-[7.5rem]" />
+      <BannerLogo className="max-w-[4.25rem] sm:max-w-[7.5rem]" />
 
-      <h3 className="font-slogan text-lg uppercase leading-tight tracking-wide sm:text-xl">
+      <h3 className="font-slogan text-[0.8rem] uppercase leading-tight tracking-wide sm:text-xl">
         {t("title")}
       </h3>
 
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-2 sm:space-y-4">
         {size(t("medium"), t("mediumPrice"))}
-        <span className="mx-auto block h-px w-12 bg-white/40" aria-hidden />
+        <span className="mx-auto block h-px w-8 bg-white/40 sm:w-12" aria-hidden />
         {size(t("large"), t("largePrice"))}
       </div>
 
-      <p className="rounded-full border border-white/50 px-4 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] sm:text-xs">
+      <p className="rounded-full border border-white/50 px-2.5 py-1 text-[0.5rem] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:py-1.5 sm:text-xs sm:tracking-[0.18em]">
         {t("collectionOnly")}
       </p>
     </PromoBanner>
@@ -111,48 +115,48 @@ export function PizzaMathPromo({ className }: { className?: string }) {
 
   return (
     <PromoBanner tone="green" ariaLabel={t("ariaLabel")} className={className}>
-      <h3 className="font-slogan text-lg uppercase leading-tight tracking-wide sm:text-xl">
+      <h3 className="font-slogan text-[0.8rem] uppercase leading-tight tracking-wide sm:text-xl">
         {t("titleLine1")}
         <span className="block">{t("titleLine2")}</span>
       </h3>
 
       {/* Sized so the longest equation stays on one row in both languages —
-          a wrapped equation reads as two separate offers. */}
-      <ul className="w-full space-y-3 font-slogan text-[0.95rem] leading-none">
+          a wrapped equation reads as two separate offers. That is also what
+          sets the phone size: the equation is the widest thing on the board. */}
+      <ul className="w-full space-y-1.5 font-slogan text-[0.7rem] leading-none sm:space-y-3 sm:text-[0.95rem]">
         <li>{t("offer3030")}</li>
         <li>{t("offer4030")}</li>
         <li>{t("offer4040")}</li>
       </ul>
 
-      <BannerLogo className="max-w-[6.5rem]" />
+      <BannerLogo className="max-w-[3.75rem] sm:max-w-[6.5rem]" />
 
-      <p className="text-[0.7rem] leading-snug text-white/90 sm:text-xs">
-        {t("noteLine1")}
-        <span className="mt-1 block font-semibold">{t("noteLine2")}</span>
+      <p className="text-[0.5rem] leading-snug text-white/90 sm:text-xs">
+        {/* The explanation is a nicety; the exclusion is not. On a phone board
+            there is no room for both, so only the exclusion survives. */}
+        <span className="hidden sm:inline">{t("noteLine1")}</span>
+        <span className="font-semibold sm:mt-1 sm:block">{t("noteLine2")}</span>
       </p>
     </PromoBanner>
   );
 }
 
 /**
- * Narrow-screen presentation: a swipeable, snapping row. The second board is
- * deliberately part-visible at the right edge so the swipe is discoverable.
- * No autoplay, no carousel library — just scroll snapping.
+ * Narrow-screen presentation: both boards side by side, always.
+ *
+ * They used to be a swipeable row at 78vw each, which on a phone in portrait
+ * made each board taller than the screen — the pair dominated the page and the
+ * second one was easy to miss. Half the row each keeps the printed 1:2
+ * proportion, shows both offers at once and needs no swipe.
+ *
+ * The max width is what keeps a tablet sane: at 640–1024px the row would
+ * otherwise stretch each board past 300px wide (and 600px tall).
  */
-export function PromoBannersCarousel() {
+export function PromoBannersRow() {
   return (
-    <div
-      className={cn(
-        "-mx-4 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 lg:hidden",
-        // `safe center` centres the pair on a tablet where both fit, but falls
-        // back to start alignment when they overflow — plain `justify-center`
-        // would push the first board out of reach on a phone.
-        "[justify-content:safe_center]",
-        "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      )}
-    >
-      <TwoToppingsPromo className="w-[78vw] max-w-[17rem] shrink-0 snap-center sm:w-[46vw]" />
-      <PizzaMathPromo className="w-[78vw] max-w-[17rem] shrink-0 snap-center sm:w-[46vw]" />
+    <div className="mx-auto mt-10 grid w-full max-w-[34rem] grid-cols-2 gap-3 sm:gap-4 lg:hidden">
+      <TwoToppingsPromo />
+      <PizzaMathPromo />
     </div>
   );
 }

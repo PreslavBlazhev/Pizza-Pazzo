@@ -9,7 +9,7 @@ import { GallerySection } from "@/components/home/GallerySection";
 import { ReviewsSection } from "@/components/home/ReviewsSection";
 import {
   PizzaMathPromo,
-  PromoBannersCarousel,
+  PromoBannersRow,
   TwoToppingsPromo,
 } from "@/components/home/PromoBanners";
 import { getCategories, getPopularProducts } from "@/lib/menu-data";
@@ -69,7 +69,7 @@ export default async function HomePage({
         <section className="relative isolate overflow-clip">
           {/* Desktop puts a promo board on each side of the hero; below `lg`
               the middle column is the whole row and the boards move under it
-              as a swipeable carousel. Vertical rhythm tightens on `lg` so the
+              as a two-up row. Vertical rhythm tightens on `lg` so the
               logo, heading, badge, CTAs and both boards fit a 1366×768 screen
               without scrolling. */}
           <div className="container py-16 sm:py-20 lg:grid lg:grid-cols-[minmax(180px,240px)_minmax(0,1fr)_minmax(180px,240px)] lg:items-center lg:gap-8 lg:py-10">
@@ -136,7 +136,7 @@ export default async function HomePage({
                 <span>{t("hero.trustDough")}</span>
               </div>
 
-              <PromoBannersCarousel />
+              <PromoBannersRow />
             </div>
 
             <PizzaMathPromo className="hidden lg:block" />
