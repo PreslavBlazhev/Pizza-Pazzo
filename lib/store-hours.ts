@@ -1,17 +1,18 @@
 /**
  * "Is the restaurant taking orders right now, and if not, when again?"
  *
- * Two independent things can close the shop:
+ * Three things decide it:
  *   1. the opening hours (`RestaurantHours`) — the kitchen is simply not
  *      working at this hour;
  *   2. a manual closure — someone pressed "Затвори заведението" in the admin
- *      panel, either for a set time or until they reopen by hand.
+ *      panel, either for a set time or until they reopen by hand;
+ *   3. a forced opening — someone pressed "Отвори принудително" because the
+ *      kitchen is working tonight regardless of what the schedule says.
  *
- * A manual closure OUTRANKS the hours: it can close a shop that would
- * otherwise be open, never the other way round. It cannot open one that the
- * hours say is closed, which is why a timer expiring at 02:00 does not start
- * taking orders — `nextOpeningAfter` moves the reopen to the next real
- * opening.
+ * Both overrides beat the hours, in opposite directions, and the closure beats
+ * everything. A closure timer expiring at 02:00 still does not start taking
+ * orders — `nextOpeningAfter` moves the reopen to the next real opening — but
+ * a forced opening at 02:00 does, because that is a person saying so.
  *
  * Nothing here writes anything. A timed closure ends because `now` moved past
  * `until`, not because a job cleared a flag, so there is no cron and no way
@@ -119,39 +120,59 @@ export function nextOpeningAfter(hours: RestaurantHours, at: Date): Date | null 
   return null;
 }
 
-/** The manual closure, reduced to what the decision actually needs. */
-export interface ManualClosureState {
+/**
+ * A manual override, reduced to what the decision actually needs. Used for
+ * both directions: the closure and the forced opening have the same shape.
+ */
+export interface ManualOverrideState {
   active: boolean;
-  /** Null while active means "until reopened by hand". */
+  /** Null while active means "until someone ends it by hand". */
   until: Date | null;
 }
+
+/** Backwards-compatible alias — the closure was the first override. */
+export type ManualClosureState = ManualOverrideState;
+
+/**
+ * Is an override still in force? An expired timer is simply not an override
+ * any more: the row keeps its stale flag until someone next touches it, and
+ * that is deliberate — going back to normal must not depend on a write
+ * succeeding.
+ */
+function overrideActive(override: ManualOverrideState, now: Date): boolean {
+  return override.active && (override.until === null || override.until.getTime() > now.getTime());
+}
+
+/** Nothing forced, in either direction. */
+const NO_OVERRIDE: ManualOverrideState = { active: false, until: null };
 
 /**
  * The one function the rest of the app asks: open or closed, why, and until
  * when. `now` is injected rather than read from the clock so this stays
  * testable and so every caller in one request agrees on the time.
+ *
+ * `forcedOpening` is the closure's mirror: it opens a shop the hours would
+ * keep closed. The two overrides are stored mutually exclusively (each write
+ * clears the other), and the closure is still checked first, so even a row
+ * that somehow holds both errs towards refusing orders.
  */
 export function resolveStoreStatus(
   hours: RestaurantHours,
-  closure: ManualClosureState,
-  now: Date
+  closure: ManualOverrideState,
+  now: Date,
+  forcedOpening: ManualOverrideState = NO_OVERRIDE
 ): StoreStatus {
   const serverTime = now.toISOString();
+  const base = { forcedOpen: false, forcedOpenUntil: null, serverTime };
 
-  // An expired timer is simply not a closure any more — the row keeps its
-  // stale `manuallyClosed = true` until someone next touches it, and that is
-  // deliberate: reopening must not depend on a write succeeding.
-  const manualActive =
-    closure.active && (closure.until === null || closure.until.getTime() > now.getTime());
-
-  if (manualActive) {
+  if (overrideActive(closure, now)) {
     if (closure.until === null) {
       return {
+        ...base,
         isOpen: false,
         reason: "manual_indefinite",
         reopensAt: null,
         needsManualReopen: true,
-        serverTime,
       };
     }
 
@@ -159,32 +180,47 @@ export function resolveStoreStatus(
     // there to cook. Orders resume at the later of the two.
     const reopensAt = nextOpeningAfter(hours, closure.until);
     return {
+      ...base,
       isOpen: false,
       reason: "manual_timed",
       reopensAt: reopensAt ? reopensAt.toISOString() : null,
       // Only if the week has no open day at all is a human needed here.
       needsManualReopen: reopensAt === null,
-      serverTime,
     };
   }
 
   const byHours = resolveHoursStatus(hours, now);
-  if (!byHours.open) {
+
+  // The forced opening only ever has to answer for the hours saying no; while
+  // the shop is open anyway it changes nothing, so it is not reported.
+  if (!byHours.open && overrideActive(forcedOpening, now)) {
     return {
-      isOpen: false,
-      reason: "hours",
-      reopensAt: byHours.nextOpenAt ? byHours.nextOpenAt.toISOString() : null,
+      isOpen: true,
+      reason: null,
+      reopensAt: null,
       needsManualReopen: false,
+      forcedOpen: true,
+      forcedOpenUntil: forcedOpening.until ? forcedOpening.until.toISOString() : null,
       serverTime,
     };
   }
 
+  if (!byHours.open) {
+    return {
+      ...base,
+      isOpen: false,
+      reason: "hours",
+      reopensAt: byHours.nextOpenAt ? byHours.nextOpenAt.toISOString() : null,
+      needsManualReopen: false,
+    };
+  }
+
   return {
+    ...base,
     isOpen: true,
     reason: null,
     reopensAt: null,
     needsManualReopen: false,
-    serverTime,
   };
 }
 

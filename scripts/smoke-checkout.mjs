@@ -1317,6 +1317,50 @@ if (mods?.storeHours) {
 
   check("the status always carries the server clock", normal.serverTime === midday.toISOString());
 
+  // ── Forced opening: the closure's mirror ──
+  //
+  // 03:00 Sofia on a Wednesday — the hours say closed, and someone decided the
+  // kitchen is working tonight anyway.
+  const night = at("2026-08-05T00:00:00Z");
+  const forcedIndefinitely = resolveStoreStatus(WEEK, open, night, {
+    active: true,
+    until: null,
+  });
+  check("a forced opening takes orders outside the hours", forcedIndefinitely.isOpen);
+  check("…and says so, for the admin panel", forcedIndefinitely.forcedOpen);
+  check("…with no end time when it needs stopping by hand", forcedIndefinitely.forcedOpenUntil === null);
+  check("…and no closed reason", forcedIndefinitely.reason === null);
+
+  const forcedUntilFive = resolveStoreStatus(WEEK, open, night, {
+    active: true,
+    until: at("2026-08-05T02:00:00Z"), // 05:00 Sofia
+  });
+  check("a timed forced opening carries its deadline", forcedUntilFive.forcedOpenUntil === "2026-08-05T02:00:00.000Z");
+
+  const forcedExpired = resolveStoreStatus(WEEK, open, at("2026-08-05T03:00:00Z"), {
+    active: true,
+    until: at("2026-08-05T02:00:00Z"),
+  });
+  check("…and lapses on its own, with no write", !forcedExpired.isOpen && !forcedExpired.forcedOpen);
+  check("…back to the plain hours reason", forcedExpired.reason === "hours");
+
+  // Inside the working day a forced opening changes nothing, so it must not
+  // decorate a shop that is simply open.
+  const forcedAtMidday = resolveStoreStatus(WEEK, open, midday, { active: true, until: null });
+  check("a forced opening is invisible while the shop is open anyway", forcedAtMidday.isOpen && !forcedAtMidday.forcedOpen);
+
+  // The two overrides are written mutually exclusively, but if a row ever held
+  // both, refusing orders is the safe answer.
+  const bothSet = resolveStoreStatus(
+    WEEK,
+    { active: true, until: null },
+    night,
+    { active: true, until: null }
+  );
+  check("a closure still beats a forced opening", !bothSet.isOpen && bothSet.reason === "manual_indefinite");
+
+  check("nothing forced → forcedOpen stays false", !normal.forcedOpen && normal.forcedOpenUntil === null);
+
   // ── Presentation helpers ──
   check("11:00 Sofia formats as 11:00 in summer", formatSofiaTime(at("2026-08-04T08:00:00Z")) === "11:00");
   check("11:00 Sofia formats as 11:00 in winter", formatSofiaTime(at("2026-01-06T09:00:00Z")) === "11:00");

@@ -35,6 +35,14 @@ export interface StoreStatus {
   reopensAt: string | null;
   /** True when only a human pressing "Отвори заведението" ends the closure. */
   needsManualReopen: boolean;
+  /**
+   * True when the shop is open ONLY because staff forced it open — outside the
+   * opening hours it would be closed. Nothing customer-facing changes; this is
+   * for the admin panel, which has to keep saying so until someone stops it.
+   */
+  forcedOpen: boolean;
+  /** ISO instant the forced opening lapses; null when it needs stopping by hand. */
+  forcedOpenUntil: string | null;
   /** Server clock, so the countdown never trusts the visitor's device. */
   serverTime: string;
 }
@@ -54,6 +62,13 @@ export const CLOSURE_MAX_MINUTES = 1440;
 /** The quick-choice buttons in the closing dialog, in order. */
 export const CLOSURE_PRESET_MINUTES = [30, 60, 120, 180] as const;
 
+/**
+ * The quick choices for forcing the shop OPEN outside its hours. Longer than
+ * the closing presets on purpose: this one is used at 03:00 by someone who has
+ * decided to work tonight, not by someone pausing for a broken oven.
+ */
+export const FORCE_OPEN_PRESET_MINUTES = [60, 120, 180, 360] as const;
+
 /** The stored manual-closure state, as the admin panel sees it. */
 export interface ManualClosure {
   active: boolean;
@@ -61,4 +76,18 @@ export interface ManualClosure {
   until: string | null;
   closedAt: string | null;
   closedByEmail: string | null;
+}
+
+/**
+ * The stored forced-opening state — the closure's mirror image.
+ *
+ * The two can never both be active: closing clears the forced opening and
+ * forcing open clears the closure, so no code has to rank them.
+ */
+export interface ForcedOpening {
+  active: boolean;
+  /** ISO instant, or null for "until stopped by hand". */
+  until: string | null;
+  openedAt: string | null;
+  openedByEmail: string | null;
 }

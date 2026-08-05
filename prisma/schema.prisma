@@ -132,6 +132,21 @@ model RestaurantSettings {
   closedAt       DateTime?
   closedByEmail  String?
 
+  /// Forced opening, set from "Отвори принудително" in the admin panel. The
+  /// mirror image of the closure above: it overrides the opening hours in the
+  /// other direction, so the site takes orders at 03:00 if someone decided the
+  /// kitchen is working tonight.
+  ///
+  /// `openUntil` reads exactly like `closedUntil`: a timestamp expires by
+  /// itself at read time, null means "until someone presses stop".
+  ///
+  /// A closure and a forced opening are mutually exclusive — each write clears
+  /// the other — so "which one wins" is never a question anyone has to answer.
+  manuallyOpen   Boolean  @default(false)
+  openUntil      DateTime?
+  openedAt       DateTime?
+  openedByEmail  String?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

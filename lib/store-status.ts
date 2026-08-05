@@ -25,7 +25,7 @@ import type { StoreStatus } from "@/types/store-status";
  * constants, so the worst case is the shop being judged by its default hours.
  */
 export async function getStoreStatus(now: Date = new Date()): Promise<StoreStatus> {
-  const { settings, closure } = await getRestaurantState();
+  const { settings, closure, forcedOpening } = await getRestaurantState();
 
   return resolveStoreStatus(
     settings.hours,
@@ -33,6 +33,10 @@ export async function getStoreStatus(now: Date = new Date()): Promise<StoreStatu
       active: closure.active,
       until: closure.until ? new Date(closure.until) : null,
     },
-    now
+    now,
+    {
+      active: forcedOpening.active,
+      until: forcedOpening.until ? new Date(forcedOpening.until) : null,
+    }
   );
 }
