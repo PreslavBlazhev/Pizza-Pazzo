@@ -51,6 +51,14 @@ export default async function AdminProductsPage({
             Промените се виждат на сайта веднага.
           </p>
         </div>
+        {canEdit && (
+          <Link
+            href="/admin/products/new"
+            className="rounded-full bg-pizza-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-pizza-green-dark"
+          >
+            + Нов продукт
+          </Link>
+        )}
       </div>
 
       {/* Filter — plain GET form, so the URL is shareable and back works. */}

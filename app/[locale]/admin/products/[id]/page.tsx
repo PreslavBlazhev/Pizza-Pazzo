@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { requireRole } from "@/lib/auth";
 import { getAdminCategories, getAdminProduct } from "@/lib/admin-menu";
-import { ProductEditForm } from "@/components/admin/ProductEditForm";
+import { ProductForm } from "@/components/admin/ProductForm";
 
 export const metadata: Metadata = { title: "Редакция на продукт" };
 
@@ -36,7 +36,7 @@ export default async function AdminProductEditPage({
       <p className="mb-8 mt-1.5 text-sm text-pizza-muted">
         Промените се публикуват на сайта веднага след „Запази“.
       </p>
-      <ProductEditForm product={product} categories={categories} />
+      <ProductForm product={product} categories={categories} />
     </div>
   );
 }

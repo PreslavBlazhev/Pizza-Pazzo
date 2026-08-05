@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MENU_CACHE_TAG } from "@/lib/menu-data";
 import { deleteProductImageIfUnused } from "@/lib/uploads/product-image-storage";
+import { latinSlug } from "@/lib/utils";
 import {
   categoryUpdateSchema,
   productUpdateSchema,
@@ -70,21 +71,9 @@ export async function toggleProductAvailabilityAction(
   };
 }
 
-/** ADMIN+: full product edit, including its variants' names and prices. */
-export async function updateProductAction(
-  _prev: ActionResult | null,
-  formData: FormData
-): Promise<ActionResult> {
-  await requireRole(["ADMIN", "SUPER_ADMIN"]);
-
-  const id = String(formData.get("productId") ?? "");
-  const existing = await db.menuProduct.findUnique({
-    where: { id },
-    include: { variants: true },
-  });
-  if (!existing) return { ok: false, error: "Продуктът не беше намерен." };
-
-  const parsed = productUpdateSchema.safeParse({
+/** The product form's fields, as posted by ProductForm (create and edit). */
+function parseProductForm(formData: FormData) {
+  return productUpdateSchema.safeParse({
     nameBg: String(formData.get("nameBg") ?? ""),
     nameEn: String(formData.get("nameEn") ?? ""),
     descriptionBg: String(formData.get("descriptionBg") ?? ""),
@@ -101,6 +90,118 @@ export async function updateProductAction(
     allergens: formData.getAll("allergens").map(String),
     allergensUnverified: formData.get("allergensUnverified") === "on",
   });
+}
+
+/**
+ * A free `prod_*` id and slug for a new product, in the shape the imported
+ * menu already uses (`prod_bekon_shunka` / `bekon-shunka`).
+ *
+ * The slug is a public URL, so it is Latin — never the Cyrillic name — and it
+ * is made unique by suffixing, the same thing a human would do. The id is the
+ * slug with underscores, which stays unique because a slug cannot contain one.
+ */
+async function nextProductIdentity(
+  nameBg: string
+): Promise<{ id: string; slug: string }> {
+  const base = latinSlug(nameBg) || "produkt";
+
+  for (let attempt = 1; attempt < 100; attempt++) {
+    const slug = attempt === 1 ? base : `${base}-${attempt}`;
+    const id = `prod_${slug.replace(/-/g, "_")}`;
+    const clash = await db.menuProduct.findFirst({
+      where: { OR: [{ id }, { slug }] },
+      select: { id: true },
+    });
+    if (!clash) return { id, slug };
+  }
+
+  // A hundred products with the same name is not a naming problem any more.
+  const unique = Date.now().toString(36);
+  return { id: `prod_${base.replace(/-/g, "_")}_${unique}`, slug: `${base}-${unique}` };
+}
+
+/**
+ * ADMIN+: create a product from the same form as the editor.
+ *
+ * It deliberately offers exactly the editor's fields — no variants. Sizes are
+ * referenced by cart rows and order history, so adding them is still a
+ * developer job (see docs/admin-menu-db-plan.md); a new product starts as a
+ * single-price item and can be given variants later.
+ */
+export async function createProductAction(
+  _prev: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  await requireRole(["ADMIN", "SUPER_ADMIN"]);
+
+  const parsed = parseProductForm(formData);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Проверете полетата по-долу.",
+      fieldErrors: firstFieldErrors(parsed.error),
+    };
+  }
+  const data = parsed.data;
+
+  const category = await db.menuCategory.findUnique({
+    where: { id: data.categoryId },
+    select: { id: true },
+  });
+  if (!category) return { ok: false, error: "Невалидна категория." };
+
+  const { id, slug } = await nextProductIdentity(data.nameBg);
+
+  try {
+    await db.menuProduct.create({
+      data: {
+        id,
+        slug,
+        nameBg: data.nameBg,
+        nameEn: data.nameEn,
+        descriptionBg: data.descriptionBg,
+        descriptionEn: data.descriptionEn,
+        categoryId: data.categoryId,
+        priceEur: data.priceEur,
+        imageUrl: data.imageUrl || null,
+        sizeBg: data.sizeBg || null,
+        sizeEn: data.sizeEn || null,
+        sortOrder: data.sortOrder,
+        isAvailable: data.isAvailable,
+        isPopular: data.isPopular,
+        isNew: data.isNew,
+        allergens: JSON.stringify(data.allergens),
+        allergensUnverified: data.allergensUnverified,
+      },
+    });
+  } catch (error) {
+    console.error("[admin-menu] product create failed:", error);
+    return { ok: false, error: "Продуктът не можа да бъде създаден. Опитайте отново." };
+  }
+
+  revalidateMenu();
+
+  // Straight to the new product's own page: it is the one screen that proves
+  // the product exists and is where an image or a correction goes next.
+  // `redirect` throws, so it stays the last statement, outside any try/catch.
+  redirect({ href: `/admin/products/${id}`, locale: await getLocale() });
+}
+
+/** ADMIN+: full product edit, including its variants' names and prices. */
+export async function updateProductAction(
+  _prev: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  await requireRole(["ADMIN", "SUPER_ADMIN"]);
+
+  const id = String(formData.get("productId") ?? "");
+  const existing = await db.menuProduct.findUnique({
+    where: { id },
+    include: { variants: true },
+  });
+  if (!existing) return { ok: false, error: "Продуктът не беше намерен." };
+
+  const parsed = parseProductForm(formData);
   if (!parsed.success) {
     return {
       ok: false,
