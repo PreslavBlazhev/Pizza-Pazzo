@@ -30,10 +30,10 @@
     <string name="settings_auto_cut">Автоматично рязане (ако се поддържа)</string>
     <string name="settings_feed_lines">Празни редове след бележката</string>
     <string name="settings_app_section">Приложение</string>
-    <string name="settings_kitchen_url">Kitchen URL</string>
+    <string name="settings_kitchen_url">Начална страница (адрес)</string>
     <string name="settings_clear_cache">Изчисти WebView кеша</string>
     <string name="settings_cache_cleared">Кешът е изчистен.</string>
-    <string name="settings_reload_page">Презареди kitchen страницата</string>
+    <string name="settings_reload_page">Презареди страницата</string>
     <string name="settings_version">Версия: %1$s</string>
     <string name="settings_last_error">Последна грешка при печат: %1$s</string>
     <string name="settings_last_error_none">Последна грешка при печат: няма</string>

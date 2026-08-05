@@ -17,9 +17,32 @@ class PrinterPreferences(context: Context) {
     private val prefs: SharedPreferences =
         context.applicationContext.getSharedPreferences("kitchen_prefs", Context.MODE_PRIVATE)
 
+    init {
+        migrateLegacyStartUrl()
+    }
+
     companion object {
-        /** The live-orders board of the Next.js admin (see project analysis). */
-        const val DEFAULT_KITCHEN_URL = "https://pizza-pazzo.onrender.com/admin/orders/live"
+        /**
+         * The page the app opens: the site's home page.
+         *
+         * It used to open the live-orders board directly. The owner asked for
+         * the home page instead — the tablet is a normal way into the site,
+         * and the board is one tap away through the admin menu. Nothing else
+         * depends on the landing page: the printer bridge is allowed by HOST,
+         * not by path, so printing keeps working wherever the staff navigate.
+         */
+        const val DEFAULT_KITCHEN_URL = "https://pizza-pazzo.onrender.com/"
+
+        /**
+         * Start pages we used to ship as the default. A stored value equal to
+         * one of these was never a choice anybody made — it is what Settings
+         * saved back after the user pressed Save with the field pre-filled —
+         * so the migration below clears it once, and once only. Typing the
+         * board's address by hand afterwards keeps working.
+         */
+        private val LEGACY_DEFAULT_KITCHEN_URLS = setOf(
+            "https://pizza-pazzo.onrender.com/admin/orders/live",
+        )
 
         private const val KEY_PRINTER_NAME = "printer_name"
         private const val KEY_PRINTER_MAC = "printer_mac"
@@ -32,6 +55,27 @@ class PrinterPreferences(context: Context) {
         private const val KEY_FEED_LINES = "feed_lines"
         private const val KEY_KITCHEN_URL = "kitchen_url"
         private const val KEY_LAST_PRINT_ERROR = "last_print_error"
+
+        /** Bumped whenever a stored value has to be fixed up on upgrade. */
+        private const val KEY_PREFS_VERSION = "prefs_version"
+        private const val CURRENT_PREFS_VERSION = 1
+    }
+
+    /**
+     * One-time fix-up so an already-installed tablet actually gets the new
+     * start page. Runs once per device (guarded by the version key), never
+     * touching a URL the user typed themselves.
+     */
+    private fun migrateLegacyStartUrl() {
+        if (prefs.getInt(KEY_PREFS_VERSION, 0) >= CURRENT_PREFS_VERSION) return
+
+        val stored = prefs.getString(KEY_KITCHEN_URL, null)
+        prefs.edit {
+            if (stored != null && stored in LEGACY_DEFAULT_KITCHEN_URLS) {
+                remove(KEY_KITCHEN_URL)
+            }
+            putInt(KEY_PREFS_VERSION, CURRENT_PREFS_VERSION)
+        }
     }
 
     var printerName: String?
@@ -71,6 +115,7 @@ class PrinterPreferences(context: Context) {
         get() = prefs.getInt(KEY_FEED_LINES, 4)
         set(value) = prefs.edit { putInt(KEY_FEED_LINES, value.coerceIn(0, 12)) }
 
+    /** The page the app opens on launch. Blank resets it to the home page. */
     var kitchenUrl: String
         get() = prefs.getString(KEY_KITCHEN_URL, DEFAULT_KITCHEN_URL) ?: DEFAULT_KITCHEN_URL
         set(value) = prefs.edit { putString(KEY_KITCHEN_URL, value.trim().ifBlank { DEFAULT_KITCHEN_URL }) }
