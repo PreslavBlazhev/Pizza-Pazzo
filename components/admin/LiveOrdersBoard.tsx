@@ -5,6 +5,15 @@ import { updateOrderStatusAction } from "@/app/actions/order-admin";
 import { openStoreAction } from "@/app/actions/store-closure";
 import { formatEurPrice } from "@/lib/format-price";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
+import {
+  clearStoredShift,
+  getAudioContext,
+  isAudioRunning,
+  readStoredShift,
+  releaseAudio,
+  storeShift,
+  unlockAudio,
+} from "@/lib/shift-session";
 import { formatSofiaTime, sofiaDayOffset } from "@/lib/store-hours";
 import { PrintOrderButtons } from "./PrintOrderButton";
 import type { Order, OrderWithItems } from "@/types/order";
@@ -14,15 +23,48 @@ import type { StoreStatus } from "@/types/store-status";
 const POLL_INTERVAL_MS = 8_000;
 const QUICK_TIMES = [20, 30, 45, 60];
 
+/** How often we re-check whether the browser is really letting sound out. */
+const AUDIO_CHECK_MS = 1_500;
+
+/**
+ * Does this closure end the shift?
+ *
+ * Closing the restaurant ends the shift — but a timed pause is not "closing",
+ * it is the kitchen catching its breath, and it reopens on its own with
+ * nobody touching the tablet. Ending the shift there would leave the board
+ * silent at the exact moment orders start arriving again, because the alarm
+ * needs a fresh tap to make sound. So a timed pause keeps the shift; the end
+ * of the working day and "до ръчно отваряне" end it.
+ */
+function closureEndsShift(status: StoreStatus | null): boolean {
+  if (!status || status.isOpen) return false;
+  return status.reason !== "manual_timed";
+}
+
 /**
  * The tablet screen: after "Начало на смяната" it polls for PENDING orders and
  * sounds a looping alarm (Web Audio — no sound file, so nothing to preload)
  * until every order on screen is accepted or cancelled. The start button is
  * mandatory: browsers only allow audio after a user gesture, and it also lets
  * us grab a screen wake lock so the tablet never sleeps mid-shift.
+ *
+ * The shift belongs to the device, not to the component: it is remembered in
+ * localStorage and the audio permission lives at module scope (see
+ * `lib/shift-session.ts`), so walking over to Табло and back no longer drops
+ * it. Exactly two things end a shift — "Приключи смяна", and the restaurant
+ * being closed (by the hours or by the switch in the nav).
+ *
+ * Polling runs even before the shift starts. It costs one request per interval
+ * and it is what lets this screen show the closed state and its "Отвори
+ * заведението" button while the shift is off.
  */
 export function LiveOrdersBoard() {
+  // The stored shift can only be read in the browser, so the first paint is
+  // deliberately blank rather than a start screen that flips a frame later.
+  const [hydrated, setHydrated] = useState(false);
   const [shiftStarted, setShiftStarted] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   // Seeded from the defaults so the print buttons work on the very first paint;
   // every poll replaces them with whatever /admin/settings/print holds now.
@@ -39,9 +81,27 @@ export function LiveOrdersBoard() {
   // can print the kitchen ticket (via the Android app) after accepting.
   const [acceptedOrders, setAcceptedOrders] = useState<OrderWithItems[]>([]);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const hasPending = orders.length > 0;
+  const closingDown = closureEndsShift(storeStatus);
+  // Closed for good, but orders are still on screen: the shift has to outlive
+  // the closing time until the last one is dealt with.
+  const closingAfterLastOrder = shiftStarted && closingDown && hasPending;
+
+  /**
+   * Ends the shift on this device: forget it, hand the speaker back, drop the
+   * confirmation. Idempotent — the poll calls it on every closed answer.
+   */
+  const endShift = useCallback(() => {
+    setShiftStarted(false);
+    setConfirmingEnd(false);
+    setAudioBlocked(false);
+    // The print list belongs to the shift that accepted those orders; older
+    // tickets are still reachable from Поръчки.
+    setAcceptedOrders((prev) => (prev.length ? [] : prev));
+    clearStoredShift();
+    releaseAudio();
+  }, []);
 
   const fetchPending = useCallback(async () => {
     try {
@@ -57,20 +117,61 @@ export function LiveOrdersBoard() {
       // A timed closure ends here: the poll after the deadline simply reports
       // the shop open again, and the banner disappears on its own.
       if (data.storeStatus) setStoreStatus(data.storeStatus);
+
+      // The second way a shift ends. Waiting for the board to be empty is not
+      // politeness: an order placed at 22:58 still has to be accepted at
+      // 23:01, and ending the shift hides it and silences the alarm.
+      if (closureEndsShift(data.storeStatus ?? null) && data.orders.length === 0) {
+        endShift();
+      }
+
       setConnectionLost(false);
       setLastCheck(new Date());
     } catch {
       setConnectionLost(true);
     }
+  }, [endShift]);
+
+  // Bring back the shift this device was left in — same day only.
+  useEffect(() => {
+    if (readStoredShift()) {
+      setShiftStarted(true);
+      // After an in-app navigation the audio context is still alive at module
+      // scope; after a real reload it is not, and the prompt below appears.
+      setAudioBlocked(!isAudioRunning());
+    }
+    setHydrated(true);
   }, []);
 
-  // Polling while the shift is on.
+  // Polling runs whether or not the shift is on — the closed notice and the
+  // reopen button need the status too.
   useEffect(() => {
-    if (!shiftStarted) return;
     void fetchPending();
     const id = setInterval(() => void fetchPending(), POLL_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [shiftStarted, fetchPending]);
+  }, [fetchPending]);
+
+  // Is sound actually coming out? A resumed shift after a page reload has no
+  // audio permission until someone touches the screen once more, and a silent
+  // alarm is worse than no alarm — so we watch the context, not our intent.
+  useEffect(() => {
+    if (!shiftStarted) return;
+
+    const sync = () => setAudioBlocked(!isAudioRunning());
+    const onGesture = () => {
+      unlockAudio();
+      window.setTimeout(sync, 100);
+    };
+
+    sync();
+    const id = setInterval(sync, AUDIO_CHECK_MS);
+    // Any tap anywhere counts as the gesture the browser is waiting for.
+    document.addEventListener("pointerdown", onGesture);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("pointerdown", onGesture);
+    };
+  }, [shiftStarted]);
 
   // Alarm loop: a near-continuous two-tone siren (sawtooth, full volume) plus
   // vibration on devices that support it — deliberately obnoxious, it must cut
@@ -79,8 +180,8 @@ export function LiveOrdersBoard() {
     if (!shiftStarted || !hasPending) return;
 
     const siren = () => {
-      const ctx = audioCtxRef.current;
-      if (!ctx) return;
+      const ctx = getAudioContext();
+      if (!ctx || ctx.state !== "running") return;
       const t0 = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -133,11 +234,11 @@ export function LiveOrdersBoard() {
 
   const startShift = () => {
     // The click is the user gesture that unlocks audio for the rest of the day.
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new Ctx();
-    void ctx.resume();
-    audioCtxRef.current = ctx;
+    unlockAudio();
+    storeShift();
+    setAudioBlocked(false); // the interval above corrects us if it lied
     setShiftStarted(true);
+    void fetchPending();
   };
 
   const submitStatus = async (orderId: string, fields: Record<string, string>) => {
@@ -168,44 +269,96 @@ export function LiveOrdersBoard() {
     }
   };
 
-  if (!shiftStarted) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
-        <p className="max-w-md text-neutral-600">
-          Натиснете бутона в началото на работния ден. Екранът ще остане буден и
-          при нова поръчка таблетът ще звъни, докато поръчката не бъде приета
-          или отказана.
-        </p>
-        <button
-          onClick={startShift}
-          className="rounded-full bg-pizza-green px-10 py-5 text-2xl font-bold text-white shadow-lg transition hover:bg-pizza-green-dark"
-        >
-          ▶ Начало на смяната
-        </button>
-        <p className="text-sm text-neutral-400">
-          Звукът работи само след натискане на бутона — изискване на браузъра.
-        </p>
-      </div>
-    );
+  // Nothing until we know whether a shift is already running: rendering the
+  // start screen first would flash it at staff who never left the shift.
+  if (!hydrated) {
+    return <div className="min-h-[60vh]" aria-hidden />;
   }
 
   return (
-    <div className={hasPending ? "animate-pulse-bg" : undefined}>
+    <div className={shiftStarted && hasPending ? "animate-pulse-bg" : undefined}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-neutral-500">
-          Смяната е започната · проверка на всеки {POLL_INTERVAL_MS / 1000} сек
+          {shiftStarted ? "Смяната е започната" : "Смяната не е започната"} · проверка
+          на всеки {POLL_INTERVAL_MS / 1000} сек
           {lastCheck && ` · последна: ${lastCheck.toLocaleTimeString("bg-BG")}`}
         </p>
-        {connectionLost && (
-          <p className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-bold text-white">
-            ⚠ Няма връзка със сървъра — проверете интернета!
-          </p>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {connectionLost && (
+            <p className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-bold text-white">
+              ⚠ Няма връзка със сървъра — проверете интернета!
+            </p>
+          )}
+          {shiftStarted && (
+            <EndShiftButton
+              confirming={confirmingEnd}
+              pendingCount={orders.length}
+              onAsk={() => setConfirmingEnd(true)}
+              onCancel={() => setConfirmingEnd(false)}
+              onConfirm={endShift}
+            />
+          )}
+        </div>
       </div>
+
+      {shiftStarted && audioBlocked && (
+        <button
+          type="button"
+          onClick={() => {
+            unlockAudio();
+            window.setTimeout(() => setAudioBlocked(!isAudioRunning()), 100);
+          }}
+          className="mb-4 w-full rounded-2xl border-2 border-red-500 bg-red-50 px-5 py-4 text-left"
+        >
+          <span className="block text-lg font-bold text-red-700">
+            🔇 Звукът е спрян от браузъра
+          </span>
+          <span className="mt-1 block text-red-800">
+            Смяната продължава, но таблетът няма да звъни. Натиснете тук (или
+            където и да е по екрана), за да включите звука отново.
+          </span>
+        </button>
+      )}
 
       <StoreClosedNotice status={storeStatus} onReopened={fetchPending} />
 
-      {!hasPending && (
+      {closingAfterLastOrder && (
+        <p className="mb-4 rounded-2xl border-2 border-amber-400 bg-white px-5 py-3 font-semibold text-amber-900">
+          Смяната приключва автоматично, щом последната чакаща поръчка бъде
+          приета или отказана.
+        </p>
+      )}
+
+      {!shiftStarted && (
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
+          <p className="max-w-md text-neutral-600">
+            Натиснете бутона в началото на работния ден. Екранът ще остане буден и
+            при нова поръчка таблетът ще звъни, докато поръчката не бъде приета
+            или отказана.
+          </p>
+          <button
+            onClick={startShift}
+            disabled={closingDown}
+            className="rounded-full bg-pizza-green px-10 py-5 text-2xl font-bold text-white shadow-lg transition hover:bg-pizza-green-dark disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            ▶ Начало на смяната
+          </button>
+          {closingDown ? (
+            <p className="max-w-md text-sm font-semibold text-amber-800">
+              Заведението е затворено — смяната може да започне, когато то е
+              отворено.
+            </p>
+          ) : (
+            <p className="max-w-md text-sm text-neutral-400">
+              Звукът работи само след натискане на бутона — изискване на браузъра.
+              След това смяната остава активна, докато не натиснете „Приключи
+              смяна“ или заведението не бъде затворено.
+            </p>
+          )}
+        </div>
+      )}
+
+      {shiftStarted && !hasPending && (
         <div className="flex min-h-[50vh] items-center justify-center rounded-3xl border-2 border-dashed border-pizza-green/40 bg-pizza-green/5">
           <p className="text-2xl font-semibold text-pizza-green-dark">
             ✓ Няма чакащи поръчки
@@ -213,18 +366,20 @@ export function LiveOrdersBoard() {
         </div>
       )}
 
-      <div className="space-y-6">
-        {orders.map((order) => (
-          <LiveOrderCard
-            key={order.id}
-            order={order}
-            busy={busyOrderId === order.id}
-            onSubmit={submitStatus}
-          />
-        ))}
-      </div>
+      {shiftStarted && (
+        <div className="space-y-6">
+          {orders.map((order) => (
+            <LiveOrderCard
+              key={order.id}
+              order={order}
+              busy={busyOrderId === order.id}
+              onSubmit={submitStatus}
+            />
+          ))}
+        </div>
+      )}
 
-      {acceptedOrders.length > 0 && (
+      {shiftStarted && acceptedOrders.length > 0 && (
         <div className="mt-8">
           <h2 className="mb-3 text-lg font-bold text-neutral-700">
             Приети наскоро — печат на бележка
@@ -254,6 +409,64 @@ export function LiveOrdersBoard() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * "Приключи смяна" — the one manual way out.
+ *
+ * It asks twice on purpose: this is the button that silences the alarm on a
+ * tablet standing in a kitchen, so a sleeve brushing past it must not be
+ * enough. The second step also says how many orders are still waiting, because
+ * ending the shift takes them off this screen.
+ */
+function EndShiftButton({
+  confirming,
+  pendingCount,
+  onAsk,
+  onCancel,
+  onConfirm,
+}: {
+  confirming: boolean;
+  pendingCount: number;
+  onAsk: () => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        onClick={onAsk}
+        className="rounded-full border-2 border-neutral-300 bg-white px-5 py-2 text-sm font-bold text-neutral-700 transition hover:border-red-400 hover:text-red-600"
+      >
+        ■ Приключи смяна
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-red-400 bg-white px-3 py-2">
+      <span className="text-sm font-semibold text-neutral-700">
+        {pendingCount > 0
+          ? `Има ${pendingCount} чакащи поръчки. Да приключим ли смяната?`
+          : "Да приключим ли смяната?"}
+      </span>
+      <button
+        type="button"
+        onClick={onConfirm}
+        className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-bold text-white transition hover:bg-red-700"
+      >
+        Да, приключи
+      </button>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-semibold text-neutral-600 transition hover:text-neutral-900"
+      >
+        Не
+      </button>
     </div>
   );
 }

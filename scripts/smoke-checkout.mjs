@@ -213,6 +213,7 @@ try {
     "lib/working-hours.ts",
     "lib/store-hours.ts",
     "lib/validators/settings.ts",
+    "lib/shift-session.ts",
   ];
   const tsconfigPath = join(buildDir, "tsconfig.smoke.json");
   writeFileSync(
@@ -220,6 +221,9 @@ try {
     JSON.stringify({
       compilerOptions: {
         target: "es2020",
+        // "dom" is here only for lib/shift-session.ts, which talks to
+        // localStorage and the Web Audio API. It runs below against stubs.
+        lib: ["es2020", "dom"],
         module: "commonjs",
         moduleResolution: "node",
         strict: true,
@@ -277,6 +281,7 @@ try {
     hours: load("lib/working-hours.js"),
     storeHours: load("lib/store-hours.js"),
     settingsValidator: load("lib/validators/settings.js"),
+    shift: load("lib/shift-session.js"),
   };
 } catch (e) {
   const detail = e.stdout ? e.stdout.toString().slice(0, 1500) : e.message;
@@ -1324,6 +1329,106 @@ if (mods?.storeHours) {
     "23:00 Sofia → 01:00 Sofia is 'tomorrow', not 'in two hours'",
     sofiaDayOffset(at("2026-08-04T20:00:00Z"), at("2026-08-04T22:00:00Z")) === 1
   );
+}
+
+// ── 14. The tablet's shift memory (lib/shift-session) ─────────────────────
+//
+// The live board decides whether the kitchen tablet is on shift by reading
+// this. Getting it wrong is not a cosmetic bug: a shift that quietly expires
+// leaves the tablet silent while orders come in. The interesting case is
+// midnight — the stored day is a SOFIA day, and 22:00 UTC is already tomorrow
+// in Sofia.
+console.log("\n14) Tablet shift session");
+
+if (mods?.shift) {
+  const check = (label, condition) => (condition ? ok(label) : fail(label));
+  const shift = mods.shift;
+  const KEY = "pp-shift";
+
+  const cell = new Map();
+  let storageThrows = false;
+  const localStorage = {
+    getItem: (k) => {
+      if (storageThrows) throw new Error("storage disabled");
+      return cell.has(k) ? cell.get(k) : null;
+    },
+    setItem: (k, v) => {
+      if (storageThrows) throw new Error("storage disabled");
+      cell.set(k, v);
+    },
+    removeItem: (k) => {
+      if (storageThrows) throw new Error("storage disabled");
+      cell.delete(k);
+    },
+  };
+
+  // Enough of an AudioContext to tell "created once" from "created again".
+  let contextsCreated = 0;
+  class FakeAudioContext {
+    constructor() {
+      this.state = "suspended";
+      contextsCreated++;
+    }
+    async resume() {
+      this.state = "running";
+    }
+    async close() {
+      this.state = "closed";
+    }
+  }
+
+  globalThis.window = { localStorage, AudioContext: FakeAudioContext };
+
+  const at = (iso) => new Date(iso);
+
+  check("nothing stored → no shift", shift.readStoredShift(at("2026-08-05T13:00:00Z")) === null);
+
+  shift.storeShift(at("2026-08-05T13:00:00Z")); // 16:00 Sofia
+  const sameDay = shift.readStoredShift(at("2026-08-05T19:30:00Z")); // 22:30 Sofia
+  check("a shift started this afternoon is still on at 22:30", sameDay?.day === "2026-08-05");
+
+  // 22:00 UTC is 01:00 Sofia the next day — the trap a bare `toISOString()`
+  // slice would fall into.
+  check(
+    "…and is gone after Sofia midnight",
+    shift.readStoredShift(at("2026-08-05T21:30:00Z")) === null
+  );
+  check("the stale entry is not left behind", !cell.has(KEY));
+
+  cell.set(KEY, JSON.stringify({ startedAt: "2026-08-04T18:00:00Z", day: "2026-08-04" }));
+  check("yesterday's shift does not come back", shift.readStoredShift(at("2026-08-05T08:00:00Z")) === null);
+
+  cell.set(KEY, "{ not json");
+  check("garbage is discarded, not thrown", shift.readStoredShift(at("2026-08-05T13:00:00Z")) === null);
+  cell.set(KEY, JSON.stringify({ nothing: "useful" }));
+  check("a wrong shape is discarded too", shift.readStoredShift(at("2026-08-05T13:00:00Z")) === null);
+
+  storageThrows = true;
+  let survivedBlockedStorage = true;
+  try {
+    shift.readStoredShift(at("2026-08-05T13:00:00Z"));
+    shift.storeShift(at("2026-08-05T13:00:00Z"));
+    shift.clearStoredShift();
+  } catch {
+    survivedBlockedStorage = false;
+  }
+  check("blocked storage never breaks the board", survivedBlockedStorage);
+  storageThrows = false;
+
+  contextsCreated = 0;
+  const ctx = shift.unlockAudio();
+  shift.unlockAudio();
+  check("the alarm gets exactly one audio context per shift", ctx !== null && contextsCreated === 1);
+  check("…and it is the one the siren reads", shift.getAudioContext() === ctx);
+
+  shift.releaseAudio();
+  check("ending the shift hands the speaker back", shift.getAudioContext() === null);
+  check("…and the board then knows sound is off", shift.isAudioRunning() === false);
+  shift.unlockAudio();
+  check("a new shift gets a new context", contextsCreated === 2);
+  shift.releaseAudio();
+
+  delete globalThis.window;
 }
 
 rmSync(buildDir, { recursive: true, force: true });
