@@ -34,10 +34,10 @@
         android:visibility="gone">
 
         <ImageView
-            android:layout_width="96dp"
-            android:layout_height="96dp"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_splash_logo" />
+            android:src="@mipmap/ic_launcher_foreground" />
 
         <TextView
             android:id="@+id/errorTitle"
