@@ -1,16 +1,21 @@
 import type { LegalDoc } from "./types";
 
 /**
- * Политика за поверителност на Android приложението „Pizza Pazzo Kitchen“.
+ * Политика за поверителност на Android приложението „Pizza Pazzo“
+ * (пакет `bg.pizzapazzo.app`).
  *
  * Google Play изисква публичен URL с политика за поверителност за всяко
- * приложение — включително за такова, което не събира нищо. Затова документът
- * е отделен от `privacy.ts`: онзи описва сайта и клиентските поръчки, този
- * описва какво прави приложението на кухненския таблет.
+ * приложение. Документът е отделен от `privacy.ts`, защото Play проверява
+ * страница, която описва ПРИЛОЖЕНИЕТО: неговите разрешения, това, което пази на
+ * устройството, и пътя за изтриване на профил. `privacy.ts` описва сайта.
+ *
+ * Едно приложение, двама потребители: клиент, който поръчва, и служител, който
+ * приема поръчки и печата бележки. Текстът трябва да описва и двете, без да
+ * плаши клиента с Bluetooth, който никога няма да види.
  *
  * Съдържанието трябва да съответства едно към едно на попълнения в Play
- * Console формуляр „Data safety“ — виж android-kitchen-app/PLAY_STORE.md.
- * Ако приложението някога започне да събира нещо, ПЪРВО се обновява този
+ * Console формуляр „Data safety“ — виж android-app/PLAY_STORE.md. Ако
+ * приложението някога започне да събира нещо ново, ПЪРВО се обновява този
  * текст, после формулярът.
  */
 export const appPrivacyDoc: LegalDoc = {
@@ -20,28 +25,34 @@ export const appPrivacyDoc: LegalDoc = {
   intro: [
     {
       p: {
-        bg: "Тази политика се отнася за Android приложението „Pizza Pazzo Kitchen“ (пакет pizzapazzo.kitchen) — служебен инструмент за персонала на Pizza Pazzo, който показва сайта на заведението на кухненския таблет и печата бележки за поръчки на Bluetooth термален принтер. За личните данни, които обработваме чрез самия сайт, важи отделната Политика за поверителност.",
-        en: "This policy covers the “Pizza Pazzo Kitchen” Android app (package pizzapazzo.kitchen) — an internal tool for Pizza Pazzo staff that displays the restaurant's website on the kitchen tablet and prints order tickets on a Bluetooth thermal printer. Personal data processed through the website itself is covered by our separate Privacy Policy.",
+        bg: "Тази политика се отнася за Android приложението „Pizza Pazzo“ (пакет bg.pizzapazzo.app). Приложението показва системата на заведението: с него разглеждате менюто, съставяте поръчка и следите профила си. Същото приложение се използва и от персонала на Pizza Pazzo за приемане на поръчки и печат на кухненски бележки — разликата е само какво ви показва системата след като влезете.",
+        en: "This policy covers the “Pizza Pazzo” Android app (package bg.pizzapazzo.app). The app presents the restaurant's own system: you browse the menu with it, put an order together and follow your account. The same app is also used by Pizza Pazzo staff to accept orders and print kitchen tickets — the only difference is what the system shows you once you sign in.",
+      },
+    },
+    {
+      p: {
+        bg: "Администратор на личните данни е Pizza Pazzo LTD (данните за контакт са по-долу). Данните, обработвани през сайта, са описани и в общата Политика за поверителност.",
+        en: "The data controller is Pizza Pazzo LTD (contact details below). Data processed through the website is also described in our general Privacy Policy.",
       },
     },
   ],
   sections: [
     {
       heading: {
-        bg: "1. Как приложението работи с данни",
-        en: "1. How the app handles data",
+        bg: "1. Какви данни се обработват през приложението",
+        en: "1. What data the app processes",
       },
       blocks: [
         {
           p: {
-            bg: "Приложението няма собствен профил, не създава акаунт и не изпраща никакви данни към разработчика. В него няма реклами, няма аналитика, няма проследяване и няма SDK-та на трети страни. Единствената му мрежова комуникация е зареждането на страниците на pizzapazzo.bg (и pizza-pazzo.onrender.com) по HTTPS — точно както би направил браузър.",
-            en: "The app has no account of its own, creates no profile, and sends no data to the developer. It contains no ads, no analytics, no tracking and no third-party SDKs. Its only network traffic is loading pages from pizzapazzo.bg (and pizza-pazzo.onrender.com) over HTTPS — exactly as a browser would.",
+            bg: "Приложението не създава собствен, отделен профил и не изпраща никакви данни към разработчика. В него няма реклами, няма аналитика, няма проследяване и няма SDK-та на трети страни. То показва сайта на Pizza Pazzo по HTTPS — точно както би направил браузър.",
+            en: "The app creates no separate account of its own and sends no data to the developer. It contains no ads, no analytics, no tracking and no third-party SDKs. It shows the Pizza Pazzo website over HTTPS — exactly as a browser would.",
           },
         },
         {
           p: {
-            bg: "Важно уточнение обаче: приложението показва целия сайт на Pizza Pazzo, а през него може да се направи поръчка и да се създаде профил. Когато това стане вътре в приложението, данните, които въвеждате, се обработват от Pizza Pazzo LTD по същия начин, както ако бяхте отворили сайта в браузър. Затова по-долу изброяваме и тях — приложението е каналът, през който минават.",
-            en: "One important qualification, though: the app displays the whole Pizza Pazzo website, and an order can be placed and an account created through it. When that happens inside the app, the data you enter is processed by Pizza Pazzo LTD in exactly the same way as if you had opened the site in a browser. That is why it is listed below as well — the app is the channel it travels through.",
+            bg: "Това обаче не значи, че през приложението не минават лични данни. Когато поръчвате или се регистрирате в него, въведеното се обработва от Pizza Pazzo LTD по същия начин, както ако бяхте отворили сайта в браузър. Затова изброяваме и него — приложението е каналът, през който минава:",
+            en: "That does not mean no personal data passes through the app, though. When you order or register in it, what you enter is processed by Pizza Pazzo LTD exactly as if you had opened the site in a browser. So it is listed here too — the app is the channel it travels through:",
           },
         },
         {
@@ -51,8 +62,12 @@ export const appPrivacyDoc: LegalDoc = {
               en: "When ordering: name, phone, email, delivery address, the contents of the order and any notes.",
             },
             {
-              bg: "При регистрация: име, имейл, телефон, парола (само като необратим хеш) и запазените от вас адреси.",
-              en: "When registering: name, email, phone, password (only as an irreversible hash) and your saved addresses.",
+              bg: "При регистрация: име, имейл, телефон, парола (пази се само като необратим хеш) и запазените от вас адреси.",
+              en: "When registering: name, email, phone, password (stored only as an irreversible hash) and your saved addresses.",
+            },
+            {
+              bg: "История на поръчките ви, докато профилът съществува.",
+              en: "Your order history, for as long as the account exists.",
             },
             {
               bg: "Технически данни на сървъра: кратки логове (IP адрес, час на заявката) за сигурност и отстраняване на проблеми.",
@@ -62,16 +77,16 @@ export const appPrivacyDoc: LegalDoc = {
         },
         {
           p: {
-            bg: "Целите, основанията и сроковете за тези данни са описани изцяло в Политиката за поверителност на сайта. Данните не се продават и не се използват за автоматизирано профилиране или реклама.",
-            en: "The purposes, legal bases and retention periods for that data are set out in full in the website's Privacy Policy. The data is not sold and is not used for automated profiling or advertising.",
+            bg: "Данните не се продават, не се предоставят за чужди рекламни цели и не се използват за автоматизирано профилиране. Целите, основанията и сроковете са описани изцяло в Политиката за поверителност на сайта.",
+            en: "The data is not sold, is not handed to anyone for their own advertising, and is not used for automated profiling. The purposes, legal bases and retention periods are set out in full in the website's Privacy Policy.",
           },
         },
       ],
     },
     {
       heading: {
-        bg: "2. Какво се пази на самия таблет",
-        en: "2. What is stored on the tablet itself",
+        bg: "2. Какво се пази на самото устройство",
+        en: "2. What is stored on the device itself",
       },
       blocks: [
         {
@@ -83,27 +98,23 @@ export const appPrivacyDoc: LegalDoc = {
         {
           list: [
             {
-              bg: "Настройки на принтера: име и Bluetooth адрес на избрания сдвоен принтер, ширина на хартията, кодировка, брой символи на ред и подобни технически предпочитания.",
-              en: "Printer settings: the name and Bluetooth address of the selected paired printer, paper width, character encoding, characters per line and similar technical preferences.",
+              bg: "Сесията ви, ако сте влезли: обикновена httpOnly бисквитка в хранилището на WebView, точно както в браузър. Тя не се архивира в Google Drive и не се прехвърля на друго устройство — автоматичното архивиране на приложението е изключено нарочно.",
+              en: "Your session, if you are signed in: an ordinary httpOnly cookie in the WebView's cookie store, exactly as in a browser. It is not backed up to Google Drive and is not carried across to another device — the app's automatic backup is deliberately disabled.",
             },
             {
-              bg: "Адресът на началната страница, която приложението отваря.",
-              en: "The address of the start page the app opens.",
+              bg: "Съдържанието на количката ви, докато не я изпразните или не завършите поръчката.",
+              en: "The contents of your cart, until you empty it or complete the order.",
             },
             {
-              bg: "Текстът на последната грешка при печат — за диагностика.",
-              en: "The text of the last printing error — for diagnostics.",
-            },
-            {
-              bg: "Сесията на служителя, влязъл в сайта: обикновена httpOnly бисквитка в хранилището на WebView, точно както в браузър. Тя не се архивира в Google Drive — автоматичното архивиране на приложението е изключено нарочно.",
-              en: "The signed-in staff member's session: an ordinary httpOnly cookie in the WebView's cookie store, exactly as in a browser. It is not backed up to Google Drive — the app's auto-backup is deliberately disabled.",
+              bg: "Само за служебни устройства: настройките на Bluetooth принтера — име и адрес на избрания сдвоен принтер, ширина на хартията, кодировка и подобни технически предпочитания, плюс текста на последната грешка при печат.",
+              en: "On staff devices only: the Bluetooth printer settings — the name and address of the selected paired printer, paper width, character encoding and similar technical preferences, plus the text of the last printing error.",
             },
           ],
         },
         {
           p: {
-            bg: "Приложението не пази пароли и не чете паролите, въведени в сайта.",
-            en: "The app stores no passwords and does not read the passwords typed into the website.",
+            bg: "Приложението не пази пароли и не чете паролите, които въвеждате в сайта.",
+            en: "The app stores no passwords and does not read the passwords you type into the website.",
           },
         },
       ],
@@ -117,33 +128,51 @@ export const appPrivacyDoc: LegalDoc = {
         {
           list: [
             {
-              bg: "Интернет и състояние на мрежата — за зареждане на страниците на сайта и за екрана „няма връзка“.",
-              en: "Internet and network state — to load the website's pages and to show the “no connection” screen.",
+              bg: "Интернет и състояние на мрежата — за зареждане на страниците и за екрана „няма връзка“. Не изискват вашето потвърждение.",
+              en: "Internet and network state — to load the pages and to show the “no connection” screen. Neither asks for your confirmation.",
             },
             {
-              bg: "Bluetooth (свързване с устройства наблизо) — единствено за връзка с вече сдвоения термален принтер, за да се отпечата бележката. Приложението не сканира за устройства, вижда само вече сдвоените, не иска и не използва достъп до местоположение, и разрешението е декларирано с „neverForLocation“.",
-              en: "Bluetooth (connect to nearby devices) — solely to connect to the already-paired thermal printer in order to print a ticket. The app does not scan for devices, sees only already-paired ones, neither requests nor uses location access, and the permission is declared with “neverForLocation”.",
+              bg: "Bluetooth (свързване с устройства наблизо) — само за служебната функция за печат на кухненски бележки.",
+              en: "Bluetooth (connect to nearby devices) — only for the staff feature that prints kitchen tickets.",
             },
           ],
+        },
+        {
+          p: {
+            bg: "За Bluetooth разрешението има какво да се уточни, защото е единственото, което приложението изобщо би поискало от вас. То НЕ се иска при стартиране и НЕ е нужно, за да поръчате. Диалогът се появява само ако някой отвори служебния екран за настройки на принтера и натисне „Избери сдвоен принтер“. Клиент, който просто поръчва пица, никога няма да го види.",
+            en: "The Bluetooth permission deserves a note, because it is the only one the app would ever ask you for. It is NOT requested at startup and is NOT needed in order to place an order. The dialog appears only if someone opens the staff printer-settings screen and taps “Select paired printer”. A customer simply ordering a pizza will never see it.",
+          },
+        },
+        {
+          p: {
+            bg: "Дори тогава приложението не сканира за устройства наоколо — вижда само вече сдвоените в системните настройки на Android. Не иска и не използва достъп до местоположение; разрешението е декларирано с „neverForLocation“ именно за да е ясно, че местоположението не се извлича от него.",
+            en: "Even then the app does not scan for nearby devices — it sees only those already paired in Android's own settings. It neither requests nor uses location access; the permission is declared with “neverForLocation” precisely to make clear that no location is derived from it.",
+          },
+        },
+        {
+          p: {
+            bg: "Приложението не иска достъп до камера, микрофон, снимки, контакти, календар, съобщения или местоположение.",
+            en: "The app requests no access to camera, microphone, photos, contacts, calendar, messages or location.",
+          },
         },
       ],
     },
     {
       heading: {
-        bg: "4. Данни за поръчките, които се печатат",
-        en: "4. Order data that gets printed",
+        bg: "4. Данни за поръчките при печат (служебна функция)",
+        en: "4. Order data when printing (staff feature)",
       },
       blocks: [
         {
           p: {
-            bg: "Когато служител отпечата бележка, сайтът подава на приложението данните за конкретната поръчка (номер, артикули, сума, а при доставка — име, телефон и адрес на клиента). Тези данни се използват само за да бъдат преобразувани в текст и изпратени по Bluetooth към принтера. Приложението не ги записва във файл, не ги качва никъде и ги забравя веднага след печата.",
-            en: "When a staff member prints a ticket, the website hands the app the data for that one order (number, items, total and — for deliveries — the customer's name, phone and address). This data is used only to be turned into text and sent over Bluetooth to the printer. The app does not write it to a file, does not upload it anywhere, and forgets it as soon as printing finishes.",
+            bg: "Когато служител отпечата бележка, системата подава на приложението данните за конкретната поръчка (номер, артикули, сума, а при доставка — име, телефон и адрес на клиента). Те се използват само за да бъдат преобразувани в текст и изпратени по Bluetooth към принтера. Приложението не ги записва във файл, не ги качва никъде и ги забравя веднага след печата.",
+            en: "When a staff member prints a ticket, the system hands the app the data for that one order (number, items, total and — for deliveries — the customer's name, phone and address). It is used only to be turned into text and sent over Bluetooth to the printer. The app does not write it to a file, does not upload it anywhere, and forgets it as soon as printing finishes.",
           },
         },
         {
           p: {
-            bg: "Администратор на данните на клиентите е Pizza Pazzo LTD; основанията и сроковете за обработката им са описани в Политиката за поверителност на сайта.",
-            en: "The controller of customer data is Pizza Pazzo LTD; the legal bases and retention periods are described in the website's Privacy Policy.",
+            bg: "Достъпът до тези данни се решава от сървъра въз основа на служебния профил, а не от приложението. Функцията за печат работи само на служебните страници на системата.",
+            en: "Access to that data is decided by the server on the basis of the staff account, not by the app. The printing feature only works on the system's staff pages.",
           },
         },
       ],
@@ -156,8 +185,8 @@ export const appPrivacyDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Приложението е служебен инструмент и не е предназначено за деца. То не съдържа съдържание, насочено към деца, и не събира данни от когото и да било.",
-            en: "The app is an internal work tool and is not directed at children. It contains no child-directed content and collects no data from anyone.",
+            bg: "Приложението е за поръчка на храна и не е насочено към деца. То не съдържа съдържание, предназначено за деца, и не събира съзнателно данни от лица под 16 години. Поръчка се прави от лице, което може да сключи договор за доставка.",
+            en: "The app is for ordering food and is not directed at children. It contains no child-directed content and does not knowingly collect data from anyone under 16. An order is placed by someone able to enter into a delivery contract.",
           },
         },
       ],
@@ -165,19 +194,25 @@ export const appPrivacyDoc: LegalDoc = {
     {
       heading: {
         bg: "6. Изтриване на данните",
-        en: "6. Deleting the data",
+        en: "6. Deleting your data",
       },
       blocks: [
         {
           p: {
-            bg: "Настройките на приложението се пазят само на устройството: деинсталирането му (или „Настройки → Приложения → Pizza Pazzo Kitchen → Изчисти данните“) ги изтрива окончателно заедно със сесията.",
-            en: "The app's settings live on the device only: uninstalling it (or “Settings → Apps → Pizza Pazzo Kitchen → Clear data”) permanently removes them along with the session.",
+            bg: "Профилът ви може да бъде изтрит по всяко време и от самото приложение: „Профил“ → „Изтриване на профила“ → потвърждение с парола. Изтриването премахва профила, паролата и запазените адреси; направените поръчки остават като счетоводни документи, но вече не са свързани с профил.",
+            en: "Your account can be deleted at any time, from inside the app: “Profile” → “Delete your account” → confirm with your password. Deleting removes the account, the password and the saved addresses; orders already placed remain as accounting records, no longer linked to any account.",
           },
         },
         {
           p: {
-            bg: "Профилът, който сте създали в системата на Pizza Pazzo, се изтрива отделно и по всяко време: влезте в профила си → „Изтриване на профила“. Пълните стъпки, включително как да заявите изтриване, ако вече нямате достъп до профила си, са на страница „Изтриване на профил“ (/account-deletion).",
-            en: "The account you created in the Pizza Pazzo system is deleted separately, at any time: sign in and go to Profile → “Delete your account”. The full steps, including how to request deletion if you can no longer sign in, are on the “Account deletion” page (/account-deletion).",
+            bg: "Пълните стъпки, включително как да заявите изтриване, ако вече нямате достъп до профила си или сте деинсталирали приложението, са на страница „Изтриване на профил“ (/account-deletion).",
+            en: "The full steps, including how to request deletion if you can no longer sign in or have uninstalled the app, are on the “Account deletion” page (/account-deletion).",
+          },
+        },
+        {
+          p: {
+            bg: "Данните, които приложението пази на устройството (сесия, количка, а на служебни устройства — настройките на принтера), се изтриват с деинсталирането му или през „Настройки → Приложения → Pizza Pazzo → Изчисти данните“.",
+            en: "The data the app keeps on the device (session, cart and, on staff devices, the printer settings) is removed by uninstalling it, or via “Settings → Apps → Pizza Pazzo → Clear data”.",
           },
         },
       ],

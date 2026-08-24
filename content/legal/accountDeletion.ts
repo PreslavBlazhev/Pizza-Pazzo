@@ -11,7 +11,7 @@ import type { LegalDoc } from "./types";
  *
  * Изискванията на Google към страницата: да се отваря без грешка, изтриването
  * да е основната ѝ тема, и да се вижда името на приложението/разработчика,
- * както е в листинга — затова „Pizza Pazzo Kitchen“ е изписано изрично.
+ * както е в листинга — затова „Pizza Pazzo“ е изписано изрично.
  *
  * Текстът трябва да съвпада с това, което кодът реално прави
  * (`deleteOwnAccount` в app/actions/auth.ts). Смени ли се едното, сменя се и
@@ -24,8 +24,8 @@ export const accountDeletionDoc: LegalDoc = {
   intro: [
     {
       p: {
-        bg: "Тази страница обяснява как да изтриете профила си в Pizza Pazzo — независимо дали го ползвате през сайта www.pizzapazzo.bg, или през Android приложението „Pizza Pazzo Kitchen“.",
-        en: "This page explains how to delete your Pizza Pazzo account — whether you use it through the www.pizzapazzo.bg website or through the “Pizza Pazzo Kitchen” Android app.",
+        bg: "Тази страница обяснява как да изтриете профила си в Pizza Pazzo — независимо дали го ползвате през сайта www.pizzapazzo.bg, или през Android приложението „Pizza Pazzo“.",
+        en: "This page explains how to delete your Pizza Pazzo account — whether you use it through the www.pizzapazzo.bg website or through the “Pizza Pazzo” Android app.",
       },
     },
   ],
@@ -124,14 +124,14 @@ export const accountDeletionDoc: LegalDoc = {
     },
     {
       heading: {
-        bg: "5. Приложението „Pizza Pazzo Kitchen“",
-        en: "5. The “Pizza Pazzo Kitchen” app",
+        bg: "5. Приложението „Pizza Pazzo“",
+        en: "5. The “Pizza Pazzo” app",
       },
       blocks: [
         {
           p: {
-            bg: "Приложението няма собствен, отделен профил — то използва същия профил като сайта. Настройките, които то пази на самото устройство (избран Bluetooth принтер, ширина на хартията и подобни), се изтриват с деинсталирането му или през „Настройки → Приложения → Pizza Pazzo Kitchen → Изчисти данните“.",
-            en: "The app has no separate account of its own — it uses the same account as the website. The settings it keeps on the device itself (the selected Bluetooth printer, paper width and the like) are removed by uninstalling it, or via “Settings → Apps → Pizza Pazzo Kitchen → Clear data”.",
+            bg: "Приложението няма собствен, отделен профил — то използва същия профил като сайта. Настройките, които то пази на самото устройство (избран Bluetooth принтер, ширина на хартията и подобни), се изтриват с деинсталирането му или през „Настройки → Приложения → Pizza Pazzo → Изчисти данните“.",
+            en: "The app has no separate account of its own — it uses the same account as the website. The settings it keeps on the device itself (the selected Bluetooth printer, paper width and the like) are removed by uninstalling it, or via “Settings → Apps → Pizza Pazzo → Clear data”.",
           },
         },
       ],

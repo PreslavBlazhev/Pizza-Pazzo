@@ -39,10 +39,10 @@
         "description": "How to cancel an order, file a complaint, and how refunds work at Pizza Pazzo."
       },
       "appPrivacy": {
-        "description": "How the “Pizza Pazzo Kitchen” Android app for the kitchen tablet works and what data it does (not) process."
+        "description": "How the “Pizza Pazzo” Android app works — what data it processes, what permissions it asks for and how to delete an account."
       },
       "accountDeletion": {
-        "description": "How to delete your Pizza Pazzo account and the Pizza Pazzo Kitchen app account — in-profile steps and a request by email."
+        "description": "How to delete your Pizza Pazzo account — steps in the app and on the website, or a request by email."
       }
     }
   },

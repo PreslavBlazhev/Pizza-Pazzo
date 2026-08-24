@@ -4,7 +4,7 @@
  *     node scripts/generate-play-assets.mjs
  *
  * Idempotent — it only overwrites its own output in
- * `android-kitchen-app/play-assets/`. Re-run it whenever
+ * `android-app/play-assets/`. Re-run it whenever
  * `public/logos/pizza-pazzo-logo.png` changes.
  *
  * Play's two mandatory graphics have rules that are easy to fail silently:
@@ -22,7 +22,7 @@
  *
  * Screenshots are NOT generated here. Play requires screenshots to show the
  * real app, and faking them is a listing-policy violation — take them on the
- * kitchen tablet (see android-kitchen-app/PLAY_STORE.md).
+ * kitchen tablet (see android-app/PLAY_STORE.md).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -31,7 +31,7 @@ import sharp from "sharp";
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE = join(projectRoot, "public", "logos", "pizza-pazzo-logo.png");
-const OUT = join(projectRoot, "android-kitchen-app", "play-assets");
+const OUT = join(projectRoot, "android-app", "play-assets");
 
 /** Brand cream — same value as `pp_cream` in the Android colors.xml. */
 const CREAM = { r: 0xfd, g: 0xf6, b: 0xec, alpha: 1 };

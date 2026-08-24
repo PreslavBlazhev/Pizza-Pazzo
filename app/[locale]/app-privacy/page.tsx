@@ -10,14 +10,14 @@ import { appPrivacyDoc } from "@/content/legal/appPrivacy";
 import { routing, type Locale } from "@/i18n/routing";
 
 /**
- * Privacy policy for the "Pizza Pazzo Kitchen" Android app.
+ * Privacy policy for the "Pizza Pazzo" Android app.
  *
  * Google Play requires a publicly reachable privacy-policy URL for every app,
- * and it must be readable without signing in — hence a normal public page and
- * not something behind /admin. It is deliberately NOT linked from the footer:
- * the app is a staff tool, and a customer clicking "privacy" wants the site's
- * policy at /privacy, not this one. The link lives in the Play Console listing
- * (see android-kitchen-app/PLAY_STORE.md).
+ * readable without signing in — hence a normal public page. It is separate from
+ * /privacy because Play checks a page that describes the APP: its permissions,
+ * what it keeps on the device, and how to delete an account. /privacy describes
+ * the website. The link goes in the Play Console listing (see
+ * android-app/PLAY_STORE.md).
  */
 interface PageProps {
   params: Promise<{ locale: Locale }>;

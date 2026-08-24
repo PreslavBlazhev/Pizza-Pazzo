@@ -8,7 +8,7 @@
  *
  * What it produces is the FOREGROUND layer of an adaptive icon —
  * `ic_launcher_foreground.png` in every `mipmap-<density>` folder of
- * android-kitchen-app. The background is a flat cream vector kept in the
+ * android-app. The background is a flat cream vector kept in the
  * Android project.
  *
  * The one rule that shapes everything here: an adaptive icon is 108dp, but
@@ -28,7 +28,7 @@ import sharp from "sharp";
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE = join(projectRoot, "public", "logos", "pizza-pazzo-logo.png");
-const RES = join(projectRoot, "android-kitchen-app", "app", "src", "main", "res");
+const RES = join(projectRoot, "android-app", "app", "src", "main", "res");
 
 /** Adaptive-icon canvas is 108dp; the guaranteed-visible circle is 72dp. */
 const CANVAS_DP = 108;

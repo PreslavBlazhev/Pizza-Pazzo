@@ -1,8 +1,8 @@
 /**
- * Bridge helpers for the Pizza Pazzo Kitchen Android app (android-kitchen-app).
+ * Bridge helpers for the Pizza Pazzo Android app (android-app).
  *
  * The app wraps the live-orders board in a WebView and injects a
- * `window.AndroidPrinter` object (see android-kitchen-app/.../JavascriptBridge.kt).
+ * `window.AndroidPrinter` object (see android-app/.../JavascriptBridge.kt).
  * Print jobs are asynchronous: `printOrder(json)` returns immediately and the
  * outcome arrives as a `pizza-pazzo-print-result` CustomEvent on `window`.
  *
@@ -43,7 +43,7 @@ declare global {
   }
 }
 
-/** True only inside the kitchen app's WebView with the bridge attached. */
+/** True only inside the app's WebView, on a staff page, with the bridge attached. */
 export function isAndroidPrinterAvailable(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -58,7 +58,7 @@ export function isAndroidPrinterAvailable(): boolean {
  * same convention as the on-screen UI.
  *
  * Extras map onto the app's existing `Item.extras` array (see
- * android-kitchen-app/.../models/PrintableOrder.kt: `Extra(name, quantity,
+ * android-app/.../models/PrintableOrder.kt: `Extra(name, quantity,
  * price)`). ReceiptFormatter already prints `+ {quantity}x {name} ({price})`,
  * so the quantity stays in its own field — never baked into the name — and
  * `price` is the extra's total for that quantity on ONE unit of the dish,
@@ -67,7 +67,7 @@ export function isAndroidPrinterAvailable(): boolean {
  *
  * The `print` block carries the layout the owner configured in
  * /admin/settings/print. It is OPTIONAL on the wire: an older build of the
- * kitchen app ignores the extra key and keeps printing its built-in layout,
+ * app ignores the extra key and keeps printing its built-in layout,
  * and a newer app falls back to that layout when the block is absent. Note
  * that `fontPt` is deliberately NOT sent — a thermal printer has no points,
  * only the 1×–4× `scale`.

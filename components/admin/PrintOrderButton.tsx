@@ -17,7 +17,7 @@ const RESULT_TIMEOUT_MS = 45_000;
 /**
  * Prints one ticket for an order.
  *
- * Inside the Pizza Pazzo Kitchen Android app it drives the Bluetooth thermal
+ * Inside the Pizza Pazzo Android app it drives the Bluetooth thermal
  * printer; in an ordinary browser it links to the print page instead, so the
  * owner is never left without a way to get the ticket out. Both paths use the
  * same template from /admin/settings/print.

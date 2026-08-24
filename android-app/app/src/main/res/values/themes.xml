@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 base theme. The kitchen UI itself is the web page; the native
+         chrome stays neutral (cream background, brand colors). -->
+    <style name="Theme.PizzaPazzo" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/pp_red</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/pp_green</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:windowBackground">@color/pp_cream</item>
+        <item name="android:statusBarColor">@color/pp_red_dark</item>
+    </style>
+
+    <!-- Splash: the real logo on cream, then MainActivity. Cream rather than the
+         brand red for the same reason as the launcher icon — the lettering in
+         the logo is red. The icon asset is the launcher foreground, which
+         already follows the "artwork inside the middle two thirds" rule the
+         splash screen expects. -->
+    <style name="Theme.PizzaPazzo.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/pp_cream</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.PizzaPazzo</item>
+    </style>
+
+</resources>
