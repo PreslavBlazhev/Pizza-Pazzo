@@ -10,3 +10,10 @@ captures/
 *.apk
 *.aab
 output-metadata.json
+
+# Release signing — NEVER commit. Losing these means never being able to update
+# the app on Google Play again. Keep an offline backup (see PLAY_STORE.md).
+keystore.properties
+keystore/
+*.jks
+*.keystore

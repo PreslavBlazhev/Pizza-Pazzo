@@ -96,7 +96,6 @@ class MainActivity : AppCompatActivity() {
             // The admin board is a Next.js app — it needs the full modern set.
             javaScriptEnabled = true
             domStorageEnabled = true // localStorage + sessionStorage
-            databaseEnabled = true
             cacheMode = WebSettings.LOAD_DEFAULT
             mediaPlaybackRequiresUserGesture = false // alarm keeps ringing after resume
             allowFileAccess = false

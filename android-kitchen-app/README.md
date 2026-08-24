@@ -6,7 +6,7 @@ Android WebView обвивка около сайта на Pizza Pazzo + Bluetoot
 сменя от Настройки → „Начална страница (адрес)“.
 
 - **Package:** `pizzapazzo.kitchen`
-- **Минимална версия:** Android 8.0 (API 26) · **target/compile:** API 35
+- **Минимална версия:** Android 8.0 (API 26) · **target/compile:** API 36 (Android 16)
 - **Стек:** Kotlin · Gradle Kotlin DSL · Material 3 · WebView · Bluetooth Classic (SPP/RFCOMM) · Coroutines
 
 ## Какво прави
@@ -23,8 +23,8 @@ Android WebView обвивка около сайта на Pizza Pazzo + Bluetoot
 1. Инсталирайте [Android Studio](https://developer.android.com/studio) (Ladybug
    или по-нов; включва нужния JDK 17).
 2. **File → Open** → изберете папката `android-kitchen-app` (НЕ корена на репото).
-3. Изчакайте Gradle sync (първия път тегли Gradle 8.10.2 + зависимости).
-4. Ако Studio поиска Android SDK Platform 35 / Build-Tools — приемете
+3. Изчакайте Gradle sync (първия път тегли Gradle 8.14.3 + зависимости).
+4. Ако Studio поиска Android SDK Platform 36 / Build-Tools — приемете
    предложената инсталация.
 
 ## Build на debug APK
@@ -123,19 +123,26 @@ window.addEventListener("pizza-pazzo-print-result", (e) => {
 „*** ПОВТОРЕН ПЕЧАТ ***“ на бележката. JSON-ът е ограничен до 100 KB и се
 валидира изцяло в `models/PrintableOrder.kt`.
 
-## Release APK
+## Release build (подписан)
 
-1. Генерирайте keystore (еднократно, пазете го!):
-   ```
-   keytool -genkey -v -keystore pizzapazzo-kitchen.jks -keyalg RSA -keysize 2048 -validity 10000 -alias kitchen
-   ```
-2. В Android Studio: **Build → Generate Signed App Bundle / APK → APK** →
-   изберете keystore-а → build variant **release**.
-3. APK: `app/build/outputs/apk/release/app-release.apk`.
+Keystore-ът е вече генериран и се чете автоматично от `keystore.properties` в
+тази папка (и двата са в `.gitignore` — **пазете ги, без тях приложението не
+може да бъде обновявано в Play никога повече**).
 
-Забележки: release build-ът НЕ позволява http/localhost origins; minification
-е изключен нарочно (R8 може да счупи bridge-а; keep-правилата са готови в
-`proguard-rules.pro`, ако някога се включи).
+```
+gradlew.bat bundleRelease    # -> app/build/outputs/bundle/release/app-release.aab   (за Google Play)
+gradlew.bat assembleRelease  # -> app/build/outputs/apk/release/app-release.apk      (за директна инсталация)
+```
+
+При всяко ново качване в Play увеличете `versionCode` в `app/build.gradle.kts`.
+
+За качването в Google Play — акаунт, Data safety, текстове на листинга,
+екранни снимки и целия ред на действията — виж **[PLAY_STORE.md](PLAY_STORE.md)**.
+
+Забележки: release build-ът НЕ позволява http/localhost origins (изключенията
+живеят само в `src/debug`); `allowBackup` е изключен, за да не изтича активната
+STAFF сесия в Google Drive; minification е изключен нарочно (R8 може да счупи
+bridge-а; keep-правилата са готови в `proguard-rules.pro`, ако някога се включи).
 
 ## Структура на кода
 
@@ -168,8 +175,6 @@ app/src/main/java/pizzapazzo/kitchen/
 
 ## Известни ограничения (v1)
 
-- **Локалният build не е изпълняван** — на машината, на която е генериран
-  проектът, няма Android SDK/JDK 17. Отворете в Android Studio и build-нете.
 - Bitmap/raster fallback за кирилица е проектиран, но не е имплементиран.
 - Няма продуктови изображения/лога на бележката — само текст.
 - Авто-reconnect е „един опит при печат“, не фонов keep-alive.

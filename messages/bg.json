@@ -37,6 +37,9 @@
       },
       "refunds": {
         "description": "Как да анулирате поръчка, как да подадете рекламация и как работи възстановяването на суми в Pizza Pazzo."
+      },
+      "appPrivacy": {
+        "description": "Как работи Android приложението „Pizza Pazzo Kitchen“ за кухненския таблет и какви данни (не) обработва."
       }
     }
   },
@@ -178,7 +181,8 @@
     "managerName": "Управител",
     "addressLabel": "Адрес",
     "emailLabel": "Имейл",
-    "phoneLabel": "Телефон"
+    "phoneLabel": "Телефон",
+    "appPrivacy": "Поверителност — мобилно приложение"
   },
   "menu": {
     "hero": {

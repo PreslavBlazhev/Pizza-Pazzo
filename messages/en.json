@@ -37,6 +37,9 @@
       },
       "refunds": {
         "description": "How to cancel an order, file a complaint, and how refunds work at Pizza Pazzo."
+      },
+      "appPrivacy": {
+        "description": "How the “Pizza Pazzo Kitchen” Android app for the kitchen tablet works and what data it does (not) process."
       }
     }
   },
@@ -178,7 +181,8 @@
     "managerName": "Manager",
     "addressLabel": "Address",
     "emailLabel": "Email",
-    "phoneLabel": "Phone"
+    "phoneLabel": "Phone",
+    "appPrivacy": "Privacy — mobile app"
   },
   "menu": {
     "hero": {
