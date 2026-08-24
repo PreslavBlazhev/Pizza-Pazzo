@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ replacement for allowBackup, and it covers one case that
+     allowBackup does not: device-to-device transfer. Both are refused here for
+     the same reason — the app's data directory contains the WebView cookie
+     store, and that holds a live STAFF/ADMIN session. A session copied onto a
+     second device is a second person logged into the restaurant's admin panel.
+
+     allowBackup="false" stays in the manifest as well: it is what Android 11
+     and older read. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

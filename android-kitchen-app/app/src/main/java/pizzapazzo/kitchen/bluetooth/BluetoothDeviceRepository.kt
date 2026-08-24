@@ -40,16 +40,22 @@ class BluetoothDeviceRepository(private val context: Context) {
             emptyArray()
         }
 
-    /** Bonded devices, printer-friendliest first (empty without permission). */
+    /**
+     * Bonded devices, printer-friendliest first (empty without permission).
+     *
+     * The whole read sits inside one try/catch on purpose: `bondedDevices` is
+     * not the only call here that BLUETOOTH_CONNECT guards — reading a device's
+     * `name` needs it too. A permission revoked between the check above and the
+     * loop below would otherwise throw out of the middle of the mapping.
+     */
     fun pairedDevices(): List<PairedDevice> {
         if (!hasConnectPermission()) return emptyList()
-        val bonded = try {
-            adapter?.bondedDevices ?: emptySet()
+        return try {
+            (adapter?.bondedDevices ?: emptySet())
+                .map { PairedDevice(it.name ?: it.address, it.address) }
+                .sortedBy { it.name.lowercase() }
         } catch (_: SecurityException) {
-            emptySet()
+            emptyList()
         }
-        return bonded
-            .map { PairedDevice(it.name ?: it.address, it.address) }
-            .sortedBy { it.name.lowercase() }
     }
 }

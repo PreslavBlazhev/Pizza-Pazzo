@@ -28,20 +28,42 @@ export const appPrivacyDoc: LegalDoc = {
   sections: [
     {
       heading: {
-        bg: "1. Приложението не събира лични данни",
-        en: "1. The app collects no personal data",
+        bg: "1. Как приложението работи с данни",
+        en: "1. How the app handles data",
       },
       blocks: [
         {
           p: {
-            bg: "Приложението не изисква регистрация в него, не създава профил и не изпраща никакви данни към разработчика или към трети страни. В него няма реклами, няма аналитика, няма проследяване и няма SDK-та на трети страни.",
-            en: "The app requires no sign-up of its own, creates no profile, and sends no data to the developer or to any third party. It contains no ads, no analytics, no tracking and no third-party SDKs.",
+            bg: "Приложението няма собствен профил, не създава акаунт и не изпраща никакви данни към разработчика. В него няма реклами, няма аналитика, няма проследяване и няма SDK-та на трети страни. Единствената му мрежова комуникация е зареждането на страниците на pizzapazzo.bg (и pizza-pazzo.onrender.com) по HTTPS — точно както би направил браузър.",
+            en: "The app has no account of its own, creates no profile, and sends no data to the developer. It contains no ads, no analytics, no tracking and no third-party SDKs. Its only network traffic is loading pages from pizzapazzo.bg (and pizza-pazzo.onrender.com) over HTTPS — exactly as a browser would.",
           },
         },
         {
           p: {
-            bg: "Единствената мрежова комуникация на приложението е зареждането на страниците на pizzapazzo.bg (и pizza-pazzo.onrender.com) по HTTPS — точно както би направил браузър.",
-            en: "The app's only network traffic is loading pages from pizzapazzo.bg (and pizza-pazzo.onrender.com) over HTTPS — exactly as a browser would.",
+            bg: "Важно уточнение обаче: приложението показва целия сайт на Pizza Pazzo, а през него може да се направи поръчка и да се създаде профил. Когато това стане вътре в приложението, данните, които въвеждате, се обработват от Pizza Pazzo LTD по същия начин, както ако бяхте отворили сайта в браузър. Затова по-долу изброяваме и тях — приложението е каналът, през който минават.",
+            en: "One important qualification, though: the app displays the whole Pizza Pazzo website, and an order can be placed and an account created through it. When that happens inside the app, the data you enter is processed by Pizza Pazzo LTD in exactly the same way as if you had opened the site in a browser. That is why it is listed below as well — the app is the channel it travels through.",
+          },
+        },
+        {
+          list: [
+            {
+              bg: "При поръчка: име, телефон, имейл, адрес за доставка, съдържание на поръчката и бележки към нея.",
+              en: "When ordering: name, phone, email, delivery address, the contents of the order and any notes.",
+            },
+            {
+              bg: "При регистрация: име, имейл, телефон, парола (само като необратим хеш) и запазените от вас адреси.",
+              en: "When registering: name, email, phone, password (only as an irreversible hash) and your saved addresses.",
+            },
+            {
+              bg: "Технически данни на сървъра: кратки логове (IP адрес, час на заявката) за сигурност и отстраняване на проблеми.",
+              en: "Technical data on the server: short-lived logs (IP address, request time) for security and troubleshooting.",
+            },
+          ],
+        },
+        {
+          p: {
+            bg: "Целите, основанията и сроковете за тези данни са описани изцяло в Политиката за поверителност на сайта. Данните не се продават и не се използват за автоматизирано профилиране или реклама.",
+            en: "The purposes, legal bases and retention periods for that data are set out in full in the website's Privacy Policy. The data is not sold and is not used for automated profiling or advertising.",
           },
         },
       ],
@@ -148,8 +170,14 @@ export const appPrivacyDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Тъй като всичко се пази само на устройството, деинсталирането на приложението (или „Настройки → Приложения → Pizza Pazzo Kitchen → Изчисти данните“) изтрива окончателно настройките и сесията. Няма акаунт в приложението, който да бъде изтриван от наша страна. За заявка относно данни, обработени през сайта, пишете на посочения по-долу имейл.",
-            en: "Because everything is kept on the device only, uninstalling the app (or “Settings → Apps → Pizza Pazzo Kitchen → Clear data”) permanently removes the settings and the session. There is no in-app account for us to delete. For any request about data processed through the website, write to the email address below.",
+            bg: "Настройките на приложението се пазят само на устройството: деинсталирането му (или „Настройки → Приложения → Pizza Pazzo Kitchen → Изчисти данните“) ги изтрива окончателно заедно със сесията.",
+            en: "The app's settings live on the device only: uninstalling it (or “Settings → Apps → Pizza Pazzo Kitchen → Clear data”) permanently removes them along with the session.",
+          },
+        },
+        {
+          p: {
+            bg: "Профилът, който сте създали в системата на Pizza Pazzo, се изтрива отделно и по всяко време: влезте в профила си → „Изтриване на профила“. Пълните стъпки, включително как да заявите изтриване, ако вече нямате достъп до профила си, са на страница „Изтриване на профил“ (/account-deletion).",
+            en: "The account you created in the Pizza Pazzo system is deleted separately, at any time: sign in and go to Profile → “Delete your account”. The full steps, including how to request deletion if you can no longer sign in, are on the “Account deletion” page (/account-deletion).",
           },
         },
       ],

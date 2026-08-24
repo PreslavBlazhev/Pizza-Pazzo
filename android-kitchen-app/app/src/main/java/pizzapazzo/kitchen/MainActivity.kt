@@ -39,6 +39,9 @@ class MainActivity : AppCompatActivity() {
     private var fileChooserCallback: ValueCallback<Array<android.net.Uri>>? = null
     private var pendingRestore: Bundle? = null
 
+    /** Set when a renderer crash already destroyed the WebView — see onDestroy. */
+    private var webViewDestroyed = false
+
     private val app get() = application as KitchenApplication
 
     private val fileChooserLauncher =
@@ -114,6 +117,7 @@ class MainActivity : AppCompatActivity() {
             onBlockedNavigation = {
                 Toast.makeText(this, R.string.blocked_external_url, Toast.LENGTH_SHORT).show()
             },
+            onExternalUri = ::openOutsideTheApp,
             onPageStarted = {
                 binding.progressBar.visibility = View.VISIBLE
             },
@@ -122,8 +126,17 @@ class MainActivity : AppCompatActivity() {
                 binding.errorView.visibility = View.GONE
             },
             onLoadError = { showErrorScreen() },
+            onRendererGone = { rebuildAfterRendererCrash() },
         )
         webView.webViewClient = webViewClient
+
+        // A download would otherwise hit a dead end inside the WebView. The
+        // site has none today; this is the safety net for the day it does.
+        webView.setDownloadListener { url, _, _, _, _ ->
+            if (!openOutsideTheApp(android.net.Uri.parse(url))) {
+                Toast.makeText(this, R.string.blocked_external_url, Toast.LENGTH_SHORT).show()
+            }
+        }
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView, newProgress: Int) {
@@ -162,6 +175,44 @@ class MainActivity : AppCompatActivity() {
             ),
             JavascriptBridge.JS_NAME,
         )
+    }
+
+    /**
+     * Hands a URI the WebView refuses to load to whatever app owns it — the
+     * dialer for `tel:`, the mail client for `mailto:`, the browser for an
+     * off-site link. Returns false when no app can take it, so the caller can
+     * fall back to the "external sites don't open here" toast.
+     *
+     * FLAG_ACTIVITY_NEW_TASK keeps the other app in its own task: pressing
+     * back from the dialer returns to the board, not to a half-dead WebView.
+     */
+    private fun openOutsideTheApp(uri: android.net.Uri): Boolean {
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        return try {
+            startActivity(intent)
+            true
+        } catch (_: android.content.ActivityNotFoundException) {
+            false
+        } catch (_: SecurityException) {
+            false
+        }
+    }
+
+    /**
+     * The WebView's renderer process died. The dead view can never render
+     * again, so it is detached and destroyed and the activity is rebuilt from
+     * scratch. The login survives regardless — it lives in the cookie store,
+     * not in the WebView.
+     */
+    private fun rebuildAfterRendererCrash(): Boolean {
+        val dead = binding.webView
+        (dead.parent as? android.view.ViewGroup)?.removeView(dead)
+        dead.destroy()
+        webViewDestroyed = true
+        recreate()
+        return true
     }
 
     private fun loadKitchen() {
@@ -212,7 +263,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        binding.webView.saveState(outState)
+        // recreate() after a renderer crash saves state on the way out, and a
+        // destroyed WebView has nothing left to save.
+        if (!webViewDestroyed) binding.webView.saveState(outState)
     }
 
     override fun onResume() {
@@ -236,7 +289,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        binding.webView.destroy()
+        if (!webViewDestroyed) binding.webView.destroy()
         super.onDestroy()
     }
 }

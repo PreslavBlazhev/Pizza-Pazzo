@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Our own back arrow. It used to be appcompat's abc_ic_ab_back_material,
+     which is a PRIVATE resource of that library: it can be renamed or dropped
+     in any appcompat release, and the settings screen would then fail to build
+     (or lose its back button) for a reason nobody would connect to a dependency
+     bump. tint follows the toolbar's foreground colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal"
+    android:autoMirrored="true">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z" />
+</vector>

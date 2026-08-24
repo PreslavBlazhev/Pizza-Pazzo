@@ -1,6 +1,7 @@
 package pizzapazzo.kitchen
 
 import android.app.Application
+import android.webkit.WebView
 import pizzapazzo.kitchen.bluetooth.BluetoothPrinterManager
 import pizzapazzo.kitchen.printer.EscPosPrinterService
 import pizzapazzo.kitchen.settings.PrinterPreferences
@@ -25,6 +26,13 @@ class KitchenApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Stated outright rather than left to the platform default: this WebView
+        // carries a live STAFF/ADMIN session, and remote DevTools inspection of
+        // it is a development convenience, never something a shipped build does.
+        // BuildConfig.DEBUG is false in every artifact that reaches Play.
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
+
         preferences = PrinterPreferences(this)
         printerManager = BluetoothPrinterManager(this)
         printerService = EscPosPrinterService(

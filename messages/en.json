@@ -40,6 +40,9 @@
       },
       "appPrivacy": {
         "description": "How the “Pizza Pazzo Kitchen” Android app for the kitchen tablet works and what data it does (not) process."
+      },
+      "accountDeletion": {
+        "description": "How to delete your Pizza Pazzo account and the Pizza Pazzo Kitchen app account — in-profile steps and a request by email."
       }
     }
   },
@@ -182,7 +185,8 @@
     "addressLabel": "Address",
     "emailLabel": "Email",
     "phoneLabel": "Phone",
-    "appPrivacy": "Privacy — mobile app"
+    "appPrivacy": "Privacy — mobile app",
+    "accountDeletion": "Account deletion"
   },
   "menu": {
     "hero": {
@@ -511,6 +515,17 @@
       "edit": "Edit",
       "delete": "Delete",
       "deleteConfirm": "Are you sure?"
+    },
+    "deleteAccount": {
+      "title": "Delete your account",
+      "explainer": "Deleting permanently removes your account, your password and your saved delivery addresses. This cannot be undone.",
+      "ordersKept": "Orders you have already placed stay in the restaurant's accounting records, no longer linked to any account. We are required by law to keep them.",
+      "start": "Delete my account",
+      "warning": "Warning: this deletes your account for good. It cannot be restored.",
+      "passwordHint": "Enter the password you sign in with to confirm.",
+      "confirm": "Yes, delete my account",
+      "deleting": "Deleting…",
+      "ownerBlocked": "The owner account cannot be deleted here — please contact the system administrator."
     }
   },
   "admin": {
@@ -608,6 +623,12 @@
       "updated": "The address has been updated.",
       "deleteFailed": "The address could not be deleted.",
       "deleted": "The address has been deleted."
+    },
+    "account": {
+      "superAdminBlocked": "The owner account cannot be deleted here. Please contact the system administrator.",
+      "passwordRequired": "Enter your password to confirm.",
+      "passwordWrong": "Wrong password.",
+      "deleteFailed": "The account could not be deleted. Please try again or write to us."
     }
   },
   "errors": {
@@ -624,5 +645,12 @@
       "home": "Homepage"
     },
     "generic": "Something went wrong. Please try again."
+  },
+  "accountDeleted": {
+    "metaTitle": "Account deleted",
+    "title": "Account deleted",
+    "body": "Your account, your password and your saved addresses have been removed. Thank you for being with us.",
+    "orders": "Orders you already placed stay in the restaurant's accounting records, no longer linked to any account.",
+    "home": "Back to the home page"
   }
 }

@@ -25,6 +25,23 @@ object AllowedOrigins {
         "192.168.68.129",
     )
 
+    /**
+     * Schemes that may be handed to another app when the WebView itself is not
+     * allowed to load them.
+     *
+     * `http`/`https` are here so an off-site link (the Google Maps link on the
+     * contacts page) opens the browser instead of dying in a toast. `intent:`,
+     * `javascript:`, `data:`, `file:` and `content:` are deliberately absent:
+     * they are the schemes used to talk an embedded WebView into launching
+     * something it was never meant to launch, or into reading local files.
+     */
+    private val HAND_OFF_SCHEMES = setOf(
+        "tel", "mailto", "sms", "smsto", "geo", "http", "https",
+    )
+
+    fun isHandOffScheme(scheme: String?): Boolean =
+        scheme?.lowercase() in HAND_OFF_SCHEMES
+
     fun isAllowedUrl(url: String?): Boolean {
         if (url.isNullOrBlank()) return false
         val uri = Uri.parse(url)

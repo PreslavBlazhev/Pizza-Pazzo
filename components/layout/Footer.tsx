@@ -17,6 +17,9 @@ const LEGAL_LINKS = [
   { href: "/cookies", labelKey: "cookies" },
   { href: "/delivery", labelKey: "delivery" },
   { href: "/refunds", labelKey: "refunds" },
+  // Google Play wants the account-deletion page reachable without being told
+  // its URL, and a customer looking for it would look here.
+  { href: "/account-deletion", labelKey: "accountDeletion" },
 ] as const;
 
 /**

@@ -313,3 +313,68 @@ export async function deleteAddress(addressId: string): Promise<ActionResult> {
   revalidatePath("/profile");
   return { ok: true, message: t("address.deleted") };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Account deletion
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Deletes the signed-in user's own account.
+ *
+ * Google Play requires every app that lets people create an account to offer
+ * an in-app way to delete it again, plus a public page describing the same
+ * thing for people who already uninstalled (`/account-deletion`). The kitchen
+ * app opens the site inside a WebView, registration included, so the rule
+ * applies to us.
+ *
+ * What actually happens:
+ *   - the User row goes, and with it the password hash and the saved addresses
+ *     (UserAddress cascades — see prisma/schema.prisma);
+ *   - past orders SURVIVE, detached from the account (`Order.userId` is
+ *     onDelete: SetNull). They are accounting records: Bulgarian law requires
+ *     keeping them, and GDPR Art. 17(3)(b) allows exactly that. This is stated
+ *     in the privacy policy and on the public page, which is what "clearly
+ *     disclosed" in Play's policy means.
+ *
+ * The current password is required: a kitchen tablet or a shared phone that is
+ * still signed in must not be one tap away from destroying somebody's account.
+ */
+export async function deleteOwnAccount(
+  _prev: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const t = await getTranslations("actions");
+  const locale = await getLocale();
+
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return { ok: false, error: t("mustBeSignedIn") };
+
+  // The owner account keeps the restaurant running — losing it would lock
+  // everyone out of the admin panel with no way back in.
+  if (sessionUser.role === "SUPER_ADMIN") {
+    return { ok: false, error: t("account.superAdminBlocked") };
+  }
+
+  const password = formData.get("password");
+  if (typeof password !== "string" || password.length === 0) {
+    return { ok: false, fieldErrors: { password: t("account.passwordRequired") } };
+  }
+
+  const record = await db.user.findUnique({
+    where: { id: sessionUser.id },
+    select: { passwordHash: true },
+  });
+  if (!record || !(await verifyPassword(password, record.passwordHash))) {
+    return { ok: false, fieldErrors: { password: t("account.passwordWrong") } };
+  }
+
+  try {
+    await db.user.delete({ where: { id: sessionUser.id } });
+  } catch {
+    return { ok: false, error: t("account.deleteFailed") };
+  }
+
+  await clearSessionCookie();
+  revalidatePath("/", "layout");
+  redirect({ href: "/account-deleted", locale });
+}

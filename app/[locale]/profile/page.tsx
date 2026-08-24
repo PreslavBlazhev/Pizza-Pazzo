@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
 import { AddressSection } from "@/components/profile/AddressSection";
+import { DeleteAccountSection } from "@/components/profile/DeleteAccountSection";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { UserRoleBadge } from "@/components/admin/UserRoleBadge";
 import { getUserAddresses, requireUser } from "@/lib/auth";
@@ -98,6 +99,12 @@ export default async function ProfilePage({ params }: PageProps) {
             </span>
           </Link>
         </div>
+
+        {/* Google Play requires an in-app account deletion path for any app
+            that lets people create an account — see deleteOwnAccount in
+            app/actions/auth.ts. Last on the page on purpose: it is the one
+            irreversible thing here. */}
+        <DeleteAccountSection canDelete={sessionUser.role !== "SUPER_ADMIN"} />
       </main>
       <Footer />
     </>
