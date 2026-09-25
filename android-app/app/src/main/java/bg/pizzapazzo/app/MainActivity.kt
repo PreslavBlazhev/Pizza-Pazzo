@@ -89,8 +89,14 @@ class MainActivity : AppCompatActivity() {
 
         setUpWebView()
         binding.retryButton.setOnClickListener { loadStartPage() }
-        binding.settingsButton.setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
+        binding.settingsButton.setOnClickListener { openSettings() }
+
+        // The gear is hidden off the staff pages, so the offline screen carries
+        // the only other way in: a long press on the logo. Without it a start
+        // URL that no longer resolves could never be corrected on the device.
+        binding.errorLogo.setOnLongClickListener {
+            openSettings()
+            true
         }
 
         // Back walks the WebView's history; on the first page the callback
@@ -193,7 +199,7 @@ class MainActivity : AppCompatActivity() {
                 printerService = app.printerService,
                 preferences = app.preferences,
                 scope = lifecycleScope,
-                openSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
+                openSettings = ::openSettings,
             ),
             JavascriptBridge.JS_NAME,
         )
@@ -282,6 +288,11 @@ class MainActivity : AppCompatActivity() {
         applyScreenModeFor(url)
     }
 
+    /** Opens the native printer/app settings. */
+    private fun openSettings() {
+        startActivity(Intent(this, SettingsActivity::class.java))
+    }
+
     /**
      * The one place where the app behaves differently for staff.
      *
@@ -289,11 +300,20 @@ class MainActivity : AppCompatActivity() {
      * the way — a cook with full hands cannot keep tapping to wake a tablet.
      * Everywhere else those are exactly the wrong things to do to somebody's
      * phone, so they are switched back off the moment the page leaves /admin.
+     *
+     * The settings gear rides along. It is staff equipment — Bluetooth printer,
+     * start URL, cache — and a customer has no business seeing it, so it only
+     * exists while the page underneath is the staff area. That the page *is*
+     * the staff area is itself the server's word: /admin answers with the panel
+     * only to a STAFF/ADMIN session and redirects everyone else to the login
+     * page, which is not /admin and therefore shows no gear.
      */
     private fun applyScreenModeFor(url: String?) {
         val staff = StaffRoutes.isStaffArea(url)
         if (staff == staffMode) return
         staffMode = staff
+
+        binding.settingsButton.visibility = if (staff) View.VISIBLE else View.GONE
 
         val controller = WindowInsetsControllerCompat(window, binding.root)
         if (staff) {

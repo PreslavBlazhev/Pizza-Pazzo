@@ -338,7 +338,7 @@ modals, select полета, валидация, скролиране, loading s
 | Live orders | Логика на сайта, непроменена |
 | Accept | Непроменено |
 | Reject | Непроменено |
-| Printer settings | Непроменено; отваря се от зъбното колело |
+| Printer settings | Отваря се от зъбното колело, което вече се показва само в `/admin` |
 | Bluetooth permission | Иска се тук и само тук (т. 10) |
 | Test print | Непроменено |
 | Order print | Bridge методът вече изисква служебна страница (т. 12) |
