@@ -89,11 +89,13 @@ class MainActivity : AppCompatActivity() {
 
         setUpWebView()
         binding.retryButton.setOnClickListener { loadStartPage() }
-        binding.settingsButton.setOnClickListener { openSettings() }
 
-        // The gear is hidden off the staff pages, so the offline screen carries
-        // the only other way in: a long press on the logo. Without it a start
-        // URL that no longer resolves could never be corrected on the device.
+        // The printer settings are opened from inside the admin panel, through
+        // the JS bridge — there is no button floating over the page any more.
+        // This is the one exception: when the site itself will not load, the
+        // admin panel is unreachable, and a start URL that no longer resolves
+        // could never be corrected on the device. Invisible, and only on the
+        // offline screen.
         binding.errorLogo.setOnLongClickListener {
             openSettings()
             true
@@ -301,19 +303,13 @@ class MainActivity : AppCompatActivity() {
      * Everywhere else those are exactly the wrong things to do to somebody's
      * phone, so they are switched back off the moment the page leaves /admin.
      *
-     * The settings gear rides along. It is staff equipment — Bluetooth printer,
-     * start URL, cache — and a customer has no business seeing it, so it only
-     * exists while the page underneath is the staff area. That the page *is*
-     * the staff area is itself the server's word: /admin answers with the panel
-     * only to a STAFF/ADMIN session and redirects everyone else to the login
-     * page, which is not /admin and therefore shows no gear.
+     * Nothing else is drawn on top of the page in either mode: the settings are
+     * reached from a button the admin panel itself renders, over the bridge.
      */
     private fun applyScreenModeFor(url: String?) {
         val staff = StaffRoutes.isStaffArea(url)
         if (staff == staffMode) return
         staffMode = staff
-
-        binding.settingsButton.visibility = if (staff) View.VISIBLE else View.GONE
 
         val controller = WindowInsetsControllerCompat(window, binding.root)
         if (staff) {

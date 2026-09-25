@@ -7,7 +7,6 @@
     <string name="offline_title">Няма връзка с интернет</string>
     <string name="offline_message">Проверете връзката си и опитайте отново.</string>
     <string name="retry">Опитай отново</string>
-    <string name="open_settings">Настройки</string>
     <string name="blocked_external_url">Тази връзка не може да бъде отворена.</string>
 
     <!-- Settings screen -->

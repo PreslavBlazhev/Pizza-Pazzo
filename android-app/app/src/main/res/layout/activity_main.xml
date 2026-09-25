@@ -76,20 +76,12 @@
             app:backgroundTint="@color/pp_green" />
     </LinearLayout>
 
-    <!-- Discreet gear in the corner: the way into native printer settings.
-         Hidden by default and shown only while the page is the staff area —
-         see MainActivity.applyScreenModeFor(). A customer browsing the menu
-         must never find a door into the printer configuration. -->
-    <ImageButton
-        android:id="@+id/settingsButton"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="10dp"
-        android:alpha="0.45"
-        android:background="@drawable/bg_settings_button"
-        android:contentDescription="@string/open_settings"
-        android:src="@android:drawable/ic_menu_manage"
-        android:visibility="gone"
-        app:tint="@color/white" />
+    <!-- There is deliberately NO settings button floating over the page.
+         It used to sit in this corner, on top of every screen a customer ever
+         saw. The way into the printer settings is now a button inside the
+         admin panel itself ("Настройки на принтера"), which calls
+         AndroidPrinter.openPrinterSettings() over the JS bridge — so the door
+         exists exactly where staff already are, and nowhere else. The offline
+         screen keeps an invisible fallback (long-press the logo) for the case
+         where the site cannot load at all. -->
 </FrameLayout>

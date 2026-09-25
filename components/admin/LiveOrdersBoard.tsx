@@ -5,6 +5,7 @@ import { openStoreAction } from "@/app/actions/store-closure";
 import { formatEurPrice } from "@/lib/format-price";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatSofiaTime, sofiaDayOffset } from "@/lib/store-hours";
+import { AndroidPrinterSettingsButton } from "./AndroidPrinterSettingsButton";
 import { PrintOrderButtons } from "./PrintOrderButton";
 import { closureEndsShift, useShift } from "./ShiftProvider";
 import type { Order } from "@/types/order";
@@ -78,6 +79,11 @@ export function LiveOrdersBoard() {
               ⚠ Няма връзка със сървъра — проверете интернета!
             </p>
           )}
+          {/* Only inside the Android app, and only here and on the print
+              settings page: the native printer screen has no other entrance
+              since the floating gear was removed. This is the screen a cook is
+              on when the printer misbehaves. */}
+          <AndroidPrinterSettingsButton className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-white px-4 py-1.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50" />
           {shiftStarted && (
             <EndShiftButton
               confirming={confirmingEnd}

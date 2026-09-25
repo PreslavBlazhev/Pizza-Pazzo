@@ -83,7 +83,7 @@ gradlew.bat bundleRelease     # -> app/build/outputs/bundle/release/app-release.
 gradlew.bat assembleRelease   # -> app/build/outputs/apk/release/app-release.apk
 ```
 
-Копия с говорещи имена: `android-app/dist/pizza-pazzo-1.0.0-v1.aab` и `.apk`
+Копия с говорещи имена: `android-app/dist/pizza-pazzo-1.0.2-v3.aab` и `.apk`
 (папката е извън git).
 
 При всяко следващо качване **`versionCode` в `app/build.gradle.kts` трябва да се

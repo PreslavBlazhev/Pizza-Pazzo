@@ -153,6 +153,20 @@ export function buildPrintableOrderJson(
   });
 }
 
+/**
+ * Opens the app's native printer settings screen.
+ *
+ * Returns false outside the app, where there is nothing to open. The bridge
+ * refuses the call unless the page is in the staff area — see
+ * JavascriptBridge.openPrinterSettings — so this is safe to call from
+ * anywhere; it simply does nothing where it should not work.
+ */
+export function openAndroidPrinterSettings(): boolean {
+  if (!isAndroidPrinterAvailable()) return false;
+  window.AndroidPrinter!.openPrinterSettings();
+  return true;
+}
+
 /** Requests a print; the result arrives via PRINT_RESULT_EVENT. */
 export function requestOrderPrint(
   order: OrderWithItems,

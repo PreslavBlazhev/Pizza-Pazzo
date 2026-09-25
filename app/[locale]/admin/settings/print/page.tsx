@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
+import { AndroidPrinterSettingsButton } from "@/components/admin/AndroidPrinterSettingsButton";
 import { PrintTemplateForm } from "@/components/admin/PrintTemplateForm";
 import { getPrintTemplate } from "@/lib/print-templates";
 import { requireRole } from "@/lib/auth";
@@ -44,6 +45,19 @@ export default async function AdminPrintSettingsPage({ searchParams }: PageProps
         Промените важат веднага — и за печат през браузъра, и за термо принтера
         на таблета.
       </p>
+
+      {/* Which paired printer, paper width and Cyrillic encoding are settings
+          of the device, not of the layout, so they live in the Android app.
+          This button is how you get there; it appears only inside the app. */}
+      <div className="mt-4">
+        <AndroidPrinterSettingsButton />
+        <p className="mt-2 max-w-3xl text-sm text-pizza-muted">
+          Избор на сдвоен Bluetooth принтер, ширина на хартията, кодиране на
+          кирилицата и тестов печат са настройки на самия таблет и се отварят с
+          бутона по-горе. Той се вижда само в Android приложението — в браузър
+          няма принтер, който да се настройва.
+        </p>
+      </div>
 
       <nav className="mt-5 flex gap-2" aria-label="Вид бележка">
         {PRINT_TEMPLATE_IDS.map((id) => (
