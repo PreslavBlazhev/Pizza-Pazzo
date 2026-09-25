@@ -519,7 +519,7 @@
     "deleteAccount": {
       "title": "Delete your account",
       "explainer": "Deleting permanently removes your account, your password and your saved delivery addresses. This cannot be undone.",
-      "ordersKept": "Orders you have already placed stay in the restaurant's accounting records, no longer linked to any account. We are required by law to keep them.",
+      "ordersKept": "Your name, email, phone, address and note are removed from the orders you have already placed. What stays is the number, date, items and amounts — the accounting part we are required by law to keep. An order on its way to you keeps its address until it is delivered.",
       "start": "Delete my account",
       "warning": "Warning: this deletes your account for good. It cannot be restored.",
       "passwordHint": "Enter the password you sign in with to confirm.",
@@ -650,7 +650,7 @@
     "metaTitle": "Account deleted",
     "title": "Account deleted",
     "body": "Your account, your password and your saved addresses have been removed. Thank you for being with us.",
-    "orders": "Orders you already placed stay in the restaurant's accounting records, no longer linked to any account.",
+    "orders": "All that is left of your past orders is the number, date, items and amounts — the accounting part we are required by law to keep. Your name, email, phone, address and notes have been removed from them.",
     "home": "Back to the home page"
   }
 }

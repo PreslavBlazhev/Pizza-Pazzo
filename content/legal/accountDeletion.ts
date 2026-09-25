@@ -98,6 +98,10 @@ export const accountDeletionDoc: LegalDoc = {
               bg: "Връзката между вас и предишните ви поръчки — те престават да сочат към профил.",
               en: "The link between you and your past orders — they stop pointing at any account.",
             },
+            {
+              bg: "Вашите данни вътре в тези поръчки: име, имейл, телефон, адрес за доставка и бележката към поръчката. Те се заличават от записа, а не просто се откачат от профила.",
+              en: "Your details inside those orders: name, email, phone, delivery address and the note you left. They are erased from the record, not merely detached from the account.",
+            },
           ],
         },
       ],
@@ -110,8 +114,14 @@ export const accountDeletionDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Самите поръчки остават в счетоводните записи на заведението. Това не е избор — счетоводното и данъчното законодателство изисква документите за продажби да се пазят определен срок, а Общият регламент относно защитата на данните изрично допуска обработване, необходимо за спазване на законово задължение (чл. 17, § 3, б. „б“).",
-            en: "The orders themselves stay in the restaurant's accounting records. This is not a choice: accounting and tax law require sales documents to be kept for a set period, and the GDPR explicitly permits processing necessary for compliance with a legal obligation (Art. 17(3)(b)).",
+            bg: "Остава счетоводната част на поръчката: нейният номер и дата, поръчаните артикули и сумите. Това не е избор — счетоводното и данъчното законодателство изисква документите за продажби да се пазят определен срок, а Общият регламент относно защитата на данните изрично допуска обработване, необходимо за спазване на законово задължение (чл. 17, § 3, б. „б“). След заличаването по тези записи не може да бъдете идентифицирани.",
+            en: "What stays is the accounting part of the order: its number and date, the items ordered and the amounts. This is not a choice: accounting and tax law require sales documents to be kept for a set period, and the GDPR explicitly permits processing necessary for compliance with a legal obligation (Art. 17(3)(b)). Once your details are erased, those records cannot identify you.",
+          },
+        },
+        {
+          p: {
+            bg: "Едно изключение: поръчка, която в момента се приготвя или вече пътува към вас, запазва адреса си, докато бъде доставена или отказана — без него куриерът няма къде да отиде. Веднага след това адресът се заличава автоматично.",
+            en: "One exception: an order that is being cooked or is already on its way keeps its address until it is delivered or cancelled — without it the driver has nowhere to go. It is erased automatically the moment that happens.",
           },
         },
         {

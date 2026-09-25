@@ -5,7 +5,7 @@
  * (see prisma/schema.prisma and types/order.ts). Pure data + a transition
  * guard — safe to import from both server and client code.
  */
-import type { OrderStatus } from "@/types/order";
+import { isOrderStatus, type OrderStatus } from "@/types/order";
 
 /** Bulgarian labels shown to staff/customers. */
 export const ORDER_STATUS_LABELS_BG: Record<OrderStatus, string> = {
@@ -66,4 +66,17 @@ export const ORDER_STATUS_FLOW: Record<OrderStatus, readonly OrderStatus[]> = {
 /** True if `from → to` is a permitted status transition. */
 export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
   return ORDER_STATUS_FLOW[from].includes(to);
+}
+
+/**
+ * True when the order is finished for good — nothing can follow DELIVERED or
+ * CANCELLED. Read off the flow table rather than listing the two statuses
+ * again, so a new terminal status can never be added in one place and
+ * forgotten in the other.
+ *
+ * Takes a plain string because the callers read it straight out of the
+ * database, where the status is TEXT (see prisma/schema.prisma).
+ */
+export function isTerminalStatus(status: string): boolean {
+  return isOrderStatus(status) && ORDER_STATUS_FLOW[status].length === 0;
 }

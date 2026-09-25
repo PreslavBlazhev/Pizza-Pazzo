@@ -226,6 +226,16 @@ model Order {
   cancelledAt           DateTime?
   completedAt           DateTime?
 
+  /// When the customer's personal fields above were scrubbed — see lib/privacy.ts.
+  /// The order itself stays: number, date, items and sums are the accounting
+  /// record. Name, e-mail, phone, address and note are not, so deleting the
+  /// account takes them out of here too.
+  anonymizedAt          DateTime?
+  /// Set when the account was deleted while this order was still being
+  /// cooked or driven. The address is needed to finish delivering it, so the
+  /// scrub is deferred to the moment the order reaches DELIVERED or CANCELLED.
+  anonymizePending      Boolean     @default(false)
+
   items                 OrderItem[]
 
   createdAt             DateTime    @default(now())

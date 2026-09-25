@@ -36,6 +36,7 @@ export const SAMPLE_PRINT_ORDER: Order = {
   acceptedAt: "2026-08-03T09:12:00.000Z",
   cancelledAt: null,
   completedAt: null,
+  anonymizedAt: null,
 
   createdAt: "2026-08-03T09:05:00.000Z",
   updatedAt: "2026-08-03T09:12:00.000Z",

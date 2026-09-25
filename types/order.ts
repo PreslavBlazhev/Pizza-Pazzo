@@ -94,6 +94,13 @@ export interface Order {
   cancelledAt: string | null;
   completedAt: string | null;
 
+  /**
+   * Set once the customer deleted their account and their name, e-mail, phone
+   * and address were scrubbed out of this order — see lib/privacy.ts. The
+   * admin reads it to explain an order with no customer on it.
+   */
+  anonymizedAt: string | null;
+
   createdAt: string;
   updatedAt: string;
 

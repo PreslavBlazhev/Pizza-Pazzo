@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { setSessionCookie, clearSessionCookie } from "@/lib/auth/session";
+import { anonymiseOrdersOfUser } from "@/lib/privacy";
 import { canAccessAdmin, isUserRole, type ActionResult } from "@/types/auth";
 import {
   addressSchema,
@@ -330,11 +331,16 @@ export async function deleteAddress(addressId: string): Promise<ActionResult> {
  * What actually happens:
  *   - the User row goes, and with it the password hash and the saved addresses
  *     (UserAddress cascades — see prisma/schema.prisma);
- *   - past orders SURVIVE, detached from the account (`Order.userId` is
- *     onDelete: SetNull). They are accounting records: Bulgarian law requires
- *     keeping them, and GDPR Art. 17(3)(b) allows exactly that. This is stated
- *     in the privacy policy and on the public page, which is what "clearly
- *     disclosed" in Play's policy means.
+ *   - past orders SURVIVE as accounting records — number, date, items, sums —
+ *     detached from the account (`Order.userId` is onDelete: SetNull).
+ *     Bulgarian law requires keeping that, and GDPR Art. 17(3)(b) allows it;
+ *   - but the customer's name, e-mail, phone, address and note are scrubbed
+ *     out of those orders first (see lib/privacy.ts). They are not accounting
+ *     data, so nothing justifies keeping them, and the privacy policy has
+ *     always promised they go.
+ *
+ * The scrub runs BEFORE the delete: afterwards `userId` is NULL and the
+ * orders can no longer be told from a guest's.
  *
  * The current password is required: a kitchen tablet or a shared phone that is
  * still signed in must not be one tap away from destroying somebody's account.
@@ -369,6 +375,10 @@ export async function deleteOwnAccount(
   }
 
   try {
+    // Order of operations matters: an order still out for delivery keeps its
+    // address until it is delivered, and only the User row's existence tells
+    // us which orders those are.
+    await anonymiseOrdersOfUser(sessionUser.id);
     await db.user.delete({ where: { id: sessionUser.id } });
   } catch {
     return { ok: false, error: t("account.deleteFailed") };

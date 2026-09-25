@@ -77,6 +77,28 @@ export const appPrivacyDoc: LegalDoc = {
         },
         {
           p: {
+            bg: "Данните минават през трима доставчика, всеки от които обработва само по наше нареждане и за посочената цел:",
+            en: "The data passes through three providers, each processing it only on our instructions and only for the stated purpose:",
+          },
+        },
+        {
+          list: [
+            {
+              bg: "Render (хостинг) — сайтът и базата данни работят на негова инфраструктура; там се пазят профилите и поръчките, както и кратките сървърни логове.",
+              en: "Render (hosting) — the site and the database run on its infrastructure; the accounts, the orders and the short-lived server logs live there.",
+            },
+            {
+              bg: "Resend (имейли) — през него минават имейлът за потвърждение на поръчка и известието до заведението. Вижда името, имейла и съдържанието на съответното съобщение.",
+              en: "Resend (e-mail) — the order confirmation to you and the notification to the restaurant are sent through it. It sees the name, the e-mail address and the contents of that message.",
+            },
+            {
+              bg: "Google Карти — на страница „Контакти“ е вградена карта на адреса на заведението. Тя се зарежда от сървър на Google, който при това вижда IP адреса на устройството ви, както при всяка вградена карта в интернет. Ако не отворите тази страница, карта не се зарежда.",
+              en: "Google Maps — the “Contacts” page embeds a map of the restaurant's address. It loads from a Google server, which in doing so sees your device's IP address, as with any embedded map on the web. If you do not open that page, no map is loaded.",
+            },
+          ],
+        },
+        {
+          p: {
             bg: "Данните не се продават, не се предоставят за чужди рекламни цели и не се използват за автоматизирано профилиране. Целите, основанията и сроковете са описани изцяло в Политиката за поверителност на сайта.",
             en: "The data is not sold, is not handed to anyone for their own advertising, and is not used for automated profiling. The purposes, legal bases and retention periods are set out in full in the website's Privacy Policy.",
           },
@@ -199,8 +221,20 @@ export const appPrivacyDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Профилът ви може да бъде изтрит по всяко време и от самото приложение: „Профил“ → „Изтриване на профила“ → потвърждение с парола. Изтриването премахва профила, паролата и запазените адреси; направените поръчки остават като счетоводни документи, но вече не са свързани с профил.",
-            en: "Your account can be deleted at any time, from inside the app: “Profile” → “Delete your account” → confirm with your password. Deleting removes the account, the password and the saved addresses; orders already placed remain as accounting records, no longer linked to any account.",
+            bg: "Профилът ви може да бъде изтрит по всяко време и от самото приложение: „Профил“ → „Изтриване на профила“ → потвърждение с парола. Изтриването премахва профила, паролата и запазените адреси.",
+            en: "Your account can be deleted at any time, from inside the app: “Profile” → “Delete your account” → confirm with your password. Deleting removes the account, the password and the saved addresses.",
+          },
+        },
+        {
+          p: {
+            bg: "От направените поръчки премахваме и вашето име, имейл, телефон, адрес за доставка и бележката към поръчката. Остава само счетоводната част — номер и дата на поръчката, поръчаните артикули и сумите — която сме задължени да пазим по данъчното и счетоводното законодателство (чл. 17, § 3, б. „б“ ОРЗД). Тези записи вече не съдържат данни, по които може да бъдете идентифицирани.",
+            en: "From the orders you have already placed we also remove your name, e-mail, phone number, delivery address and order note. Only the accounting part remains — the order number and date, the items ordered and the amounts — which we are required to keep under tax and accounting law (GDPR Art. 17(3)(b)). Those records no longer contain anything that identifies you.",
+          },
+        },
+        {
+          p: {
+            bg: "Единственото изключение е поръчка, която в момента се приготвя или пътува към вас: адресът ѝ е необходим, за да бъде доставена, затова се премахва веднага щом поръчката бъде доставена или отказана.",
+            en: "The one exception is an order that is being cooked or is already on its way to you: its address is what makes the delivery possible, so it is removed as soon as that order is delivered or cancelled.",
           },
         },
         {

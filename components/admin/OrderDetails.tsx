@@ -69,23 +69,41 @@ export function OrderDetails({
         </section>
       )}
 
-      <section>
-        <h2 className="mb-1 text-sm font-semibold text-neutral-600">Клиент</h2>
-        <p className="text-sm text-neutral-700">
-          {order.customerName} · {order.customerPhone}
-        </p>
-        <p className="text-sm text-neutral-500">{order.customerEmail || "— без имейл"}</p>
-      </section>
+      {/* A customer who deleted their account left this order behind as an
+          accounting record — the sums and the items are still here, the person
+          is not. Saying so is clearer for staff than four empty fields. */}
+      {order.anonymizedAt ? (
+        <section className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-4">
+          <h2 className="mb-1 text-sm font-semibold text-neutral-600">Клиент</h2>
+          <p className="text-sm text-neutral-700">
+            Профилът е изтрит по искане на клиента. Данните му за контакт и адресът
+            са премахнати от поръчката на {formatDateTime(order.anonymizedAt)}.
+          </p>
+          <p className="mt-1 text-sm text-neutral-500">
+            Сумите, артикулите и номерът на поръчката остават за счетоводството.
+          </p>
+        </section>
+      ) : (
+        <>
+          <section>
+            <h2 className="mb-1 text-sm font-semibold text-neutral-600">Клиент</h2>
+            <p className="text-sm text-neutral-700">
+              {order.customerName} · {order.customerPhone}
+            </p>
+            <p className="text-sm text-neutral-500">{order.customerEmail || "— без имейл"}</p>
+          </section>
 
-      <section>
-        <h2 className="mb-1 text-sm font-semibold text-neutral-600">Доставка</h2>
-        <p className="text-sm text-neutral-700">
-          {order.deliveryAddress}, {order.deliveryCity}
-        </p>
-        {order.deliveryNote && (
-          <p className="text-sm text-neutral-500">Бележка: {order.deliveryNote}</p>
-        )}
-      </section>
+          <section>
+            <h2 className="mb-1 text-sm font-semibold text-neutral-600">Доставка</h2>
+            <p className="text-sm text-neutral-700">
+              {order.deliveryAddress}, {order.deliveryCity}
+            </p>
+            {order.deliveryNote && (
+              <p className="text-sm text-neutral-500">Бележка: {order.deliveryNote}</p>
+            )}
+          </section>
+        </>
+      )}
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-neutral-600">Продукти</h2>

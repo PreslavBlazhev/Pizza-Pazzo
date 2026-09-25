@@ -124,7 +124,7 @@ https://pizza-pazzo.onrender.com/app-privacy
 | **COVID-19** | Не |
 | **Data safety** | **Yes, събира данни** — т. 7. Не отговаряй „No“ |
 | **Government apps** | Не |
-| **Financial features** | Никаква. Плащането е при доставка/на място, стоката е физическа → **Google Play Billing не се изисква** |
+| **Financial features** | Никаква. Плащането е в брой при доставка, стоката е физическа → **Google Play Billing не се изисква** |
 | **Health** | Не |
 | **Advertising ID** | Не се използва |
 
@@ -136,26 +136,53 @@ SDK-та. Но през него се прави поръчка и се създ
 
 **„Does your app collect or share any of the required user data types?“ → Yes**
 
-| Data type | Collected | Shared | Purpose | Required | Encrypted | Deletion |
-|---|---|---|---|---|---|---|
-| Personal info → Name | Yes | No | App functionality | Required | Yes | Yes |
-| Personal info → Email address | Yes | No | App functionality | Required | Yes | Yes |
-| Personal info → Phone number | Yes | No | App functionality | Required | Yes | Yes |
-| Personal info → Address | Yes | No | App functionality | Optional (само при доставка) | Yes | Yes |
-| App activity → Purchase history | Yes | No | App functionality | Required | Yes | Yes |
-| Device or other IDs | No | No | — | — | — | — |
-| Location | No | No | — | — | — | — |
-| Financial info | No | No | — | — | — | — |
-| Diagnostics / Crash logs | No | No | — | — | — | — |
+Категориите по-долу са точните имена от формата на Google. Отметни **само**
+тези редове — всеки излишен „Yes“ е също толкова невярна декларация, колкото
+липсващ.
 
-„Shared“ е **No** навсякъде: данните отиват само към собствения сървър (Render)
-и към Resend за имейла за потвърждение — процесор, не споделяне.
+| Data type | Collected | Shared | Purpose | Required | Какво е това у нас |
+|---|---|---|---|---|---|
+| Personal info → **Name** | Yes | No | App functionality | Required | Име при поръчка и при регистрация |
+| Personal info → **Email address** | Yes | No | App functionality | Required | Имейл за потвърждение + вход в профила |
+| Personal info → **Phone number** | Yes | No | App functionality | Required | Телефон за връзка при доставка |
+| Personal info → **Address** | Yes | No | App functionality | Required | Адрес за доставка (единственият начин на изпълнение) |
+| Personal info → **User IDs** | Yes | No | App functionality, Account management | Optional | `User.id` на профила — само при регистрация; гост поръчва без него |
+| Financial info → **Purchase history** | Yes | No | App functionality | Required | Историята на поръчките (номер, дата, артикули, суми) |
+| App activity → **Other user-generated content** | Yes | No | App functionality | Optional | Бележката към поръчката и бележките по артикул |
+| Device or other IDs | No | No | — | — | Няма Advertising ID, няма device fingerprint |
+| Location | No | No | — | — | Адресът се въвежда на ръка; GPS не се пипа |
+| Financial info → User payment info | No | No | — | — | Плаща се в брой на вратата; няма карти |
+| App info and performance (Crash logs, Diagnostics) | No | No | — | — | Няма crash reporter, няма аналитика |
+| Messages, Photos, Contacts, Calendar, Files | No | No | — | — | Приложението не ги пипа |
+
+⚠️ Две неща, в които е лесно да се сбърка:
+
+- **Purchase history е под „Financial info“, не под „App activity“.** Google я
+  държи там, макар че нищо не се плаща онлайн.
+- **Бележката към поръчката е „Other user-generated content“.** Текст, който
+  потребителят е написал, е данна. Пропускането ѝ е най-често срещаният
+  пропуск в подобни листинги.
+
+**„Shared“ е No навсякъде.** Google смята за „sharing“ предаването на трето
+лице, което ползва данните за свои цели, и изрично изключва обработващия по
+нареждане („service provider“). Нашите са точно такива:
+
+| Получател | Какво вижда | Защо не е „sharing“ |
+|---|---|---|
+| **Render** (хостинг) | Всичко — базата данни и сървърните логове (IP, час на заявката) са на негова инфраструктура | Обработващ по договор; не ползва данните за свои цели |
+| **Resend** (имейли) | Име, имейл и съдържанието на съответния имейл | Същото — само доставя съобщението |
+| **Google Карти** | IP адреса на устройството, **само** при отваряне на „Контакти“ | Вградена карта, не наш трансфер на потребителски данни. Ако рецензент попита: това е `<iframe>` към `google.com/maps?...&output=embed`, без API ключ, без SDK и без данни на клиента в заявката |
+
+Сървърните логове (IP + час) **не се декларират** като събирана данна: Google
+пита за данни, събирани от приложението, а не за неизбежните HTTP логове на
+хостинга. Оповестени са в политиката за поверителност, където им е мястото.
 
 Останалите въпроси:
 
 - „Is all of the user data collected by your app encrypted in transit?“ → **Yes**
 - „Do you provide a way for users to request that their data is deleted?“ → **Yes**
 - **Data deletion URL:** `https://pizza-pazzo.onrender.com/account-deletion`
+- „Data deletion“ за всеки отметнат ред → **Yes** (виж по-долу — вече е вярно)
 
 ### Изтриване на профил
 
@@ -165,9 +192,21 @@ Google изисква **два** пътя. И двата съществуват:
 2. **Публична страница:** `/account-deletion` — работи и за деинсталирал
    приложението; линкната е във футъра
 
-Профилът, паролата и адресите се изтриват; поръчките остават като счетоводни
-документи, откачени от профила. Google изисква такова задържане да е изрично
-оповестено — оповестено е и на двете места.
+Какво точно се случва (код: `lib/privacy.ts`, тест: `npm run smoke:deletion`):
+
+- изтриват се профилът, паролата и запазените адреси;
+- от старите поръчки се **заличават** името, имейлът, телефонът, адресът и
+  бележките — не просто се откачат от профила;
+- остава счетоводната част: номер, дата, артикули, суми. Това е задържане по
+  законово задължение (чл. 17, § 3, б. „б“ ОРЗД) и Google изисква да е изрично
+  оповестено — оповестено е в политиката, на `/account-deletion` и в самия екран
+  за изтриване;
+- поръчка, която в момента се приготвя или пътува, запазва адреса си, докато
+  бъде доставена или отказана, и се заличава автоматично в този момент.
+
+Това е промяна от 25.09.2026. Дотогава поръчките пазеха името, телефона, имейла
+и адреса завинаги, докато политиката твърдеше обратното — точно разминаването,
+което рецензент проверява пръв.
 
 ### Bluetooth и Data safety
 
@@ -212,11 +251,11 @@ Pizza Pazzo е официалното приложение на пицария P
 ПОРЪЧКАТА
 • Избирате размер и добавки към всяко ястие.
 • Количката пази избора ви, докато решите.
-• Доставка или вземане от място.
+• Доставка до адрес, с плащане в брой при получаване.
 • Виждате сумата преди да потвърдите — без изненади накрая.
 
 ПРОФИЛ
-• Запазвате адресите си, за да не ги пишете всеки път.
+• С профил името, телефонът и имейлът ви се попълват автоматично при поръчка.
 • Историята на поръчките ви е под ръка.
 • Профилът може да бъде изтрит по всяко време от самото приложение.
 
@@ -247,11 +286,11 @@ THE MENU
 ORDERING
 • Choose the size and the add-ons for each dish.
 • The cart keeps your choices until you are ready.
-• Delivery or pickup.
+• Delivery to your address, paid in cash on arrival.
 • You see the total before you confirm — no surprises at the end.
 
 YOUR ACCOUNT
-• Save your addresses so you do not retype them every time.
+• With an account your name, phone and email fill themselves in at checkout.
 • Your order history stays within reach.
 • The account can be deleted at any time from inside the app.
 
@@ -282,33 +321,77 @@ a staff account.
 
 ## 9. App access — текст за рецензента
 
+Полето се чете от рецензент в Google, не от клиента, затова текстът е **на
+английски**. Паролите се вадят от `npm run accounts:review` (виж по-долу) —
+попълни ги, преди да подадеш.
+
 ```
-Приложението е за поръчка на храна от пицария Pizza Pazzo.
+Pizza Pazzo is a food-ordering app for a pizzeria in Pleven, Bulgaria.
 
-БЕЗ ВХОД (по-голямата част от приложението):
-Менюто, категориите, продуктите, количката, доставка/вземане и подаването на
-поръчка работят изцяло без регистрация. Може да се тества веднага след
-стартиране.
+NO SIGN-IN NEEDED (most of the app):
+The menu, categories, products, the cart and placing a delivery order all work
+without any account. You can test the whole ordering flow straight after
+opening the app. Payment is cash on delivery — no card, no in-app purchase.
 
-С КЛИЕНТСКИ ПРОФИЛ:
-Регистрацията е свободна и отнема секунди — запазени адреси, история на
-поръчките и изтриване на профила.
+WITH A CUSTOMER ACCOUNT:
+Registration is free and takes seconds. An account pre-fills your name, phone
+and email at checkout, keeps your order history, and can be deleted from inside
+the app (Profile -> Delete account).
 
-СЛУЖЕБНА ЧАСТ (ограничена):
-Таблото с поръчките и печатът са само за персонала на заведението.
-Демо служебен акаунт:
-  имейл: <демо имейл>
-  парола: <демо парола>
-След вход отвори „Админ → Поръчки → На живо“.
+Demo customer account:
+  email: review.customer@pizzapazzo.review
+  password: <paste from `npm run accounts:review`>
 
-Печатът на бележки изисква сдвоен Bluetooth термален принтер, какъвто на
-тестово устройство няма — бутонът ще каже, че принтер не е избран. Това е
-очакваното поведение без хардуер. Разрешението за Bluetooth се иска само в
-служебния екран за настройки на принтера, никога при стартиране.
+STAFF AREA (restricted):
+The live orders board, accepting/rejecting orders and receipt printing are for
+restaurant staff only. This is a demo staff account. It can watch the board,
+accept, reject and print orders, and mark a product as sold out — nothing
+else. It cannot manage users, change roles, edit the menu or prices, or change
+the restaurant's settings:
+
+  email: review.staff@pizzapazzo.review
+  password: <paste from `npm run accounts:review`>
+
+After signing in, open "Админ" (Admin) -> "Поръчки" (Orders) -> "На живо"
+(Live). The admin panel is in Bulgarian only, as it is used by the restaurant's
+own staff.
+
+HOW TO SEE A FULL ORDER GO THROUGH:
+1. Place an order as a guest or as the demo customer.
+2. Sign in as the demo staff account and open the live orders board.
+3. The new order appears there within a few seconds, with an alarm sound.
+4. Accept it (an estimated time is required) or reject it.
+
+PRINTING:
+Receipt printing needs a paired Bluetooth thermal printer, which a test device
+will not have — the button will say no printer is selected. That is the
+expected behaviour without the hardware. The Bluetooth permission is requested
+only inside the staff printer-settings screen, never at startup, and never for
+a customer.
+
+NOTE ON OPENING HOURS:
+If the restaurant is closed at the moment you test, the app says when it opens
+again instead of accepting an order. Staff can open it manually. If this blocks
+your review, please contact us and we will open it for the duration.
 ```
 
-⚠️ **Направи демо STAFF акаунта преди подаването**: Админ → Потребители → нов
-потребител с роля **STAFF**. Не давай ADMIN.
+⚠️ **Направи демо акаунтите преди подаването:**
+
+```bash
+npm run accounts:review      # локално
+# или в Render Shell:  node scripts/create-review-accounts.mjs
+```
+
+Скриптът създава `review.customer@…` (CUSTOMER) и `review.staff@…` (**STAFF**,
+никога ADMIN) с измислени данни на домейн `pizzapazzo.review`, който не
+съществува — имейл до тях не стига до никого. Паролите се печатат веднъж;
+повторно пускане ги сменя, което е и начинът да ги ротираш след прегледа.
+
+**Не давай реалния акаунт на собственика.** STAFF вижда таблото, приема/отказва,
+печата и може да маркира продукт като изчерпан — точно колкото е нужно. Не може
+да отваря `/admin/users`, да сменя роли, да редактира менюто и цените, да гледа
+отчетите или да пипа настройките на заведението (проверено: `requireRole` в
+`app/[locale]/admin/{users,categories,reports}/page.tsx` и в `app/actions/admin-*.ts`).
 
 ## 10. Content rating (IARC)
 
@@ -374,7 +457,7 @@ Google. Ако клиентът има фирма, **регистрирай ак
 
 | Файл | Размер | Къде |
 |---|---|---|
-| `play-icon-512.png` | 512×512 PNG, без alpha | App icon |
+| `play-icon-512.png` | 512×512 PNG, **32-bit с alpha** (Play отказва 24-bit) | App icon |
 | `play-feature-graphic-1024x500.png` | 1024×500 PNG, без alpha | Feature graphic |
 
 Регенерират се с `npm run icons:play`.

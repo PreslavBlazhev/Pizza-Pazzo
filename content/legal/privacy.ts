@@ -95,6 +95,10 @@ export const privacyDoc: LegalDoc = {
               en: "Our email delivery provider (Resend) — for sending order confirmations and notifications.",
             },
             {
+              bg: "Google — само при отваряне на страница „Контакти“, където е вградена карта на адреса ни. Картата се зарежда от сървър на Google и той вижда IP адреса на устройството ви. Друго съдържание на трети страни в сайта няма.",
+              en: "Google — only when you open the “Contacts” page, which embeds a map of our address. The map loads from a Google server, which therefore sees your device's IP address. There is no other third-party content on the site.",
+            },
+            {
               bg: "Счетоводители и държавни органи — когато закон го изисква.",
               en: "Accountants and public authorities — where required by law.",
             },
@@ -118,8 +122,12 @@ export const privacyDoc: LegalDoc = {
               en: "Order data: for the period required by tax and accounting legislation.",
             },
             {
-              bg: "Профил: докато не поискате изтриването му. При изтриване поръчките се анонимизират в частта, която законът позволява.",
-              en: "Account: until you request its deletion. Upon deletion, orders are anonymised to the extent the law allows.",
+              bg: "Профил: докато не поискате изтриването му. При изтриване премахваме профила, паролата и запазените адреси, а от старите поръчки — името, имейла, телефона, адреса за доставка и бележката. В поръчките остават само номер, дата, артикули и суми, които сме длъжни да пазим като счетоводни документи.",
+              en: "Account: until you request its deletion. Deleting removes the account, the password and the saved addresses, and takes the name, e-mail, phone number, delivery address and note out of past orders. What stays in an order is its number, date, items and amounts — the accounting record we are required to keep.",
+            },
+            {
+              bg: "Поръчка, която още се приготвя или пътува към вас, запазва адреса си до доставянето или отказването ѝ — иначе не може да бъде доставена.",
+              en: "An order still being cooked or on its way keeps its address until it is delivered or cancelled — otherwise it could not be delivered at all.",
             },
             {
               bg: "Сървърни логове: кратък технически срок.",

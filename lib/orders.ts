@@ -8,7 +8,8 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { parseOrderItemExtras } from "@/lib/extras-rules";
-import { ACTIVE_ORDER_STATUSES } from "@/lib/order-status";
+import { ACTIVE_ORDER_STATUSES, isTerminalStatus } from "@/lib/order-status";
+import { anonymiseIfPending } from "@/lib/privacy";
 import { startOfSofiaDay } from "@/lib/report-period";
 import type { AdminDashboardStats } from "@/types/admin";
 import {
@@ -69,6 +70,7 @@ export function mapOrderRow(o: PrismaOrderRow): Order {
     acceptedAt: o.acceptedAt?.toISOString() ?? null,
     cancelledAt: o.cancelledAt?.toISOString() ?? null,
     completedAt: o.completedAt?.toISOString() ?? null,
+    anonymizedAt: o.anonymizedAt?.toISOString() ?? null,
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
   };
@@ -213,4 +215,12 @@ export async function setOrderStatus(
       ...statusTimestamps(next),
     },
   });
+
+  // The order is closed, so an address nobody will drive to any more has no
+  // reason to exist. This only ever fires for an order whose customer deleted
+  // their account mid-delivery — see lib/privacy.ts. It runs after the status
+  // is safely committed, and does nothing at all otherwise.
+  if (isTerminalStatus(next)) {
+    await anonymiseIfPending(id);
+  }
 }
