@@ -17,6 +17,8 @@ import {
 import { customerPaymentState } from "@/lib/payments/service";
 import { mapSimulatorState, SIMULATOR_SESSION_TTL_MS } from "@/lib/payments/providers/simulator";
 import { itemsSchema } from "@/lib/checkout/place-order";
+import { checkTestCard, formatCardNumber, formatExpiry, passesLuhn } from "@/lib/payments/simulator-cards";
+import { emailDeliveryBlockedReason } from "@/lib/email/resend";
 
 // ── Money ────────────────────────────────────────────────────────────────
 
@@ -234,4 +236,50 @@ test("i18n: every payment screen text exists in Bulgarian AND English", () => {
   // The screens say different things in the two languages (no copy-paste).
   assert.notEqual(bg.payment.success.title, en.payment.success.title);
   assert.equal(bg.checkout.paymentCod, undefined, "the old cash-only label is gone");
+});
+
+// ── The simulator's demo card form (browser-side rules) ──────────────────
+
+test("demo cards: only the simulator's test numbers are accepted", () => {
+  const now = new Date(2026, 8, 26);
+  const good = { expiry: "12/29", cvc: "123" };
+  const paid = checkTestCard({ number: "4242 4242 4242 4242", ...good }, now);
+  assert.ok(paid.ok && paid.card.behaviour.kind === "paid");
+  const declined = checkTestCard({ number: "4000000000009995", ...good }, now);
+  assert.ok(declined.ok && declined.card.behaviour.kind === "declined");
+  const challenge = checkTestCard({ number: "4000 0027 6000 3184", ...good }, now);
+  assert.ok(challenge.ok && challenge.card.behaviour.kind === "challenge");
+
+  // A Luhn-valid number that is not ours looks like a real card: refused and
+  // flagged so the form clears it.
+  const realLooking = checkTestCard({ number: "4111 1111 1111 1111", ...good }, now);
+  assert.deepEqual(realLooking, { ok: false, field: "number", code: "NOT_TEST_CARD_REAL_LOOKING" });
+  assert.deepEqual(checkTestCard({ number: "1234 5678 9012 3456", ...good }, now), {
+    ok: false,
+    field: "number",
+    code: "NOT_TEST_CARD",
+  });
+  assert.equal(checkTestCard({ number: "4242 4242", ...good }, now).ok, false);
+});
+
+test("demo cards: expiry and CVC are validated like a real form", () => {
+  const now = new Date(2026, 8, 26); // September 2026
+  const n = "4242424242424242";
+  assert.equal(checkTestCard({ number: n, expiry: "09/26", cvc: "123" }, now).ok, true, "valid through its month");
+  assert.deepEqual(checkTestCard({ number: n, expiry: "08/26", cvc: "123" }, now), { ok: false, field: "expiry", code: "EXPIRY_PAST" });
+  assert.deepEqual(checkTestCard({ number: n, expiry: "13/29", cvc: "123" }, now), { ok: false, field: "expiry", code: "EXPIRY_INVALID" });
+  assert.deepEqual(checkTestCard({ number: n, expiry: "1229", cvc: "123" }, now), { ok: false, field: "expiry", code: "EXPIRY_INVALID" });
+  assert.deepEqual(checkTestCard({ number: n, expiry: "12/29", cvc: "12" }, now), { ok: false, field: "cvc", code: "CVC_INVALID" });
+  assert.equal(formatCardNumber("4242424242424242999"), "4242 4242 4242 4242");
+  assert.equal(formatExpiry("1229"), "12/29");
+  assert.equal(passesLuhn("4242424242424242"), true);
+  assert.equal(passesLuhn("4242424242424241"), false);
+});
+
+// ── E-mail delivery switch ───────────────────────────────────────────────
+
+test("e-mail: staging never delivers; EMAIL_DELIVERY=disabled switches it off anywhere", () => {
+  assert.ok(emailDeliveryBlockedReason({ APP_ENV: "staging", EMAIL_DELIVERY: "enabled" } as unknown as NodeJS.ProcessEnv));
+  assert.ok(emailDeliveryBlockedReason({ APP_ENV: "production", EMAIL_DELIVERY: "disabled" } as unknown as NodeJS.ProcessEnv));
+  assert.equal(emailDeliveryBlockedReason({ APP_ENV: "production" } as unknown as NodeJS.ProcessEnv), null);
 });
