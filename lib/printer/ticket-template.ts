@@ -185,6 +185,22 @@ export function buildTicket(
   push("header", template.headerText);
   push("ticketType", template.name);
   push("orderNumber", `ПОРЪЧКА #${order.orderNumber}`);
+  if (order.isTest) {
+    // ALWAYS printed, whatever the layout hides: the kitchen slip usually has
+    // no payment section, and a test order that looks real is how food gets
+    // cooked for nobody. Styled like the order number so it cannot be missed.
+    const style = sections.orderNumber;
+    for (const part of wrap("*** ТЕСТ — НЕ ПРИГОТВЯЙ ***", Math.max(8, Math.floor(charsPerLine / style.scale)))) {
+      lines.push({
+        section: "orderNumber",
+        text: part,
+        align: "center",
+        bold: true,
+        fontPt: style.fontPt,
+        scale: style.scale,
+      });
+    }
+  }
   if (options.isReprint) push("reprint", "*** ПОВТОРЕН ПЕЧАТ ***");
   push("createdAt", formatTimestamp(order.createdAt));
   push("acceptedAt", (() => {
@@ -218,7 +234,6 @@ export function buildTicket(
   divider();
 
   // ── Money ──
-  if (order.isTest) push("payment", "*** ТЕСТОВА ПОРЪЧКА — НЕ ПРИГОТВЯЙ ***");
   push("payment", `Плащане: ${paymentLabel(order)}`);
   push("totals", "Междинна сума", { right: formatEurPrice(order.subtotalEur) });
   push("totals", "Доставка", { right: formatEurPrice(order.deliveryFeeEur) });

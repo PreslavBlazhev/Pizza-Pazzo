@@ -36,8 +36,8 @@ export function fromMinorUnits(minor: number): number {
   return Math.round(minor) / 100;
 }
 
-/** "23,52 €" style label for minor units — used in logs and admin details. */
+/** "23.52 €" — the same format as formatEurPrice on the rest of the site. */
 export function formatMinor(minor: number, currency: string): string {
-  const value = fromMinorUnits(minor).toFixed(2).replace(".", ",");
+  const value = fromMinorUnits(minor).toFixed(2);
   return currency === "EUR" ? `${value} €` : `${value} ${currency}`;
 }
