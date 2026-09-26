@@ -13,6 +13,9 @@ import { db } from "@/lib/db";
 import { placeOrder } from "@/lib/checkout/place-order";
 import {
   applyProviderStatus,
+  MAX_NOTIFICATION_ATTEMPTS,
+  notifyRestaurantOnce,
+  retryFailedNotifications,
   handleProviderCallback,
   refreshOrderPayment,
   startCardPayment,
@@ -45,6 +48,10 @@ after(async () => {
 
 async function orderRow(orderNumber: number) {
   return db.order.findUniqueOrThrow({ where: { orderNumber } });
+}
+
+async function notificationAttempts(orderNumber: number): Promise<number> {
+  return (await orderRow(orderNumber)).notificationAttempts;
 }
 
 async function kitchenNumbers(): Promise<number[]> {
@@ -86,7 +93,11 @@ test("cash on delivery: priced on the server, straight to the kitchen, one e-mai
     assert.equal(Number(row.totalEur), 23.4);
     assert.equal(row.paymentStatus, "CASH_DUE");
     assert.ok(row.releasedToKitchenAt);
-    assert.ok(row.notificationSentAt);
+    // No Resend key in tests: the attempt is made once and recorded as
+    // SKIPPED — notificationSentAt is only ever set for a real send.
+    assert.equal(row.notificationStatus, "SKIPPED");
+    assert.equal(row.notificationAttempts, 1);
+    assert.equal(row.notificationSentAt, null);
     assert.equal(row.isTest, false);
     assert.ok((await kitchenNumbers()).includes(r.orderNumber));
     assert.equal(log.countFor(r.orderNumber), 1);
@@ -232,7 +243,7 @@ test("successful card payment: PAID, to the kitchen once, one e-mail — despite
     assert.ok(row.paidAt);
     assert.ok(row.releasedToKitchenAt);
     const releasedAt = row.releasedToKitchenAt!.getTime();
-    assert.equal(log.countFor(r.orderNumber), 1, "exactly one restaurant e-mail");
+    assert.equal(await notificationAttempts(r.orderNumber), 1, "exactly one notification attempt");
     assert.deepEqual(
       (await kitchenNumbers()).filter((n) => n === r.orderNumber),
       [r.orderNumber],
@@ -245,7 +256,7 @@ test("successful card payment: PAID, to the kitchen once, one e-mail — despite
     );
     const again = await orderRow(r.orderNumber);
     assert.equal(again.releasedToKitchenAt!.getTime(), releasedAt);
-    assert.equal(log.countFor(r.orderNumber), 1);
+    assert.equal(await notificationAttempts(r.orderNumber), 1);
 
     // "Pay" on a paid order never opens a second session.
     const second = await startCardPayment({ accessToken: r.accessToken!, locale: "bg" });
@@ -318,7 +329,7 @@ test("declined card: FAILED, never reaches the kitchen; retry pays the SAME orde
     assert.equal(row.paymentStatus, "PAID");
     assert.ok(row.releasedToKitchenAt);
     assert.equal(await db.order.count(), ordersBefore, "no second order was created");
-    assert.equal(log.countFor(r.orderNumber), 1);
+    assert.equal(await notificationAttempts(r.orderNumber), 1);
   } finally {
     log.restore();
   }
@@ -426,7 +437,7 @@ test("two successful attempts on one order: kept, flagged DUPLICATE_PAYMENT, kit
     );
     const row = await orderRow(r.orderNumber);
     assert.equal(row.paymentAlert, "DUPLICATE_PAYMENT");
-    assert.equal(log.countFor(r.orderNumber), 1);
+    assert.equal(await notificationAttempts(r.orderNumber), 1);
   } finally {
     log.restore();
   }
@@ -494,4 +505,93 @@ test("reports: test and unpaid card orders are not revenue; cash and card are sp
     report.summary.revenueEur
   );
   assert.equal(report.summary.paidOnlineCount, 1, "simulator payments are not counted as money");
+});
+
+// ── The restaurant e-mail: honest accounting, retries, no duplicates ─────
+
+test("a failed restaurant e-mail is recorded as FAILED, retried later, and sent once", async () => {
+  // A cash order is a real (non-test) order, so it does reach the sender.
+  const r = await order("cash_on_delivery"); // first attempt: SKIPPED (no key in tests)
+  const id = (await orderRow(r.orderNumber)).id;
+  // Put it back to "never attempted" to drive the sender by hand.
+  await db.order.update({
+    where: { id },
+    data: { notificationStatus: null, notificationAttempts: 0, notificationClaimedAt: null, notificationError: null },
+  });
+
+  let calls = 0;
+  let fail = true;
+  const keys: (string | undefined)[] = [];
+  const sender = async (_data: unknown, opts?: { idempotencyKey?: string }) => {
+    calls++;
+    keys.push(opts?.idempotencyKey);
+    await new Promise((res) => setTimeout(res, 30));
+    return fail ? { status: "failed" as const, error: "Resend 503" } : { status: "sent" as const };
+  };
+
+  // Five concurrent triggers → ONE attempt (the lease).
+  const results = await quiet(() =>
+    Promise.all(Array.from({ length: 5 }, () => notifyRestaurantOnce(id, sender)))
+  );
+  assert.equal(calls, 1);
+  assert.deepEqual(results.filter(Boolean), ["FAILED"]);
+  let row = await orderRow(r.orderNumber);
+  assert.equal(row.notificationStatus, "FAILED");
+  assert.equal(row.notificationSentAt, null, "a failed e-mail is never marked as sent");
+  assert.equal(row.notificationError, "Resend 503");
+
+  // Immediately again: still inside the wait, nothing is sent.
+  assert.equal(await retryFailedNotifications(sender), 0);
+  assert.equal(calls, 1);
+
+  // After the wait the retry goes out — and succeeds.
+  fail = false;
+  await db.order.update({ where: { id }, data: { notificationClaimedAt: new Date(Date.now() - 61_000) } });
+  assert.equal(await quiet(() => retryFailedNotifications(sender)), 1);
+  row = await orderRow(r.orderNumber);
+  assert.equal(row.notificationStatus, "SENT");
+  assert.ok(row.notificationSentAt);
+  assert.equal(row.notificationAttempts, 2);
+  assert.equal(calls, 2);
+  // Both attempts carried the same Resend idempotency key.
+  assert.deepEqual(new Set(keys), new Set([`pp-new-order-${id}`]));
+
+  // Sent is final: nothing ever sends it again.
+  assert.equal(await notifyRestaurantOnce(id, sender), null);
+  assert.equal(calls, 2);
+});
+
+test("retries stop after the attempt limit; a human sees FAILED in the admin", async () => {
+  const r = await order("cash_on_delivery");
+  const id = (await orderRow(r.orderNumber)).id;
+  await db.order.update({
+    where: { id },
+    data: { notificationStatus: "FAILED", notificationAttempts: MAX_NOTIFICATION_ATTEMPTS, notificationClaimedAt: new Date(0) },
+  });
+  let calls = 0;
+  await retryFailedNotifications(async () => {
+    calls++;
+    return { status: "sent" as const };
+  });
+  assert.equal(calls, 0);
+  assert.equal((await orderRow(r.orderNumber)).notificationStatus, "FAILED");
+});
+
+test("test (simulator) orders never reach the restaurant inbox", async () => {
+  const r = await order("card_online");
+  const a = await payWith(r.accessToken!, "paid");
+  let calls = 0;
+  await quiet(() => syncAttempt(a.id));
+  // The release above already recorded the decision; a direct call is a no-op.
+  assert.equal(
+    await notifyRestaurantOnce(a.orderId, async () => {
+      calls++;
+      return { status: "sent" as const };
+    }),
+    null
+  );
+  const row = await orderRow(r.orderNumber);
+  assert.equal(row.notificationStatus, "SKIPPED");
+  assert.equal(row.notificationError, "тестова поръчка");
+  assert.equal(calls, 0);
 });

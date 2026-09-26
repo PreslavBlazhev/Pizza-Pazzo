@@ -85,22 +85,150 @@ export async function releaseToKitchenAndNotify(orderId: string): Promise<void> 
   await notifyRestaurantOnce(orderId);
 }
 
-/** Sends the "new order" e-mail if — and only if — nobody has claimed it yet. */
-export async function notifyRestaurantOnce(orderId: string): Promise<boolean> {
+/** How many times the restaurant e-mail is attempted before a human must look. */
+export const MAX_NOTIFICATION_ATTEMPTS = 5;
+/**
+ * The attempt lease. While it runs nobody else may send; after it, a FAILED
+ * (or crashed SENDING) notification may be tried again.
+ */
+export const NOTIFICATION_RETRY_AFTER_MS = 60_000;
+
+type NewOrderSender = typeof sendNewOrderNotification;
+
+/**
+ * Sends the restaurant's "new order" e-mail for a released order, and records
+ * what really happened:
+ *
+ *   SENT     Resend accepted it — notificationSentAt is set only now
+ *   SKIPPED  deliberately not sent (test order, staging, Resend not set up);
+ *            final, never retried
+ *   FAILED   Resend refused or was unreachable; retried after
+ *            NOTIFICATION_RETRY_AFTER_MS, at most MAX_NOTIFICATION_ATTEMPTS
+ *            times (retryFailedNotifications, driven by the live board)
+ *
+ * No duplicates: an attempt first takes a lease with a conditional update, so
+ * concurrent callers cannot both send; and every attempt for one order carries
+ * the same Resend idempotency key, so even a crash between "Resend accepted"
+ * and "we recorded SENT" does not deliver a second e-mail.
+ *
+ * Returns the recorded status, or null when this call did not attempt a send.
+ */
+export async function notifyRestaurantOnce(
+  orderId: string,
+  send: NewOrderSender = sendNewOrderNotification
+): Promise<"SENT" | "SKIPPED" | "FAILED" | null> {
+  const now = new Date();
   const { count } = await db.order.updateMany({
-    where: { id: orderId, notificationSentAt: null, releasedToKitchenAt: { not: null } },
-    data: { notificationSentAt: new Date() },
+    where: {
+      id: orderId,
+      releasedToKitchenAt: { not: null },
+      notificationSentAt: null,
+      notificationAttempts: { lt: MAX_NOTIFICATION_ATTEMPTS },
+      AND: [
+        {
+          OR: [
+            { notificationStatus: null },
+            { notificationStatus: { in: ["FAILED", "SENDING"] } },
+          ],
+        },
+        {
+          OR: [
+            { notificationClaimedAt: null },
+            { notificationClaimedAt: { lt: new Date(now.getTime() - NOTIFICATION_RETRY_AFTER_MS) } },
+          ],
+        },
+      ],
+    },
+    data: {
+      notificationStatus: "SENDING",
+      notificationClaimedAt: now,
+      notificationAttempts: { increment: 1 },
+    },
   });
-  if (count !== 1) return false;
+  if (count !== 1) return null;
 
   const order = await db.order.findUnique({ where: { id: orderId }, include: { items: true } });
-  if (!order) return false;
+  if (!order) return null;
+
+  // Test orders (simulator / bank sandbox) never reach the real inbox.
+  if (order.isTest) {
+    await db.order.update({
+      where: { id: orderId },
+      data: { notificationStatus: "SKIPPED", notificationError: "тестова поръчка" },
+    });
+    return "SKIPPED";
+  }
 
   const method = isPaymentMethod(order.paymentMethod) ? order.paymentMethod : "CASH_ON_DELIVERY";
   const status = isPaymentStatus(order.paymentStatus) ? order.paymentStatus : "CASH_DUE";
   const totalEur = Number(order.totalEur);
 
-  await sendNewOrderNotification({
+  let outcome: Awaited<ReturnType<NewOrderSender>>;
+  try {
+    outcome = await send(buildNewOrderEmail(order, method, status, totalEur), {
+      idempotencyKey: `pp-new-order-${order.id}`,
+    });
+  } catch (err) {
+    outcome = { status: "failed", error: String((err as Error).message ?? err).slice(0, 300) };
+  }
+
+  if (outcome.status === "sent") {
+    await db.order.update({
+      where: { id: orderId },
+      data: { notificationStatus: "SENT", notificationSentAt: new Date(), notificationError: null },
+    });
+    return "SENT";
+  }
+  if (outcome.status === "skipped") {
+    await db.order.update({
+      where: { id: orderId },
+      data: { notificationStatus: "SKIPPED", notificationError: outcome.reason },
+    });
+    return "SKIPPED";
+  }
+  console.error(
+    `[email] restaurant notification for order #${order.orderNumber} failed ` +
+      `(attempt ${order.notificationAttempts}/${MAX_NOTIFICATION_ATTEMPTS}): ${outcome.error}`
+  );
+  // notificationClaimedAt stays as the time of this attempt: the retry clock.
+  await db.order.update({
+    where: { id: orderId },
+    data: { notificationStatus: "FAILED", notificationError: outcome.error },
+  });
+  return "FAILED";
+}
+
+/**
+ * Retries restaurant e-mails that failed, once their wait is over. Cheap when
+ * there is nothing to do (one indexed query); called from the live board's
+ * poll, so a Resend outage heals itself while the shift is running.
+ */
+export async function retryFailedNotifications(send: NewOrderSender = sendNewOrderNotification): Promise<number> {
+  const due = await db.order.findMany({
+    where: {
+      releasedToKitchenAt: { not: null },
+      notificationSentAt: null,
+      notificationStatus: { in: ["FAILED", "SENDING"] },
+      notificationAttempts: { lt: MAX_NOTIFICATION_ATTEMPTS },
+      notificationClaimedAt: { lt: new Date(Date.now() - NOTIFICATION_RETRY_AFTER_MS) },
+    },
+    select: { id: true },
+    take: 5,
+  });
+  let sent = 0;
+  for (const o of due) {
+    if ((await notifyRestaurantOnce(o.id, send)) === "SENT") sent++;
+  }
+  return sent;
+}
+
+function buildNewOrderEmail(
+  order: Prisma.OrderGetPayload<{ include: { items: true } }>,
+  method: "CASH_ON_DELIVERY" | "CARD_ONLINE",
+  status: Parameters<typeof collectInstructionBg>[1],
+  totalEur: number
+): Parameters<NewOrderSender>[0] {
+  return {
     orderNumber: order.orderNumber,
     customerName: order.customerName,
     customerPhone: order.customerPhone,
@@ -118,8 +246,7 @@ export async function notifyRestaurantOnce(orderId: string): Promise<boolean> {
       totalPriceEur: Number(i.totalPriceEur),
       extras: parseOrderItemExtras(i.extrasJson),
     })),
-  });
-  return true;
+  };
 }
 
 // ── Starting a payment ─────────────────────────────────────────────────────

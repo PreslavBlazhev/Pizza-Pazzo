@@ -172,7 +172,10 @@ async function main() {
     const onBoard = (await kitchen()).filter((o) => o.orderNumber === order.orderNumber);
     check(onBoard.length === 1 && onBoard[0].paymentStatus === "PAID", "paid order is on the kitchen board exactly once");
     const paidRow = await db.order.findUniqueOrThrow({ where: { id: order.id } });
-    check(!!paidRow.notificationSentAt && paidRow.isTest, "restaurant notification claimed once; order flagged TEST");
+    check(
+      paidRow.isTest && paidRow.notificationAttempts === 1 && paidRow.notificationStatus === "SKIPPED" && !paidRow.notificationSentAt,
+      "one notification decision, SKIPPED (test orders never reach the inbox); order flagged TEST"
+    );
     check((await db.order.count({ where: { customerEmail: "e2e@example.test", id: { notIn: createdOrders } } })) === 0, "no second order was created");
 
     const again = await start(token);

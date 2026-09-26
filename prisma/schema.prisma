@@ -233,9 +233,19 @@ model Order {
   /// a card order only once its payment is confirmed. Null = the kitchen has
   /// never seen it and must not.
   releasedToKitchenAt   DateTime?
-  /// Claimed atomically (updateMany … where null) right before the "new
-  /// order" e-mail goes out, so a retried callback can never send it twice.
+  /// The restaurant's "new order" e-mail — see notifyRestaurantOnce in
+  /// lib/payments/service.ts. `notificationSentAt` is set ONLY once Resend
+  /// accepted the message; the other four columns account for everything
+  /// else, so a failed send is visible and retried instead of looking sent.
   notificationSentAt    DateTime?
+  /// null (not attempted) | SENDING | SENT | SKIPPED | FAILED | LEGACY (pre-2026-09-26 orders)
+  notificationStatus    String?
+  notificationAttempts  Int         @default(0)
+  /// Why it was skipped or why the last attempt failed (no secrets).
+  notificationError     String?
+  /// When the current/last attempt started — a lease that stops two
+  /// requests from sending at once, and the clock for the next retry.
+  notificationClaimedAt DateTime?
 
   /// Unguessable token that lets whoever placed the order (a guest has no
   /// account) open its payment page and result. Never shown to staff.

@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getPendingOrders } from "@/lib/orders";
 import { getPrintTemplates } from "@/lib/print-templates";
 import { getStoreStatus } from "@/lib/store-status";
+import { retryFailedNotifications } from "@/lib/payments/service";
 
 /**
  * Pending orders for the live board (`/admin/orders/live`), which polls this
@@ -25,6 +26,13 @@ export async function GET() {
   // So does the open/closed state: that is what makes a timed closure resume
   // the board by itself. Nobody writes anything when the timer expires; the
   // next poll simply comes back with `isOpen: true`.
+  // A restaurant e-mail that failed (Resend down, a bad moment) is retried
+  // here, on the board's own rhythm — bounded and never duplicated (see
+  // notifyRestaurantOnce). Never allowed to break the poll itself.
+  await retryFailedNotifications().catch((err) =>
+    console.error("[email] notification retry failed:", (err as Error).message)
+  );
+
   const [orders, printTemplates, storeStatus] = await Promise.all([
     getPendingOrders(),
     getPrintTemplates(),
