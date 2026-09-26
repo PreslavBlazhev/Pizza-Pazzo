@@ -34,6 +34,10 @@ npm run dev
 - `npm run start` — стартиране на build
 - `npm run lint` — линтване
 - `npm run type-check` — проверка на типовете
+- `npm run check:i18n` — BG/EN каталозите са синхронни
+- `npm run smoke` — проверки на цени/добавки/отчети
+- `npm run test:payments` — тестове на онлайн плащането (временна база)
+- `npm run e2e:payments` — HTTP поток със симулатора срещу работещ сървър
 
 ## Структура на проекта
 
@@ -65,6 +69,10 @@ _downloads-and-unused/  Работни/непродукционни матери
 - [`docs/admin-panel-plan.md`](docs/admin-panel-plan.md) — админ панел
 - [`docs/printing-plan.md`](docs/printing-plan.md) — печат на 80mm термален принтер
 
-## Какво още НЕ е направено (умишлено)
-Без реална база данни, онлайн плащания, реално изпращане на имейли, финален
-дизайн или сложни интеграции. Всичко това идва по-късно, стъпка по стъпка.
+## Онлайн плащане с карта
+Изградено с хоствана страница на доставчика и сървърна проверка на статуса;
+изключено по подразбиране. Тества се с вграден симулатор; адаптерът за
+банката чака избора на банка. Вижте:
+- [`docs/online-card-payments.md`](docs/online-card-payments.md) — как работи, staging демо, sandbox, production, аварийно изключване;
+- [`docs/bank-meeting-checklist.md`](docs/bank-meeting-checklist.md) — какво да се поиска от банката;
+- [`docs/domain-and-deploy.md`](docs/domain-and-deploy.md) — `.com` домейнът и Render.

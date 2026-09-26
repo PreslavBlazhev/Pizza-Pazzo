@@ -48,5 +48,25 @@ services:
         sync: false
       - key: FROM_EMAIL
         sync: false
-      - key: NEXT_PUBLIC_SITE_URL
+      # THE public address (https://…, no trailing slash). Canonical URLs, the
+      # sitemap and the bank's return/callback addresses are all built from it
+      # — the move to the .com domain is this one value (docs/domain-and-deploy.md).
+      - key: APP_BASE_URL
+        sync: false
+
+      # This service is the real restaurant. The payment simulator and bank
+      # sandboxes refuse to run here (lib/payments/config.ts).
+      - key: APP_ENV
+        value: production
+
+      # Online card payments: OFF until the bank contract and a successful
+      # sandbox test exist (docs/online-card-payments.md §3.5). This is also
+      # the emergency switch — set to false and save to turn cards off.
+      - key: CARD_PAYMENTS_ENABLED
+        value: "false"
+      - key: PAYMENT_PROVIDER
+        sync: false
+      - key: PAYMENT_ENV
+        sync: false
+      - key: PAYMENT_CURRENCY
         sync: false
