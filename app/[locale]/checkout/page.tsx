@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { getSessionUser } from "@/lib/auth";
-import { getEffectivePaymentConfig } from "@/lib/payments/providers";
+import { resolveCheckoutPayment } from "@/lib/payments/providers";
 import type { Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -26,6 +26,7 @@ export default async function CheckoutPage({ params }: PageProps) {
 
   const t = await getTranslations("checkout");
   const user = await getSessionUser();
+  const payment = await resolveCheckoutPayment(user?.role ?? null);
   const defaults = user
     ? { name: user.fullName, email: user.email, phone: user.phone ?? undefined }
     : undefined;
@@ -37,7 +38,11 @@ export default async function CheckoutPage({ params }: PageProps) {
         <h1 className="mb-8 font-display text-2xl font-bold text-pizza-ink sm:text-3xl">
           {t("title")}
         </h1>
-        <CheckoutForm defaults={defaults} cardAvailable={getEffectivePaymentConfig().enabled} />
+        <CheckoutForm
+          defaults={defaults}
+          cardAvailable={payment.available}
+          cardIsDemo={payment.demo}
+        />
       </main>
       <Footer />
     </>

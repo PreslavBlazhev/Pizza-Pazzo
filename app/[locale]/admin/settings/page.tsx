@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { RestaurantSettingsForm } from "@/components/admin/RestaurantSettingsForm";
 import { getRestaurantSettings } from "@/lib/restaurant-settings";
 import { getPaymentStatusSummary } from "@/lib/payments/admin";
+import { CardDemoModeForm } from "@/components/admin/CardDemoModeForm";
 
 export const metadata: Metadata = { title: "Настройки" };
 
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
   const settings = await getRestaurantSettings();
-  const payments = getPaymentStatusSummary();
+  const payments = await getPaymentStatusSummary();
 
   return (
     <div>
@@ -49,10 +50,10 @@ export default async function AdminSettingsPage() {
         </Link>
       </section>
 
-      {/* Read-only on purpose: card payments are switched on and off through
-          environment variables on the server (docs/online-card-payments.md),
-          never from a web form — a stolen admin session must not be able to
-          turn a test simulator on in front of real customers. */}
+      {/* The REAL provider is configured through environment variables on the
+          server (docs/online-card-payments.md) and shown read-only here. The
+          one switch on this page is the card DEMO (simulator, no real money),
+          which the owner turns on to test the flow on the live site. */}
       <section className="mt-6 rounded-2xl border border-pizza-cream-dark bg-white p-5">
         <h2 className="font-display text-lg font-semibold text-pizza-ink">
           Онлайн плащане с карта
@@ -62,7 +63,9 @@ export default async function AdminSettingsPage() {
             payments.enabled ? "bg-green-100 text-green-800" : "bg-neutral-100 text-neutral-700"
           }`}
         >
-          {payments.enabled ? "Включено" : "Изключено — клиентите виждат само плащане в брой"}
+          {payments.enabled
+            ? "Истински доставчик: включен"
+            : "Истинска банка: не е настроена (виж демото по-долу)"}
         </p>
         <dl className="mt-3 grid gap-1 text-sm sm:grid-cols-[12rem_1fr]">
           <dt className="text-pizza-muted">Среда на сайта (APP_ENV)</dt>
@@ -93,6 +96,22 @@ export default async function AdminSettingsPage() {
             Тестов режим: поръчките, платени така, са тестови и не са реални пари.
           </p>
         )}
+
+        <div className="mt-5 border-t border-pizza-cream-dark pt-4">
+          <CardDemoModeForm mode={payments.demoMode} />
+          {payments.demoMode !== "OFF" && payments.demoProblems.length > 0 && (
+            <ul className="mt-2 list-disc pl-5 text-sm text-red-700">
+              {payments.demoProblems.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-xs text-pizza-muted">
+            Тестови карти: 4242 4242 4242 4242 (успех), 4000 0000 0000 9995 (отказ). Демо
+            поръчките са маркирани „ТЕСТ — НЕ ПРИГОТВЯЙ“, не са реални пари и не пращат имейли.
+            Щом има настроена истинска банка, тя е с предимство пред демото.
+          </p>
+        </div>
       </section>
     </div>
   );

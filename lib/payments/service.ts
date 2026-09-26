@@ -27,7 +27,7 @@ import { db } from "@/lib/db";
 import { parseOrderItemExtras } from "@/lib/extras-rules";
 import { sendNewOrderNotification } from "@/lib/email/resend";
 import { toMinorUnits } from "./money";
-import { getEffectivePaymentConfig, getActivePaymentProvider, getProviderForAttempt, providerIdFromSlug, providerSlug } from "./providers";
+import { getProviderForAttempt, getProviderForNewPayment, providerIdFromSlug, providerSlug } from "./providers";
 import {
   collectInstructionBg,
   isOpenAttempt,
@@ -291,9 +291,11 @@ export async function startCardPayment(input: {
   const reuse = await reusableSession(order.id);
   if (reuse) return { ok: true, redirectUrl: reuse, reused: true };
 
-  const provider = getActivePaymentProvider();
-  const config = getEffectivePaymentConfig();
-  if (!provider || !config.enabled) return { ok: false, code: "DISABLED" };
+  // A demo order (isTest) is paid through the simulator, a real one through
+  // the configured provider — see getProviderForNewPayment.
+  const setup = await getProviderForNewPayment(order);
+  if (!setup) return { ok: false, code: "DISABLED" };
+  const { provider, config } = setup;
 
   // ── Per-order lock: only one request at a time may create a session.
   const now = new Date();
@@ -441,7 +443,7 @@ export async function syncAttempt(
     return attempt;
   }
 
-  const provider = getProviderForAttempt(attempt.provider);
+  const provider = await getProviderForAttempt(attempt.provider);
   if (!provider) {
     console.warn(`[payments] no provider available to verify ${attempt.reference} (${attempt.provider})`);
     return attempt;
@@ -607,7 +609,7 @@ export async function handleProviderCallback(
   request: CallbackRequest
 ): Promise<CallbackOutcome> {
   const providerId = providerIdFromSlug(slug);
-  const provider = providerId ? getProviderForAttempt(providerId) : null;
+  const provider = providerId ? await getProviderForAttempt(providerId) : null;
   if (!providerId || !provider) return { status: 404, body: "unknown provider" };
 
   const ident = await provider.identifyCallback(request);

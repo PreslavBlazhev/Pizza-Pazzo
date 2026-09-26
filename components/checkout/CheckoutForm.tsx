@@ -31,6 +31,8 @@ interface Props {
    * sneak a card order through after the switch was turned off.
    */
   cardAvailable?: boolean;
+  /** The card option is the live-site DEMO (simulator, no real money). */
+  cardIsDemo?: boolean;
 }
 
 type PaymentChoice = "cash_on_delivery" | "card_online";
@@ -53,7 +55,7 @@ const REQUIRED_FIELDS = [
 type RequiredField = (typeof REQUIRED_FIELDS)[number];
 type FormValues = Record<RequiredField | "deliveryNote", string>;
 
-export function CheckoutForm({ defaults, cardAvailable = false }: Props) {
+export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = false }: Props) {
   const t = useTranslations("checkout");
   const tCart = useTranslations("cart");
   const tCommon = useTranslations("common");
@@ -333,8 +335,12 @@ export function CheckoutForm({ defaults, cardAvailable = false }: Props) {
                 checked={paymentMethod === "card_online"}
                 onSelect={setPaymentMethod}
                 icon="💳"
-                title={t("paymentCard")}
-                hint={t("paymentCardHint", { amount: formatEurPrice(totals.total) })}
+                title={cardIsDemo ? t("paymentCardDemo") : t("paymentCard")}
+                hint={
+                  cardIsDemo
+                    ? t("paymentCardDemoHint")
+                    : t("paymentCardHint", { amount: formatEurPrice(totals.total) })
+                }
               />
             ) : null}
           </div>

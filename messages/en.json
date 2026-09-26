@@ -404,7 +404,9 @@
     "paymentCard": "Pay online by card",
     "paymentCardHint": "Card details are entered only on the bank's secure page. Amount to pay: {amount}.",
     "paymentCardUnavailable": "Card payment is not available at the moment.",
-    "submitCard": "Continue to card payment"
+    "submitCard": "Continue to card payment",
+    "paymentCardDemo": "Demo card payment (test)",
+    "paymentCardDemoHint": "TEST SIMULATOR — no real money. The order is a test and is NOT prepared. Use the test card 4242 4242 4242 4242."
   },
   "orderSuccess": {
     "metaTitle": "Order placed",

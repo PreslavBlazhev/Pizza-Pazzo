@@ -143,6 +143,12 @@ model RestaurantSettings {
   ///
   /// A closure and a forced opening are mutually exclusive — each write clears
   /// the other — so "which one wins" is never a question anyone has to answer.
+  /// Card-payment DEMO on the live site (the payment simulator, no real
+  /// money), switched from Admin → Settings: OFF | STAFF (only signed-in
+  /// staff/admins see the card option) | EVERYONE. Demo orders are always
+  /// test orders ("ТЕСТ — НЕ ПРИГОТВЯЙ"). See lib/payments/demo.ts.
+  cardDemoMode   String   @default("OFF")
+
   manuallyOpen   Boolean  @default(false)
   openUntil      DateTime?
   openedAt       DateTime?

@@ -21,7 +21,7 @@ import { checkoutSchema } from "@/lib/validators/checkout";
 import { DELIVERY_FEE } from "@/lib/constants";
 import { resolveOrderItemExtras, type ExtraSourceProduct } from "@/lib/extras-resolve";
 import { EXTRAS_LIMITS, type OrderItemExtra } from "@/lib/extras-rules";
-import { getEffectivePaymentConfig } from "@/lib/payments/providers";
+import { resolveCheckoutPayment } from "@/lib/payments/providers";
 import { newAccessToken, releaseToKitchenAndNotify } from "@/lib/payments/service";
 import type { Product } from "@/types/product";
 
@@ -64,6 +64,8 @@ export interface PlaceOrderInput {
   paymentMethod: unknown;
   checkoutKey: unknown;
   userId: string | null;
+  /** The viewer's role (null = guest): decides whether the card DEMO is offered. */
+  role?: string | null;
 }
 
 export interface PlaceOrderDeps {
@@ -120,8 +122,10 @@ export async function placeOrder(
   if (method !== "cash_on_delivery" && method !== "card_online") {
     return { ok: false, error: "Изберете начин на плащане." };
   }
-  const paymentConfig = getEffectivePaymentConfig();
-  if (method === "card_online" && !paymentConfig.enabled) {
+  // The same decision the checkout page made when it showed (or hid) the
+  // card option — a crafted request cannot pick a method it was not offered.
+  const payment = await resolveCheckoutPayment(input.role ?? null);
+  if (method === "card_online" && !payment.available) {
     return {
       ok: false,
       error:
@@ -308,7 +312,8 @@ export async function placeOrder(
             paymentStatus: card ? "AWAITING_PAYMENT" : "CASH_DUE",
             // Cash goes to the kitchen now; card only once the money is confirmed.
             releasedToKitchenAt: card ? null : now,
-            isTest: card ? paymentConfig.isTest : false,
+            // Simulator / sandbox / live-site demo: a test order, never cooked.
+            isTest: card ? payment.config.isTest : false,
             accessToken: newAccessToken(),
             checkoutKey,
             deliveryMethod: "DELIVERY",

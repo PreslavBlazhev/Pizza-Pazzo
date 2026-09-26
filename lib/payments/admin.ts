@@ -3,6 +3,7 @@
  */
 import { db } from "@/lib/db";
 import { getEffectivePaymentConfig } from "./providers";
+import { demoSimulatorConfig, getCardDemoMode, type CardDemoMode } from "./demo";
 
 export interface AdminPaymentAttempt {
   id: string;
@@ -54,10 +55,16 @@ export interface PaymentStatusSummary {
   baseUrl: string;
   returnUrl: string | null;
   callbackUrl: string | null;
+  /** The live-site card demo switch (Admin → Settings). */
+  demoMode: CardDemoMode;
+  /** Why the demo cannot run even when switched on (missing address/secret). */
+  demoProblems: string[];
 }
 
-export function getPaymentStatusSummary(): PaymentStatusSummary {
+export async function getPaymentStatusSummary(): Promise<PaymentStatusSummary> {
   const c = getEffectivePaymentConfig();
+  const demoMode = await getCardDemoMode();
+  const demo = demoSimulatorConfig();
   const slug = c.providerId === "simulator" ? "simulator" : c.providerId ? "bank" : null;
   return {
     enabled: c.enabled,
@@ -69,5 +76,7 @@ export function getPaymentStatusSummary(): PaymentStatusSummary {
     baseUrl: c.baseUrl,
     returnUrl: c.baseUrl ? `${c.baseUrl}/api/payments/return` : null,
     callbackUrl: c.baseUrl && slug ? `${c.baseUrl}/api/payments/callback/${slug}` : null,
+    demoMode,
+    demoProblems: demo.problems,
   };
 }

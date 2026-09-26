@@ -8,7 +8,7 @@
 import { db } from "@/lib/db";
 import { getOrderByAccessToken } from "@/lib/orders";
 import type { Order } from "@/types/order";
-import { getEffectivePaymentConfig, getProviderForAttempt } from "./providers";
+import { getProviderForAttempt } from "./providers";
 import { customerPaymentState, refreshOrderPayment, type CustomerPaymentState } from "./service";
 import { isOpenAttempt } from "./status";
 
@@ -51,8 +51,7 @@ export async function getCustomerPaymentView(
     select: { status: true, provider: true, redirectUrl: true },
   });
 
-  const provider = latest ? getProviderForAttempt(latest.provider) : null;
-  const config = getEffectivePaymentConfig();
+  const provider = latest ? await getProviderForAttempt(latest.provider) : null;
 
   return {
     order,
@@ -66,7 +65,7 @@ export async function getCustomerPaymentView(
     hasOpenSession: !!latest && isOpenAttempt(latest.status) && !!latest.redirectUrl,
     providerName:
       provider?.displayName ??
-      (config.providerId === "simulator"
+      (order.isTest
         ? { bg: "тестов симулатор (без реални пари)", en: "test simulator (no real money)" }
         : { bg: "банката", en: "the bank" }),
     isTest: order.isTest,

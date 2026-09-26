@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getEffectivePaymentConfig } from "@/lib/payments/providers";
+import { getSimulatorConfig } from "@/lib/payments/providers";
 import {
   recordSimulatorOutcome,
   sendSimulatorCallback,
@@ -16,12 +16,13 @@ import {
  * the browser back to the shop. It never touches an order — the order moves
  * only when our normal verification reads the ledger back.
  *
- * Refused outright unless the simulator is the configured, allowed provider
- * (never in production — see lib/payments/config.ts).
+ * Refused outright unless the simulator may run here: the environment
+ * simulator (development/staging), or the live-site card demo switched on in
+ * Admin → Settings (lib/payments/demo.ts).
  */
 export async function simulatorDecideAction(formData: FormData): Promise<void> {
-  const config = getEffectivePaymentConfig({ ...process.env, CARD_PAYMENTS_ENABLED: "true" });
-  if (config.providerId !== "simulator" || !config.enabled) {
+  const config = await getSimulatorConfig();
+  if (!config) {
     throw new Error("Payment simulator is not available here.");
   }
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { db } from "@/lib/db";
-import { getEffectivePaymentConfig } from "@/lib/payments/providers";
+import { getSimulatorConfig } from "@/lib/payments/providers";
 import {
   mapSimulatorState,
   SIMULATOR_SCENARIOS,
@@ -52,8 +52,7 @@ export default async function PaymentSimulatorPage({ params }: PageProps) {
   const { locale, id } = await params;
   setRequestLocale(locale);
 
-  const config = getEffectivePaymentConfig({ ...process.env, CARD_PAYMENTS_ENABLED: "true" });
-  if (config.providerId !== "simulator" || !config.enabled) notFound();
+  if (!(await getSimulatorConfig())) notFound();
 
   const session = await db.paymentSimulatorSession.findUnique({ where: { id } });
   if (!session) notFound();

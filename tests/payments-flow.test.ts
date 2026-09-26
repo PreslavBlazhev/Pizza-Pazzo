@@ -28,6 +28,7 @@ import {
   type SimulatorScenario,
 } from "@/lib/payments/providers/simulator";
 import { getCustomerPaymentView } from "@/lib/payments/customer";
+import { getEffectivePaymentConfig, resolveCheckoutPayment } from "@/lib/payments/providers";
 import { getPendingOrders } from "@/lib/orders";
 import { getAdminReport } from "@/lib/reports";
 import { resolvePresetRange } from "@/lib/report-period";
@@ -594,4 +595,85 @@ test("test (simulator) orders never reach the restaurant inbox", async () => {
   assert.equal(row.notificationStatus, "SKIPPED");
   assert.equal(row.notificationError, "тестова поръчка");
   assert.equal(calls, 0);
+});
+
+// ── The live-site card DEMO (Admin → Settings switch) ────────────────────
+
+/** Runs `fn` as the REAL production site: no payment env, APP_ENV=production. */
+async function asProduction<T>(fn: () => Promise<T>): Promise<T> {
+  const saved = { APP_ENV: process.env.APP_ENV, CARD_PAYMENTS_ENABLED: process.env.CARD_PAYMENTS_ENABLED, PAYMENT_PROVIDER: process.env.PAYMENT_PROVIDER, APP_BASE_URL: process.env.APP_BASE_URL };
+  process.env.APP_ENV = "production";
+  // Production is HTTPS: the demo refuses to send anyone to an http:// page there.
+  process.env.APP_BASE_URL = "https://pizza.example.test";
+  process.env.CARD_PAYMENTS_ENABLED = "false";
+  delete process.env.PAYMENT_PROVIDER;
+  try {
+    return await fn();
+  } finally {
+    Object.assign(process.env, saved);
+  }
+}
+
+async function setDemo(mode: "OFF" | "STAFF" | "EVERYONE") {
+  await db.restaurantSettings.update({ where: { id: "restaurant" }, data: { cardDemoMode: mode } });
+}
+
+test("demo: production refuses the env simulator, the demo switch decides who sees the card", async () => {
+  await asProduction(async () => {
+    assert.equal(getEffectivePaymentConfig().enabled, false, "the env simulator stays refused in production");
+
+    await setDemo("STAFF"); // what the migration leaves the live site on
+    assert.equal((await resolveCheckoutPayment(null)).available, false, "guest: no card");
+    assert.equal((await resolveCheckoutPayment("CUSTOMER")).available, false, "customer: no card");
+    const admin = await resolveCheckoutPayment("SUPER_ADMIN");
+    assert.ok(admin.available && admin.demo && admin.config.isTest, "admin: demo card, test orders");
+    assert.ok((await resolveCheckoutPayment("STAFF")).available, "staff: demo card");
+
+    await setDemo("EVERYONE");
+    assert.ok((await resolveCheckoutPayment(null)).available, "EVERYONE: guests see it too");
+
+    await setDemo("OFF");
+    assert.equal((await resolveCheckoutPayment("SUPER_ADMIN")).available, false, "OFF: nobody");
+  });
+  await setDemo("STAFF");
+});
+
+test("demo: an admin pays with the test card on production — PAID, test order, never e-mailed", async () => {
+  await asProduction(async () => {
+    await setDemo("STAFF");
+    // A customer cannot sneak a card order through a crafted request.
+    const refused = await placeOrder(
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, role: "CUSTOMER" },
+      deps
+    );
+    assert.equal(refused.ok, false);
+
+    const placed = await placeOrder(
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, role: "SUPER_ADMIN" },
+      deps
+    );
+    assert.ok(placed.ok && placed.accessToken);
+    const r = placed as Extract<typeof placed, { ok: true }>;
+    const row0 = await orderRow(r.orderNumber);
+    assert.equal(row0.isTest, true, "demo orders are test orders");
+
+    const a = await payWith(r.accessToken!, "paid");
+    assert.equal(a.provider, "SIMULATOR");
+    await quiet(() => syncAttempt(a.id));
+    const row = await orderRow(r.orderNumber);
+    assert.equal(row.paymentStatus, "PAID");
+    assert.ok(row.releasedToKitchenAt);
+    assert.equal(row.notificationStatus, "SKIPPED");
+
+    // Switching the demo OFF stops NEW demo payments.
+    const other = await placeOrder(
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, role: "ADMIN" },
+      deps
+    );
+    assert.ok(other.ok);
+    await setDemo("OFF");
+    const start = await startCardPayment({ accessToken: (other as { accessToken: string }).accessToken, locale: "bg" });
+    assert.deepEqual(start, { ok: false, code: "DISABLED" });
+  });
+  await setDemo("STAFF");
 });

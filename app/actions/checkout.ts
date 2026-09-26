@@ -56,6 +56,7 @@ export async function createOrder(
       paymentMethod: formData.get("paymentMethod") ?? "cash_on_delivery",
       checkoutKey: formData.get("checkoutKey"),
       userId: sessionUser?.id ?? null,
+      role: sessionUser?.role ?? null,
     },
     { getProduct: getProductById }
   );
