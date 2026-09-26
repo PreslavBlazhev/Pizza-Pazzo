@@ -1013,7 +1013,7 @@ if (mods) {
     addressEn: "13 Georgi Kochev St., Pleven (opposite Technopolis)",
     primaryPhone: "+359 88 248 4777",
     secondaryPhone: "+359 801 999",
-    contactEmail: "orderspp@gmail.com",
+    contactEmail: "pr2.blazhev@gmail.com",
     hours: openWeek(),
     ...over,
   });

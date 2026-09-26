@@ -24,7 +24,7 @@ export const SITE = {
   phones: ["+359 88 248 4777", "+359 801 999"],
   /** Primary phone (kept for convenience). */
   phone: "+359 88 248 4777",
-  email: "orderspp@gmail.com",
+  email: "pr2.blazhev@gmail.com",
   /** Full display address (BG) as shown to visitors. Updated 2026-07. */
   address: "Плевен, ул. Георги Кочев 13 (Срещу Технополис)",
   /** Full display address for the English pages. */

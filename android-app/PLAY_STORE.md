@@ -313,7 +313,7 @@ a staff account.
 | Free or paid | Free |
 | **Category** | **Food & Drink** |
 | Tags | Food delivery, Restaurants |
-| Contact email | orderspp@gmail.com |
+| Contact email | pr2.blazhev@gmail.com |
 | Contact phone | +359 88 248 4777 |
 | Website | https://pizza-pazzo.onrender.com (**не** pizzapazzo.bg) |
 | Държави | България |
