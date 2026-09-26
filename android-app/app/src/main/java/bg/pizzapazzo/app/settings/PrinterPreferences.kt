@@ -3,7 +3,10 @@ package bg.pizzapazzo.app.settings
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import bg.pizzapazzo.app.BuildConfig
 import bg.pizzapazzo.app.printer.CyrillicEncodingMode
+import bg.pizzapazzo.app.webview.AllowedOrigins
+import bg.pizzapazzo.app.webview.PaymentFlow
 import bg.pizzapazzo.app.printer.PaperWidth
 import bg.pizzapazzo.app.printer.PrinterSettings
 
@@ -34,7 +37,7 @@ class PrinterPreferences(context: Context) {
          * depends on the landing page: the printer bridge is allowed by HOST,
          * not by path, so printing keeps working wherever the staff navigate.
          */
-        const val DEFAULT_START_URL = "https://pizza-pazzo.onrender.com/"
+        val DEFAULT_START_URL: String = BuildConfig.START_URL
 
         /**
          * Start pages we used to ship as the default. A stored value equal to
@@ -59,6 +62,13 @@ class PrinterPreferences(context: Context) {
         // Stored key names are frozen for the same reason as the file name above.
         private const val KEY_START_URL = "kitchen_url"
         private const val KEY_LAST_PRINT_ERROR = "last_print_error"
+
+        // A card payment in progress — see PaymentFlow. Only the order's
+        // access token and where to return; no amounts, no card data.
+        private const val KEY_PAY_TOKEN = "payment_token"
+        private const val KEY_PAY_ORIGIN = "payment_origin"
+        private const val KEY_PAY_LOCALE = "payment_locale"
+        private const val KEY_PAY_STARTED = "payment_started_at"
 
         /** Bumped whenever a stored value has to be fixed up on upgrade. */
         private const val KEY_PREFS_VERSION = "prefs_version"
@@ -121,8 +131,43 @@ class PrinterPreferences(context: Context) {
 
     /** The page the app opens on launch. Blank resets it to the home page. */
     var startUrl: String
-        get() = prefs.getString(KEY_START_URL, DEFAULT_START_URL) ?: DEFAULT_START_URL
+        // A stored address on a host this build no longer trusts (e.g. after
+        // the move to a new domain) would open nowhere — fall back instead.
+        get() = prefs.getString(KEY_START_URL, DEFAULT_START_URL)
+            ?.takeIf { AllowedOrigins.isAllowedUrl(it) }
+            ?: DEFAULT_START_URL
         set(value) = prefs.edit { putString(KEY_START_URL, value.trim().ifBlank { DEFAULT_START_URL }) }
+
+    fun savePaymentSession(session: PaymentFlow.Session) {
+        prefs.edit {
+            putString(KEY_PAY_TOKEN, session.token)
+            putString(KEY_PAY_ORIGIN, session.origin)
+            putString(KEY_PAY_LOCALE, session.localePrefix)
+            putLong(KEY_PAY_STARTED, session.startedAtMs)
+        }
+    }
+
+    fun loadPaymentSession(): PaymentFlow.Session? {
+        val token = prefs.getString(KEY_PAY_TOKEN, null) ?: return null
+        val origin = prefs.getString(KEY_PAY_ORIGIN, null) ?: return null
+        // Never resume onto a host the app no longer trusts.
+        if (!AllowedOrigins.isAllowedUrl("$origin/")) return null
+        return PaymentFlow.Session(
+            token = token,
+            origin = origin,
+            localePrefix = prefs.getString(KEY_PAY_LOCALE, "") ?: "",
+            startedAtMs = prefs.getLong(KEY_PAY_STARTED, 0L),
+        )
+    }
+
+    fun clearPaymentSession() {
+        prefs.edit {
+            remove(KEY_PAY_TOKEN)
+            remove(KEY_PAY_ORIGIN)
+            remove(KEY_PAY_LOCALE)
+            remove(KEY_PAY_STARTED)
+        }
+    }
 
     var lastPrintError: String?
         get() = prefs.getString(KEY_LAST_PRINT_ERROR, null)

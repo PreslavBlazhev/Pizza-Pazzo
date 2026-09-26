@@ -10,12 +10,18 @@ import bg.pizzapazzo.app.BuildConfig
  */
 object AllowedOrigins {
 
-    /** Production hosts of the Pizza Pazzo site. */
-    private val PRODUCTION_HOSTS = setOf(
-        "pizza-pazzo.onrender.com",
-        "pizzapazzo.bg",
-        "www.pizzapazzo.bg",
-    )
+    /**
+     * Production hosts of the Pizza Pazzo site. Set at BUILD time from
+     * `pizzapazzo.siteHosts` in android-app/gradle.properties, so adding the
+     * new .com domain is a one-line change plus a rebuild — see
+     * docs/domain-and-deploy.md. Keep the old hosts listed until every
+     * installed app has updated, or those apps lose the site.
+     */
+    private val PRODUCTION_HOSTS: Set<String> = BuildConfig.SITE_HOSTS
+        .split(',')
+        .map { it.trim().lowercase() }
+        .filter { it.isNotEmpty() }
+        .toSet()
 
     /** Development-only hosts (next dev on the same LAN / emulator loopback). */
     private val DEV_HOSTS = setOf(

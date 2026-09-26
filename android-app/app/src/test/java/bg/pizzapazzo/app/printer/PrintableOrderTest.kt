@@ -233,4 +233,20 @@ class PrintableOrderTest {
         assertEquals(25.50, order.total!!, 0.001)
         assertEquals("EUR", order.currency)
     }
+
+    @Test
+    fun `payment instruction and test flag are read, and absent means cash-era defaults`() {
+        val json = fullJson.replace(
+            "\"paymentMethod\": \"CASH\",",
+            "\"paymentMethod\": \"CARD_ONLINE\", \"paymentStatus\": \"PAID\", \"paymentText\": \"ПЛАТЕНО ОНЛАЙН С КАРТА — НЕ СЪБИРАЙ ПАРИ\", \"isTest\": true,"
+        )
+        val order = PrintableOrder.fromJson(json).getOrThrow()
+        assertEquals("CARD_ONLINE", order.paymentMethod)
+        assertEquals("ПЛАТЕНО ОНЛАЙН С КАРТА — НЕ СЪБИРАЙ ПАРИ", order.paymentText)
+        assertTrue(order.isTest)
+
+        val legacy = PrintableOrder.fromJson(fullJson).getOrThrow()
+        assertNull(legacy.paymentText)
+        assertFalse(legacy.isTest)
+    }
 }

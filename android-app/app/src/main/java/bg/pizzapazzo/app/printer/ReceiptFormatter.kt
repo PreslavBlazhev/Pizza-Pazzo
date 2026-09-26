@@ -108,6 +108,11 @@ object ReceiptFormatter {
             push("reprint", "*** ПОВТОРЕН ПЕЧАТ ***",
                 fallback = PrintLayout.SectionStyle(bold = true, align = "center"))
         }
+        if (order.isTest) {
+            // Always printed, whatever the layout says: a test order that
+            // looks real is how food gets cooked for nobody.
+            out += Line("*** ТЕСТ — НЕ ПРИГОТВЯЙ ***", bold = true, center = true)
+        }
         push("createdAt", formatTimestamp(order.createdAt),
             fallback = PrintLayout.SectionStyle(align = "center"))
         formatTimestamp(order.acceptedAt)?.let {
@@ -160,7 +165,12 @@ object ReceiptFormatter {
         divider()
 
         // ── Totals ──
-        push("payment", "Начин на плащане: ${paymentLabel(order.paymentMethod)}")
+        push(
+            "payment",
+            order.paymentText?.let { "Плащане: $it" }
+                ?: "Начин на плащане: ${paymentLabel(order.paymentMethod)}",
+            fallback = PrintLayout.SectionStyle(bold = order.paymentText != null),
+        )
         order.subtotal?.let { push("totals", "Междинна сума", right = money(it)) }
         order.deliveryFee?.let { push("totals", "Доставка", right = money(it)) }
         order.discount?.takeIf { it > 0 }?.let {
@@ -254,6 +264,7 @@ object ReceiptFormatter {
         null -> "—"
         "CASH", "CASH_ON_DELIVERY" -> "В брой (наложен платеж)"
         "CARD" -> "С карта"
+        "CARD_ONLINE" -> "Онлайн с карта"
         else -> method
     }
 

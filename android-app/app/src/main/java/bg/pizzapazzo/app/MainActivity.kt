@@ -26,6 +26,8 @@ import androidx.lifecycle.lifecycleScope
 import bg.pizzapazzo.app.databinding.ActivityMainBinding
 import bg.pizzapazzo.app.settings.SettingsActivity
 import bg.pizzapazzo.app.webview.JavascriptBridge
+import bg.pizzapazzo.app.webview.PaymentFlow
+import bg.pizzapazzo.app.webview.PaymentSessionHost
 import bg.pizzapazzo.app.webview.SiteWebViewClient
 import bg.pizzapazzo.app.webview.StaffRoutes
 
@@ -42,7 +44,7 @@ import bg.pizzapazzo.app.webview.StaffRoutes
  *
  * Constant either way: no address bar, and no navigation off the allowlist.
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), PaymentSessionHost {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var webViewClient: SiteWebViewClient
@@ -54,6 +56,12 @@ class MainActivity : AppCompatActivity() {
 
     /** True while the current page is the staff area (see [StaffRoutes]). */
     private var staffMode = false
+
+    /** A card payment in progress at the bank (see [PaymentFlow]). */
+    private var payment: PaymentFlow.Session? = null
+
+    override val activePayment: PaymentFlow.Session?
+        get() = payment?.takeUnless { it.isExpired(System.currentTimeMillis()) }
 
     /**
      * Enabled only while the WebView has somewhere to go back to. Disabled, the
@@ -110,12 +118,25 @@ class MainActivity : AppCompatActivity() {
 
         watchConnectivity()
 
+        val interruptedPayment = app.preferences.loadPaymentSession()
+            ?.takeUnless { it.isExpired(System.currentTimeMillis()) }
+
         if (savedInstanceState != null) {
             // Restores history + scroll; the session survives anyway because it
-            // lives in the cookie store, not in the WebView instance.
+            // lives in the cookie store, not in the WebView instance. If the
+            // restored page is the bank's, the payment is still in progress.
+            interruptedPayment?.let { startPayment(it) }
             binding.webView.restoreState(savedInstanceState)
             if (binding.webView.url == null) loadStartPage()
+        } else if (interruptedPayment != null) {
+            // Android killed the app while the customer was at the bank. The
+            // bank page cannot be restored, but the payment still settles on
+            // the server — so open the site's "checking your payment" screen
+            // for that order instead of the home page.
+            app.preferences.clearPaymentSession()
+            loadUrlWhenOnline(interruptedPayment.resumeUrl())
         } else {
+            app.preferences.clearPaymentSession()
             loadStartPage()
         }
     }
@@ -143,6 +164,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         webViewClient = SiteWebViewClient(
+            payments = this,
             onBlockedNavigation = {
                 Toast.makeText(this, R.string.blocked_external_url, Toast.LENGTH_SHORT).show()
             },
@@ -246,12 +268,67 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadStartPage() {
+        loadUrlWhenOnline(app.preferences.startUrl)
+    }
+
+    private fun loadUrlWhenOnline(url: String) {
         if (!isOnline()) {
             showErrorScreen()
             return
         }
         binding.errorView.visibility = View.GONE
-        binding.webView.loadUrl(app.preferences.startUrl)
+        binding.webView.loadUrl(url)
+    }
+
+    // ── Card payments (PaymentSessionHost) ──────────────────────────────────
+
+    override fun startPayment(session: PaymentFlow.Session) {
+        payment = session
+        app.preferences.savePaymentSession(session)
+        // 3-D Secure pages commonly run the issuer's challenge in an iframe on
+        // another domain, which needs its own cookies. Allowed for the length
+        // of the payment only; the site itself never needs them.
+        CookieManager.getInstance().setAcceptThirdPartyCookies(binding.webView, true)
+    }
+
+    override fun endPayment() {
+        payment = null
+        app.preferences.clearPaymentSession()
+        CookieManager.getInstance().setAcceptThirdPartyCookies(binding.webView, false)
+    }
+
+    /**
+     * A bank page asking to open the bank's own app ("approve in your
+     * banking app"). Parsed as an intent: URI, but stripped down to an
+     * implicit, BROWSABLE intent — no explicit component, no selector — which
+     * is the same thing Chrome does, and means a page cannot use it to start
+     * an arbitrary activity. If no app takes it, the page's own
+     * browser_fallback_url (HTTPS only) opens in the WebView instead.
+     */
+    override fun openPaymentIntent(url: String): Boolean {
+        val intent = try {
+            Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+        } catch (_: Exception) {
+            return false
+        }
+        intent.addCategory(Intent.CATEGORY_BROWSABLE)
+        intent.component = null
+        intent.selector = null
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return try {
+            startActivity(intent)
+            true
+        } catch (_: android.content.ActivityNotFoundException) {
+            val fallback = intent.getStringExtra("browser_fallback_url")
+            if (fallback != null && fallback.startsWith("https://")) {
+                binding.webView.loadUrl(fallback)
+                true
+            } else {
+                false
+            }
+        } catch (_: SecurityException) {
+            false
+        }
     }
 
     private fun showErrorScreen() {
@@ -388,7 +465,10 @@ class MainActivity : AppCompatActivity() {
         // eight seconds and rings an alarm on a new order, and a cook who
         // switched apps for a moment still needs to hear it. So staff mode is
         // left running.
-        if (!staffMode && !webViewDestroyed) {
+        // A customer who switches to the banking app to approve a payment
+        // must come back to a 3-D Secure page that kept polling, so an active
+        // payment is not paused either.
+        if (!staffMode && activePayment == null && !webViewDestroyed) {
             binding.webView.onPause()
             binding.webView.pauseTimers()
         }

@@ -451,4 +451,27 @@ class ReceiptFormatterTest {
             ReceiptFormatter.toPlainText(lines, settings58).contains("10x Млечно-чеснов сос")
         )
     }
+
+    @Test
+    fun `a card order paid online tells the driver not to collect money`() {
+        val paid = order(payment = "CARD_ONLINE")
+            .copy(paymentText = "ПЛАТЕНО ОНЛАЙН С КАРТА — НЕ СЪБИРАЙ ПАРИ")
+        val text = textOf(paid, settings80)
+        // Long enough to wrap on 80 mm paper — compare with the wrapping undone.
+        assertTrue(text.replace(Regex("\\s+"), " ").contains("ПЛАТЕНО ОНЛАЙН С КАРТА — НЕ СЪБИРАЙ ПАРИ"))
+        assertFalse(text.contains("наложен платеж"))
+    }
+
+    @Test
+    fun `an older site without paymentText still prints the method`() {
+        assertTrue(textOf(order(payment = "CARD_ONLINE"), settings80).contains("Онлайн с карта"))
+        assertTrue(textOf(order(payment = "CASH_ON_DELIVERY"), settings80).contains("В брой"))
+    }
+
+    @Test
+    fun `a test order is marked do-not-prepare even if the layout hides sections`() {
+        val text = textOf(order().copy(isTest = true), settings58)
+        assertTrue(text.contains("ТЕСТ — НЕ ПРИГОТВЯЙ"))
+        assertFalse(textOf(order(), settings58).contains("ТЕСТ"))
+    }
 }

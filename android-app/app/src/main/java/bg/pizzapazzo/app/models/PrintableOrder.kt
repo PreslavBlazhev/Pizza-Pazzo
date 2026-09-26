@@ -24,6 +24,15 @@ data class PrintableOrder(
     val delivery: Delivery,
     val items: List<Item>,
     val paymentMethod: String?,
+    /**
+     * Ready-made instruction from the website, e.g. "ПЛАТЕНО ОНЛАЙН С КАРТА —
+     * НЕ СЪБИРАЙ ПАРИ". Printed instead of [paymentMethod] when present, so the
+     * wording lives in one place (lib/payments/status.ts). Absent from older
+     * sites — then the method code is translated here as before.
+     */
+    val paymentText: String? = null,
+    /** Simulator / sandbox order — printed as "do not prepare". */
+    val isTest: Boolean = false,
     val customerNote: String?,
     val subtotal: Double?,
     val deliveryFee: Double?,
@@ -144,6 +153,8 @@ data class PrintableOrder(
                 ),
                 items = items,
                 paymentMethod = root.optStringOrNull("paymentMethod"),
+                paymentText = root.optStringOrNull("paymentText")?.take(120),
+                isTest = root.optBoolean("isTest", false),
                 customerNote = root.optStringOrNull("customerNote"),
                 subtotal = root.optDoubleOrNull("subtotal"),
                 deliveryFee = root.optDoubleOrNull("deliveryFee"),

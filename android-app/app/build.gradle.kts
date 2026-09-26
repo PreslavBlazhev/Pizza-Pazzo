@@ -18,6 +18,14 @@ val keystoreProperties = Properties().apply {
 }
 val hasReleaseKeystore = keystoreProperties.getProperty("storeFile") != null
 
+// The site this app is a window onto. Both come from gradle.properties so the
+// move to the new .com domain is configuration, not code (docs/domain-and-deploy.md).
+val siteStartUrl: String = (project.findProperty("pizzapazzo.startUrl") as String?)
+    ?: "https://pizza-pazzo.onrender.com/"
+val siteHosts: String = (project.findProperty("pizzapazzo.siteHosts") as String?)
+    ?: "pizza-pazzo.onrender.com,pizzapazzo.bg,www.pizzapazzo.bg"
+require(siteStartUrl.startsWith("https://")) { "pizzapazzo.startUrl must be HTTPS" }
+
 android {
     namespace = "bg.pizzapazzo.app"
     // API 36 (Android 16). Google Play requires new apps and updates to target
@@ -30,8 +38,13 @@ android {
         // adaptive icons work everywhere, so no legacy PNG icons are needed.
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.0.2"
+        // 1.1.0: online card payments (bank page + 3-D Secure inside the app,
+        // resume after the app was killed), configurable site hosts.
+        versionCode = 4
+        versionName = "1.1.0"
+
+        buildConfigField("String", "START_URL", "\"$siteStartUrl\"")
+        buildConfigField("String", "SITE_HOSTS", "\"$siteHosts\"")
     }
 
     signingConfigs {

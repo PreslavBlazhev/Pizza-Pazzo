@@ -25,6 +25,8 @@ import android.webkit.WebViewClient
  * the kitchen app untouched behind them. Everything else is still swallowed.
  */
 class SiteWebViewClient(
+    /** The card-payment session the activity keeps (see [PaymentFlow]). */
+    private val payments: PaymentSessionHost,
     private val onBlockedNavigation: (String) -> Unit,
     /** Hand a URL to another app. Returns false if nothing could open it. */
     private val onExternalUri: (Uri) -> Boolean,
@@ -51,11 +53,51 @@ class SiteWebViewClient(
     var lastCommittedUrl: String? = null
         private set
 
+    /**
+     * The payment the customer is about to start: set while the WebView is on
+     * a page with a "pay" button (the review screen, or "back to the bank" on
+     * the pending screen). The next navigation that leaves the allowlist is
+     * that payment. Kept separately from [lastCommittedUrl] because the form
+     * posts to /api/payments/start first, which the WebView may report as a
+     * page of its own before the redirect to the bank.
+     */
+    private var paymentCandidate: PaymentFlow.Session? = null
+
+    private fun noteCommitted(url: String?) {
+        val candidate = PaymentFlow.sessionStartedFrom(url, System.currentTimeMillis())
+        when {
+            candidate != null -> paymentCandidate = candidate
+            PaymentFlow.isPaymentStartEndpoint(url) -> Unit // the hop to the bank
+            AllowedOrigins.isAllowedUrl(url) -> paymentCandidate = null
+        }
+    }
+
+    /** The candidate, if the customer can still be on their way to the bank. */
+    private fun freshCandidate(): PaymentFlow.Session? =
+        paymentCandidate?.copy(startedAtMs = System.currentTimeMillis())
+
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
         val uri = request.url
         val url = uri.toString()
 
         if (AllowedOrigins.isAllowedUrl(url)) return false // let the WebView load it
+
+        // ── Card payment: the bank's hosted page and 3-D Secure must load HERE,
+        //    in the same WebView, or the customer never finds their way back.
+        if (payments.activePayment == null && request.isForMainFrame) {
+            val started = freshCandidate()
+            if (started != null && PaymentFlow.decideDuringPayment(url) == PaymentFlow.Decision.ALLOW) {
+                payments.startPayment(started)
+                return false
+            }
+        }
+        if (payments.activePayment != null) {
+            when (PaymentFlow.decideDuringPayment(url)) {
+                PaymentFlow.Decision.ALLOW -> return false
+                PaymentFlow.Decision.HAND_OFF -> if (payments.openPaymentIntent(url)) return true
+                PaymentFlow.Decision.BLOCK -> Unit
+            }
+        }
 
         // Only a real navigation may leave the app. A background subframe that
         // was never touched by anyone does not get to launch the browser.
@@ -69,12 +111,33 @@ class SiteWebViewClient(
     }
 
     override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+        trackPayment(url)
+        noteCommitted(url)
         lastCommittedUrl = url
         onNavigated(url)
         onPageStarted()
     }
 
+    /**
+     * WebView does not always consult shouldOverrideUrlLoading for the
+     * redirect that follows the review screen's POST, so a payment is also
+     * recognised here, from the page that actually started loading. And the
+     * session ends as soon as the WebView is back on the site.
+     */
+    private fun trackPayment(next: String?) {
+        if (payments.activePayment != null) {
+            if (PaymentFlow.isBackOnSite(next)) payments.endPayment()
+            return
+        }
+        if (next != null && !AllowedOrigins.isAllowedUrl(next) &&
+            PaymentFlow.decideDuringPayment(next) == PaymentFlow.Decision.ALLOW
+        ) {
+            freshCandidate()?.let { payments.startPayment(it) }
+        }
+    }
+
     override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+        noteCommitted(url)
         lastCommittedUrl = url
         // The only hook that fires for a client-side route change, which is how
         // the site moves between /menu and /admin most of the time.
@@ -82,6 +145,7 @@ class SiteWebViewClient(
     }
 
     override fun onPageFinished(view: WebView, url: String?) {
+        noteCommitted(url)
         lastCommittedUrl = url
         onNavigated(url)
         onPageFinished(url)
