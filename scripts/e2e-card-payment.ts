@@ -144,7 +144,11 @@ async function main() {
     check(s1.location === s2.location && s2.location === s3.location, "three concurrent clicks → one hosted session");
     check((await db.paymentAttempt.count({ where: { orderId: order.id } })) === 1, "exactly one payment attempt");
     res = await fetch(s1.location);
-    check(res.status === 200 && (await res.text()).includes("ТЕСТОВ ПЛАТЕЖЕН СИМУЛАТОР"), "simulator hosted page renders");
+    const simHtml = await res.text();
+    check(res.status === 200 && simHtml.includes("Тестов симулатор — без реални пари"), "simulator hosted page renders with its warning");
+    const cardInput = /<input[^>]*data-testid="sim-card-number"[^>]*>/.exec(simHtml)?.[0] ?? "";
+    check(cardInput !== "" && !/\sname=/.test(cardInput), "the card-number field has no name (it can never be submitted)");
+    check(simHtml.includes('name="scenario"') && simHtml.includes('name="sessionId"'), "the only form fields sent to the server are sessionId + scenario");
     const a1 = await db.paymentAttempt.findFirstOrThrow({ where: { orderId: order.id } });
     check(a1.amountMinor === expectedMinor, "amount sent = stored total in cents", `${a1.amountMinor} vs ${expectedMinor}`);
 
