@@ -51,7 +51,7 @@ INSERT OR IGNORE INTO "RestaurantSettings" (
     '13 Georgi Kochev St., Pleven (opposite Technopolis)',
     '+359 88 248 4777',
     '+359 801 999',
-    'orderspp@gmail.com',
+    'pr2.blazhev@gmail.com',
     true, '11:00', '23:00',
     true, '11:00', '23:00',
     true, '11:00', '23:00',
