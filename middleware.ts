@@ -43,7 +43,11 @@ const intlMiddleware = createMiddleware(routing);
  */
 function stagingAuthChallenge(request: NextRequest): NextResponse | null {
   if ((process.env.APP_ENV ?? "").trim().toLowerCase() !== "staging") return null;
-  const expected = (process.env.STAGING_BASIC_AUTH ?? "").trim();
+  // Either "user:password" in STAGING_BASIC_AUTH, or a generated
+  // STAGING_BASIC_AUTH_PASSWORD with the user "staging" (render.staging.yaml).
+  const password = (process.env.STAGING_BASIC_AUTH_PASSWORD ?? "").trim();
+  const expected =
+    (process.env.STAGING_BASIC_AUTH ?? "").trim() || (password ? `staging:${password}` : "");
   if (!expected || !expected.includes(":")) return null;
 
   const header = request.headers.get("authorization") ?? "";

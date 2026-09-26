@@ -45,5 +45,10 @@ export function normalizeBaseUrl(raw: string | undefined): string {
  * as a fallback, because existing deployments already have it.
  */
 export function getAppBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
-  return normalizeBaseUrl(env.APP_BASE_URL) || normalizeBaseUrl(env.NEXT_PUBLIC_SITE_URL);
+  const explicit = normalizeBaseUrl(env.APP_BASE_URL) || normalizeBaseUrl(env.NEXT_PUBLIC_SITE_URL);
+  if (explicit) return explicit;
+  // A staging service on Render can start without anyone typing its own
+  // address: Render provides it as RENDER_EXTERNAL_URL. Never used in
+  // production, whose canonical address must always be an explicit choice.
+  return getAppEnv(env) === "production" ? "" : normalizeBaseUrl(env.RENDER_EXTERNAL_URL);
 }

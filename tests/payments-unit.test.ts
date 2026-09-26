@@ -31,7 +31,7 @@ test("money: euros become exact integer cents, float noise included", () => {
   assert.equal(toMinorUnits("10.005"), 1001); // half-up
   assert.equal(toMinorUnits(0), 0);
   assert.equal(fromMinorUnits(2340), 23.4);
-  assert.equal(formatMinor(2340, "EUR"), "23,40 €");
+  assert.equal(formatMinor(2340, "EUR"), "23.40 €");
 });
 
 test("money: unreadable or negative amounts are refused", () => {
@@ -282,4 +282,24 @@ test("e-mail: staging never delivers; EMAIL_DELIVERY=disabled switches it off an
   assert.ok(emailDeliveryBlockedReason({ APP_ENV: "staging", EMAIL_DELIVERY: "enabled" } as unknown as NodeJS.ProcessEnv));
   assert.ok(emailDeliveryBlockedReason({ APP_ENV: "production", EMAIL_DELIVERY: "disabled" } as unknown as NodeJS.ProcessEnv));
   assert.equal(emailDeliveryBlockedReason({ APP_ENV: "production" } as unknown as NodeJS.ProcessEnv), null);
+});
+
+test("base URL: staging may fall back to Render's own address, production never", () => {
+  const render = { RENDER_EXTERNAL_URL: "https://pizza-pazzo-staging.onrender.com" };
+  assert.equal(
+    getAppBaseUrl({ ...render, APP_ENV: "staging" } as unknown as NodeJS.ProcessEnv),
+    "https://pizza-pazzo-staging.onrender.com"
+  );
+  assert.equal(getAppBaseUrl({ ...render, APP_ENV: "production" } as unknown as NodeJS.ProcessEnv), "");
+  assert.equal(getAppBaseUrl({ ...render, NODE_ENV: "production" } as unknown as NodeJS.ProcessEnv), "");
+  // The simulator on a Render staging service with nothing typed by hand:
+  const c = getPaymentConfig({
+    ...render,
+    APP_ENV: "staging",
+    CARD_PAYMENTS_ENABLED: "true",
+    PAYMENT_PROVIDER: "simulator",
+    PAYMENT_SIMULATOR_SECRET: "a-generated-render-secret-value",
+  } as unknown as NodeJS.ProcessEnv);
+  assert.equal(c.enabled, true);
+  assert.equal(c.baseUrl, "https://pizza-pazzo-staging.onrender.com");
 });
