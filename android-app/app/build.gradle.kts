@@ -26,6 +26,13 @@ val siteHosts: String = (project.findProperty("pizzapazzo.siteHosts") as String?
     ?: "pizza-pazzo.onrender.com,pizzapazzo.bg,www.pizzapazzo.bg"
 require(siteStartUrl.startsWith("https://")) { "pizzapazzo.startUrl must be HTTPS" }
 
+// The STAGING demo shop (payment simulator). Only the "staging" build type
+// below points at it — see docs/online-card-payments.md.
+val stagingUrl: String = (project.findProperty("pizzapazzo.stagingUrl") as String?)
+    ?: "https://pizza-pazzo-staging.onrender.com/"
+require(stagingUrl.startsWith("https://")) { "pizzapazzo.stagingUrl must be HTTPS" }
+val stagingHost: String = stagingUrl.removePrefix("https://").substringBefore("/").substringBefore(":")
+
 android {
     namespace = "bg.pizzapazzo.app"
     // API 36 (Android 16). Google Play requires new apps and updates to target
@@ -38,10 +45,11 @@ android {
         // adaptive icons work everywhere, so no legacy PNG icons are needed.
         minSdk = 26
         targetSdk = 36
+        // 1.1.1: staging build type + password prompt for the staging site.
         // 1.1.0: online card payments (bank page + 3-D Secure inside the app,
         // resume after the app was killed), configurable site hosts.
-        versionCode = 4
-        versionName = "1.1.0"
+        versionCode = 5
+        versionName = "1.1.1"
 
         buildConfigField("String", "START_URL", "\"$siteStartUrl\"")
         buildConfigField("String", "SITE_HOSTS", "\"$siteHosts\"")
@@ -67,6 +75,21 @@ android {
             // Debug builds may talk to a dev server over plain HTTP (localhost /
             // LAN IP). Release builds are HTTPS-only (see network_security_config).
             buildConfigField("boolean", "ALLOW_DEV_ORIGINS", "true")
+        }
+        // A separate, side-by-side installable app for trying the card flow on
+        // the STAGING site: its own package (…app.staging), its own name, its
+        // own cookies and settings, and it can reach ONLY the staging host —
+        // never the real restaurant. HTTPS-only like release; signed with the
+        // debug key (a test tool, never uploaded to Play).
+        create("staging") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            buildConfigField("boolean", "ALLOW_DEV_ORIGINS", "false")
+            buildConfigField("String", "START_URL", "\"$stagingUrl\"")
+            buildConfigField("String", "SITE_HOSTS", "\"$stagingHost\"")
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("debug")
         }
         release {
             buildConfigField("boolean", "ALLOW_DEV_ORIGINS", "false")

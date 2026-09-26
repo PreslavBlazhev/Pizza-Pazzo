@@ -25,7 +25,10 @@
     "icons:android": "node scripts/generate-android-icons.mjs",
     "icons:play": "node scripts/generate-play-assets.mjs",
     "test:payments": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/payments-unit.test.ts tests/payments-flow.test.ts",
-    "e2e:payments": "node --env-file=.env --import tsx scripts/e2e-card-payment.ts"
+    "e2e:payments": "node --env-file=.env --import tsx scripts/e2e-card-payment.ts",
+    "db:backup": "node scripts/backup-db.mjs",
+    "db:seed-staging": "node scripts/seed-staging.mjs",
+    "e2e:browser": "node --env-file=.env --import tsx scripts/e2e-browser-payments.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
@@ -51,6 +54,7 @@
     "autoprefixer": "10.4.20",
     "eslint": "9.18.0",
     "eslint-config-next": "^15.5.20",
+    "playwright-core": "^1.63.0",
     "postcss": "8.5.1",
     "prisma": "^5.22.0",
     "tailwindcss": "3.4.17",

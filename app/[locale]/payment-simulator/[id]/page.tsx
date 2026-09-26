@@ -10,12 +10,16 @@ import {
 } from "@/lib/payments/providers/simulator";
 import { formatMinor } from "@/lib/payments/money";
 import { simulatorDecideAction } from "@/app/actions/payment-simulator";
+import { SimulatorCheckout } from "@/components/payment/SimulatorCheckout";
 import type { Locale } from "@/i18n/routing";
 
 /**
- * The SIMULATOR's "hosted payment page". Deliberately does not look like
- * Pizza Pazzo and does not look like a bank: it is a test instrument, and it
- * says so. There is no card field of any kind.
+ * The SIMULATOR's "hosted payment page" — a demo card form (test numbers
+ * only, checked in the browser) plus the advanced scenario buttons.
+ *
+ * It plays the bank: whatever is chosen here only changes the simulator's own
+ * ledger. The order is settled afterwards by the site's normal server-to-
+ * server verification (callback + status query), exactly as with a bank.
  *
  * 404 unless the simulator is the configured and allowed provider, so this
  * page cannot exist on a production deployment.
@@ -32,6 +36,18 @@ interface PageProps {
   params: Promise<{ locale: Locale; id: string }>;
 }
 
+/** Card-driven outcomes are on the form; these stay as buttons. */
+const ADVANCED: SimulatorScenario[] = [
+  "pending",
+  "latePaid",
+  "lateAfterDecline",
+  "unreachable",
+  "duplicateCallback",
+  "amountMismatch",
+  "declined",
+  "cancelled",
+];
+
 export default async function PaymentSimulatorPage({ params }: PageProps) {
   const { locale, id } = await params;
   setRequestLocale(locale);
@@ -42,55 +58,41 @@ export default async function PaymentSimulatorPage({ params }: PageProps) {
   const session = await db.paymentSimulatorSession.findUnique({ where: { id } });
   if (!session) notFound();
 
+  const attempt = await db.paymentAttempt.findUnique({
+    where: { reference: session.reference },
+    select: { order: { select: { orderNumber: true } } },
+  });
+
   const open =
     session.state === "OPEN" && mapSimulatorState(session.state, session.createdAt) !== "EXPIRED";
 
+  if (!open) {
+    return (
+      <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
+        <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow ring-1 ring-slate-200">
+          <p className="font-semibold">
+            {locale === "en"
+              ? "This test payment session has already finished."
+              : "Тази тестова платежна сесия вече е приключила."}
+          </p>
+          <p className="mt-1 font-mono text-xs text-slate-500">{session.state}</p>
+          <a href={session.returnUrl} className="mt-4 inline-block rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white">
+            {locale === "en" ? "Back to Pizza Pazzo" : "Обратно към Pizza Pazzo"}
+          </a>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-slate-900 px-4 py-10 text-slate-100">
-      <div className="mx-auto max-w-lg space-y-6">
-        <div className="rounded-2xl border-4 border-yellow-400 bg-yellow-300 p-4 text-slate-900">
-          <p className="text-lg font-extrabold">ТЕСТОВ ПЛАТЕЖЕН СИМУЛАТОР</p>
-          <p className="mt-1 text-sm font-semibold">
-            Това НЕ е банка. Няма реални пари и няма поле за карта. Изберете какво да
-            „отговори банката“ — поръчката ще бъде проверена от сайта по същия път, по който
-            ще се проверява истинско плащане. / TEST PAYMENT SIMULATOR — no bank, no money.
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-800 p-5">
-          <p className="text-sm text-slate-400">{session.description}</p>
-          <p className="mt-2 text-3xl font-bold">{formatMinor(session.amountMinor, session.currency)}</p>
-          <p className="mt-1 font-mono text-xs text-slate-400">{session.reference}</p>
-        </div>
-
-        {open ? (
-          <form action={simulatorDecideAction} className="grid gap-2">
-            <input type="hidden" name="sessionId" value={session.id} />
-            {(Object.keys(SIMULATOR_SCENARIOS) as SimulatorScenario[]).map((key) => (
-              <button
-                key={key}
-                type="submit"
-                name="scenario"
-                value={key}
-                className={`rounded-xl px-4 py-3 text-left font-semibold transition ${
-                  key === "paid"
-                    ? "bg-emerald-500 text-slate-900 hover:bg-emerald-400"
-                    : key === "declined" || key === "cancelled"
-                      ? "bg-rose-500 text-white hover:bg-rose-400"
-                      : "bg-slate-700 hover:bg-slate-600"
-                }`}
-              >
-                {SIMULATOR_SCENARIOS[key].bg}
-                <span className="block font-mono text-xs font-normal opacity-70">{key}</span>
-              </button>
-            ))}
-          </form>
-        ) : (
-          <p className="rounded-2xl bg-slate-800 p-5 text-sm">
-            Тази тестова сесия вече е приключила ({session.state}). Върнете се в магазина.
-          </p>
-        )}
-      </div>
-    </main>
+    <SimulatorCheckout
+      sessionId={session.id}
+      locale={locale === "en" ? "en" : "bg"}
+      amountLabel={formatMinor(session.amountMinor, session.currency)}
+      orderNumber={attempt?.order.orderNumber ?? null}
+      reference={session.reference}
+      decide={simulatorDecideAction}
+      advancedScenarios={ADVANCED.map((key) => ({ key, label: SIMULATOR_SCENARIOS[key].bg }))}
+    />
   );
 }

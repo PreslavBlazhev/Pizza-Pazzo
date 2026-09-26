@@ -17,6 +17,27 @@ import {
   type AttemptStatus,
 } from "@/lib/payments/status";
 
+/** Where the restaurant's "new order" e-mail stands — honestly. */
+function NotificationLine({ order }: { order: Order }) {
+  const s = order.notificationStatus;
+  if (!s || s === "LEGACY") return null;
+  const text =
+    s === "SENT"
+      ? "Имейл към ресторанта: изпратен."
+      : s === "SKIPPED"
+        ? `Имейл към ресторанта: не е изпращан (${order.notificationError ?? "—"}).`
+        : s === "SENDING"
+          ? "Имейл към ресторанта: изпраща се…"
+          : `Имейл към ресторанта: НЕУСПЕШЕН (опит ${order.notificationAttempts} от 5): ${
+              order.notificationError ?? "—"
+            }. Системата опитва отново автоматично, докато таблото „Поръчки на живо“ е отворено.`;
+  return (
+    <p className={`text-sm ${s === "FAILED" ? "font-semibold text-red-700" : "text-neutral-600"}`}>
+      {text}
+    </p>
+  );
+}
+
 export function OrderDetails({
   order,
   printTemplates,
@@ -212,6 +233,7 @@ export function OrderDetails({
             formatEurPrice(order.totalEur)
           )}
         </p>
+        <NotificationLine order={order} />
         {order.paidAt && (
           <p className="text-sm text-neutral-600">
             Потвърдено от доставчика: {formatDateTime(order.paidAt)}

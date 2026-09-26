@@ -28,6 +28,9 @@ export const SAMPLE_PRINT_ORDER: Order = {
   releasedToKitchenAt: "2026-08-03T12:00:00.000Z",
   isTest: false,
   paymentAlert: null,
+  notificationStatus: null,
+  notificationAttempts: 0,
+  notificationError: null,
   deliveryMethod: "DELIVERY",
   status: "ACCEPTED",
 

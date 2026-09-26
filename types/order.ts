@@ -118,6 +118,10 @@ export interface Order {
   isTest: boolean;
   /** A money problem a human must look at (see lib/payments/status.ts). */
   paymentAlert: string | null;
+  /** The restaurant e-mail: null | SENDING | SENT | SKIPPED | FAILED | LEGACY. */
+  notificationStatus: string | null;
+  notificationAttempts: number;
+  notificationError: string | null;
   deliveryMethod: DeliveryMethod;
   status: OrderStatus;
 

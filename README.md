@@ -38,6 +38,9 @@ npm run dev
 - `npm run smoke` — проверки на цени/добавки/отчети
 - `npm run test:payments` — тестове на онлайн плащането (временна база)
 - `npm run e2e:payments` — HTTP поток със симулатора срещу работещ сървър
+- `npm run e2e:browser` — същото в истински Chrome, с демо картите
+- `npm run db:backup` — безопасен архив на SQLite базата с проверка
+- `npm run db:seed-staging` — тестови акаунти + меню (само staging/development)
 
 ## Структура на проекта
 

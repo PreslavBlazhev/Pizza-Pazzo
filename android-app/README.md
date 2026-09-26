@@ -75,9 +75,14 @@ export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
 ```
 
-Последният тестов build (1.1.0, versionCode 4, подписан с **debug** ключ — за
-тестове, не за Google Play) е копиран в `dist/pizza-pazzo-1.1.0-v4-debug.apk`
-(папката е в .gitignore). Release/AAB за Play се прави по `PLAY_STORE.md`
+Последните тестови build-ове (1.1.1, versionCode 5, подписани с **debug**
+ключ — за тестове, не за Google Play), копирани в `dist/` (в .gitignore):
+- `pizza-pazzo-1.1.1-v5-debug.apk` — обикновеният debug (production сайта + dev сървъри);
+- `pizza-pazzo-1.1.1-v5-staging.apk` — **„Pizza Pazzo ТЕСТ“**, пакет
+  `bg.pizzapazzo.app.staging`: инсталира се редом с истинското приложение,
+  отваря САМО staging сайта (`pizzapazzo.stagingUrl` в `gradle.properties`),
+  HTTPS-only, пита за паролата на staging сайта с нативен диалог.
+  Build: `gradlew.bat assembleStaging`. Release/AAB за Play се прави по `PLAY_STORE.md`
 с release ключа, който живее само на тази машина.
 
 ## Кой сайт отваря приложението

@@ -178,6 +178,7 @@ class MainActivity : AppCompatActivity(), PaymentSessionHost {
             },
             onLoadError = { showErrorScreen() },
             onRendererGone = { rebuildAfterRendererCrash() },
+            onHttpAuthRequest = { host, handler -> askForSitePassword(host, handler) },
             onNavigated = { url -> onNavigated(url) },
         )
         webView.webViewClient = webViewClient
@@ -278,6 +279,41 @@ class MainActivity : AppCompatActivity(), PaymentSessionHost {
         }
         binding.errorView.visibility = View.GONE
         binding.webView.loadUrl(url)
+    }
+
+    /**
+     * The staging site's browser password (HTTP Basic auth). Asked for, never
+     * stored by the app — the WebView keeps it only for this session.
+     */
+    private fun askForSitePassword(host: String, handler: android.webkit.HttpAuthHandler) {
+        val pad = (16 * resources.displayMetrics.density).toInt()
+        val user = android.widget.EditText(this).apply {
+            hint = getString(R.string.auth_user)
+            setSingleLine()
+            setText("staging")
+        }
+        val password = android.widget.EditText(this).apply {
+            hint = getString(R.string.auth_password)
+            setSingleLine()
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        val form = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(pad, pad / 2, pad, 0)
+            addView(user)
+            addView(password)
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(getString(R.string.auth_title))
+            .setMessage(host)
+            .setView(form)
+            .setCancelable(false)
+            .setPositiveButton(R.string.auth_ok) { _, _ ->
+                handler.proceed(user.text.toString(), password.text.toString())
+            }
+            .setNegativeButton(R.string.auth_cancel) { _, _ -> handler.cancel() }
+            .show()
     }
 
     // ── Card payments (PaymentSessionHost) ──────────────────────────────────
