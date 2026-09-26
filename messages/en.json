@@ -95,7 +95,8 @@
     "friday": "Friday",
     "saturday": "Saturday",
     "sunday": "Sunday",
-    "closed": "Closed"
+    "closed": "Closed",
+    "allDay": "Open 24/7"
   },
   "home": {
     "pizzaThursday": "Every Thursday is pizza day",

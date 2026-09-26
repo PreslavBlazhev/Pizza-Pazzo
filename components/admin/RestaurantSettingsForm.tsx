@@ -43,6 +43,25 @@ export function RestaurantSettingsForm({
     >
   );
 
+  /**
+   * Days open around the clock (00:00 – 24:00). A time picker cannot hold
+   * "24:00", so such a day is a checkbox that sends the two values itself
+   * through hidden fields instead of showing the pickers.
+   */
+  const [allDay, setAllDay] = useState<Record<Weekday, boolean>>(() =>
+    Object.fromEntries(
+      WEEKDAYS.map((d) => [
+        d,
+        settings.hours[d].open && settings.hours[d].from === "00:00" && settings.hours[d].to === "24:00",
+      ])
+    ) as Record<Weekday, boolean>
+  );
+
+  const makeWholeWeekAllDay = () => {
+    setOpenDays(Object.fromEntries(WEEKDAYS.map((d) => [d, true])) as Record<Weekday, boolean>);
+    setAllDay(Object.fromEntries(WEEKDAYS.map((d) => [d, true])) as Record<Weekday, boolean>);
+  };
+
   const fieldError = (name: string) => state?.fieldErrors?.[name];
 
   return (
@@ -109,8 +128,16 @@ export function RestaurantSettingsForm({
           Работно време
         </h2>
         <p className="mt-1 text-sm text-pizza-muted">
-          Изключете деня, за да се показва като „Затворено“.
+          Изключете деня, за да се показва като „Затворено“. „Денонощно“ = 00:00 – 24:00;
+          поредни денонощни дни работят без прекъсване (24/7).
         </p>
+        <button
+          type="button"
+          onClick={makeWholeWeekAllDay}
+          className="mt-3 rounded-xl border border-pizza-cream-dark px-4 py-2 text-sm font-semibold text-pizza-ink transition hover:border-pizza-green"
+        >
+          Всички дни денонощно (24/7)
+        </button>
 
         <ul className="mt-4 space-y-2">
           {WEEKDAYS.map((day) => {
@@ -141,6 +168,25 @@ export function RestaurantSettingsForm({
 
                   {isOpen ? (
                     <div className="flex flex-wrap items-center gap-3">
+                      <label className="flex items-center gap-2 text-sm font-medium text-pizza-ink">
+                        <input
+                          type="checkbox"
+                          checked={allDay[day]}
+                          onChange={(e) =>
+                            setAllDay((prev) => ({ ...prev, [day]: e.target.checked }))
+                          }
+                          className="h-4 w-4 rounded border-pizza-cream-dark text-pizza-green focus:ring-2 focus:ring-pizza-green/40"
+                        />
+                        Денонощно
+                      </label>
+                      {allDay[day] ? (
+                        <>
+                          <input type="hidden" name={`${day}.from`} value="00:00" />
+                          <input type="hidden" name={`${day}.to`} value="24:00" />
+                          <span className="text-sm text-pizza-muted">00:00 – 24:00</span>
+                        </>
+                      ) : (
+                    <>
                       <label className="flex items-center gap-2 text-sm text-pizza-muted">
                         От
                         <input
@@ -159,7 +205,9 @@ export function RestaurantSettingsForm({
                         <input
                           type="time"
                           name={`${day}.to`}
-                          defaultValue={settings.hours[day].to ?? "23:00"}
+                          defaultValue={
+                            settings.hours[day].to === "24:00" ? "23:59" : (settings.hours[day].to ?? "23:00")
+                          }
                           aria-invalid={toError ? true : undefined}
                           className={cn(
                             "rounded-xl border bg-white px-3 py-2 text-sm text-pizza-ink outline-none transition focus:border-pizza-green focus:ring-2 focus:ring-pizza-green/25",
@@ -167,6 +215,8 @@ export function RestaurantSettingsForm({
                           )}
                         />
                       </label>
+                    </>
+                      )}
                     </div>
                   ) : (
                     <span className="text-sm font-medium text-brand">Затворено</span>

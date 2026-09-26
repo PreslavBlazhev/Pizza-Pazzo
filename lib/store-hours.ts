@@ -32,15 +32,29 @@ import { addSofiaDays, sofiaParts, sofiaWallClockToUtc } from "./report-period";
 /** How far ahead to look for the next opening. */
 const SEARCH_DAYS = 8;
 
-/** "HH:mm" → minutes since midnight, or null when unusable. */
+/**
+ * "HH:mm" → minutes since midnight, or null when unusable. "24:00" is the end
+ * of the day (1440) and is only meaningful as a CLOSING time — a day open
+ * 00:00 – 24:00 is open around the clock, and such days join at midnight.
+ */
 function parseHhMm(value: string | null): number | null {
   if (!value) return null;
   const m = /^(\d{2}):(\d{2})$/.exec(value.trim());
   if (!m) return null;
   const hours = Number(m[1]);
   const minutes = Number(m[2]);
+  if (hours === 24 && minutes === 0) return 24 * 60;
   if (hours > 23 || minutes > 59) return null;
   return hours * 60 + minutes;
+}
+
+/** Sofia wall-clock minutes of a calendar day → the real instant (1440 = next midnight). */
+function instantOf(year: number, month: number, day: number, minutes: number): Date {
+  if (minutes >= 24 * 60) {
+    const next = new Date(Date.UTC(year, month - 1, day + 1));
+    return sofiaWallClockToUtc(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate(), 0, 0);
+  }
+  return sofiaWallClockToUtc(year, month, day, Math.floor(minutes / 60), minutes % 60);
 }
 
 /** One day's open window as real instants. */
@@ -72,11 +86,11 @@ function windowForDay(
 
   const from = parseHhMm(value.from);
   const to = parseHhMm(value.to);
-  if (from === null || to === null || to <= from) return null;
+  if (from === null || to === null || from >= 24 * 60 || to <= from) return null;
 
   return {
-    opensAt: sofiaWallClockToUtc(year, month, day, Math.floor(from / 60), from % 60),
-    closesAt: sofiaWallClockToUtc(year, month, day, Math.floor(to / 60), to % 60),
+    opensAt: instantOf(year, month, day, from),
+    closesAt: instantOf(year, month, day, to),
   };
 }
 

@@ -68,8 +68,10 @@ export const SITE_URL = getAppBaseUrl() || "https://www.pizzapazzo.bg";
  * paint Sunday red, which would have silently stopped working in English.
  */
 export const WORKING_HOURS = [
-  { dayKey: "mondayToSaturday", hours: "11:00 – 23:00", closed: false },
-  { dayKey: "sunday", hours: "11:00 – 22:30", closed: false },
+  // Open around the clock since 2026-09-26 (owner's decision): "24:00" is
+  // the end of the day, so consecutive days join into 24/7.
+  { dayKey: "mondayToSaturday", hours: "00:00 – 24:00", closed: false },
+  { dayKey: "sunday", hours: "00:00 – 24:00", closed: false },
 ] as const satisfies readonly {
   dayKey: "mondayToSaturday" | "sunday";
   hours: string | null;

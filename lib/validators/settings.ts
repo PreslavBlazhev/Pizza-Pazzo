@@ -11,6 +11,13 @@ import { WEEKDAYS } from "@/types/settings";
 /** Strict "HH:mm", 00:00–23:59. Rejects 24:00, 11:60 and any seconds. */
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+/**
+ * A closing time: 00:00–23:59, or "24:00" = the end of the day (midnight).
+ * That is how a day open around the clock is written (00:00 – 24:00), and
+ * consecutive 24-hour days join into 24/7 without a gap at midnight.
+ */
+const CLOSING_PATTERN = /^(([01]\d|2[0-3]):[0-5]\d|24:00)$/;
+
 /** "HH:mm" → minutes since midnight, for ordering comparisons. */
 function toMinutes(value: string): number {
   const [h, m] = value.split(":");
@@ -19,8 +26,8 @@ function toMinutes(value: string): number {
 
 /**
  * One day. An open day must carry both bounds and end after it starts —
- * overnight spans are deliberately unsupported (the restaurant closes before
- * midnight). A closed day may leave the times empty; whatever is sent is
+ * overnight spans are deliberately unsupported; a day that runs to midnight
+ * closes at "24:00" (00:00 – 24:00 = open all day). A closed day may leave the times empty; whatever is sent is
  * discarded so a closed day can never persist stray values.
  */
 const daySchema = z
@@ -44,11 +51,11 @@ const daySchema = z
 
     if (!to) {
       ctx.addIssue({ code: "custom", path: ["to"], message: "Въведете краен час." });
-    } else if (!TIME_PATTERN.test(to)) {
-      ctx.addIssue({ code: "custom", path: ["to"], message: "Часът трябва да е във формат ЧЧ:ММ (00:00 – 23:59)." });
+    } else if (!CLOSING_PATTERN.test(to)) {
+      ctx.addIssue({ code: "custom", path: ["to"], message: "Часът трябва да е във формат ЧЧ:ММ (00:00 – 23:59, или 24:00 за края на деня)." });
     }
 
-    if (from && to && TIME_PATTERN.test(from) && TIME_PATTERN.test(to)) {
+    if (from && to && TIME_PATTERN.test(from) && CLOSING_PATTERN.test(to)) {
       if (toMinutes(from) === toMinutes(to)) {
         ctx.addIssue({ code: "custom", path: ["to"], message: "Началният и крайният час не може да съвпадат." });
       } else if (toMinutes(from) > toMinutes(to)) {

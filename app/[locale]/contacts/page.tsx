@@ -135,7 +135,7 @@ export default async function ContactsPage({ params }: PageProps) {
                           : "font-medium text-pizza-ink"
                       }
                     >
-                      {row.closed ? tHours("closed") : row.hours}
+                      {row.closed ? tHours("closed") : row.allDay ? tHours("allDay") : row.hours}
                     </span>
                   </li>
                 ))}

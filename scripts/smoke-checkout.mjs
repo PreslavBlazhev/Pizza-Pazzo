@@ -1029,7 +1029,10 @@ if (mods) {
     check("empty EN address is rejected", !parse(baseSettings({ addressEn: "" })).success);
     check("invalid phone is rejected", !parse(baseSettings({ primaryPhone: "телефон" })).success);
     check("valid HH:mm is accepted", parse(baseSettings({ hours: openWeek("09:30", "22:15") })).success);
-    check("24:00 is rejected", !parse(baseSettings({ hours: openWeek("11:00", "24:00") })).success);
+    check("24:00 is accepted as a closing time (end of day)", parse(baseSettings({ hours: openWeek("11:00", "24:00") })).success);
+    check("00:00 – 24:00 (open all day) is accepted", parse(baseSettings({ hours: openWeek("00:00", "24:00") })).success);
+    check("24:00 is rejected as an opening time", !parse(baseSettings({ hours: openWeek("24:00", "24:00") })).success);
+    check("24:30 is rejected", !parse(baseSettings({ hours: openWeek("11:00", "24:30") })).success);
     check("11:60 is rejected", !parse(baseSettings({ hours: openWeek("11:60", "23:00") })).success);
     check("seconds are rejected", !parse(baseSettings({ hours: openWeek("11:00:00", "23:00") })).success);
 
@@ -1096,6 +1099,11 @@ if (mods) {
     check("JSON-LD has one entry per group", spec.length === 2);
     check("JSON-LD lists the 6 weekday names", spec[0].dayOfWeek.join(",") === "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday");
     check("JSON-LD opens/closes come from the day", spec[0].opens === "11:00" && spec[0].closes === "23:00");
+    const allWeek = H.groupWorkingHours(openWeek("00:00", "24:00"));
+    check("a 24-hour day is flagged allDay", allWeek[0].allDay === true);
+    check("an ordinary day is not allDay", H.groupWorkingHours(openWeek())[0].allDay === false);
+    const spec247 = H.toOpeningHoursSpecification(openWeek("00:00", "24:00"));
+    check("JSON-LD writes until-midnight as 23:59", spec247[0].opens === "00:00" && spec247[0].closes === "23:59");
     const withClosed = H.toOpeningHoursSpecification({ ...openWeek(), sunday: day(false, null, null) });
     check("closed days are absent from JSON-LD", withClosed.every((s) => !s.dayOfWeek.includes("Sunday")));
     const allClosed = Object.fromEntries(Object.keys(openWeek()).map((d) => [d, day(false, null, null)]));
@@ -1188,6 +1196,27 @@ if (mods?.storeHours) {
   );
   const at = (iso) => new Date(iso);
   const iso = (d) => (d ? d.toISOString() : null);
+
+  // ── Open around the clock (00:00 – 24:00 every day) ──
+  const ALL_DAY = Object.fromEntries(Object.keys(WEEK).map((k) => [k, day(true, "00:00", "24:00")]));
+  for (const [label, instant] of [
+    ["3 a.m. Sofia (summer)", "2026-08-04T00:00:00Z"],
+    ["23:59:59 Sofia", "2026-08-04T20:59:59Z"],
+    ["exactly midnight Sofia", "2026-08-04T21:00:00Z"],
+    ["00:00:01 Sofia", "2026-08-04T21:00:01Z"],
+    ["midnight Sunday → Monday, winter", "2026-01-11T22:00:00Z"],
+    ["DST change night (Oct 25, 03:30 Sofia)", "2026-10-25T00:30:00Z"],
+  ]) {
+    check(`24/7: open at ${label}`, resolveHoursStatus(ALL_DAY, at(instant)).open);
+  }
+  check(
+    "24/7: a 24-hour day closes at the next midnight, where the next day opens",
+    iso(resolveHoursStatus(ALL_DAY, at("2026-08-04T12:00:00Z")).closesAt) === "2026-08-04T21:00:00.000Z"
+  );
+  check(
+    "24/7: the store status is open with no reopen time",
+    resolveStoreStatus(ALL_DAY, { active: false, until: null }, at("2026-08-04T23:30:00Z")).isOpen === true
+  );
 
   // ── Opening hours alone ──
   check("midday Tuesday is open", resolveHoursStatus(WEEK, at("2026-08-04T09:00:00Z")).open);

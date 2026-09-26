@@ -33,6 +33,13 @@ export interface WorkingHoursRow {
   closed: boolean;
   /** "11:00 – 23:00", or null for a closed run. */
   hours: string | null;
+  /** Open 00:00 – 24:00: shown as "Денонощно" / "Open 24 hours". */
+  allDay: boolean;
+}
+
+/** True for a day open around the clock (00:00 – 24:00). */
+export function isAllDay(day: { open: boolean; from: string | null; to: string | null }): boolean {
+  return day.open && day.from === "00:00" && day.to === "24:00";
 }
 
 /** True when two days have exactly the same opening state and bounds. */
@@ -66,6 +73,7 @@ export function groupWorkingHours(hours: RestaurantHours): WorkingHoursRow[] {
       days: [day],
       closed: !value.open,
       hours: value.open && value.from && value.to ? `${value.from} – ${value.to}` : null,
+      allDay: isAllDay(value),
     });
   }
 
@@ -109,7 +117,9 @@ export function toOpeningHoursSpecification(
         "@type": "OpeningHoursSpecification" as const,
         dayOfWeek: row.days.map((d) => SCHEMA_DAY[d]),
         opens: day.from as string,
-        closes: day.to as string,
+        // schema.org writes "until midnight" as 23:59 (Google's convention
+        // for a place open 24 hours is 00:00–23:59).
+        closes: day.to === "24:00" ? "23:59" : (day.to as string),
       };
     });
 }
