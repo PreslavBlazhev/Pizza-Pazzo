@@ -44,6 +44,18 @@ export function ReportSummaryCards({ summary }: { summary: ReportSummary }) {
               {formatEurPrice(summary.deliveryRevenueEur)}
             </dd>
           </div>
+          <div className="flex items-baseline justify-between gap-2 border-t border-pizza-cream-dark pt-1">
+            <dt className="text-neutral-500">{t("cashRevenue")}</dt>
+            <dd className="whitespace-nowrap font-medium text-neutral-700">
+              {formatEurPrice(summary.cashRevenueEur)}
+            </dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-2">
+            <dt className="text-neutral-500">{t("cardRevenue")}</dt>
+            <dd className="whitespace-nowrap font-medium text-neutral-700">
+              {formatEurPrice(summary.cardRevenueEur)}
+            </dd>
+          </div>
         </dl>
         <p className="mt-2 text-[11px] italic text-neutral-400">
           {t("revenueHint")}
@@ -67,6 +79,31 @@ export function ReportSummaryCards({ summary }: { summary: ReportSummary }) {
           {summary.cancelledCount}
         </p>
       </Card>
+
+      <Card>
+        <p className="text-xs uppercase tracking-wide text-neutral-500">
+          {t("paidOnline")}
+        </p>
+        <p className="mt-1 text-2xl font-bold text-neutral-800">
+          {formatEurPrice(summary.paidOnlineEur)}
+        </p>
+        <p className="mt-1 text-xs text-neutral-500">
+          {t("paidOnlineCount", { count: summary.paidOnlineCount })}
+        </p>
+        <p className="mt-2 text-[11px] italic text-neutral-400">{t("paidOnlineHint")}</p>
+      </Card>
+
+      {summary.refundDueCount > 0 && (
+        <Card className="border-red-300 bg-red-50">
+          <p className="text-xs uppercase tracking-wide text-red-700">{t("refundDue")}</p>
+          <p className="mt-1 text-2xl font-bold text-red-800">
+            {formatEurPrice(summary.refundDueEur)}
+          </p>
+          <p className="mt-1 text-xs text-red-700">
+            {t("refundDueHint", { count: summary.refundDueCount })}
+          </p>
+        </Card>
+      )}
     </div>
   );
 }

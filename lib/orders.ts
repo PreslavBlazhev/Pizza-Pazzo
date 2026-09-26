@@ -14,6 +14,8 @@ import { startOfSofiaDay } from "@/lib/report-period";
 import type { AdminDashboardStats } from "@/types/admin";
 import {
   isOrderStatus,
+  isPaymentMethod,
+  isPaymentStatus,
   type Order,
   type OrderItem,
   type OrderStatus,
@@ -59,7 +61,12 @@ export function mapOrderRow(o: PrismaOrderRow): Order {
     deliveryAddress: o.deliveryAddress,
     deliveryCity: o.deliveryCity,
     deliveryNote: o.deliveryNote,
-    paymentMethod: "CASH_ON_DELIVERY",
+    paymentMethod: isPaymentMethod(o.paymentMethod) ? o.paymentMethod : "CASH_ON_DELIVERY",
+    paymentStatus: isPaymentStatus(o.paymentStatus) ? o.paymentStatus : "CASH_DUE",
+    paidAt: o.paidAt?.toISOString() ?? null,
+    releasedToKitchenAt: o.releasedToKitchenAt?.toISOString() ?? null,
+    isTest: o.isTest,
+    paymentAlert: o.paymentAlert,
     deliveryMethod: "DELIVERY",
     status: isOrderStatus(o.status) ? o.status : "PENDING",
     subtotalEur: Number(o.subtotalEur),
@@ -106,10 +113,17 @@ export async function getOrders(limit?: number): Promise<Order[]> {
   return rows.map(mapOrder);
 }
 
+/**
+ * The kitchen may see an order only once it was released to it: a cash order
+ * at checkout, a card order when the provider CONFIRMED the payment. A card
+ * order still waiting for (or refused) payment is not an order to cook.
+ */
+export const RELEASED_TO_KITCHEN = { releasedToKitchenAt: { not: null } } as const;
+
 /** Orders still waiting for confirmation, oldest first — the live board's queue. */
 export async function getPendingOrders(): Promise<Order[]> {
   const rows = await db.order.findMany({
-    where: { status: "PENDING" },
+    where: { status: "PENDING", ...RELEASED_TO_KITCHEN },
     orderBy: { createdAt: "asc" },
     include: { items: true },
   });
@@ -139,22 +153,30 @@ export async function getLatestOrders(limit = 5): Promise<Order[]> {
 /**
  * KPI figures for the admin dashboard. "Today" is the calendar day in
  * **Europe/Sofia** — not the server's local day, which on Render (UTC) started
- * three hours late and put early-morning orders on the wrong date. Today's
- * revenue excludes cancelled orders.
+ * three hours late and put early-morning orders on the wrong date. Only
+ * orders released to the kitchen count (an unpaid card order is not an
+ * order yet), and today's revenue also leaves out cancelled and test orders.
  */
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   const startOfToday = startOfSofiaDay(new Date());
 
   const [ordersToday, pendingOrders, activeOrders, deliveredOrders, cancelledOrders, revenueToday] =
     await Promise.all([
-      db.order.count({ where: { createdAt: { gte: startOfToday } } }),
-      db.order.count({ where: { status: "PENDING" } }),
+      db.order.count({ where: { createdAt: { gte: startOfToday }, ...RELEASED_TO_KITCHEN } }),
+      db.order.count({ where: { status: "PENDING", ...RELEASED_TO_KITCHEN } }),
       db.order.count({ where: { status: { in: [...ACTIVE_ORDER_STATUSES] } } }),
       db.order.count({ where: { status: "DELIVERED" } }),
       db.order.count({ where: { status: "CANCELLED" } }),
       db.order.aggregate({
         _sum: { totalEur: true },
-        where: { createdAt: { gte: startOfToday }, status: { not: "CANCELLED" } },
+        // Released, real orders only: an unpaid card order and a simulator
+        // test are not money the restaurant made.
+        where: {
+          createdAt: { gte: startOfToday },
+          status: { not: "CANCELLED" },
+          isTest: false,
+          ...RELEASED_TO_KITCHEN,
+        },
       }),
     ]);
 
@@ -223,4 +245,15 @@ export async function setOrderStatus(
   if (isTerminalStatus(next)) {
     await anonymiseIfPending(id);
   }
+}
+
+/**
+ * The order behind a customer's payment pages, found by its unguessable
+ * access token (a guest has no account to look it up by). Null for a
+ * malformed token without touching the database.
+ */
+export async function getOrderByAccessToken(token: string): Promise<Order | null> {
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return null;
+  const row = await db.order.findUnique({ where: { accessToken: token }, include: { items: true } });
+  return row ? mapOrder(row) : null;
 }

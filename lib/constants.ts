@@ -1,5 +1,6 @@
 /** Global constants for the Pizza Pazzo app. */
 import type { UserRole } from "@/types/auth";
+import { getAppBaseUrl } from "@/lib/app-env";
 
 /**
  * Business facts that do not change with language: name, phones, address.
@@ -43,12 +44,15 @@ export const SITE = {
 // `settingsAddress(settings, locale)` from lib/restaurant-settings.ts instead.
 
 /**
- * Canonical origin of the site, used to build absolute URLs for Open Graph and
- * hreflang. Override per environment with NEXT_PUBLIC_SITE_URL (Vercel previews
- * and localhost are not pizzapazzo.bg).
+ * Canonical origin of the site, used to build absolute URLs for Open Graph,
+ * hreflang, the sitemap and robots.txt.
+ *
+ * Comes from APP_BASE_URL (NEXT_PUBLIC_SITE_URL still honoured) — the SAME
+ * variable the payment return/callback addresses are built from, so moving to
+ * the new domain is one setting (see docs/domain-and-deploy.md). The literal
+ * below is only the last-resort fallback for a server with neither set.
  */
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.pizzapazzo.bg";
+export const SITE_URL = getAppBaseUrl() || "https://www.pizzapazzo.bg";
 
 /**
  * Working hours, grouped for display.

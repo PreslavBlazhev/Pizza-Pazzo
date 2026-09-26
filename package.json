@@ -23,7 +23,9 @@
     "db:seed": "prisma db seed",
     "e2e:alarm": "node --experimental-websocket scripts/e2e-alarm.mjs",
     "icons:android": "node scripts/generate-android-icons.mjs",
-    "icons:play": "node scripts/generate-play-assets.mjs"
+    "icons:play": "node scripts/generate-play-assets.mjs",
+    "test:payments": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/payments-unit.test.ts tests/payments-flow.test.ts",
+    "e2e:payments": "node --env-file=.env --import tsx scripts/e2e-card-payment.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
@@ -52,6 +54,7 @@
     "postcss": "8.5.1",
     "prisma": "^5.22.0",
     "tailwindcss": "3.4.17",
+    "tsx": "^4.23.15",
     "typescript": "5.7.3"
   }
 }

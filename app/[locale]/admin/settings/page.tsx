@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { RestaurantSettingsForm } from "@/components/admin/RestaurantSettingsForm";
 import { getRestaurantSettings } from "@/lib/restaurant-settings";
+import { getPaymentStatusSummary } from "@/lib/payments/admin";
 
 export const metadata: Metadata = { title: "Настройки" };
 
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
   const settings = await getRestaurantSettings();
+  const payments = getPaymentStatusSummary();
 
   return (
     <div>
@@ -45,6 +47,52 @@ export default async function AdminSettingsPage() {
         >
           🖨 Отвори настройките на печата
         </Link>
+      </section>
+
+      {/* Read-only on purpose: card payments are switched on and off through
+          environment variables on the server (docs/online-card-payments.md),
+          never from a web form — a stolen admin session must not be able to
+          turn a test simulator on in front of real customers. */}
+      <section className="mt-6 rounded-2xl border border-pizza-cream-dark bg-white p-5">
+        <h2 className="font-display text-lg font-semibold text-pizza-ink">
+          Онлайн плащане с карта
+        </h2>
+        <p
+          className={`mt-2 inline-block rounded-full px-3 py-1 text-sm font-bold ${
+            payments.enabled ? "bg-green-100 text-green-800" : "bg-neutral-100 text-neutral-700"
+          }`}
+        >
+          {payments.enabled ? "Включено" : "Изключено — клиентите виждат само плащане в брой"}
+        </p>
+        <dl className="mt-3 grid gap-1 text-sm sm:grid-cols-[12rem_1fr]">
+          <dt className="text-pizza-muted">Среда на сайта (APP_ENV)</dt>
+          <dd className="font-mono">{payments.appEnv}</dd>
+          <dt className="text-pizza-muted">Доставчик</dt>
+          <dd className="font-mono">
+            {payments.provider ?? "—"}
+            {payments.environment ? ` / ${payments.environment}` : ""}
+          </dd>
+          <dt className="text-pizza-muted">Валута</dt>
+          <dd className="font-mono">{payments.currency}</dd>
+          <dt className="text-pizza-muted">Публичен адрес</dt>
+          <dd className="break-all font-mono">{payments.baseUrl || "—"}</dd>
+          <dt className="text-pizza-muted">Return URL за банката</dt>
+          <dd className="break-all font-mono">{payments.returnUrl ?? "—"}</dd>
+          <dt className="text-pizza-muted">Callback URL за банката</dt>
+          <dd className="break-all font-mono">{payments.callbackUrl ?? "—"}</dd>
+        </dl>
+        {payments.problems.length > 0 && (
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-red-700">
+            {payments.problems.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+        )}
+        {payments.environment && payments.environment !== "production" && (
+          <p className="mt-3 text-sm font-semibold text-fuchsia-800">
+            Тестов режим: поръчките, платени така, са тестови и не са реални пари.
+          </p>
+        )}
       </section>
     </div>
   );

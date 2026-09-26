@@ -390,7 +390,6 @@
     "address": "Delivery address",
     "addressPlaceholder": "street, number, entrance, floor, apartment",
     "payment": "Payment",
-    "paymentCod": "Cash on delivery",
     "agreeTerms": "By placing your order you agree to the <terms>Terms and Conditions</terms> and the <privacy>Privacy Policy</privacy>.",
     "placing": "Placing…",
     "required": "REQUIRED",
@@ -398,7 +397,13 @@
     "fieldRequired": "This field is required.",
     "missingFieldsTitle": "Please fill in the required fields",
     "missingFieldsKept": "Your order was NOT sent. Everything you already entered has been kept.",
-    "goToField": "Go to the field →"
+    "goToField": "Go to the field →",
+    "paymentCash": "Cash on delivery",
+    "paymentCashHint": "You pay the courier when your order arrives.",
+    "paymentCard": "Pay online by card",
+    "paymentCardHint": "Card details are entered only on the bank's secure page. Amount to pay: {amount}.",
+    "paymentCardUnavailable": "Card payment is not available at the moment.",
+    "submitCard": "Continue to card payment"
   },
   "orderSuccess": {
     "metaTitle": "Order placed",
@@ -526,7 +531,8 @@
       "confirm": "Yes, delete my account",
       "deleting": "Deleting…",
       "ownerBlocked": "The owner account cannot be deleted here — please contact the system administrator."
-    }
+    },
+    "orderPaymentLabel": "Payment"
   },
   "admin": {
     "title": "Admin panel",
@@ -576,7 +582,14 @@
       "next": "Next",
       "pageOf": "Page {page} of {total}",
       "invalidRange": "The selected range is invalid. Showing today instead.",
-      "maxRange": "The range cannot be longer than 366 days. Showing today instead."
+      "maxRange": "The range cannot be longer than 366 days. Showing today instead.",
+      "cashRevenue": "Cash",
+      "cardRevenue": "Online by card",
+      "paidOnline": "Paid online",
+      "paidOnlineCount": "{count, plural, one {# payment} other {# payments}}",
+      "paidOnlineHint": "Card payments confirmed by the bank (tests excluded)",
+      "refundDue": "To refund",
+      "refundDueHint": "{count, plural, one {# paid and cancelled order} other {# paid and cancelled orders}} — refund by hand in the bank portal"
     }
   },
   "validation": {
@@ -652,5 +665,79 @@
     "body": "Your account, your password and your saved addresses have been removed. Thank you for being with us.",
     "orders": "All that is left of your past orders is the number, date, items and amounts — the accounting part we are required by law to keep. Your name, email, phone, address and notes have been removed from them.",
     "home": "Back to the home page"
+  },
+  "payment": {
+    "testMode": "TEST MODE — this payment goes through a simulator, no real money. This order will not be prepared.",
+    "orderNumber": "Order #{number}",
+    "items": "Items",
+    "subtotal": "Subtotal",
+    "delivery": "Delivery",
+    "total": "Total",
+    "deliverTo": "Deliver to",
+    "backToMenu": "Back to the menu",
+    "callUs": "Phone: {phone}",
+    "review": {
+      "metaTitle": "Card payment",
+      "title": "Review and pay",
+      "intro": "Check your order. \"Pay by card\" takes you to the secure payment page ({provider}), where you enter your card details — Pizza Pazzo never sees or stores them.",
+      "method": "Payment method",
+      "methodCard": "Online by card",
+      "totalToPay": "Amount to pay",
+      "pay": "Pay by card {amount}",
+      "paying": "Redirecting to the bank…",
+      "kitchenNotice": "Your order is sent to the restaurant only after the bank confirms the payment.",
+      "changeOrder": "Change the order",
+      "resumeHint": "You have already started paying for this order. The button takes you back to the same bank page — you will not be charged twice."
+    },
+    "errors": {
+      "DISABLED": "Card payment is not available right now. You can order with cash on delivery.",
+      "BUSY": "The payment is being prepared. Please try again in a few seconds.",
+      "PROVIDER_ERROR": "We could not open the payment page. Nothing was charged — please try again shortly.",
+      "STORE_CLOSED": "The restaurant is closed and is not taking orders right now.",
+      "NOT_FOUND": "Order not found.",
+      "NOT_CARD": "This order is paid in cash on delivery.",
+      "ALREADY_PAID": "This order has already been paid.",
+      "ORDER_CANCELLED": "This order was cancelled."
+    },
+    "success": {
+      "metaTitle": "Order paid",
+      "title": "Payment successful — thank you!",
+      "subtitle": "The bank confirmed your payment and the order has been sent to the restaurant.",
+      "paid": "Paid by card: {amount}",
+      "nextTitle": "What happens next",
+      "next1": "The restaurant will accept your order and e-mail you the estimated delivery time.",
+      "next2": "The courier will not ask you for money — the order is paid.",
+      "next3": "Questions? Call {phone} and give your order number."
+    },
+    "pending": {
+      "metaTitle": "Waiting for confirmation",
+      "title": "Waiting for the bank's confirmation",
+      "subtitle": "The payment is not final yet. This page refreshes by itself — please do not pay again.",
+      "checking": "Checking…",
+      "checkNow": "Check again",
+      "resume": "Back to the bank's page",
+      "slow": "If the confirmation takes more than a few minutes, call us on {phone}. Your order is prepared only after the payment is confirmed."
+    },
+    "failed": {
+      "metaTitle": "Payment not completed",
+      "title": "The payment did not go through",
+      "subtitle": "Your order has NOT been sent to the restaurant. Your cart is saved.",
+      "reasonFAILED": "The bank declined the payment.",
+      "reasonCANCELLED": "The payment was cancelled.",
+      "reasonEXPIRED": "The payment session expired.",
+      "reasonERROR": "The payment page could not be opened.",
+      "retry": "Try the card again",
+      "changeOrder": "Change the order or pay in cash",
+      "note": "If you still see money taken from your account, do not order again — call us on {phone}."
+    },
+    "cancelled": {
+      "title": "The order was cancelled",
+      "subtitle": "This order was cancelled and will not be prepared."
+    },
+    "notice": {
+      "text": "Order #{number} is waiting for payment.",
+      "action": "Check the payment",
+      "dismiss": "Dismiss"
+    }
   }
 }

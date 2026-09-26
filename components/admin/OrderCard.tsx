@@ -5,6 +5,7 @@ import { formatEurPrice } from "@/lib/format-price";
 import { formatDateTime } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { OrderStatusBadge } from "./OrderStatusBadge";
+import { PaymentBadge } from "./PaymentBadge";
 
 /**
  * One order row in the admin lists (dashboard, /admin/orders, /admin/reports).
@@ -27,6 +28,12 @@ export function OrderCard({ order }: { order: Order }) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-semibold text-neutral-800">#{order.orderNumber}</span>
             <OrderStatusBadge status={order.status} />
+            <PaymentBadge order={order} />
+            {order.paymentAlert && (
+              <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
+                ⚠ плащане
+              </span>
+            )}
           </div>
           <p className="break-words text-xs text-neutral-500">
             {order.customerName} · {order.customerPhone} ·{" "}

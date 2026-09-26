@@ -6,14 +6,32 @@ import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { PrintOrderButtons } from "./PrintOrderButton";
 import type { PrintTemplateData } from "@/types/print";
+import { PaymentBadge } from "./PaymentBadge";
+import { RecheckPaymentButton } from "./RecheckPaymentButton";
+import type { AdminPaymentAttempt } from "@/lib/payments/admin";
+import { formatMinor } from "@/lib/payments/money";
+import {
+  ATTEMPT_STATUS_LABELS_BG,
+  collectInstructionBg,
+  paymentAlertLabel,
+  type AttemptStatus,
+} from "@/lib/payments/status";
 
 export function OrderDetails({
   order,
   printTemplates,
+  paymentAttempts = [],
 }: {
   order: Order;
   printTemplates: PrintTemplateData[];
+  paymentAttempts?: AdminPaymentAttempt[];
 }) {
+  // A card order the provider has not confirmed is not an order to cook: it
+  // can only be cancelled (e.g. an abandoned payment) — see order-admin.ts.
+  const awaitingMoney =
+    !order.releasedToKitchenAt ||
+    (order.paymentMethod === "CARD_ONLINE" && order.paymentStatus !== "PAID");
+  const alert = paymentAlertLabel(order.paymentAlert);
   const items = order.items ?? [];
 
   const priceRow = (label: string, eur: number, strong = false) => (
@@ -34,8 +52,31 @@ export function OrderDetails({
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold text-neutral-800">#{order.orderNumber}</h1>
         <OrderStatusBadge status={order.status} />
+        <PaymentBadge order={order} size="lg" />
         <span className="text-sm text-neutral-400">{formatDateTime(order.createdAt)}</span>
       </div>
+
+      {alert && (
+        <div
+          role="alert"
+          className="rounded-2xl border-2 border-red-600 bg-red-50 p-4 text-sm font-semibold text-red-800"
+        >
+          ⚠ {alert}
+        </div>
+      )}
+
+      {order.isTest && (
+        <div className="rounded-2xl border-2 border-fuchsia-500 bg-fuchsia-50 p-3 text-sm font-semibold text-fuchsia-900">
+          Тестова поръчка (симулатор / банков sandbox) — без реални пари. Не се приготвя.
+        </div>
+      )}
+
+      {awaitingMoney && order.status !== "CANCELLED" && (
+        <div className="rounded-2xl border border-neutral-300 bg-neutral-50 p-3 text-sm text-neutral-700">
+          Тази поръчка още НЕ е изпратена към кухнята: плащането с карта не е потвърдено от
+          доставчика. Ако клиентът не завърши плащането, поръчката може само да бъде отказана.
+        </div>
+      )}
 
       {(order.estimatedTimeMinutes !== null || order.adminNote) && (
         <div className="space-y-0.5 text-sm text-neutral-600">
@@ -54,7 +95,11 @@ export function OrderDetails({
       {/* Status control */}
       <section className="rounded-2xl border border-neutral-200 bg-white p-4">
         <h2 className="mb-3 text-sm font-semibold text-neutral-600">Смяна на статус</h2>
-        <OrderStatusControl orderId={order.id} status={order.status} />
+        <OrderStatusControl
+          orderId={order.id}
+          status={order.status}
+          cancelOnly={awaitingMoney}
+        />
       </section>
 
       {/* Kitchen ticket — only after the order is accepted, never for pending
@@ -158,7 +203,84 @@ export function OrderDetails({
         {priceRow("Общо", order.totalEur, true)}
       </section>
 
-      <p className="text-xs text-neutral-400">Плащане: Наложен платеж</p>
+      <section className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-neutral-600">Плащане</h2>
+        <p className="text-sm font-bold text-neutral-800">
+          {collectInstructionBg(
+            order.paymentMethod,
+            order.paymentStatus,
+            formatEurPrice(order.totalEur)
+          )}
+        </p>
+        {order.paidAt && (
+          <p className="text-sm text-neutral-600">
+            Потвърдено от доставчика: {formatDateTime(order.paidAt)}
+          </p>
+        )}
+
+        {order.paymentMethod === "CARD_ONLINE" && (
+          <>
+            {paymentAttempts.length === 0 ? (
+              <p className="text-sm text-neutral-500">
+                Клиентът още не е отворил страницата за плащане.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[34rem] text-left text-xs">
+                  <thead className="text-neutral-500">
+                    <tr>
+                      <th className="py-1 pr-3 font-medium">Опит</th>
+                      <th className="py-1 pr-3 font-medium">Статус</th>
+                      <th className="py-1 pr-3 font-medium">Сума</th>
+                      <th className="py-1 pr-3 font-medium">Доставчик</th>
+                      <th className="py-1 font-medium">Време</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 text-neutral-700">
+                    {paymentAttempts.map((a) => (
+                      <tr key={a.id}>
+                        <td className="py-1.5 pr-3 font-mono">{a.reference}</td>
+                        <td className="py-1.5 pr-3">
+                          {ATTEMPT_STATUS_LABELS_BG[a.status as AttemptStatus] ?? a.status}
+                          {a.providerStatus ? (
+                            <span className="text-neutral-400"> ({a.providerStatus})</span>
+                          ) : null}
+                          {a.failureReason ? (
+                            <span className="block text-red-700">{a.failureReason}</span>
+                          ) : null}
+                        </td>
+                        <td className="whitespace-nowrap py-1.5 pr-3">
+                          {formatMinor(a.amountMinor, a.currency)}
+                        </td>
+                        <td className="py-1.5 pr-3">
+                          {a.provider} / {a.environment}
+                        </td>
+                        <td className="whitespace-nowrap py-1.5">
+                          {formatDateTime(a.createdAt)}
+                          {a.finalizedAt ? (
+                            <span className="block text-neutral-400">
+                              край {formatDateTime(a.finalizedAt)}
+                            </span>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {order.paymentStatus !== "PAID" && paymentAttempts.length > 0 && (
+              <RecheckPaymentButton orderId={order.id} />
+            )}
+            {order.paymentStatus === "PAID" && order.status === "CANCELLED" && (
+              <p className="text-sm font-semibold text-red-700">
+                Отказана, но платена поръчка: възстановяването се прави ръчно през портала на
+                банката. Сайтът не връща пари и не отбелязва възстановяване сам.
+              </p>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }

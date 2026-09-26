@@ -11,6 +11,7 @@
  */
 
 import { toOrderExtrasDisplay, withPerUnitHint } from "@/lib/order-extras-display";
+import { collectInstructionBg } from "@/lib/payments/status";
 import type { OrderWithItems } from "@/types/order";
 import { PRINT_SECTIONS, type PrintTemplateData } from "@/types/print";
 
@@ -142,6 +143,15 @@ export function buildPrintableOrderJson(
       note: item.itemNote,
     })),
     paymentMethod: order.paymentMethod,
+    // Ready-made instruction for the receipt (app 1.1.0+ prints it; older
+    // builds ignore unknown keys and print the method code instead).
+    paymentStatus: order.paymentStatus,
+    paymentText: collectInstructionBg(
+      order.paymentMethod,
+      order.paymentStatus,
+      `${order.totalEur.toFixed(2)} €`
+    ),
+    isTest: order.isTest,
     customerNote: order.deliveryNote,
     subtotal: order.subtotalEur,
     deliveryFee: order.deliveryFeeEur,

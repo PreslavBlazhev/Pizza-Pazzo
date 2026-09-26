@@ -9,6 +9,7 @@ import {
   type StatusUpdateExtras,
 } from "@/lib/orders";
 import { canTransition } from "@/lib/order-status";
+import { paymentBlocksStatusChange } from "@/lib/payments/status";
 import { sendCustomerOrderAcceptedEmail } from "@/lib/email/resend";
 import { isOrderStatus } from "@/types/order";
 import type { ActionResult } from "@/types/auth";
@@ -46,6 +47,20 @@ export async function updateOrderStatusAction(
 
   if (!canTransition(current, next)) {
     return { ok: false, error: "Недопустима смяна на статус." };
+  }
+
+  // The money gate. A card order the provider has not confirmed was never
+  // released to the kitchen and must not be accepted, prepared or delivered —
+  // only cancelled (e.g. an abandoned payment). Checked on the server so a
+  // stale screen or a crafted request cannot get round it.
+  const before = await getOrderById(id);
+  if (!before) return { ok: false, error: "Поръчката не беше намерена." };
+  if (paymentBlocksStatusChange(before, next)) {
+    return {
+      ok: false,
+      error:
+        "Поръчката чака потвърждение на плащането с карта и не може да бъде приета. Може само да бъде отказана.",
+    };
   }
 
   const extras: StatusUpdateExtras = {};
@@ -86,5 +101,15 @@ export async function updateOrderStatusAction(
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${id}`);
+
+  // Cancelling does NOT refund anything — nothing here talks to the bank. Say
+  // so, instead of letting anyone believe the money went back by itself.
+  if (next === "CANCELLED" && before.paymentMethod === "CARD_ONLINE" && before.paymentStatus === "PAID") {
+    return {
+      ok: true,
+      message:
+        "Поръчката е отказана. Тя е платена с карта — възстановете сумата ръчно през портала на банката.",
+    };
+  }
   return { ok: true, message: "Статусът е обновен." };
 }

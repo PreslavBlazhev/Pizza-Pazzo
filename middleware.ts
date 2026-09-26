@@ -34,6 +34,41 @@ import { getPathname } from "@/i18n/navigation";
 
 const intlMiddleware = createMiddleware(routing);
 
+/**
+ * Optional password in front of a STAGING deployment (APP_ENV=staging +
+ * STAGING_BASIC_AUTH="user:password"), so the test shop with the payment
+ * simulator is not open to the public. Never applies in production, and never
+ * to /api — the matcher below skips /api, so provider callbacks and the
+ * simulator's own callbacks always get through.
+ */
+function stagingAuthChallenge(request: NextRequest): NextResponse | null {
+  if ((process.env.APP_ENV ?? "").trim().toLowerCase() !== "staging") return null;
+  const expected = (process.env.STAGING_BASIC_AUTH ?? "").trim();
+  if (!expected || !expected.includes(":")) return null;
+
+  const header = request.headers.get("authorization") ?? "";
+  if (header.startsWith("Basic ")) {
+    try {
+      if (atob(header.slice(6)) === expected) return null;
+    } catch {
+      /* malformed header — challenge again */
+    }
+  }
+  return new NextResponse("Staging — authentication required", {
+    status: 401,
+    headers: { "WWW-Authenticate": 'Basic realm="Pizza Pazzo staging", charset="UTF-8"' },
+  });
+}
+
+/** Anything that is not production must never be indexed. */
+function markNonProduction(response: NextResponse): NextResponse {
+  const appEnv = (process.env.APP_ENV ?? "").trim().toLowerCase();
+  if (appEnv === "staging" || appEnv === "development") {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+  return response;
+}
+
 /** Routes that only require a session. Checkout is intentionally NOT here —
  *  guests may order (Order.userId is nullable); a signed-in user just gets
  *  their details prefilled. */
@@ -87,8 +122,12 @@ function localeRedirect(
 }
 
 export async function middleware(request: NextRequest) {
+  // ── 0. Staging password (no-op everywhere else) ──
+  const challenge = stagingAuthChallenge(request);
+  if (challenge) return challenge;
+
   // ── 1. Locale first ──
-  const intlResponse = intlMiddleware(request);
+  const intlResponse = markNonProduction(intlMiddleware(request));
 
   // A 3xx here is locale negotiation (e.g. an English visitor hitting `/menu`
   // being sent to `/en/menu`). Let it happen; auth is evaluated on the request

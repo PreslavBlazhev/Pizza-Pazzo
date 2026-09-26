@@ -16,11 +16,24 @@ import {
 } from "@/store/cart-store";
 import { formatEurPrice } from "@/lib/format-price";
 import { createOrder, type CheckoutResult } from "@/app/actions/checkout";
+import {
+  clearPendingPayment,
+  newCheckoutKey,
+  rememberPendingPayment,
+} from "@/components/checkout/pending-payment";
 
 interface Props {
   /** Prefilled contact details for a signed-in user. */
   defaults?: { name?: string; email?: string; phone?: string };
+  /**
+   * Whether the server currently offers card payment (configuration + kill
+   * switch). The server re-checks it on submit, so a stale page cannot
+   * sneak a card order through after the switch was turned off.
+   */
+  cardAvailable?: boolean;
 }
+
+type PaymentChoice = "cash_on_delivery" | "card_online";
 
 /**
  * Every field the customer MUST fill, in the order they appear on the page.
@@ -40,7 +53,7 @@ const REQUIRED_FIELDS = [
 type RequiredField = (typeof REQUIRED_FIELDS)[number];
 type FormValues = Record<RequiredField | "deliveryNote", string>;
 
-export function CheckoutForm({ defaults }: Props) {
+export function CheckoutForm({ defaults, cardAvailable = false }: Props) {
   const t = useTranslations("checkout");
   const tCart = useTranslations("cart");
   const tCommon = useTranslations("common");
@@ -73,6 +86,19 @@ export function CheckoutForm({ defaults }: Props) {
     deliveryAddress: "",
     deliveryNote: "",
   });
+
+  const [paymentMethod, setPaymentMethod] = useState<PaymentChoice>("cash_on_delivery");
+
+  /**
+   * One key per checkout. Sent with the order so that a double click, a
+   * retried request or a resubmission after a network hiccup gives back the
+   * order that already exists instead of creating a second one. A fresh key
+   * is drawn once an order has been placed.
+   */
+  const [checkoutKey, setCheckoutKey] = useState<string>("");
+  useEffect(() => {
+    setCheckoutKey(newCheckoutKey());
+  }, []);
 
   /** Fields this browser found empty on the last attempt to submit. */
   const [missing, setMissing] = useState<RequiredField[]>([]);
@@ -148,12 +174,22 @@ export function CheckoutForm({ defaults }: Props) {
     [items]
   );
 
-  // On success: clear the cart and go to the confirmation page.
+  // On success. Cash: the order is placed — clear the cart and confirm.
+  // Card: the order is saved but NOT paid, so the cart stays until the bank
+  // confirms the payment (a declined card must not cost the customer their
+  // cart); the payment review screen takes over.
   useEffect(() => {
-    if (state?.ok && state.orderNumber) {
-      clear();
-      router.push({ pathname: "/order-success", query: { n: String(state.orderNumber) } });
+    if (!state?.ok || !state.orderNumber) return;
+    setCheckoutKey(newCheckoutKey());
+    if (state.paymentMethod === "CARD_ONLINE" && state.accessToken) {
+      rememberPendingPayment({ token: state.accessToken, orderNumber: state.orderNumber });
+      router.push(`/checkout/pay/${state.accessToken}`);
+      return;
     }
+    clear();
+    // A cash order replaces any card payment the customer walked away from.
+    clearPendingPayment();
+    router.push({ pathname: "/order-success", query: { n: String(state.orderNumber) } });
   }, [state, clear, router]);
 
   if (!hydrated) {
@@ -209,6 +245,7 @@ export function CheckoutForm({ defaults }: Props) {
         {state?.error && <FormAlert tone="error">{state.error}</FormAlert>}
 
         <input type="hidden" name="items" value={itemsPayload} />
+        <input type="hidden" name="checkoutKey" value={checkoutKey} />
 
         <section className="space-y-3 rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
           <h2 className="text-lg font-semibold text-pizza-ink">{t("contactDetails")}</h2>
@@ -276,10 +313,32 @@ export function CheckoutForm({ defaults }: Props) {
           />
         </section>
 
-        <section className="rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
-          <h2 className="text-lg font-semibold text-pizza-ink">{t("payment")}</h2>
-          <p className="mt-2 text-sm text-pizza-muted">💵 {t("paymentCod")}</p>
-        </section>
+        <fieldset className="rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
+          <legend className="sr-only">{t("payment")}</legend>
+          <h2 aria-hidden className="text-lg font-semibold text-pizza-ink">
+            {t("payment")}
+          </h2>
+          <div className="mt-3 grid gap-3">
+            <PaymentOption
+              value="cash_on_delivery"
+              checked={paymentMethod === "cash_on_delivery"}
+              onSelect={setPaymentMethod}
+              icon="💵"
+              title={t("paymentCash")}
+              hint={t("paymentCashHint")}
+            />
+            {cardAvailable ? (
+              <PaymentOption
+                value="card_online"
+                checked={paymentMethod === "card_online"}
+                onSelect={setPaymentMethod}
+                icon="💳"
+                title={t("paymentCard")}
+                hint={t("paymentCardHint", { amount: formatEurPrice(totals.total) })}
+              />
+            ) : null}
+          </div>
+        </fieldset>
 
         {/* `createOrder` refuses a closed shop on its own — this only spares
             the customer filling the whole form to be told no at the end. */}
@@ -290,7 +349,11 @@ export function CheckoutForm({ defaults }: Props) {
           disabled={isPending || storeClosed}
           className="w-full rounded-full bg-brand px-6 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark disabled:opacity-60"
         >
-          {isPending ? t("placing") : t("submit")}
+          {isPending
+            ? t("placing")
+            : paymentMethod === "card_online"
+              ? t("submitCard")
+              : t("submit")}
         </button>
 
         <p className="text-center text-xs text-pizza-muted">
@@ -353,6 +416,52 @@ export function CheckoutForm({ defaults }: Props) {
         <CartSummary totals={totals} />
       </aside>
     </div>
+  );
+}
+
+/**
+ * One payment method as a large, tappable radio card. A real radio input
+ * carries the value (so the form works and screen readers announce the
+ * group); the card around it is the label.
+ */
+function PaymentOption({
+  value,
+  checked,
+  onSelect,
+  icon,
+  title,
+  hint,
+}: {
+  value: PaymentChoice;
+  checked: boolean;
+  onSelect: (value: PaymentChoice) => void;
+  icon: string;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <label
+      className={`flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition ${
+        checked
+          ? "border-pizza-green bg-pizza-green-light/40"
+          : "border-pizza-cream-dark hover:border-pizza-green/50"
+      }`}
+    >
+      <input
+        type="radio"
+        name="paymentMethod"
+        value={value}
+        checked={checked}
+        onChange={() => onSelect(value)}
+        className="mt-1 h-4 w-4 accent-pizza-green"
+      />
+      <span className="min-w-0">
+        <span className="block font-semibold text-pizza-ink">
+          <span aria-hidden>{icon}</span> {title}
+        </span>
+        <span className="mt-0.5 block text-sm text-pizza-muted">{hint}</span>
+      </span>
+    </label>
   );
 }
 

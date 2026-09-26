@@ -10,6 +10,7 @@ import { PrintOrderButtons } from "./PrintOrderButton";
 import { closureEndsShift, useShift } from "./ShiftProvider";
 import type { Order } from "@/types/order";
 import type { StoreStatus } from "@/types/store-status";
+import { collectInstructionBg } from "@/lib/payments/status";
 
 const QUICK_TIMES = [20, 30, 45, 60];
 
@@ -282,6 +283,11 @@ function LiveOrderCard({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-2xl font-extrabold text-pizza-ink sm:text-3xl">
           Поръчка #{order.orderNumber}
+          {order.isTest && (
+            <span className="ml-2 rounded-full bg-fuchsia-600 px-3 py-1 align-middle text-base font-bold text-white">
+              ТЕСТ — НЕ ПРИГОТВЯЙ
+            </span>
+          )}
         </h2>
         <p className="text-base text-neutral-500 sm:text-lg">
           {new Date(order.createdAt).toLocaleTimeString("bg-BG", {
@@ -337,8 +343,29 @@ function LiveOrderCard({
           </ul>
           <p className="mt-2 border-t pt-2 text-xl font-bold">
             Общо: {formatEurPrice(order.totalEur)}
-            <span className="ml-2 text-sm font-normal text-neutral-500">наложен платеж</span>
           </p>
+          {/* Whoever hands the food over must know whether to collect money.
+              A card order only ever reaches this board once it is PAID. */}
+          <p
+            className={`mt-1 rounded-lg px-2 py-1 text-base font-extrabold ${
+              order.paymentMethod === "CARD_ONLINE"
+                ? "bg-green-100 text-green-900"
+                : "bg-amber-100 text-amber-900"
+            }`}
+          >
+            {order.paymentMethod === "CARD_ONLINE" ? "💳 " : "💵 "}
+            {collectInstructionBg(
+              order.paymentMethod,
+              order.paymentStatus,
+              formatEurPrice(order.totalEur)
+            )}
+          </p>
+          {order.paymentAlert === "LATE_CONFIRMATION" && (
+            <p className="mt-1 rounded-lg bg-red-100 px-2 py-1 text-sm font-bold text-red-800">
+              ⚠ Плащането е потвърдено със закъснение — проверете с клиента дали няма и втора
+              поръчка.
+            </p>
+          )}
         </div>
       </div>
 

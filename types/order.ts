@@ -19,8 +19,34 @@ export const ORDER_STATUSES = [
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const PAYMENT_METHODS = ["CASH_ON_DELIVERY"] as const;
+/**
+ * How the customer pays. CASH_ON_DELIVERY is the original flow; CARD_ONLINE
+ * is paid on the payment provider's hosted page before the kitchen sees it.
+ */
+export const PAYMENT_METHODS = ["CASH_ON_DELIVERY", "CARD_ONLINE"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export function isPaymentMethod(value: unknown): value is PaymentMethod {
+  return typeof value === "string" && (PAYMENT_METHODS as readonly string[]).includes(value);
+}
+
+/**
+ * Where the MONEY is — kept apart from `OrderStatus` (where the FOOD is).
+ * See lib/payments/status.ts for labels and the rules built on it.
+ */
+export const PAYMENT_STATUSES = [
+  "CASH_DUE",
+  "AWAITING_PAYMENT",
+  "PAID",
+  "FAILED",
+  "CANCELLED",
+  "EXPIRED",
+] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+export function isPaymentStatus(value: unknown): value is PaymentStatus {
+  return typeof value === "string" && (PAYMENT_STATUSES as readonly string[]).includes(value);
+}
 
 export const DELIVERY_METHODS = ["DELIVERY"] as const;
 export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
@@ -80,6 +106,18 @@ export interface Order {
   deliveryNote: string | null;
 
   paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  /** When the provider confirmed the card payment; null for cash/unpaid. */
+  paidAt: string | null;
+  /**
+   * When the kitchen got the order. Null for a card order whose payment is
+   * not confirmed — such an order must never be treated as one to cook.
+   */
+  releasedToKitchenAt: string | null;
+  /** Paid through the payment simulator or a bank sandbox — never real. */
+  isTest: boolean;
+  /** A money problem a human must look at (see lib/payments/status.ts). */
+  paymentAlert: string | null;
   deliveryMethod: DeliveryMethod;
   status: OrderStatus;
 

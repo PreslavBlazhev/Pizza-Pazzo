@@ -9,6 +9,7 @@ import { getOrdersForUser } from "@/lib/orders";
 import { formatEurPrice } from "@/lib/format-price";
 import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatDateTime } from "@/lib/utils";
+import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/payments/status";
 import type { Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -88,6 +89,12 @@ export default async function ProfileOrdersPage({ params }: PageProps) {
                         {t("orderTitle", { number: order.orderNumber })}
                       </h2>
                       <OrderStatusBadge status={order.status} locale={locale} />
+                      <span className="rounded-full bg-pizza-cream px-2.5 py-0.5 text-xs font-medium text-pizza-muted">
+                        {t("orderPaymentLabel")}:{" "}
+                        {order.paymentMethod === "CARD_ONLINE"
+                          ? PAYMENT_STATUS_LABELS[locale][order.paymentStatus]
+                          : PAYMENT_METHOD_LABELS[locale].CASH_ON_DELIVERY}
+                      </span>
                     </div>
                     <p className="text-sm text-pizza-muted">
                       {formatDateTime(order.createdAt, dateLocale)}

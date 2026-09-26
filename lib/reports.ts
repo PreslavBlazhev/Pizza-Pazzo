@@ -10,7 +10,16 @@
  *                delivered order was accepted first)
  *   cancelled  → cancelledAt != null
  *   revenue    → delivered orders only; PENDING / in-progress / CANCELLED
- *                never count, so the figure can never be inflated
+ *                never count, so the figure can never be inflated. It is
+ *                split into cash (collected by the driver) and card (paid
+ *                online and confirmed by the provider).
+ *   paid online → card orders the provider confirmed as PAID, whatever the
+ *                kitchen status — the money that actually arrived online
+ *   refund due → card orders PAID and then CANCELLED. Refunds are made by
+ *                hand in the bank portal; nothing here ever marks one done.
+ *
+ * Test orders (simulator / bank sandbox) are excluded everywhere, and so are
+ * card orders that were never paid — they never reached the kitchen.
  *
  * The period always filters on `createdAt` (the order belongs to the day it was
  * placed) using the half-open range built in lib/report-period.ts.
@@ -46,6 +55,16 @@ export interface ReportSummary {
   revenueEur: number;
   foodRevenueEur: number;
   deliveryRevenueEur: number;
+  /** Delivered revenue collected in cash by the driver. */
+  cashRevenueEur: number;
+  /** Delivered revenue paid online by card. */
+  cardRevenueEur: number;
+  /** All provider-confirmed card payments in the period (any kitchen status). */
+  paidOnlineEur: number;
+  paidOnlineCount: number;
+  /** Card payments for orders later cancelled — to refund by hand. */
+  refundDueEur: number;
+  refundDueCount: number;
 }
 
 export interface ReportPagination {
@@ -84,23 +103,50 @@ export async function getAdminReport({
   pageSize = REPORT_PAGE_SIZE,
 }: GetAdminReportInput): Promise<AdminReport> {
   const createdAt = { gte: range.from, lt: range.toExclusive };
-  const delivered = { createdAt, completedAt: { not: null } };
+  // Real orders the kitchen actually got: no simulator/sandbox tests, no
+  // card orders that never paid.
+  const real = { createdAt, isTest: false, releasedToKitchenAt: { not: null } };
+  const delivered = { ...real, completedAt: { not: null } };
+  const paidOnline = { createdAt, isTest: false, paymentMethod: "CARD_ONLINE", paymentStatus: "PAID" };
 
-  const [deliveredCount, acceptedCount, cancelledCount, revenue, totalItems] =
-    await Promise.all([
-      db.order.count({ where: delivered }),
-      db.order.count({ where: { createdAt, acceptedAt: { not: null } } }),
-      db.order.count({ where: { createdAt, cancelledAt: { not: null } } }),
-      db.order.aggregate({
-        where: delivered,
-        _sum: {
-          totalEur: true,
-          subtotalEur: true,
-          deliveryFeeEur: true,
-        },
-      }),
-      db.order.count({ where: { createdAt } }),
-    ]);
+  const [
+    deliveredCount,
+    acceptedCount,
+    cancelledCount,
+    revenue,
+    cashRevenue,
+    cardRevenue,
+    paidOnlineSum,
+    refundDue,
+    totalItems,
+  ] = await Promise.all([
+    db.order.count({ where: delivered }),
+    db.order.count({ where: { ...real, acceptedAt: { not: null } } }),
+    db.order.count({ where: { ...real, cancelledAt: { not: null } } }),
+    db.order.aggregate({
+      where: delivered,
+      _sum: {
+        totalEur: true,
+        subtotalEur: true,
+        deliveryFeeEur: true,
+      },
+    }),
+    db.order.aggregate({
+      where: { ...delivered, paymentMethod: "CASH_ON_DELIVERY" },
+      _sum: { totalEur: true },
+    }),
+    db.order.aggregate({
+      where: { ...delivered, paymentMethod: "CARD_ONLINE", paymentStatus: "PAID" },
+      _sum: { totalEur: true },
+    }),
+    db.order.aggregate({ where: paidOnline, _sum: { totalEur: true }, _count: true }),
+    db.order.aggregate({
+      where: { ...paidOnline, status: "CANCELLED" },
+      _sum: { totalEur: true },
+      _count: true,
+    }),
+    db.order.count({ where: { createdAt } }),
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const currentPage = Math.min(Math.max(1, page), totalPages);
@@ -123,6 +169,12 @@ export async function getAdminReport({
       revenueEur: money(revenue._sum.totalEur),
       foodRevenueEur: money(revenue._sum.subtotalEur),
       deliveryRevenueEur: money(revenue._sum.deliveryFeeEur),
+      cashRevenueEur: money(cashRevenue._sum.totalEur),
+      cardRevenueEur: money(cardRevenue._sum.totalEur),
+      paidOnlineEur: money(paidOnlineSum._sum.totalEur),
+      paidOnlineCount: paidOnlineSum._count,
+      refundDueEur: money(refundDue._sum.totalEur),
+      refundDueCount: refundDue._count,
     },
     orders: rows.map(mapOrderRow),
     pagination: {

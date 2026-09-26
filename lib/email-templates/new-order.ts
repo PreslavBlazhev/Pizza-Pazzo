@@ -26,6 +26,14 @@ export interface NewOrderEmailData {
   deliveryNote?: string | null;
   totalEur: number;
   items: NewOrderEmailItem[];
+  /**
+   * How the money is handled, e.g. "ПЛАТЕНО ОНЛАЙН С КАРТА — НЕ СЪБИРАЙ ПАРИ"
+   * (see collectInstructionBg in lib/payments/status.ts). Optional so a
+   * caller that predates card payments still reads as cash on delivery.
+   */
+  paymentLine?: string;
+  /** Simulator / sandbox order: flagged in the subject, never real food. */
+  isTest?: boolean;
 }
 
 const eur = (n: number) => `${n.toFixed(2)} €`;
@@ -35,7 +43,9 @@ export function newOrderEmail(data: NewOrderEmailData): {
   html: string;
   text: string;
 } {
-  const subject = `Нова поръчка #${data.orderNumber} — Pizza Pazzo`;
+  const testPrefix = data.isTest ? "[ТЕСТ — НЕ ПРИГОТВЯЙ] " : "";
+  const subject = `${testPrefix}Нова поръчка #${data.orderNumber} — Pizza Pazzo`;
+  const paymentLine = data.paymentLine ?? "В брой при доставка (наложен платеж)";
 
   // Extras go on their own indented lines under the dish; "/ всяка" marks that
   // they apply to every unit of a multi-quantity line (staff read this).
@@ -62,7 +72,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
     ...itemLines,
     ``,
     `Общо: ${eur(data.totalEur)}`,
-    `Плащане: Наложен платеж`,
+    `Плащане: ${paymentLine}`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -93,7 +103,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
     .join("");
 
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#222;">
-  <h2 style="color:#c0392b;">Нова поръчка #${data.orderNumber}</h2>
+  <h2 style="color:#c0392b;">${testPrefix}Нова поръчка #${data.orderNumber}</h2>
   <p style="margin:4px 0;"><strong>Клиент:</strong> ${data.customerName}</p>
   <p style="margin:4px 0;"><strong>Телефон:</strong> ${data.customerPhone}</p>
   <p style="margin:4px 0;"><strong>Имейл:</strong> ${data.customerEmail || "— (не е посочен)"}</p>
@@ -101,7 +111,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
   ${data.deliveryNote ? `<p style="margin:4px 0;"><strong>Бележка:</strong> ${data.deliveryNote}</p>` : ""}
   <table style="width:100%;border-collapse:collapse;margin:16px 0;">${itemRows}</table>
   <p style="font-size:18px;"><strong>Общо: ${eur(data.totalEur)}</strong></p>
-  <p style="color:#888;">Плащане: Наложен платеж</p>
+  <p style="font-weight:bold;">Плащане: ${paymentLine}</p>
 </div>`;
 
   return { subject, html, text };

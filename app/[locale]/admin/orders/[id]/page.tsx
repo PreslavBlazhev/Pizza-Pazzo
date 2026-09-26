@@ -4,6 +4,7 @@ import { OrderDetails } from "@/components/admin/OrderDetails";
 import { Button } from "@/components/ui/Button";
 import { getOrderById } from "@/lib/orders";
 import { getPrintTemplates } from "@/lib/print-templates";
+import { getPaymentAttemptsForOrder } from "@/lib/payments/admin";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -11,7 +12,11 @@ interface PageProps {
 
 export default async function AdminOrderDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const [order, printTemplates] = await Promise.all([getOrderById(id), getPrintTemplates()]);
+  const [order, printTemplates, paymentAttempts] = await Promise.all([
+    getOrderById(id),
+    getPrintTemplates(),
+    getPaymentAttemptsForOrder(id),
+  ]);
   if (!order) notFound();
 
   return (
@@ -24,7 +29,11 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
           <Button variant="outline">Печат на бележка</Button>
         </Link>
       </div>
-      <OrderDetails order={order} printTemplates={printTemplates} />
+      <OrderDetails
+        order={order}
+        printTemplates={printTemplates}
+        paymentAttempts={paymentAttempts}
+      />
     </div>
   );
 }

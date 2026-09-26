@@ -17,9 +17,12 @@ const QUICK_TIMES = [20, 30, 45, 60];
 export function OrderStatusControl({
   orderId,
   status,
+  cancelOnly = false,
 }: {
   orderId: string;
   status: OrderStatus;
+  /** Unconfirmed card payment: the only thing staff may do is cancel. */
+  cancelOnly?: boolean;
 }) {
   const [state, formAction, isPending] = useActionState<ActionResult | null, FormData>(
     updateOrderStatusAction,
@@ -28,7 +31,9 @@ export function OrderStatusControl({
   const [quickTime, setQuickTime] = useState(30);
   const [customTime, setCustomTime] = useState("");
 
-  const nextStatuses = ORDER_STATUS_FLOW[status];
+  const nextStatuses = cancelOnly
+    ? ORDER_STATUS_FLOW[status].filter((s) => s === "CANCELLED")
+    : ORDER_STATUS_FLOW[status];
   const canAccept = nextStatuses.includes("ACCEPTED");
   const canCancel = nextStatuses.includes("CANCELLED");
   const plainStatuses = nextStatuses.filter((s) => s !== "ACCEPTED" && s !== "CANCELLED");

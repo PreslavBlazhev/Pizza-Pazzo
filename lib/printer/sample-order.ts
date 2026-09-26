@@ -23,6 +23,11 @@ export const SAMPLE_PRINT_ORDER: Order = {
   deliveryNote: "Звънете при пристигане, звънецът не работи.",
 
   paymentMethod: "CASH_ON_DELIVERY",
+  paymentStatus: "CASH_DUE",
+  paidAt: null,
+  releasedToKitchenAt: "2026-08-03T12:00:00.000Z",
+  isTest: false,
+  paymentAlert: null,
   deliveryMethod: "DELIVERY",
   status: "ACCEPTED",
 

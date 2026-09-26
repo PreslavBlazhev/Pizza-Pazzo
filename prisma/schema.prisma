@@ -12,7 +12,8 @@
 // canonical value lists live in TypeScript:
 //   UserRole        → types/user.ts  (CUSTOMER | STAFF | ADMIN | SUPER_ADMIN)
 //   OrderStatus     → types/order.ts + lib/order-status.ts
-//   PaymentMethod   → types/order.ts (CASH_ON_DELIVERY)
+//   PaymentMethod   → types/order.ts (CASH_ON_DELIVERY | CARD_ONLINE)
+//   PaymentStatus   → types/order.ts + lib/payments/status.ts
 //   DeliveryMethod  → types/order.ts (DELIVERY)
 
 generator client {
@@ -206,8 +207,16 @@ model Order {
   deliveryCity          String      @default("Плевен")
   deliveryNote          String?
 
-  // PaymentMethod enum (SQLite = TEXT): CASH_ON_DELIVERY
+  // PaymentMethod enum (SQLite = TEXT): CASH_ON_DELIVERY | CARD_ONLINE
   paymentMethod         String      @default("CASH_ON_DELIVERY")
+  // PaymentStatus enum (SQLite = TEXT) — deliberately SEPARATE from `status`
+  // (the kitchen's view of the order). See lib/payments/status.ts:
+  //   CASH_DUE          cash order, the driver collects the money
+  //   AWAITING_PAYMENT  card order, no confirmed payment yet
+  //   PAID              the provider confirmed the payment server-to-server
+  //   FAILED | CANCELLED | EXPIRED   the last card attempt did not go through
+  paymentStatus         String      @default("CASH_DUE")
+  paidAt                DateTime?
   // DeliveryMethod enum (SQLite = TEXT): DELIVERY
   deliveryMethod        String      @default("DELIVERY")
 
@@ -218,6 +227,31 @@ model Order {
   subtotalEur           Decimal
   deliveryFeeEur        Decimal     @default(0)
   totalEur              Decimal
+
+  /// When the order became visible to the kitchen (live board, dashboard
+  /// counters, the restaurant e-mail). A cash order is released at checkout;
+  /// a card order only once its payment is confirmed. Null = the kitchen has
+  /// never seen it and must not.
+  releasedToKitchenAt   DateTime?
+  /// Claimed atomically (updateMany … where null) right before the "new
+  /// order" e-mail goes out, so a retried callback can never send it twice.
+  notificationSentAt    DateTime?
+
+  /// Unguessable token that lets whoever placed the order (a guest has no
+  /// account) open its payment page and result. Never shown to staff.
+  accessToken           String?     @unique
+  /// Client-generated key of one checkout attempt: a double click or a
+  /// repeated request returns the order already created instead of a second.
+  checkoutKey           String?     @unique
+  /// Placed through the payment SIMULATOR — no real money, never real food.
+  isTest                Boolean     @default(false)
+  /// Short lock taken while a payment session is being created, so two
+  /// concurrent "Pay" clicks cannot open two sessions at the provider.
+  paymentLockedUntil    DateTime?
+  /// Something about the money a human has to look at (see PAYMENT_ALERTS in
+  /// lib/payments/status.ts) — e.g. a payment confirmed only after the
+  /// customer gave up, or a second successful attempt on the same order.
+  paymentAlert          String?
 
   estimatedTimeMinutes  Int?
   adminNote             String?
@@ -237,6 +271,7 @@ model Order {
   anonymizePending      Boolean     @default(false)
 
   items                 OrderItem[]
+  paymentAttempts       PaymentAttempt[]
 
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
@@ -244,6 +279,82 @@ model Order {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([paymentStatus])
+  @@index([releasedToKitchenAt])
+}
+
+/// One attempt to pay an order online. An order may have several (the first
+/// was declined, the customer tried again) — never more than one PAID in a
+/// correct world, and if a provider ever reports a second one it is kept and
+/// flagged instead of hidden.
+///
+/// Holds no card data of any kind: the card is typed only on the provider's
+/// hosted page. `providerResponse` is a size-capped diagnostic snapshot from
+/// which the adapter has already stripped every card field.
+model PaymentAttempt {
+  id                 String    @id @default(cuid())
+  orderId            String
+  order              Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// Our unique reference, sent to the provider as its order number.
+  reference          String    @unique
+  /// "SIMULATOR" or the bank adapter's id.
+  provider           String
+  /// "simulator" | "sandbox" | "production" — frozen at creation.
+  environment        String
+  /// The provider's own id for the session/transaction.
+  providerPaymentId  String?
+  /// Hosted payment page the customer is sent to.
+  redirectUrl        String?
+
+  /// Amount in the currency's smallest unit (euro cents), copied from the
+  /// stored order total; the provider must confirm exactly this.
+  amountMinor        Int
+  /// ISO 4217 alphabetic code, e.g. "EUR".
+  currency           String
+
+  /// Internal status (ATTEMPT_STATUSES in lib/payments/status.ts):
+  /// CREATED | REDIRECTED | PENDING | PAID | FAILED | CANCELLED | EXPIRED | ERROR
+  status             String    @default("CREATED")
+  /// The provider's raw status code, verbatim — for diagnosis only.
+  providerStatus     String?
+  providerResponse   String?
+  failureReason      String?
+  /// Locale the customer paid in — sends them back to the right pages.
+  locale             String    @default("bg")
+
+  lastCheckedAt      DateTime?
+  finalizedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([orderId])
+  @@index([providerPaymentId])
+  @@index([status])
+}
+
+/// The payment SIMULATOR's own ledger. It plays the bank's database, so the
+/// rest of the system talks to it exactly as it will talk to a real provider:
+/// create a session, send the customer to a hosted page, ask for the status.
+///
+/// Only ever written when PAYMENT_PROVIDER=simulator, which lib/payments/config
+/// refuses unless APP_ENV is development or staging. Empty in production.
+model PaymentSimulatorSession {
+  id           String    @id @default(cuid())
+  reference    String    @unique
+  amountMinor  Int
+  currency     String
+  description  String    @default("")
+  returnUrl    String
+  callbackUrl  String?
+  /// OPEN | PAID | DECLINED | CANCELLED | PENDING
+  state        String    @default("OPEN")
+  /// "Late confirmation" scenario: a PENDING session turns into `resolveTo`
+  /// by itself once this moment has passed.
+  resolveAt    DateTime?
+  resolveTo    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 // ── Menu (DB-backed since 2026-07-18, see docs/admin-menu-db-plan.md) ───────

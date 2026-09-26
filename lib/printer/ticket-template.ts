@@ -1,5 +1,6 @@
 import type { Order } from "@/types/order";
 import { formatEurPrice } from "@/lib/format-price";
+import { collectInstructionBg } from "@/lib/payments/status";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import {
   type PrintAlign,
@@ -89,8 +90,17 @@ function deliveryLabel(method: string): string {
   return method === "DELIVERY" ? "ДОСТАВКА" : "ВЗЕМАНЕ ОТ МЯСТО";
 }
 
-function paymentLabel(method: string): string {
-  return method === "CASH_ON_DELIVERY" ? "В брой (наложен платеж)" : method;
+/**
+ * What the person handing over the food must do about money. For a card order
+ * that reads "paid — do not collect", which is the whole reason the payment
+ * status is printed at all.
+ */
+function paymentLabel(order: Pick<Order, "paymentMethod" | "paymentStatus" | "totalEur">): string {
+  return collectInstructionBg(
+    order.paymentMethod,
+    order.paymentStatus,
+    formatEurPrice(order.totalEur)
+  );
 }
 
 export interface BuildTicketOptions {
@@ -208,7 +218,8 @@ export function buildTicket(
   divider();
 
   // ── Money ──
-  push("payment", `Плащане: ${paymentLabel(order.paymentMethod)}`);
+  if (order.isTest) push("payment", "*** ТЕСТОВА ПОРЪЧКА — НЕ ПРИГОТВЯЙ ***");
+  push("payment", `Плащане: ${paymentLabel(order)}`);
   push("totals", "Междинна сума", { right: formatEurPrice(order.subtotalEur) });
   push("totals", "Доставка", { right: formatEurPrice(order.deliveryFeeEur) });
   push("grandTotal", "ОБЩО", { right: formatEurPrice(order.totalEur) });

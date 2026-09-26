@@ -36,6 +36,11 @@ export function customerOrderAcceptedEmail(
 } {
   const subject = `Поръчката ви е приета — Pizza Pazzo #${order.orderNumber}`;
 
+  // A card order only ever reaches "accepted" after the bank confirmed it, so
+  // "платено" here is a fact, not a hope (see updateOrderStatusAction).
+  const paidByCard = order.paymentMethod === "CARD_ONLINE" && order.paymentStatus === "PAID";
+  const paymentNote = paidByCard ? "платено онлайн с карта" : "в брой при доставка";
+
   // The customer email is Bulgarian (the order stores no locale), so extras use
   // their BG snapshot names; "за всяка бройка" clarifies multi-quantity lines.
   const perItemHint = (quantity: number) =>
@@ -65,7 +70,7 @@ export function customerOrderAcceptedEmail(
     ``,
     `Междинна сума: ${eur(order.subtotalEur)}`,
     `Доставка: ${eur(order.deliveryFeeEur)}`,
-    `Обща сума: ${eur(order.totalEur)} (наложен платеж)`,
+    `Обща сума: ${eur(order.totalEur)} (${paymentNote})`,
     ``,
     `Адрес за доставка: ${order.deliveryAddress}, ${order.deliveryCity}`,
     ...(order.deliveryNote ? [`Бележка: ${order.deliveryNote}`] : []),
@@ -114,7 +119,7 @@ ${htmlRows}
       <td style="padding:6px 8px;text-align:right;white-space:nowrap;">${eur(order.deliveryFeeEur)}</td>
     </tr>
     <tr>
-      <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;">Обща сума (наложен платеж)</td>
+      <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;">Обща сума (${paymentNote})</td>
       <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;text-align:right;white-space:nowrap;">${eur(order.totalEur)}</td>
     </tr>
   </table>
