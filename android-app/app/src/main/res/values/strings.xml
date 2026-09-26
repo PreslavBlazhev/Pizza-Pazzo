@@ -9,6 +9,13 @@
     <string name="retry">Опитай отново</string>
     <string name="blocked_external_url">Тази връзка не може да бъде отворена.</string>
 
+    <!-- Password of the protected STAGING site (HTTP Basic auth) -->
+    <string name="auth_title">Вход в тестовата среда</string>
+    <string name="auth_user">Потребител</string>
+    <string name="auth_password">Парола</string>
+    <string name="auth_ok">Вход</string>
+    <string name="auth_cancel">Отказ</string>
+
     <!-- Settings screen -->
     <string name="settings_title">Настройки на принтера</string>
     <string name="settings_printer_section">Bluetooth принтер</string>

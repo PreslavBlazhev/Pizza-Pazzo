@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The staging build shows up on the phone as a separate, obvious app. -->
+<resources>
+    <string name="app_name">Pizza Pazzo ТЕСТ</string>
+</resources>

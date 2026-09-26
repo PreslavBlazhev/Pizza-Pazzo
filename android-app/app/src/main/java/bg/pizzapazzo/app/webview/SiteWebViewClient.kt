@@ -3,6 +3,7 @@ package bg.pizzapazzo.app.webview
 import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
+import android.webkit.HttpAuthHandler
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -35,6 +36,11 @@ class SiteWebViewClient(
     private val onLoadError: (description: String) -> Unit,
     /** The WebView's renderer died. Return true once it has been dealt with. */
     private val onRendererGone: () -> Boolean,
+    /**
+     * The site asked for a password (HTTP Basic auth) — only the protected
+     * STAGING copy does that. Called for our own hosts only.
+     */
+    private val onHttpAuthRequest: (host: String, handler: HttpAuthHandler) -> Unit,
     /**
      * Fired whenever the committed URL changes — including the pushState
      * navigations a Next.js app does without a page load. The shell uses it to
@@ -169,6 +175,25 @@ class SiteWebViewClient(
      * terminal that carries a live admin session would hand that session to
      * whoever is running the man-in-the-middle.
      */
+    /**
+     * A password prompt from the web server. Answered only for our own site
+     * (the password-protected staging copy); any other host — a bank page, an
+     * ad, anything — gets no dialog and is refused, so the app can never be
+     * used to phish a password under a foreign site's name.
+     */
+    override fun onReceivedHttpAuthRequest(
+        view: WebView,
+        handler: HttpAuthHandler,
+        host: String?,
+        realm: String?,
+    ) {
+        if (host != null && AllowedOrigins.isAllowedUrl("https://$host/")) {
+            onHttpAuthRequest(host, handler)
+        } else {
+            handler.cancel()
+        }
+    }
+
     override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
         handler.cancel()
         onLoadError("SSL: ${error.primaryError}")
