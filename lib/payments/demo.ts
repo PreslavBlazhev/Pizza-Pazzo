@@ -8,6 +8,8 @@
  * database and flipped from Admin → Settings:
  *
  *   OFF       no demo (card appears only if a real provider is configured)
+ * Live site: EVERYONE since 2026-09-27 (migration 20260927140000).
+ *
  *   STAFF     the demo card option is shown only to signed-in STAFF / ADMIN /
  *             SUPER_ADMIN — customers never see it
  *   EVERYONE  every visitor sees it (orders paid this way are still TEST

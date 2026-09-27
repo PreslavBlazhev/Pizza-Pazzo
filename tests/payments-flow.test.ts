@@ -178,6 +178,8 @@ test("card order starts unpaid, test-flagged and hidden from the kitchen, no e-m
 
 test("card payment is refused when the switch is off — the order is not even created", async () => {
   process.env.CARD_PAYMENTS_ENABLED = "false";
+  // The live-site demo is a separate way in (tested below) — off here.
+  await setDemo("OFF");
   try {
     const before = await db.order.count();
     const r = await placeOrder(
@@ -188,6 +190,7 @@ test("card payment is refused when the switch is off — the order is not even c
     assert.equal(await db.order.count(), before);
   } finally {
     process.env.CARD_PAYMENTS_ENABLED = "true";
+    await setDemo("STAFF");
   }
 });
 
@@ -673,6 +676,33 @@ test("demo: an admin pays with the test card on production — PAID, test order,
     await setDemo("OFF");
     const start = await startCardPayment({ accessToken: (other as { accessToken: string }).accessToken, locale: "bg" });
     assert.deepEqual(start, { ok: false, code: "DISABLED" });
+  });
+  await setDemo("STAFF");
+});
+
+test("demo EVERYONE: a guest with no account pays with the test card on production", async () => {
+  await asProduction(async () => {
+    await setDemo("EVERYONE"); // what the live site runs on since 2026-09-27
+    const setup = await resolveCheckoutPayment(null);
+    assert.ok(setup.available && setup.demo, "the guest sees the demo card option");
+
+    // No session at all: no userId, no role.
+    const placed = await placeOrder(
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null },
+      deps
+    );
+    assert.ok(placed.ok && placed.accessToken, "the guest's card order is accepted");
+    const r = placed as Extract<typeof placed, { ok: true }>;
+    assert.equal((await orderRow(r.orderNumber)).isTest, true);
+
+    // The access token alone opens the payment — no account needed.
+    const a = await payWith(r.accessToken!, "paid");
+    assert.equal(a.amountMinor, STANDARD_TOTAL_MINOR, "free delivery: the items are the whole charge");
+    await quiet(() => syncAttempt(a.id));
+    const row = await orderRow(r.orderNumber);
+    assert.equal(row.paymentStatus, "PAID");
+    assert.equal(row.userId, null);
+    assert.ok(row.releasedToKitchenAt);
   });
   await setDemo("STAFF");
 });
