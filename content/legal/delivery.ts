@@ -3,14 +3,12 @@ import type { LegalDoc } from "./types";
 /**
  * Условия за доставка / Delivery Terms — DRAFT for client review.
  *
- * ⚠️ The delivery zones, fee and minimum order are STILL UNCONFIRMED by the
- * client (docs/client-delivery-questions.md). The text deliberately points to
- * the cart as the source of the current fee instead of hardcoding numbers, so
- * this page stays true when the real values arrive.
+ * Delivery is FREE (owner decision 2026-09-27). The delivery zones and the
+ * minimum order are still unconfirmed (docs/client-delivery-questions.md).
  */
 export const deliveryDoc: LegalDoc = {
   slug: "delivery",
-  updated: "18.07.2026",
+  updated: "27.09.2026",
   intro: [
     {
       p: {
@@ -21,12 +19,12 @@ export const deliveryDoc: LegalDoc = {
   ],
   sections: [
     {
-      heading: { bg: "1. Райони и такса за доставка", en: "1. Delivery areas and fee" },
+      heading: { bg: "1. Райони и цена на доставката", en: "1. Delivery areas and price" },
       blocks: [
         {
           p: {
-            bg: "Доставяме в рамките на обявените райони на града. Актуалната такса за доставка се показва в количката преди финализиране на поръчката. Ако адресът ви е извън районите ни, ще се свържем с вас, преди да приемем или откажем поръчката.",
-            en: "We deliver within the announced areas of the city. The current delivery fee is shown in the cart before you finalize your order. If your address is outside our areas, we will contact you before accepting or declining the order.",
+            bg: "Доставяме в рамките на обявените райони на града. Доставката е безплатна — плащате само поръчаните продукти. Ако адресът ви е извън районите ни, ще се свържем с вас, преди да приемем или откажем поръчката.",
+            en: "We deliver within the announced areas of the city. Delivery is free — you pay only for the items you order. If your address is outside our areas, we will contact you before accepting or declining the order.",
           },
         },
       ],
@@ -58,8 +56,8 @@ export const deliveryDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Моля, посочете точен адрес (вход, етаж, апартамент) и телефон, на който отговаряте. Ако куриерът не успее да се свърже с вас на адреса и по телефона в разумен срок, поръчката се счита за неуспешно доставена по вина на клиента; при повторна заявка може да бъде начислена нова такса за доставка.",
-            en: "Please provide an exact address (entrance, floor, apartment) and a phone number you answer. If the courier cannot reach you at the address or by phone within a reasonable time, the delivery is considered failed due to the customer; a repeated delivery may incur a new delivery fee.",
+            bg: "Моля, посочете точен адрес (вход, етаж, апартамент) и телефон, на който отговаряте. Ако куриерът не успее да се свърже с вас на адреса и по телефона в разумен срок, поръчката се счита за неуспешно доставена по вина на клиента.",
+            en: "Please provide an exact address (entrance, floor, apartment) and a phone number you answer. If the courier cannot reach you at the address or by phone within a reasonable time, the delivery is considered failed due to the customer.",
           },
         },
         {

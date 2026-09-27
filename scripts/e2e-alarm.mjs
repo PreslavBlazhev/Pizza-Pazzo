@@ -248,7 +248,6 @@ try {
       deliveryAddress: "ул. Тестова 1",
       status: "PENDING",
       subtotalEur: 10,
-      deliveryFeeEur: 0,
       totalEur: 10,
       items: {
         create: [

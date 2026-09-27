@@ -7,7 +7,7 @@ import type { LegalDoc } from "./types";
  */
 export const termsDoc: LegalDoc = {
   slug: "terms",
-  updated: "18.07.2026",
+  updated: "27.09.2026",
   showCompanyBox: true,
   intro: [
     {
@@ -34,8 +34,8 @@ export const termsDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Всички цени са в евро (EUR), с включен ДДС. Валидна е цената, показана в момента на подаване на поръчката. Таксата за доставка (ако има такава) се показва отделно в количката преди финализиране.",
-            en: "All prices are shown in euro (EUR), VAT included. The price shown at the moment the order is placed applies. Any delivery fee is shown separately in the cart before you finalize.",
+            bg: "Всички цени са в евро (EUR), с включен ДДС. Валидна е цената, показана в момента на подаване на поръчката. Доставката е безплатна.",
+            en: "All prices are shown in euro (EUR), VAT included. The price shown at the moment the order is placed applies. Delivery is free.",
           },
         },
       ],
@@ -73,8 +73,8 @@ export const termsDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Условията за доставка (райони, такси, срокове, получаване) са описани в отделния документ „Условия за доставка“, който е неразделна част от настоящите Общи условия.",
-            en: "Delivery conditions (areas, fees, times, handover) are described in the separate “Delivery Terms” document, which forms an integral part of these Terms.",
+            bg: "Условията за доставка (райони, срокове, получаване) са описани в отделния документ „Условия за доставка“, който е неразделна част от настоящите Общи условия.",
+            en: "Delivery conditions (areas, times, handover) are described in the separate “Delivery Terms” document, which forms an integral part of these Terms.",
           },
         },
       ],

@@ -6,7 +6,6 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { CartExtraSelection, CartItem, CartTotals } from "@/types/cart";
 import type { Product, ProductVariant } from "@/types/product";
 import { lineIdFor } from "@/lib/extras-rules";
-import { DELIVERY_FEE } from "@/lib/constants";
 
 interface CartState {
   items: CartItem[];
@@ -191,14 +190,9 @@ export const useCartStore = create<CartState>()(
         const itemsCount = items.reduce((n, i) => n + i.quantity, 0);
         // Line totals include the extras PREVIEW prices (display snapshots);
         // the authoritative totals are recomputed server-side at checkout.
-        const subtotal = items.reduce((s, i) => round2(s + linePreviewTotalEur(i)), 0);
-        const deliveryFee = itemsCount > 0 ? DELIVERY_FEE : 0;
-        return {
-          itemsCount,
-          subtotal,
-          deliveryFee,
-          total: subtotal + deliveryFee,
-        };
+        // Delivery is free, so the items are the whole bill.
+        const total = items.reduce((s, i) => round2(s + linePreviewTotalEur(i)), 0);
+        return { itemsCount, total };
       },
     }),
     {

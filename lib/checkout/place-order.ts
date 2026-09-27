@@ -18,7 +18,6 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { checkoutSchema } from "@/lib/validators/checkout";
-import { DELIVERY_FEE } from "@/lib/constants";
 import { resolveOrderItemExtras, type ExtraSourceProduct } from "@/lib/extras-resolve";
 import { EXTRAS_LIMITS, type OrderItemExtra } from "@/lib/extras-rules";
 import { resolveCheckoutPayment } from "@/lib/payments/providers";
@@ -282,8 +281,8 @@ export async function placeOrder(
     });
   }
 
-  const deliveryFeeEur = DELIVERY_FEE;
-  const totalEur = round2(subtotalEur + deliveryFeeEur);
+  // Delivery is free: the items are the whole bill.
+  const totalEur = subtotalEur;
   const d = parsed.data;
   const card = method === "card_online";
 
@@ -319,7 +318,6 @@ export async function placeOrder(
             deliveryMethod: "DELIVERY",
             status: "PENDING",
             subtotalEur,
-            deliveryFeeEur,
             totalEur,
             items: { create: lineData },
           },

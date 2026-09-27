@@ -231,7 +231,6 @@ model Order {
   status                String      @default("PENDING")
 
   subtotalEur           Decimal
-  deliveryFeeEur        Decimal     @default(0)
   totalEur              Decimal
 
   /// When the order became visible to the kitchen (live board, dashboard

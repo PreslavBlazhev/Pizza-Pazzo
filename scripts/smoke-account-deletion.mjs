@@ -148,8 +148,7 @@ async function makeOrder(user, status) {
       deliveryNote: "Звънни на съседа",
       status,
       subtotalEur: 12.5,
-      deliveryFeeEur: 2,
-      totalEur: 14.5,
+      totalEur: 12.5,
     },
   });
   made.orders.push(order.id);

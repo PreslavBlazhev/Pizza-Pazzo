@@ -60,15 +60,7 @@ export async function PaymentOrderSummary({
       </div>
 
       <dl className="space-y-1.5 border-t border-pizza-cream-dark pt-3 text-sm">
-        <div className="flex justify-between gap-3 text-pizza-muted">
-          <dt>{t("subtotal")}</dt>
-          <dd>{formatEurPrice(order.subtotalEur)}</dd>
-        </div>
-        <div className="flex justify-between gap-3 text-pizza-muted">
-          <dt>{t("delivery")}</dt>
-          <dd>{formatEurPrice(order.deliveryFeeEur)}</dd>
-        </div>
-        <div className="flex justify-between gap-3 border-t border-pizza-cream-dark pt-2 text-base font-bold text-pizza-ink">
+        <div className="flex justify-between gap-3 text-base font-bold text-pizza-ink">
           <dt>{t("total")}</dt>
           <dd>{formatEurPrice(order.totalEur)}</dd>
         </div>

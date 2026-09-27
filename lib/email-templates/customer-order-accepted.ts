@@ -68,8 +68,6 @@ export function customerOrderAcceptedEmail(
     `Вашата поръчка:`,
     ...textItems,
     ``,
-    `Междинна сума: ${eur(order.subtotalEur)}`,
-    `Доставка: ${eur(order.deliveryFeeEur)}`,
     `Обща сума: ${eur(order.totalEur)} (${paymentNote})`,
     ``,
     `Адрес за доставка: ${order.deliveryAddress}, ${order.deliveryCity}`,
@@ -110,14 +108,6 @@ export function customerOrderAcceptedEmail(
   } минути</p>
   <table style="width:100%;border-collapse:collapse;margin:12px 0;">
 ${htmlRows}
-    <tr>
-      <td style="padding:6px 8px;color:#555;">Междинна сума</td>
-      <td style="padding:6px 8px;text-align:right;white-space:nowrap;">${eur(order.subtotalEur)}</td>
-    </tr>
-    <tr>
-      <td style="padding:6px 8px;color:#555;">Доставка</td>
-      <td style="padding:6px 8px;text-align:right;white-space:nowrap;">${eur(order.deliveryFeeEur)}</td>
-    </tr>
     <tr>
       <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;">Обща сума (${paymentNote})</td>
       <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;text-align:right;white-space:nowrap;">${eur(order.totalEur)}</td>

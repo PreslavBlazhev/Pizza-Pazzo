@@ -53,8 +53,6 @@ export interface ReportSummary {
   acceptedCount: number;
   cancelledCount: number;
   revenueEur: number;
-  foodRevenueEur: number;
-  deliveryRevenueEur: number;
   /** Delivered revenue collected in cash by the driver. */
   cashRevenueEur: number;
   /** Delivered revenue paid online by card. */
@@ -127,8 +125,6 @@ export async function getAdminReport({
       where: delivered,
       _sum: {
         totalEur: true,
-        subtotalEur: true,
-        deliveryFeeEur: true,
       },
     }),
     db.order.aggregate({
@@ -167,8 +163,6 @@ export async function getAdminReport({
       acceptedCount,
       cancelledCount,
       revenueEur: money(revenue._sum.totalEur),
-      foodRevenueEur: money(revenue._sum.subtotalEur),
-      deliveryRevenueEur: money(revenue._sum.deliveryFeeEur),
       cashRevenueEur: money(cashRevenue._sum.totalEur),
       cardRevenueEur: money(cardRevenue._sum.totalEur),
       paidOnlineEur: money(paidOnlineSum._sum.totalEur),

@@ -235,8 +235,6 @@ export function buildTicket(
 
   // ── Money ──
   push("payment", `Плащане: ${paymentLabel(order)}`);
-  push("totals", "Междинна сума", { right: formatEurPrice(order.subtotalEur) });
-  push("totals", "Доставка", { right: formatEurPrice(order.deliveryFeeEur) });
   push("grandTotal", "ОБЩО", { right: formatEurPrice(order.totalEur) });
 
   // ── Notes & footer ──

@@ -219,8 +219,6 @@ export function OrderDetails({
       </section>
 
       <section className="max-w-xs space-y-2 text-sm">
-        {priceRow("Междинна сума", order.subtotalEur)}
-        {priceRow("Доставка", order.deliveryFeeEur)}
         {priceRow("Общо", order.totalEur, true)}
       </section>
 

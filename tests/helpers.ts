@@ -62,12 +62,12 @@ export const CONTACT = {
   deliveryNote: "",
 };
 
-/** 2 × pizza 30 cm (9.90) + 1 × drink (1.10) = 20.90 + 2.50 delivery = 23.40 € */
+/** 2 × pizza 30 cm (9.90) + 1 × drink (1.10) = 20.90 € (delivery is free) */
 export const STANDARD_ITEMS = JSON.stringify([
   { productId: "prod_test_pizza", variantId: "var_test_30", quantity: 2 },
   { productId: "prod_test_drink", quantity: 1 },
 ]);
-export const STANDARD_TOTAL_MINOR = 2340;
+export const STANDARD_TOTAL_MINOR = 2090;
 
 export function key(): string {
   return randomUUID();

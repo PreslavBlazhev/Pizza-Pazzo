@@ -90,8 +90,7 @@ test("cash on delivery: priced on the server, straight to the kitchen, one e-mai
     assert.equal(r.accessToken, undefined, "a cash order gets no payment pages");
     const row = await orderRow(r.orderNumber);
     assert.equal(Number(row.subtotalEur), 20.9);
-    assert.equal(Number(row.deliveryFeeEur), 2.5);
-    assert.equal(Number(row.totalEur), 23.4);
+    assert.equal(Number(row.totalEur), 20.9, "delivery is free: the total is the items");
     assert.equal(row.paymentStatus, "CASH_DUE");
     assert.ok(row.releasedToKitchenAt);
     // No Resend key in tests: the attempt is made once and recorded as
@@ -500,7 +499,7 @@ test("reports: test and unpaid card orders are not revenue; cash and card are sp
   });
   const expectedTotal = delivered.reduce((s, o) => s + Number(o.totalEur), 0);
   assert.equal(report.summary.revenueEur, Math.round(expectedTotal * 100) / 100);
-  assert.equal(report.summary.cardRevenueEur, 23.4);
+  assert.equal(report.summary.cardRevenueEur, 20.9);
   assert.equal(
     Math.round((report.summary.cashRevenueEur + report.summary.cardRevenueEur) * 100) / 100,
     report.summary.revenueEur

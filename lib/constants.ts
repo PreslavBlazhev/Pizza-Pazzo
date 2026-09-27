@@ -103,9 +103,6 @@ export const CURRENCY = {
   primary: "EUR",
 } as const;
 
-/** Default flat delivery fee in EUR (placeholder). */
-export const DELIVERY_FEE = 2.5;
-
 /** Preset ETA choices (minutes) offered to staff when accepting an order. */
 export const ETA_PRESETS = [20, 30, 45, 60, 90] as const;
 

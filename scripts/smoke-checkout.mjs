@@ -616,8 +616,7 @@ if (mods) {
     deliveryMethod: "DELIVERY",
     status: "ACCEPTED",
     subtotalEur: 10.23,
-    deliveryFeeEur: 2.5,
-    totalEur: 12.73,
+    totalEur: 10.23,
     estimatedTimeMinutes: 30,
     adminNote: null,
     acceptedAt: "2026-07-26T10:00:00.000Z",
@@ -974,10 +973,10 @@ if (mods) {
 
     // Fixture: only delivered orders may contribute to revenue.
     const fixture = [
-      { completedAt: "x", acceptedAt: "x", cancelledAt: null, totalEur: 25.52, subtotalEur: 23.02, deliveryFeeEur: 2.5 },
-      { completedAt: null, acceptedAt: "x", cancelledAt: null, totalEur: 12.21, subtotalEur: 9.71, deliveryFeeEur: 2.5 },
-      { completedAt: null, acceptedAt: null, cancelledAt: "x", totalEur: 99.99, subtotalEur: 97.49, deliveryFeeEur: 2.5 },
-      { completedAt: null, acceptedAt: null, cancelledAt: null, totalEur: 50.0, subtotalEur: 47.5, deliveryFeeEur: 2.5 },
+      { completedAt: "x", acceptedAt: "x", cancelledAt: null, totalEur: 23.02, subtotalEur: 23.02 },
+      { completedAt: null, acceptedAt: "x", cancelledAt: null, totalEur: 9.71, subtotalEur: 9.71 },
+      { completedAt: null, acceptedAt: null, cancelledAt: "x", totalEur: 97.49, subtotalEur: 97.49 },
+      { completedAt: null, acceptedAt: null, cancelledAt: null, totalEur: 47.5, subtotalEur: 47.5 },
     ];
     const delivered = fixture.filter((o) => o.completedAt !== null);
     const accepted = fixture.filter((o) => o.acceptedAt !== null);
@@ -987,12 +986,9 @@ if (mods) {
     check("delivered count uses completedAt", delivered.length === 1);
     check("accepted count uses acceptedAt and includes the delivered one", accepted.length === 2);
     check("cancelled count uses cancelledAt", cancelled.length === 1);
-    check("revenue excludes cancelled and pending", sum(delivered, "totalEur") === 25.52);
+    check("revenue excludes cancelled and pending", sum(delivered, "totalEur") === 23.02);
     check("revenue excludes accepted-but-not-delivered", sum(delivered, "totalEur") !== sum(accepted, "totalEur"));
-    check(
-      "food + delivery = total",
-      money(sum(delivered, "subtotalEur") + sum(delivered, "deliveryFeeEur")) === sum(delivered, "totalEur")
-    );
+    check("delivery is free: items = total", sum(delivered, "subtotalEur") === sum(delivered, "totalEur"));
   }
 }
 
@@ -1126,8 +1122,8 @@ if (mods) {
       customerName: "Иван Петров", customerEmail: "ivan@example.com", customerPhone: "0888123456",
       deliveryAddress: "ул. Тестова 1", deliveryCity: "Плевен", deliveryNote: null,
       paymentMethod: "CASH_ON_DELIVERY", deliveryMethod: "DELIVERY", status: "ACCEPTED",
-      subtotalEur: 10.23, deliveryFeeEur: 2.5,
-      totalEur: 12.73, estimatedTimeMinutes: 30, adminNote: null,
+      subtotalEur: 10.23,
+      totalEur: 10.23, estimatedTimeMinutes: 30, adminNote: null,
       acceptedAt: "2026-07-26T10:00:00.000Z", cancelledAt: null, completedAt: null,
       createdAt: "2026-07-26T09:50:00.000Z", updatedAt: "2026-07-26T10:00:00.000Z",
       items: [{

@@ -84,8 +84,6 @@ export interface CartItem {
 /** Cart money totals — EUR amounts. */
 export interface CartTotals {
   itemsCount: number;
-  subtotal: number;
-  deliveryFee: number;
   total: number;
 }
 

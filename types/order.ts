@@ -126,7 +126,6 @@ export interface Order {
   status: OrderStatus;
 
   subtotalEur: number;
-  deliveryFeeEur: number;
   totalEur: number;
 
   estimatedTimeMinutes: number | null;

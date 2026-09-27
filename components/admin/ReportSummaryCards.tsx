@@ -33,18 +33,6 @@ export function ReportSummaryCards({ summary }: { summary: ReportSummary }) {
         </p>
         <dl className="mt-3 space-y-1 border-t border-pizza-cream-dark pt-2 text-xs">
           <div className="flex items-baseline justify-between gap-2">
-            <dt className="text-neutral-500">{t("foodRevenue")}</dt>
-            <dd className="whitespace-nowrap font-medium text-neutral-700">
-              {formatEurPrice(summary.foodRevenueEur)}
-            </dd>
-          </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <dt className="text-neutral-500">{t("deliveryRevenue")}</dt>
-            <dd className="whitespace-nowrap font-medium text-neutral-700">
-              {formatEurPrice(summary.deliveryRevenueEur)}
-            </dd>
-          </div>
-          <div className="flex items-baseline justify-between gap-2 border-t border-pizza-cream-dark pt-1">
             <dt className="text-neutral-500">{t("cashRevenue")}</dt>
             <dd className="whitespace-nowrap font-medium text-neutral-700">
               {formatEurPrice(summary.cashRevenueEur)}
