@@ -1,16 +1,20 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
 import { getSessionUser } from "@/lib/auth";
 import { getProductById } from "@/lib/menu-data";
 import { getStoreStatus } from "@/lib/store-status";
 import { placeOrder } from "@/lib/checkout/place-order";
+import { isLocale } from "@/i18n/routing";
 
 /**
  * Checkout — the server action behind the checkout form.
  *
- * Only the request-bound parts live here (open/closed check, session); the
- * order itself is built by lib/checkout/place-order.ts, which re-derives every
- * price on the server and handles both payment methods and idempotency.
+ * Only the request-bound parts live here (open/closed check, session,
+ * language of the messages); the order itself is built by
+ * lib/checkout/place-order.ts, which re-derives every price on the server,
+ * enforces the delivery area and the explicit confirmations, and handles both
+ * payment methods and idempotency.
  */
 
 export interface CheckoutResult {
@@ -27,17 +31,18 @@ export async function createOrder(
   _prev: CheckoutResult | null,
   formData: FormData
 ): Promise<CheckoutResult> {
+  // The refusals come back as codes; say them in the customer's language.
+  const rawLocale = formData.get("locale");
+  const locale = isLocale(rawLocale) ? rawLocale : "bg";
+  const t = await getTranslations({ locale, namespace: "checkout.errors" });
+
   // ── Is the restaurant taking orders at all? ──
   // The authoritative check. The buttons and the dialog in the browser are a
   // courtesy; this is what makes a closed shop actually closed, including for
   // a stale tab, a resubmitted form or a crafted request.
   const storeStatus = await getStoreStatus();
   if (!storeStatus.isOpen) {
-    return {
-      ok: false,
-      error:
-        "Заведението в момента е затворено и не приема поръчки. Опитайте отново, когато отворим.",
-    };
+    return { ok: false, error: t("STORE_CLOSED") };
   }
 
   const sessionUser = await getSessionUser();
@@ -55,6 +60,11 @@ export async function createOrder(
       itemsJson: String(formData.get("items") ?? "[]"),
       paymentMethod: formData.get("paymentMethod") ?? "cash_on_delivery",
       checkoutKey: formData.get("checkoutKey"),
+      consents: {
+        consentTerms: formData.get("consentTerms"),
+        consentRefunds: formData.get("consentRefunds"),
+        consentPrivacy: formData.get("consentPrivacy"),
+      },
       userId: sessionUser?.id ?? null,
       role: sessionUser?.role ?? null,
     },
@@ -62,7 +72,10 @@ export async function createOrder(
   );
 
   if (!result.ok) {
-    return { ok: false, error: result.error, fieldErrors: result.fieldErrors };
+    const fieldErrors = result.fieldErrors
+      ? Object.fromEntries(Object.entries(result.fieldErrors).map(([field, code]) => [field, t(code)]))
+      : undefined;
+    return { ok: false, error: result.error ? t(result.error) : undefined, fieldErrors };
   }
   return {
     ok: true,

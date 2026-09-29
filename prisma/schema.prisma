@@ -268,6 +268,16 @@ model Order {
   /// customer gave up, or a second successful attempt on the same order.
   paymentAlert          String?
 
+  /// Checkout confirmations (UBB-16, docs/UBB-COMPLIANCE.md). The version
+  /// identifiers of the Terms, the Cancellation/Returns terms and the Privacy
+  /// Policy the customer explicitly confirmed (content/legal/versions.ts), and
+  /// the server time it happened. Null on orders placed before 2026-09-29 —
+  /// deliberately NOT back-filled: no consent is invented for the past.
+  consentTermsVersion   String?
+  consentRefundsVersion String?
+  consentPrivacyVersion String?
+  consentRecordedAt     DateTime?
+
   estimatedTimeMinutes  Int?
   adminNote             String?
 

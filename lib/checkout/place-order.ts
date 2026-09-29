@@ -17,7 +17,16 @@
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { checkoutSchema } from "@/lib/validators/checkout";
+import {
+  checkoutSchema,
+  CHECKOUT_FIELD_ERRORS,
+  CONSENT_FIELDS,
+  isTicked,
+  type CheckoutFieldError,
+  type CheckoutFormError,
+  type ConsentField,
+} from "@/lib/validators/checkout";
+import { LEGAL_VERSIONS } from "@/content/legal/versions";
 import { resolveOrderItemExtras, type ExtraSourceProduct } from "@/lib/extras-resolve";
 import { EXTRAS_LIMITS, type OrderItemExtra } from "@/lib/extras-rules";
 import { resolveCheckoutPayment } from "@/lib/payments/providers";
@@ -62,6 +71,11 @@ export interface PlaceOrderInput {
   itemsJson: string;
   paymentMethod: unknown;
   checkoutKey: unknown;
+  /**
+   * The three explicit confirmations, exactly as posted (a ticked checkbox
+   * sends "on"). All three are REQUIRED — see CONSENT_FIELDS.
+   */
+  consents: Partial<Record<ConsentField, unknown>>;
   userId: string | null;
   /** The viewer's role (null = guest): decides whether the card DEMO is offered. */
   role?: string | null;
@@ -82,7 +96,13 @@ export type PlaceOrderResult =
       /** True when this was a repeat of an order already placed. */
       duplicate: boolean;
     }
-  | { ok: false; error?: string; fieldErrors?: Record<string, string> };
+  | {
+      ok: false;
+      /** A whole-form refusal — translated by the caller (checkout.errors.<code>). */
+      error?: CheckoutFormError;
+      /** Per-field refusals, as codes (checkout.errors.<code>). */
+      fieldErrors?: Record<string, CheckoutFieldError>;
+    };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -119,17 +139,13 @@ export async function placeOrder(
   // ── 0. Payment method + idempotency key ──
   const method = input.paymentMethod;
   if (method !== "cash_on_delivery" && method !== "card_online") {
-    return { ok: false, error: "Изберете начин на плащане." };
+    return { ok: false, error: "PAYMENT_METHOD" };
   }
   // The same decision the checkout page made when it showed (or hid) the
   // card option — a crafted request cannot pick a method it was not offered.
   const payment = await resolveCheckoutPayment(input.role ?? null);
   if (method === "card_online" && !payment.available) {
-    return {
-      ok: false,
-      error:
-        "Плащането с карта в момента не е налично. Изберете плащане в брой при доставка.",
-    };
+    return { ok: false, error: "CARD_UNAVAILABLE" };
   }
 
   const keyParsed = checkoutKeySchema.safeParse(input.checkoutKey);
@@ -146,19 +162,30 @@ export async function placeOrder(
     customerName: input.contact.customerName,
     customerEmail: input.contact.customerEmail,
     customerPhone: input.contact.customerPhone,
-    deliveryCity: input.contact.deliveryCity || undefined,
+    deliveryCity: input.contact.deliveryCity,
     deliveryAddress: input.contact.deliveryAddress,
     deliveryNote: input.contact.deliveryNote || undefined,
     paymentMethod: method,
     deliveryMethod: "delivery",
   });
 
+  // ── 1b. The explicit confirmations — checked together with the fields, so
+  //    the customer sees every problem at once. Enforced HERE, on the server:
+  //    a request that skips the form (or unticks a box in devtools) is refused.
+  const fieldErrors: Record<string, CheckoutFieldError> = {};
   if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {};
     for (const issue of parsed.error.issues) {
       const key = issue.path[0];
-      if (typeof key === "string" && !fieldErrors[key]) fieldErrors[key] = issue.message;
+      if (typeof key !== "string" || fieldErrors[key]) continue;
+      fieldErrors[key] = (CHECKOUT_FIELD_ERRORS as readonly string[]).includes(issue.message)
+        ? (issue.message as CheckoutFieldError)
+        : "FIELD_INVALID";
     }
+  }
+  for (const field of CONSENT_FIELDS) {
+    if (!isTicked(input.consents?.[field])) fieldErrors[field] = "CONSENT_REQUIRED";
+  }
+  if (!parsed.success || Object.keys(fieldErrors).length > 0) {
     return { ok: false, fieldErrors };
   }
 
@@ -171,7 +198,7 @@ export async function placeOrder(
   }
   const itemsParsed = itemsSchema.safeParse(rawItems);
   if (!itemsParsed.success) {
-    return { ok: false, error: "Количката е празна или невалидна." };
+    return { ok: false, error: "CART_INVALID" };
   }
 
   // ── 3. Re-derive prices from the menu (authoritative) ──
@@ -195,7 +222,7 @@ export async function placeOrder(
     const pBg = await deps.getProduct(it.productId, "bg");
     const pEn = await deps.getProduct(it.productId, "en");
     if (!pBg || !pBg.isAvailable) {
-      return { ok: false, error: "Един от продуктите вече не е наличен. Обновете количката." };
+      return { ok: false, error: "PRODUCT_UNAVAILABLE" };
     }
 
     let unitEur = pBg.priceEur;
@@ -207,7 +234,7 @@ export async function placeOrder(
       const vBg = pBg.variants?.find((v) => v.id === it.variantId);
       const vEn = pEn?.variants?.find((v) => v.id === it.variantId);
       if (!vBg) {
-        return { ok: false, error: "Невалиден размер на продукт. Обновете количката." };
+        return { ok: false, error: "VARIANT_INVALID" };
       }
       unitEur = vBg.priceEur;
       variantId = it.variantId;
@@ -250,10 +277,7 @@ export async function placeOrder(
       });
       if (!resolved.ok) {
         // Deliberately generic for the customer; the code stays server-side.
-        return {
-          ok: false,
-          error: "Невалидни добавки в количката. Обновете количката и опитайте отново.",
-        };
+        return { ok: false, error: "EXTRAS_INVALID" };
       }
       extras = resolved.extras;
       extrasUnitEur = resolved.extrasUnitTotalEur;
@@ -319,6 +343,13 @@ export async function placeOrder(
             status: "PENDING",
             subtotalEur,
             totalEur,
+            // Proof of the explicit confirmations: WHICH versions were
+            // accepted, and when (server clock). Nothing else is recorded —
+            // no IP, no user agent: not needed to prove the contract.
+            consentTermsVersion: LEGAL_VERSIONS.terms,
+            consentRefundsVersion: LEGAL_VERSIONS.refunds,
+            consentPrivacyVersion: LEGAL_VERSIONS.privacy,
+            consentRecordedAt: now,
             items: { create: lineData },
           },
         });
@@ -348,5 +379,5 @@ export async function placeOrder(
       break;
     }
   }
-  return { ok: false, error: "Поръчката не можа да бъде записана. Опитайте отново." };
+  return { ok: false, error: "SAVE_FAILED" };
 }

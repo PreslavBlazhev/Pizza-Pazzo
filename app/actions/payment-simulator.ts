@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { getSimulatorConfig } from "@/lib/payments/providers";
+import { simulatorPageAllowed } from "@/lib/payments/demo";
+import { getSessionUser } from "@/lib/auth";
 import {
   recordSimulatorOutcome,
   sendSimulatorCallback,
@@ -23,6 +25,12 @@ import {
 export async function simulatorDecideAction(formData: FormData): Promise<void> {
   const config = await getSimulatorConfig();
   if (!config) {
+    throw new Error("Payment simulator is not available here.");
+  }
+  // Production: only signed-in staff may play the bank. A public request can
+  // never decide a simulator session, so it can never make an order "paid".
+  const user = await getSessionUser();
+  if (!simulatorPageAllowed(user?.role ?? null)) {
     throw new Error("Payment simulator is not available here.");
   }
 

@@ -8,12 +8,18 @@
  * database and flipped from Admin → Settings:
  *
  *   OFF       no demo (card appears only if a real provider is configured)
- * Live site: EVERYONE since 2026-09-27 (migration 20260927140000).
  *
  *   STAFF     the demo card option is shown only to signed-in STAFF / ADMIN /
  *             SUPER_ADMIN — customers never see it
  *   EVERYONE  every visitor sees it (orders paid this way are still TEST
  *             orders and are never cooked)
+ *
+ * ⚠️ PRODUCTION (APP_ENV=production) NEVER shows the demo to the public: a
+ * stored EVERYONE is read as STAFF there, and the simulator's hosted page and
+ * its "decide" action require a signed-in staff session. A public visitor
+ * must not see a fake "pay by card" option, and a public request must not be
+ * able to mark any order paid (UBB-07 / UBB-14, docs/UBB-COMPLIANCE.md).
+ * EVERYONE remains available on development/staging for demos.
  *
  * A real, configured provider (bank in production) always wins over the demo.
  * Everything paid through the demo is a test order: "ТЕСТ — НЕ ПРИГОТВЯЙ" on
@@ -29,8 +35,19 @@ export { CARD_DEMO_MODES, CARD_DEMO_MODE_LABELS, isCardDemoMode, type CardDemoMo
 
 const STAFF_ROLES = ["STAFF", "ADMIN", "SUPER_ADMIN"];
 
-/** The current switch; OFF when the row or the database cannot be read. */
-export async function getCardDemoMode(): Promise<CardDemoMode> {
+/**
+ * The mode that actually applies here. Production caps the stored value at
+ * STAFF — the public never gets the demo, whatever the database says.
+ */
+export function effectiveCardDemoMode(
+  stored: CardDemoMode,
+  env: NodeJS.ProcessEnv = process.env
+): CardDemoMode {
+  return stored === "EVERYONE" && getAppEnv(env) === "production" ? "STAFF" : stored;
+}
+
+/** The switch as stored in Admin → Settings; OFF when unreadable. */
+export async function getStoredCardDemoMode(): Promise<CardDemoMode> {
   try {
     const row = await db.restaurantSettings.findUnique({
       where: { id: "restaurant" },
@@ -40,6 +57,28 @@ export async function getCardDemoMode(): Promise<CardDemoMode> {
   } catch {
     return "OFF";
   }
+}
+
+/** The effective switch (see effectiveCardDemoMode); OFF when unreadable. */
+export async function getCardDemoMode(): Promise<CardDemoMode> {
+  return effectiveCardDemoMode(await getStoredCardDemoMode());
+}
+
+/** True for the roles that may use the demo when it is limited to staff. */
+export function isStaffRole(role: string | null | undefined): boolean {
+  return !!role && STAFF_ROLES.includes(role);
+}
+
+/**
+ * May this viewer drive the simulator's hosted page (the "bank" that says
+ * paid / declined)? Anyone on development/staging; in production only staff,
+ * and only while the demo is not OFF.
+ */
+export function simulatorPageAllowed(
+  role: string | null | undefined,
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  return getAppEnv(env) !== "production" || isStaffRole(role);
 }
 
 /** May this viewer (role, or null for a guest) see the demo card option? */

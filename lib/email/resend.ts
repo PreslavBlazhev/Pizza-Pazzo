@@ -16,6 +16,8 @@ import { Resend } from "resend";
 import { newOrderEmail, type NewOrderEmailData } from "@/lib/email-templates/new-order";
 import { customerOrderAcceptedEmail } from "@/lib/email-templates/customer-order-accepted";
 import { getRestaurantSettings } from "@/lib/restaurant-settings";
+import { companyFor } from "@/content/legal/company";
+import { SITE_URL } from "@/lib/constants";
 import { getAppEnv } from "@/lib/app-env";
 import type { Order, OrderWithItems } from "@/types/order";
 
@@ -121,7 +123,17 @@ export async function sendCustomerOrderAcceptedEmail(order: OrderWithItems): Pro
   const settings = await getRestaurantSettings();
   return sendToCustomer(
     order,
-    customerOrderAcceptedEmail(order, { phone: settings.primaryPhone }),
+    customerOrderAcceptedEmail(order, {
+      phone: settings.primaryPhone,
+      email: settings.contactEmail,
+      siteUrl: SITE_URL,
+      merchant: (({ legalName, uic, vatNumber, correspondenceAddress }) => ({
+        legalName,
+        uic,
+        vatNumber,
+        registeredAddress: correspondenceAddress,
+      }))(companyFor("bg")),
+    }),
     "accepted"
   );
 }

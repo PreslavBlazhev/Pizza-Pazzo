@@ -141,6 +141,10 @@ export function OrderStatusControl({
             placeholder="Причина за отказ (по избор)"
             className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-400 focus:outline-none"
           />
+          <p className="mt-2 text-xs text-red-800">
+            Клиентът не получава имейл при отказ — обадете му се. Ако е платил с карта,
+            сумата се възстановява от портала на банката.
+          </p>
           <button
             type="submit"
             disabled={isPending}

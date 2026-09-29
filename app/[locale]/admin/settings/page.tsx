@@ -98,7 +98,10 @@ export default async function AdminSettingsPage() {
         )}
 
         <div className="mt-5 border-t border-pizza-cream-dark pt-4">
-          <CardDemoModeForm mode={payments.demoMode} />
+          <CardDemoModeForm
+            mode={payments.demoMode}
+            publicAllowed={payments.appEnv !== "production"}
+          />
           {payments.demoMode !== "OFF" && payments.demoProblems.length > 0 && (
             <ul className="mt-2 list-disc pl-5 text-sm text-red-700">
               {payments.demoProblems.map((p) => (
