@@ -113,7 +113,7 @@ async function main() {
 
     // ── 1. Card order ──
     const placed = await placeOrder(
-      { contact, itemsJson: items, paymentMethod: "card_online", checkoutKey: crypto.randomUUID(), userId: null },
+      { contact, itemsJson: items, paymentMethod: "card_online", checkoutKey: crypto.randomUUID(), userId: null, consents: { consentTerms: "on", consentRefunds: "on", consentPrivacy: "on" } },
       { getProduct }
     );
     if (!placed.ok || !placed.accessToken) throw new Error(`placeOrder: ${JSON.stringify(placed)}`);
@@ -189,7 +189,7 @@ async function main() {
 
     // ── 5. Cash still works as before ──
     const cash = await placeOrder(
-      { contact, itemsJson: items, paymentMethod: "cash_on_delivery", checkoutKey: crypto.randomUUID(), userId: null },
+      { contact, itemsJson: items, paymentMethod: "cash_on_delivery", checkoutKey: crypto.randomUUID(), userId: null, consents: { consentTerms: "on", consentRefunds: "on", consentPrivacy: "on" } },
       { getProduct }
     );
     if (!cash.ok) throw new Error("cash order failed");

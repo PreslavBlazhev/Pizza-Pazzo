@@ -1,0 +1,190 @@
+1. Legal/contact pages without an account
+  ✓ mobile bg /terms → 200
+  ✓ mobile bg /terms: no raw i18n key
+  ✓ mobile bg /terms: no horizontal overflow
+  ✓ mobile bg /terms: shows its version
+  ✓ mobile bg /refunds → 200
+  ✓ mobile bg /refunds: no raw i18n key
+  ✓ mobile bg /refunds: no horizontal overflow
+  ✓ mobile bg /refunds: shows its version
+  ✓ mobile bg /delivery → 200
+  ✓ mobile bg /delivery: no raw i18n key
+  ✓ mobile bg /delivery: no horizontal overflow
+  ✓ mobile bg /delivery: shows its version
+  ✓ mobile bg /payment-methods → 200
+  ✓ mobile bg /payment-methods: no raw i18n key
+  ✓ mobile bg /payment-methods: no horizontal overflow
+  ✓ mobile bg /payment-methods: shows its version
+  ✓ mobile bg /privacy → 200
+  ✓ mobile bg /privacy: no raw i18n key
+  ✓ mobile bg /privacy: no horizontal overflow
+  ✓ mobile bg /privacy: shows its version
+  ✓ mobile bg /cookies → 200
+  ✓ mobile bg /cookies: no raw i18n key
+  ✓ mobile bg /cookies: no horizontal overflow
+  ✓ mobile bg /cookies: shows its version
+  ✓ mobile bg /contacts → 200
+  ✓ mobile bg /contacts: no raw i18n key
+  ✓ mobile bg /contacts: no horizontal overflow
+  ✓ mobile en /terms → 200
+  ✓ mobile en /terms: no raw i18n key
+  ✓ mobile en /terms: no horizontal overflow
+  ✓ mobile en /terms: shows its version
+  ✓ mobile en /refunds → 200
+  ✓ mobile en /refunds: no raw i18n key
+  ✓ mobile en /refunds: no horizontal overflow
+  ✓ mobile en /refunds: shows its version
+  ✓ mobile en /delivery → 200
+  ✓ mobile en /delivery: no raw i18n key
+  ✓ mobile en /delivery: no horizontal overflow
+  ✓ mobile en /delivery: shows its version
+  ✓ mobile en /payment-methods → 200
+  ✓ mobile en /payment-methods: no raw i18n key
+  ✓ mobile en /payment-methods: no horizontal overflow
+  ✓ mobile en /payment-methods: shows its version
+  ✓ mobile en /privacy → 200
+  ✓ mobile en /privacy: no raw i18n key
+  ✓ mobile en /privacy: no horizontal overflow
+  ✓ mobile en /privacy: shows its version
+  ✓ mobile en /cookies → 200
+  ✓ mobile en /cookies: no raw i18n key
+  ✓ mobile en /cookies: no horizontal overflow
+  ✓ mobile en /cookies: shows its version
+  ✓ mobile en /contacts → 200
+  ✓ mobile en /contacts: no raw i18n key
+  ✓ mobile en /contacts: no horizontal overflow
+  ✓ desktop bg /terms → 200
+  ✓ desktop bg /terms: no raw i18n key
+  ✓ desktop bg /terms: no horizontal overflow
+  ✓ desktop bg /terms: shows its version
+  ✓ desktop bg /refunds → 200
+  ✓ desktop bg /refunds: no raw i18n key
+  ✓ desktop bg /refunds: no horizontal overflow
+  ✓ desktop bg /refunds: shows its version
+  ✓ desktop bg /delivery → 200
+  ✓ desktop bg /delivery: no raw i18n key
+  ✓ desktop bg /delivery: no horizontal overflow
+  ✓ desktop bg /delivery: shows its version
+  ✓ desktop bg /payment-methods → 200
+  ✓ desktop bg /payment-methods: no raw i18n key
+  ✓ desktop bg /payment-methods: no horizontal overflow
+  ✓ desktop bg /payment-methods: shows its version
+  ✓ desktop bg /privacy → 200
+  ✓ desktop bg /privacy: no raw i18n key
+  ✓ desktop bg /privacy: no horizontal overflow
+  ✓ desktop bg /privacy: shows its version
+  ✓ desktop bg /cookies → 200
+  ✓ desktop bg /cookies: no raw i18n key
+  ✓ desktop bg /cookies: no horizontal overflow
+  ✓ desktop bg /cookies: shows its version
+  ✓ desktop bg /contacts → 200
+  ✓ desktop bg /contacts: no raw i18n key
+  ✓ desktop bg /contacts: no horizontal overflow
+  ✓ desktop en /terms → 200
+  ✓ desktop en /terms: no raw i18n key
+  ✓ desktop en /terms: no horizontal overflow
+  ✓ desktop en /terms: shows its version
+  ✓ desktop en /refunds → 200
+  ✓ desktop en /refunds: no raw i18n key
+  ✓ desktop en /refunds: no horizontal overflow
+  ✓ desktop en /refunds: shows its version
+  ✓ desktop en /delivery → 200
+  ✓ desktop en /delivery: no raw i18n key
+  ✓ desktop en /delivery: no horizontal overflow
+  ✓ desktop en /delivery: shows its version
+  ✓ desktop en /payment-methods → 200
+  ✓ desktop en /payment-methods: no raw i18n key
+  ✓ desktop en /payment-methods: no horizontal overflow
+  ✓ desktop en /payment-methods: shows its version
+  ✓ desktop en /privacy → 200
+  ✓ desktop en /privacy: no raw i18n key
+  ✓ desktop en /privacy: no horizontal overflow
+  ✓ desktop en /privacy: shows its version
+  ✓ desktop en /cookies → 200
+  ✓ desktop en /cookies: no raw i18n key
+  ✓ desktop en /cookies: no horizontal overflow
+  ✓ desktop en /cookies: shows its version
+  ✓ desktop en /contacts → 200
+  ✓ desktop en /contacts: no raw i18n key
+  ✓ desktop en /contacts: no horizontal overflow
+  ✓ contacts: ЕИК and ДДС № shown
+  ✓ contacts: seat and restaurant addresses kept apart
+  ✓ contacts: both phones dialable (tel:)
+  ✓ contacts: e-mail is a mailto: link
+  ✓ footer: registered name + ЕИК
+  ✓ footer links to /terms
+  ✓ footer links to /refunds
+  ✓ footer links to /delivery
+  ✓ footer links to /payment-methods
+  ✓ footer links to /privacy
+  ✓ footer links to /cookies
+  ✓ footer links to /contacts
+  ✓ EN footer links to /en/terms
+  ✓ EN footer links to /en/refunds
+  ✓ EN footer links to /en/delivery
+  ✓ EN footer links to /en/payment-methods
+  ✓ EN footer links to /en/privacy
+  ✓ EN footer links to /en/cookies
+  ✓ EN footer links to /en/contacts
+5. Google map loads only on request
+  ✓ no request to Google on page load
+  ✓ no Google cookie before the click
+  ✓ the map loads after pressing the button
+    first-party cookies seen on a plain visit: NEXT_LOCALE@localhost
+2–4. Checkout: confirmations, links, final total, server enforcement
+  ✓ mobile: consentTerms starts unticked
+  ✓ mobile: consentRefunds starts unticked
+  ✓ mobile: consentPrivacy starts unticked
+  ✓ mobile: delivery town is fixed to Плевен and stated before ordering
+  ✓ mobile: checkout has no horizontal overflow
+  ✓ mobile: final total shown before the button
+  ✓ mobile: the button says the order is binding
+  ✓ mobile: total sits immediately above the button
+  ✓ mobile: the popup names the missing confirmations
+  ✓ mobile: no order without confirmations (UI)
+  ✓ mobile: the refunds link opens /refunds in a new tab
+  ✓ mobile: the document renders
+  ✓ mobile: typed address kept after opening a document
+  ✓ mobile: cart kept after opening a document
+  ✓ mobile: consentTerms ticked with the keyboard
+  ✓ mobile: consentRefunds ticked with the keyboard
+  ✓ mobile: consentPrivacy ticked with the keyboard
+  ✓ mobile: Tab moves from the checkbox to its document link
+  ✓ server refuses a request whose privacy confirmation was removed (UI bypassed)
+  ✓ mobile: order #1001 stores the Terms version
+  ✓ mobile: order #1001 stores the Cancellation terms version
+  ✓ mobile: order #1001 stores the Privacy version
+  ✓ mobile: order #1001 stores the server time
+  ✓ mobile: cash order to Pleven
+  ✓ desktop: consentTerms starts unticked
+  ✓ desktop: consentRefunds starts unticked
+  ✓ desktop: consentPrivacy starts unticked
+  ✓ desktop: delivery town is fixed to Плевен and stated before ordering
+  ✓ desktop: checkout has no horizontal overflow
+  ✓ desktop: final total shown before the button
+  ✓ desktop: the button says the order is binding
+  ✓ desktop: total sits immediately above the button
+  ✓ desktop: the popup names the missing confirmations
+  ✓ desktop: no order without confirmations (UI)
+  ✓ desktop: the refunds link opens /refunds in a new tab
+  ✓ desktop: the document renders
+  ✓ desktop: typed address kept after opening a document
+  ✓ desktop: cart kept after opening a document
+  ✓ desktop: consentTerms ticked with the keyboard
+  ✓ desktop: consentRefunds ticked with the keyboard
+  ✓ desktop: consentPrivacy ticked with the keyboard
+  ✓ desktop: Tab moves from the checkbox to its document link
+  ✓ desktop: order #1002 stores the Terms version
+  ✓ desktop: order #1002 stores the Cancellation terms version
+  ✓ desktop: order #1002 stores the Privacy version
+  ✓ desktop: order #1002 stores the server time
+  ✓ desktop: cash order to Pleven
+  ✓ EN: the server's refusal is shown in English
+  ✓ EN: the confirmations are in English
+
+cleaned up 2 test order(s): #1001, #1002
+  ✓ database back to its order count
+
+screenshots: C:\Users\The King\Desktop\Sites\08. Pizza Pazzo\docs\ubb-evidence\screenshots
+
+E2E UBB OK

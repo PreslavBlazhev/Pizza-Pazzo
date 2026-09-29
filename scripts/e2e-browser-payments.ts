@@ -75,8 +75,12 @@ async function checkoutByCard(page: Page, slug: string, tag: string): Promise<st
   await page.locator('[name="customerEmail"]').fill("browser-e2e@example.test");
   await page.locator('[name="deliveryAddress"]').fill(`ул. Тестова 5 (${tag})`);
   await page.getByText("Плащане онлайн с карта").click();
+  // The three explicit confirmations (UBB-16) start unticked.
+  for (const name of ["consentTerms", "consentRefunds", "consentPrivacy"]) {
+    await page.locator(`input[name="${name}"]`).check();
+  }
   await shot(page, `${tag}-01-checkout`);
-  await page.getByRole("button", { name: "Продължи към плащане с карта" }).click();
+  await page.getByRole("button", { name: "Поръчай и плати с карта" }).click();
   await page.waitForURL(/\/checkout\/pay\//, { timeout: 30_000 });
   const token = page.url().split("/checkout/pay/")[1].split("?")[0];
   const order = await db.order.findUniqueOrThrow({ where: { accessToken: token } });

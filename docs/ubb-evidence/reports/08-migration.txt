@@ -1,0 +1,11 @@
+Migration 20260929120000_checkout_consents on a copy with 5 legacy orders:
+  ✓ same number of orders
+  ✓ same number of order items
+  ✓ every old column value unchanged
+  ✓ order items byte-for-byte unchanged
+  ✓ no consent invented for any old order
+  ✓ old orders still read through Prisma (with items)
+  ✓ broken phone '+359 801 999' corrected to '+359 64 801 999'
+  ✓ a phone the owner edited is never overwritten by the fix
+
+MIGRATION CHECK OK

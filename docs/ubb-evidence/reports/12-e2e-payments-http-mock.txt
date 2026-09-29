@@ -1,0 +1,37 @@
+E2E card payment against http://localhost:3000
+
+order #1001, total 23.52 €
+  ✓ review page renders
+  ✓ review page shows the order number
+  ✓ review page posts to /api/payments/start
+  ✓ no card field anywhere on our page
+  ✓ success URL of an UNPAID order redirects to the checking page
+  ✓ unpaid card order is NOT on the kitchen board
+  ✓ start → 303 to the hosted page
+  ✓ three concurrent clicks → one hosted session
+  ✓ exactly one payment attempt
+  ✓ simulator hosted page renders with its warning
+  ✓ the card-number field has no name (it can never be submitted)
+  ✓ the only form fields sent to the server are sessionId + scenario
+  ✓ amount sent = stored total in cents
+  ✓ signed callback accepted
+  ✓ return URL → checking page (its ?success=true ignored)
+  ✓ status API: FAILED
+  ✓ failed page renders
+  ✓ declined order is NOT on the kitchen board
+  ✓ forged callback → 401
+  ✓ retry opens a NEW hosted session for the SAME order
+  ✓ three duplicate callbacks acknowledged
+  ✓ status API: PAID
+  ✓ success page renders for the paid order
+  ✓ paid order is on the kitchen board exactly once
+  ✓ one notification decision, SKIPPED (test orders never reach the inbox); order flagged TEST
+  ✓ no second order was created
+  ✓ 'Pay' on a paid order → success page, no new session
+  ✓ English review page of a paid order → English success page
+[email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order #1002
+  ✓ cash order goes straight to the kitchen
+
+cleaned up 2 test orders
+
+E2E OK

@@ -53,6 +53,9 @@ export const deps = {
   getProduct: async (id: string) => MENU[id] ?? null,
 };
 
+/** All three explicit checkout confirmations, ticked (a checkbox posts "on"). */
+export const ALL_CONSENTS = { consentTerms: "on", consentRefunds: "on", consentPrivacy: "on" } as const;
+
 export const CONTACT = {
   customerName: "Тест Клиент",
   customerEmail: "client@example.test",
@@ -84,6 +87,7 @@ export async function order(
       paymentMethod: method,
       checkoutKey: overrides.checkoutKey ?? key(),
       userId: null,
+      consents: ALL_CONSENTS,
     },
     deps
   );

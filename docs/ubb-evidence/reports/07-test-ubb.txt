@@ -1,0 +1,104 @@
+TAP version 13
+# Subtest: UBB-16: a direct call without consentTerms is refused and creates nothing
+ok 1 - UBB-16: a direct call without consentTerms is refused and creates nothing
+  ---
+  duration_ms: 36.0021
+  ...
+# Subtest: UBB-16: a direct call without consentRefunds is refused and creates nothing
+ok 2 - UBB-16: a direct call without consentRefunds is refused and creates nothing
+  ---
+  duration_ms: 5.6971
+  ...
+# Subtest: UBB-16: a direct call without consentPrivacy is refused and creates nothing
+ok 3 - UBB-16: a direct call without consentPrivacy is refused and creates nothing
+  ---
+  duration_ms: 5.4449
+  ...
+# Subtest: UBB-16: nothing ticked → all three refusals at once
+ok 4 - UBB-16: nothing ticked → all three refusals at once
+  ---
+  duration_ms: 2.9141
+  ...
+# Subtest: UBB-16: only a real tick counts — 'off', '', 'false', 0 and 'yes' are refused
+ok 5 - UBB-16: only a real tick counts — 'off', '', 'false', 0 and 'yes' are refused
+  ---
+  duration_ms: 14.7288
+  ...
+# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
+# Subtest: UBB-16: a valid order records the accepted versions and the server time — nothing else
+ok 6 - UBB-16: a valid order records the accepted versions and the server time — nothing else
+  ---
+  duration_ms: 35.1549
+  ...
+# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
+# Subtest: UBB-16: a duplicate submission returns the first order, which carries the proof
+ok 7 - UBB-16: a duplicate submission returns the first order, which carries the proof
+  ---
+  duration_ms: 24.5417
+  ...
+# Subtest: UBB-06: prices, totals, fees and currency sent by the client are rejected or ignored
+ok 8 - UBB-06: prices, totals, fees and currency sent by the client are rejected or ignored
+  ---
+  duration_ms: 20.2794
+  ...
+# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
+# Subtest: UBB-06: the stored total is the menu price of the chosen variant × quantity
+ok 9 - UBB-06: the stored total is the menu price of the chosen variant × quantity
+  ---
+  duration_ms: 27.1008
+  ...
+# Subtest: UBB-08: an address outside Pleven is refused by the server
+ok 10 - UBB-08: an address outside Pleven is refused by the server
+  ---
+  duration_ms: 9.3902
+  ...
+# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
+# Subtest: UBB-08: Pleven in any common spelling is accepted and stored canonically
+ok 11 - UBB-08: Pleven in any common spelling is accepted and stored canonically
+  ---
+  duration_ms: 23.5148
+  ...
+# Subtest: UBB-07: production reads a stored EVERYONE as STAFF; staging keeps it
+ok 12 - UBB-07: production reads a stored EVERYONE as STAFF; staging keeps it
+  ---
+  duration_ms: 0.4331
+  ...
+# Subtest: UBB-07: in production only staff may open/decide the simulator page
+ok 13 - UBB-07: in production only staff may open/decide the simulator page
+  ---
+  duration_ms: 0.2341
+  ...
+# Subtest: every checkout refusal code has a Bulgarian and an English message
+ok 14 - every checkout refusal code has a Bulgarian and an English message
+  ---
+  duration_ms: 3.5489
+  ...
+# Subtest: UBB-02: the merchant identity matches the Commercial Register / VIES record
+ok 15 - UBB-02: the merchant identity matches the Commercial Register / VIES record
+  ---
+  duration_ms: 0.5439
+  ...
+# Subtest: every legal document carries the version orders store, and unique anchors
+ok 16 - every legal document carries the version orders store, and unique anchors
+  ---
+  duration_ms: 0.6475
+  ...
+# Subtest: every linked legal route exists as a page
+ok 17 - every linked legal route exists as a page
+  ---
+  duration_ms: 0.9195
+  ...
+# Subtest: the texts never promise what the code does not do
+ok 18 - the texts never promise what the code does not do
+  ---
+  duration_ms: 1.077
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4271.1856

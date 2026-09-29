@@ -1,0 +1,13 @@
+Production guard against http://localhost:3001 (stored demo switch: EVERYONE)
+
+  ✓ guest checkout → 200
+  ✓ guest checkout: the server offers NO card option
+  ✓ guest checkout: no card logos
+  ✓ signed-in staff: the demo card option (test orders only)
+  ✓ payment-methods: card payment stated as NOT active
+  ✓ guest: simulator hosted page is 404
+  ✓ staff: simulator hosted page opens
+  ✓ unsigned public callback is refused
+  ✓ nothing public changed the simulator ledger
+
+PRODUCTION GUARD OK
