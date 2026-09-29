@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageAlternates } from "@/lib/seo/alternates";
 import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { use } from "react";
@@ -21,7 +22,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "legal" });
   const tMeta = await getTranslations({ locale, namespace: "meta.legal" });
-  return { title: t("terms"), description: tMeta("terms.description") };
+  return {
+    title: t("terms"), description: tMeta("terms.description"),
+    alternates: pageAlternates("/terms", locale),
+  };
 }
 
 export default function TermsPage({ params }: PageProps) {

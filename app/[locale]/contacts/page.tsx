@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageAlternates } from "@/lib/seo/alternates";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
@@ -6,6 +7,8 @@ import { Footer } from "@/components/layout/Footer";
 import { PageHero } from "@/components/ui/PageHero";
 import { Card } from "@/components/ui/Card";
 import { SITE } from "@/lib/constants";
+import { companyFor } from "@/content/legal/company";
+import { ClickToLoadMap } from "@/components/contacts/ClickToLoadMap";
 import {
   getRestaurantSettings,
   settingsAddress,
@@ -30,6 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     getRestaurantSettings(),
   ]);
   return {
+    alternates: pageAlternates("/contacts", locale),
     title: t("title"),
     description: t("description", {
       address: settingsAddress(settings, locale),
@@ -45,6 +49,8 @@ export default async function ContactsPage({ params }: PageProps) {
   const t = await getTranslations("contacts");
   const tHours = await getTranslations("hours");
   const tCommon = await getTranslations("common");
+  const tLegal = await getTranslations("legal");
+  const company = companyFor(locale);
 
   const settings = await getRestaurantSettings();
   const address = settingsAddress(settings, locale);
@@ -97,7 +103,10 @@ export default async function ContactsPage({ params }: PageProps) {
               <h2 className="mt-4 font-display text-xl font-semibold text-pizza-ink">
                 {t("addressAndEmail")}
               </h2>
-              <p className="mt-3 text-sm text-pizza-muted">{address}</p>
+              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-pizza-muted">
+                {t("restaurantAddress")}
+              </p>
+              <p className="mt-1 text-sm text-pizza-muted">{address}</p>
               <a
                 href={`mailto:${settings.contactEmail}`}
                 className="mt-2 inline-block text-sm font-medium text-pizza-ink transition hover:text-brand"
@@ -143,14 +152,72 @@ export default async function ContactsPage({ params }: PageProps) {
             </Card>
           </div>
 
-          {/* Map */}
+          {/* Merchant + complaints — the seller's identity and the channel
+              for cancellations, complaints and refunds (UBB-02, UBB-04). */}
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            <Card className="rounded-3xl" id="merchant">
+              <h2 className="font-display text-xl font-semibold text-pizza-ink">
+                {t("merchantTitle")}
+              </h2>
+              <p className="mt-3 font-semibold text-pizza-ink">{company.legalName}</p>
+              <dl className="mt-2 grid gap-x-4 gap-y-1 text-sm text-pizza-muted sm:grid-cols-[auto_1fr]">
+                <dt className="font-medium text-pizza-ink">{tLegal("uic")}</dt>
+                <dd>{company.uic}</dd>
+                <dt className="font-medium text-pizza-ink">{tLegal("vatNumber")}</dt>
+                <dd>{company.vatNumber}</dd>
+                <dt className="font-medium text-pizza-ink">{tLegal("registeredAddress")}</dt>
+                <dd>{company.registeredAddress}</dd>
+                <dt className="font-medium text-pizza-ink">{tLegal("correspondenceAddress")}</dt>
+                <dd>{company.correspondenceAddress}</dd>
+              </dl>
+            </Card>
+            <Card className="rounded-3xl" id="complaints">
+              <h2 className="font-display text-xl font-semibold text-pizza-ink">
+                {t("complaintsTitle")}
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-pizza-muted">
+                {t.rich("complaintsText", {
+                  link: (chunks) => (
+                    <Link href="/refunds" className="font-semibold text-pizza-green underline">
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </p>
+              <ul className="mt-3 space-y-1 text-sm">
+                {phones.map((p) => (
+                  <li key={p}>
+                    <a href={telHref(p)} className="font-medium text-pizza-ink underline transition hover:text-brand">
+                      {p}
+                    </a>
+                  </li>
+                ))}
+                <li>
+                  <a
+                    href={`mailto:${settings.contactEmail}`}
+                    className="break-all font-medium text-pizza-ink underline transition hover:text-brand"
+                  >
+                    {settings.contactEmail}
+                  </a>
+                </li>
+              </ul>
+            </Card>
+          </div>
+
+          {/* Map — loaded from Google only on request (no third-party request
+              or cookie before the click). */}
           <div className="mt-10 overflow-hidden rounded-3xl border border-pizza-cream-dark shadow-card">
-            <iframe
+            <ClickToLoadMap
               title={t("mapTitle", { name: SITE.name })}
               src={`https://www.google.com/maps?q=${mapsQuery}&output=embed`}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="h-[380px] w-full border-0"
+              buttonLabel={t("showMap")}
+              notice={t.rich("mapNotice", {
+                link: (chunks) => (
+                  <Link href="/cookies" className="underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}
             />
           </div>
 

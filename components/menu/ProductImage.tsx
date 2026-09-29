@@ -52,8 +52,16 @@ export function ProductImage({
     );
   }
 
+  // The bundled placeholders are drawings, not photos of the dish — say so.
+  const illustrative = src.startsWith("/images/products/placeholder");
+
   return (
     <div className="relative h-full w-full">
+      {illustrative && (
+        <span className="absolute bottom-2 left-2 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-medium text-pizza-muted shadow-sm">
+          {t("illustrativeImage")}
+        </span>
+      )}
       <Image
         src={src}
         alt={alt}

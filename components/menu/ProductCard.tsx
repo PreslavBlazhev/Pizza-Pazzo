@@ -10,7 +10,9 @@ import { ProductImageLink } from "./ProductImageLink";
 export function ProductCard({ product }: { product: Product }) {
   const t = useTranslations("product");
   const tAllergens = useTranslations("allergens");
-  const allergens = orderedAllergens(product.allergens);
+  // Unconfirmed lists are provisional developer estimates — never shown as
+  // fact; the "being confirmed, ask the staff" note is shown instead (UBB-05).
+  const allergens = product.allergensUnverified ? [] : orderedAllergens(product.allergens);
   const unavailable = !product.isAvailable;
 
   return (

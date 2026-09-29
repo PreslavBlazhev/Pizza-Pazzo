@@ -18,7 +18,9 @@ interface ProductDetailsProps {
 export function ProductDetails({ product, category, extras = null }: ProductDetailsProps) {
   const t = useTranslations("product");
   const tAllergens = useTranslations("allergens");
-  const allergens = orderedAllergens(product.allergens);
+  // Unconfirmed lists are provisional developer estimates — never shown as
+  // fact; the "being confirmed, ask the staff" note is shown instead (UBB-05).
+  const allergens = product.allergensUnverified ? [] : orderedAllergens(product.allergens);
 
   return (
     <div className="grid gap-10 md:grid-cols-2">

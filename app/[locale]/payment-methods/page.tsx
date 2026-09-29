@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHero } from "@/components/ui/PageHero";
 import { LegalArticle } from "@/components/legal/LegalArticle";
-import { deliveryDoc } from "@/content/legal/delivery";
+import { paymentDoc } from "@/content/legal/payment";
 import { routing, type Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -23,12 +23,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const t = await getTranslations({ locale, namespace: "legal" });
   const tMeta = await getTranslations({ locale, namespace: "meta.legal" });
   return {
-    title: t("delivery"), description: tMeta("delivery.description"),
-    alternates: pageAlternates("/delivery", locale),
+    title: t("payment"), description: tMeta("payment.description"),
+    alternates: pageAlternates("/payment-methods", locale),
   };
 }
 
-export default function DeliveryTermsPage({ params }: PageProps) {
+export default function PaymentPage({ params }: PageProps) {
   const { locale } = use(params);
   setRequestLocale(locale);
   const t = useTranslations("legal");
@@ -37,9 +37,9 @@ export default function DeliveryTermsPage({ params }: PageProps) {
     <>
       <Header />
       <main>
-        <PageHero eyebrow={t("eyebrow")} title={t("delivery")} />
+        <PageHero eyebrow={t("eyebrow")} title={t("payment")} />
         <div className="container pb-24 pt-10">
-          <LegalArticle doc={deliveryDoc} locale={locale} />
+          <LegalArticle doc={paymentDoc} locale={locale} />
         </div>
       </main>
       <Footer />

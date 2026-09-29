@@ -20,6 +20,7 @@ import type { LegalDoc } from "./types";
  */
 export const appPrivacyDoc: LegalDoc = {
   slug: "app-privacy",
+  version: "2026-08-24",
   updated: "24.08.2026",
   showCompanyBox: true,
   intro: [
@@ -31,8 +32,8 @@ export const appPrivacyDoc: LegalDoc = {
     },
     {
       p: {
-        bg: "Администратор на личните данни е Pizza Pazzo LTD (данните за контакт са по-долу). Данните, обработвани през сайта, са описани и в общата Политика за поверителност.",
-        en: "The data controller is Pizza Pazzo LTD (contact details below). Data processed through the website is also described in our general Privacy Policy.",
+        bg: "Администратор на личните данни е „ПИЦА ПАЦО“ ЕООД, ЕИК 203300275 (данните за контакт са по-долу). Данните, обработвани през сайта, са описани и в общата Политика за поверителност.",
+        en: "The data controller is PIZZA PAZZO LTD, UIC 203300275 (contact details below). Data processed through the website is also described in our general Privacy Policy.",
       },
     },
   ],
@@ -51,8 +52,8 @@ export const appPrivacyDoc: LegalDoc = {
         },
         {
           p: {
-            bg: "Това обаче не значи, че през приложението не минават лични данни. Когато поръчвате или се регистрирате в него, въведеното се обработва от Pizza Pazzo LTD по същия начин, както ако бяхте отворили сайта в браузър. Затова изброяваме и него — приложението е каналът, през който минава:",
-            en: "That does not mean no personal data passes through the app, though. When you order or register in it, what you enter is processed by Pizza Pazzo LTD exactly as if you had opened the site in a browser. So it is listed here too — the app is the channel it travels through:",
+            bg: "Това обаче не значи, че през приложението не минават лични данни. Когато поръчвате или се регистрирате в него, въведеното се обработва от „ПИЦА ПАЦО“ ЕООД по същия начин, както ако бяхте отворили сайта в браузър. Затова изброяваме и него — приложението е каналът, през който минава:",
+            en: "That does not mean no personal data passes through the app, though. When you order or register in it, what you enter is processed by PIZZA PAZZO LTD exactly as if you had opened the site in a browser. So it is listed here too — the app is the channel it travels through:",
           },
         },
         {

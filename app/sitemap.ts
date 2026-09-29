@@ -50,6 +50,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/gallery", 0.6],
     ["/reviews", 0.6],
     ["/contacts", 0.7],
+    // The merchant's legal information — public and meant to be found.
+    ["/terms", 0.3],
+    ["/refunds", 0.3],
+    ["/delivery", 0.3],
+    ["/payment-methods", 0.3],
+    ["/privacy", 0.3],
+    ["/cookies", 0.2],
   ];
 
   // Slugs come from the JSON SEED, not the DB: the sitemap is prerendered at
