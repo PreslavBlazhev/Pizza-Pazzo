@@ -120,6 +120,7 @@ async function main() {
       await page.goto(`${BASE}/contacts`);
       const main = await page.locator("main").innerText();
       check(main.includes("203300275") && main.includes("BG203300275"), "contacts: ЕИК and ДДС № shown");
+      check(main.includes("152700478") && main.includes("101-7892/16.04.2015"), "contacts: BFSA registration shown");
       check(main.includes("Димитър Константинов") && main.includes("Георги Кочев"), "contacts: seat and restaurant addresses kept apart");
       const tel = await page.locator('a[href^="tel:"]').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
       const mail = await page.locator('a[href^="mailto:"]').count();

@@ -46,15 +46,19 @@ export const COMPANY = {
   } satisfies L,
   website: "pizzapazzo.bg",
   /**
-   * Registration of the food business (обект за търговия с храни) with the
-   * Bulgarian Food Safety Agency (БАБХ), Art. 24 of the Food Act.
-   *
-   * ⚠️ NOT YET PROVIDED by the owner — see docs/UBB-BUSINESS-DATA.md. While
-   * null, nothing is printed; never fill it with a guessed number. When the
-   * certificate arrives, set e.g.
-   *   { number: "…", authority: { bg: "ОДБХ – Плевен", en: "RFSD Pleven" } }
+   * Registration of the food business with the Bulgarian Food Safety Agency
+   * (БАБХ), Art. 24 of the Food Act — verified 2026-09-30 in BFSA's public
+   * "Регистър на обекти за обществено хранене (ОХ)" (public-iisr.bfsa.bg,
+   * report register_4_2, ЕИК 203300275): рег. № 152700478, удостоверение
+   * № 101-7892/16.04.2015, „Пицария с доставка по домовете“, бул. „Георги
+   * Кочев“ № 13, Плевен, status Активен, ОДБХ Плевен. Evidence:
+   * docs/ubb-evidence/registry/.
    */
-  foodRegistration: null as null | { number: string; authority: L },
+  foodRegistration: {
+    number: "152700478",
+    certificate: "101-7892/16.04.2015",
+    authority: { bg: "ОДБХ – Плевен", en: "RFSD Pleven (BFSA)" },
+  } as null | { number: string; certificate: string; authority: L },
 } as const;
 
 /** Plain strings of the merchant identity for one locale. */
@@ -71,6 +75,7 @@ export function companyFor(locale: string) {
     foodRegistration: COMPANY.foodRegistration
       ? {
           number: COMPANY.foodRegistration.number,
+          certificate: COMPANY.foodRegistration.certificate,
           authority: pick(COMPANY.foodRegistration.authority),
         }
       : null,

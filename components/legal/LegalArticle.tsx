@@ -158,7 +158,11 @@ async function MerchantDetails({
           <>
             <dt className="font-medium text-pizza-ink">{t("foodRegistration")}</dt>
             <dd>
-              {company.foodRegistration.number} ({company.foodRegistration.authority})
+              {t("foodRegistrationValue", {
+                number: company.foodRegistration.number,
+                certificate: company.foodRegistration.certificate,
+                authority: company.foodRegistration.authority,
+              })}
             </dd>
           </>
         )}

@@ -1,5 +1,5 @@
 /**
- * Proves the 2026-09-29 migration (checkout consents + phone fix) on a COPY
+ * Proves the 2026-09-29/30 migrations (checkout consents, phone and address fixes) on a COPY
  * of a database that already holds representative old orders — no data is
  * lost and no historical consent is invented.
  *
@@ -42,7 +42,7 @@ try {
   cpSync(join(root, "prisma", "schema.prisma"), join(schemaDir, "schema.prisma"));
   const all = readdirSync(join(root, "prisma", "migrations"));
   for (const name of all) {
-    if (name === NEW_MIGRATION) continue;
+    if (name >= NEW_MIGRATION) continue; // this migration and everything after it
     cpSync(join(root, "prisma", "migrations", name), join(schemaDir, "migrations", name), { recursive: true });
   }
   deploy();
@@ -50,6 +50,10 @@ try {
   // ── 2. Representative legacy data, written with raw SQL (the old columns) ──
   const db = new PrismaClient({ datasources: { db: { url } } });
   await db.$executeRawUnsafe(`UPDATE "RestaurantSettings" SET "secondaryPhone" = '+359 801 999'`);
+  // The address as the site shipped it (corrected by 20260930120000).
+  await db.$executeRawUnsafe(
+    `UPDATE "RestaurantSettings" SET "addressBg" = 'Плевен, ул. Георги Кочев 13 (Срещу Технополис)', "addressEn" = '13 Georgi Kochev St., Pleven (opposite Technopolis)'`
+  );
   const legacy = [
     [1001, "CASH_ON_DELIVERY", "CASH_DUE", "DELIVERED", 21.4, null],
     [1002, "CARD_ONLINE", "PAID", "DELIVERED", 13.45, null],
@@ -78,7 +82,9 @@ try {
   await db.$disconnect();
 
   // ── 3. The new migration ──
-  cpSync(join(root, "prisma", "migrations", NEW_MIGRATION), join(schemaDir, "migrations", NEW_MIGRATION), { recursive: true });
+  for (const name of all.filter((n) => n >= NEW_MIGRATION && n !== "migration_lock.toml")) {
+    cpSync(join(root, "prisma", "migrations", name), join(schemaDir, "migrations", name), { recursive: true });
+  }
   deploy();
 
   // ── 4. Checks ──
@@ -102,6 +108,7 @@ try {
   check("old orders still read through Prisma (with items)", orders.length === before.length && orders.every((o) => o.items.length === 1));
   const s = await db2.restaurantSettings.findUniqueOrThrow({ where: { id: "restaurant" } });
   check("broken phone '+359 801 999' corrected to '+359 64 801 999'", s.secondaryPhone === "+359 64 801 999");
+  check("restaurant address corrected to бул. „Георги Кочев“ 13 (BG + EN)", s.addressBg === "Плевен, бул. „Георги Кочев“ 13 (срещу Технополис)" && s.addressEn === "13 Georgi Kochev Blvd., Pleven (opposite Technopolis)");
   await db2.$executeRawUnsafe(`UPDATE "RestaurantSettings" SET "secondaryPhone" = '+359 88 000 0000'`);
   // Re-run the migration's UPDATE on an owner-edited value: it must not match.
   const sql = readFileSync(join(root, "prisma", "migrations", NEW_MIGRATION, "migration.sql"), "utf8");

@@ -30,12 +30,13 @@ export const SITE = {
   phone: "+359 88 248 4777",
   email: "pr2.blazhev@gmail.com",
   /** Full display address (BG) as shown to visitors. Updated 2026-07. */
-  address: "Плевен, ул. Георги Кочев 13 (Срещу Технополис)",
+  // "бул.", as the BFSA register and the owner's own site write it (2026-09-30).
+  address: "Плевен, бул. „Георги Кочев“ 13 (срещу Технополис)",
   /** Full display address for the English pages. */
-  addressEn: "13 Georgi Kochev St., Pleven (opposite Technopolis)",
+  addressEn: "13 Georgi Kochev Blvd., Pleven (opposite Technopolis)",
   /** Street only — for schema.org streetAddress and Maps queries, where the
    *  "(Срещу Технополис)" landmark hint would just add noise. */
-  streetAddress: "ул. Георги Кочев 13",
+  streetAddress: "бул. „Георги Кочев“ 13",
   city: "Плевен",
   cityEn: "Pleven",
   website: "pizzapazzo.bg",

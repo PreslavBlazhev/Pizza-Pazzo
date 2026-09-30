@@ -218,7 +218,8 @@
     "formSignature": "Signature of consumer(s) (only if this form is notified on paper): …",
     "formDate": "Date: …",
     "formStrike": "(*) Delete as appropriate.",
-    "contacts": "Contact"
+    "contacts": "Contact",
+    "foodRegistrationValue": "reg. No. {number}, certificate No. {certificate}, {authority}"
   },
   "menu": {
     "hero": {

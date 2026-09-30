@@ -198,7 +198,11 @@ test("UBB-02: the merchant identity matches the Commercial Register / VIES recor
   assert.equal(companyFor("bg").legalName, "„ПИЦА ПАЦО“ ЕООД");
   assert.equal(companyFor("en").legalName, "PIZZA PAZZO LTD");
   assert.match(companyFor("bg").registeredAddress, /Димитър Константинов“ № 37, ет\. 4, ап\. 5/);
-  assert.equal(COMPANY.foodRegistration, null, "never a guessed registration number");
+  // UBB-15: exactly the BFSA register entry (public-iisr.bfsa.bg, register 4-2).
+  assert.deepEqual(COMPANY.foodRegistration && {
+    number: COMPANY.foodRegistration.number,
+    certificate: COMPANY.foodRegistration.certificate,
+  }, { number: "152700478", certificate: "101-7892/16.04.2015" });
 });
 
 // ── Legal documents: versioned, anchored, linkable ───────────────────────

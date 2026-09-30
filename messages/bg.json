@@ -218,7 +218,8 @@
     "formSignature": "Подпис на потребителя/ите (само ако формулярът е на хартия): …",
     "formDate": "Дата: …",
     "formStrike": "(*) Ненужното се зачертава.",
-    "contacts": "Контакти"
+    "contacts": "Контакти",
+    "foodRegistrationValue": "рег. № {number}, удостоверение № {certificate}, {authority}"
   },
   "menu": {
     "hero": {

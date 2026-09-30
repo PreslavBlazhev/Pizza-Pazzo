@@ -108,6 +108,7 @@
   ✓ desktop en /contacts: no raw i18n key
   ✓ desktop en /contacts: no horizontal overflow
   ✓ contacts: ЕИК and ДДС № shown
+  ✓ contacts: BFSA registration shown
   ✓ contacts: seat and restaurant addresses kept apart
   ✓ contacts: both phones dialable (tel:)
   ✓ contacts: e-mail is a mailto: link

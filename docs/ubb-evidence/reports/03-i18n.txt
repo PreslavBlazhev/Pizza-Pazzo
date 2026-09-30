@@ -1,1 +1,1 @@
-i18n OK — 630 keys, locales in sync: bg, en
+i18n OK — 631 keys, locales in sync: bg, en

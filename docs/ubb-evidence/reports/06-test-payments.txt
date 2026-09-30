@@ -2,12 +2,12 @@ TAP version 13
 # Subtest: cash on delivery: priced on the server, straight to the kitchen, one e-mail
 ok 1 - cash on delivery: priced on the server, straight to the kitchen, one e-mail
   ---
-  duration_ms: 80.1273
+  duration_ms: 55.2836
   ...
 # Subtest: the browser cannot change prices, fees, the method or the status
 ok 2 - the browser cannot change prices, fees, the method or the status
   ---
-  duration_ms: 6.4018
+  duration_ms: 5.2589
   ...
 # prisma:error 
 # Invalid `tx.order.create()` invocation in
@@ -44,7 +44,7 @@ ok 2 - the browser cannot change prices, fees, the method or the status
 # Subtest: double click / repeated request: one checkout key, one order
 ok 3 - double click / repeated request: one checkout key, one order
   ---
-  duration_ms: 90.9179
+  duration_ms: 72.8929
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
@@ -53,272 +53,272 @@ ok 3 - double click / repeated request: one checkout key, one order
 # Subtest: concurrent checkouts with different keys get different order numbers
 ok 4 - concurrent checkouts with different keys get different order numbers
   ---
-  duration_ms: 168.7323
+  duration_ms: 89.2486
   ...
 # Subtest: card order starts unpaid, test-flagged and hidden from the kitchen, no e-mail
 ok 5 - card order starts unpaid, test-flagged and hidden from the kitchen, no e-mail
   ---
-  duration_ms: 15.8824
+  duration_ms: 11.2482
   ...
 # Subtest: card payment is refused when the switch is off — the order is not even created
 ok 6 - card payment is refused when the switch is off — the order is not even created
   ---
-  duration_ms: 12.4871
+  duration_ms: 10.0218
   ...
-# [payments] PP1008-921F3A1D → hosted page (SIMULATOR/simulator)
+# [payments] PP1008-187954B5 → hosted page (SIMULATOR/simulator)
 # Subtest: the amount sent to the provider is the stored order total, in cents
 ok 7 - the amount sent to the provider is the stored order total, in cents
   ---
-  duration_ms: 41.4998
+  duration_ms: 37.0921
   ...
-# [payments] PP1009-B02FED1C → hosted page (SIMULATOR/simulator)
+# [payments] PP1009-EBF430CF → hosted page (SIMULATOR/simulator)
 # Subtest: double click on 'Pay': one provider session, every click to the same page
 ok 8 - double click on 'Pay': one provider session, every click to the same page
   ---
-  duration_ms: 105.2773
+  duration_ms: 281.0783
   ...
-# [payments] PP1010-A18EEB06 → hosted page (SIMULATOR/simulator)
+# [payments] PP1010-96C1E8EF → hosted page (SIMULATOR/simulator)
 # Subtest: successful card payment: PAID, to the kitchen once, one e-mail — despite repeats
 ok 9 - successful card payment: PAID, to the kitchen once, one e-mail — despite repeats
   ---
-  duration_ms: 216.4985
+  duration_ms: 192.5777
   ...
-# [payments] PP1011-84D364DF → hosted page (SIMULATOR/simulator)
+# [payments] PP1011-66B983F0 → hosted page (SIMULATOR/simulator)
 # Subtest: opening the success URL without paying proves nothing
 ok 10 - opening the success URL without paying proves nothing
   ---
-  duration_ms: 66.6543
+  duration_ms: 53.3407
   ...
-# [payments] PP1012-6537080F → hosted page (SIMULATOR/simulator)
+# [payments] PP1012-A5A58F72 → hosted page (SIMULATOR/simulator)
 # [payments] rejected unauthenticated simulator callback
 # [payments] simulator callback for an unknown attempt — ignored
 # Subtest: a forged callback is rejected and marks nothing
 ok 11 - a forged callback is rejected and marks nothing
   ---
-  duration_ms: 48.3166
+  duration_ms: 41.4799
   ...
-# [payments] PP1013-4C634BE4 → hosted page (SIMULATOR/simulator)
-# [payments] PP1013-1CA8A0CD → hosted page (SIMULATOR/simulator)
+# [payments] PP1013-79BAD2C4 → hosted page (SIMULATOR/simulator)
+# [payments] PP1013-C0A1781A → hosted page (SIMULATOR/simulator)
 # Subtest: declined card: FAILED, never reaches the kitchen; retry pays the SAME order
 ok 12 - declined card: FAILED, never reaches the kitchen; retry pays the SAME order
   ---
-  duration_ms: 127.2949
+  duration_ms: 103.5557
   ...
-# [payments] PP1014-D8B34661 → hosted page (SIMULATOR/simulator)
+# [payments] PP1014-98DD389D → hosted page (SIMULATOR/simulator)
 # Subtest: customer cancels on the bank page: CANCELLED, not in the kitchen
 ok 13 - customer cancels on the bank page: CANCELLED, not in the kitchen
   ---
-  duration_ms: 66.9037
+  duration_ms: 52.2406
   ...
-# [payments] PP1015-44EEE0C9 → hosted page (SIMULATOR/simulator)
+# [payments] PP1015-CA8ECAB6 → hosted page (SIMULATOR/simulator)
 # Subtest: pending: stays out of the kitchen; 'Pay' reuses the open session
 ok 14 - pending: stays out of the kitchen; 'Pay' reuses the open session
   ---
-  duration_ms: 64.2796
+  duration_ms: 54.6442
   ...
-# [payments] PP1016-D7D43BA3 → hosted page (SIMULATOR/simulator)
+# [payments] PP1016-DA486898 → hosted page (SIMULATOR/simulator)
 # Subtest: late confirmation: pending first, PAID later — released once
 ok 15 - late confirmation: pending first, PAID later — released once
   ---
-  duration_ms: 95.2273
+  duration_ms: 83.2699
   ...
-# [payments] PP1017-402C06F0 → hosted page (SIMULATOR/simulator)
+# [payments] PP1017-9C0F2331 → hosted page (SIMULATOR/simulator)
 # Subtest: looked declined, bank confirms later: PAID, released, flagged for the staff
 ok 16 - looked declined, bank confirms later: PAID, released, flagged for the staff
   ---
-  duration_ms: 94.7412
+  duration_ms: 89.0116
   ...
-# [payments] PP1018-3DFD6D11 → hosted page (SIMULATOR/simulator)
+# [payments] PP1018-A20E6070 → hosted page (SIMULATOR/simulator)
 # Subtest: provider timeout: nothing changes, no failure is invented; later answer wins
 ok 17 - provider timeout: nothing changes, no failure is invented; later answer wins
   ---
-  duration_ms: 84.2723
+  duration_ms: 74.4253
   ...
-# [payments] PP1019-572D2BEE → hosted page (SIMULATOR/simulator)
+# [payments] PP1019-516EED75 → hosted page (SIMULATOR/simulator)
 # Subtest: different amount confirmed: not released, flagged AMOUNT_MISMATCH
 ok 18 - different amount confirmed: not released, flagged AMOUNT_MISMATCH
   ---
-  duration_ms: 57.5739
+  duration_ms: 56.0112
   ...
-# [payments] PP1020-027F1668 → hosted page (SIMULATOR/simulator)
+# [payments] PP1020-CBE1D939 → hosted page (SIMULATOR/simulator)
 # Subtest: two successful attempts on one order: kept, flagged DUPLICATE_PAYMENT, kitchen once
 ok 19 - two successful attempts on one order: kept, flagged DUPLICATE_PAYMENT, kitchen once
   ---
-  duration_ms: 93.9376
+  duration_ms: 76.6138
   ...
-# [payments] PP1021-D3C8E29C → hosted page (SIMULATOR/simulator)
+# [payments] PP1021-EE3C41DA → hosted page (SIMULATOR/simulator)
 # Subtest: payment confirmed after the staff cancelled the order: never cooked, flagged
 ok 20 - payment confirmed after the staff cancelled the order: never cooked, flagged
   ---
-  duration_ms: 70.0533
+  duration_ms: 58.5667
   ...
-# [payments] PP1022-8CE06AD4 → hosted page (SIMULATOR/simulator)
+# [payments] PP1022-F0CABAA1 → hosted page (SIMULATOR/simulator)
 # Subtest: app restarted between redirect and return: the callback alone completes the order
 ok 21 - app restarted between redirect and return: the callback alone completes the order
   ---
-  duration_ms: 80.2614
+  duration_ms: 66.6098
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1023
-# [payments] PP1024-E5CCCD2C → hosted page (SIMULATOR/simulator)
+# [payments] PP1024-0DC54321 → hosted page (SIMULATOR/simulator)
 # Subtest: reports: test and unpaid card orders are not revenue; cash and card are split
 ok 22 - reports: test and unpaid card orders are not revenue; cash and card are split
   ---
-  duration_ms: 116.7572
+  duration_ms: 104.835
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1025
 # Subtest: a failed restaurant e-mail is recorded as FAILED, retried later, and sent once
 ok 23 - a failed restaurant e-mail is recorded as FAILED, retried later, and sent once
   ---
-  duration_ms: 159.7579
+  duration_ms: 142.9134
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1026
 # Subtest: retries stop after the attempt limit; a human sees FAILED in the admin
 ok 24 - retries stop after the attempt limit; a human sees FAILED in the admin
   ---
-  duration_ms: 31.7607
+  duration_ms: 23.9876
   ...
-# [payments] PP1027-ADDF844B → hosted page (SIMULATOR/simulator)
+# [payments] PP1027-A5F62D8B → hosted page (SIMULATOR/simulator)
 # Subtest: test (simulator) orders never reach the restaurant inbox
 ok 25 - test (simulator) orders never reach the restaurant inbox
   ---
-  duration_ms: 74.5737
+  duration_ms: 63.3349
   ...
 # Subtest: demo: production refuses the env simulator, the demo switch decides who sees the card
 ok 26 - demo: production refuses the env simulator, the demo switch decides who sees the card
   ---
-  duration_ms: 22.8673
+  duration_ms: 21.4112
   ...
-# [payments] PP1028-AC4112FD → hosted page (SIMULATOR/simulator)
+# [payments] PP1028-ED591591 → hosted page (SIMULATOR/simulator)
 # Subtest: demo: an admin pays with the test card on production — PAID, test order, never e-mailed
 ok 27 - demo: an admin pays with the test card on production — PAID, test order, never e-mailed
   ---
-  duration_ms: 101.3804
+  duration_ms: 89.2903
   ...
 # Subtest: demo EVERYONE on production: a guest's crafted card order is refused
 ok 28 - demo EVERYONE on production: a guest's crafted card order is refused
   ---
-  duration_ms: 10.1858
+  duration_ms: 8.3436
   ...
-# [payments] PP1030-43763029 → hosted page (SIMULATOR/simulator)
+# [payments] PP1030-39FAEF85 → hosted page (SIMULATOR/simulator)
 # Subtest: demo EVERYONE on staging: a guest with no account pays with the test card
 ok 29 - demo EVERYONE on staging: a guest with no account pays with the test card
   ---
-  duration_ms: 90.2044
+  duration_ms: 72.7636
   ...
 # Subtest: money: euros become exact integer cents, float noise included
 ok 30 - money: euros become exact integer cents, float noise included
   ---
-  duration_ms: 2.2623
+  duration_ms: 1.4899
   ...
 # Subtest: money: unreadable or negative amounts are refused
 ok 31 - money: unreadable or negative amounts are refused
   ---
-  duration_ms: 7.4353
+  duration_ms: 5.6739
   ...
 # Subtest: config: card payments are OFF by default
 ok 32 - config: card payments are OFF by default
   ---
-  duration_ms: 0.5539
+  duration_ms: 0.4072
   ...
 # Subtest: config: the kill switch turns card payments off whatever else is set
 ok 33 - config: the kill switch turns card payments off whatever else is set
   ---
-  duration_ms: 0.2617
+  duration_ms: 0.1818
   ...
 # Subtest: config: the simulator runs on staging and development
 ok 34 - config: the simulator runs on staging and development
   ---
-  duration_ms: 0.2839
+  duration_ms: 0.1982
   ...
 # Subtest: config: the simulator can NEVER run in production
 ok 35 - config: the simulator can NEVER run in production
   ---
-  duration_ms: 0.2022
+  duration_ms: 0.1419
   ...
 # Subtest: config: the simulator refuses to run without its signing secret
 ok 36 - config: the simulator refuses to run without its signing secret
   ---
-  duration_ms: 0.2775
+  duration_ms: 0.1929
   ...
 # Subtest: config: a bank sandbox cannot run in production, bank production only in production
 ok 37 - config: a bank sandbox cannot run in production, bank production only in production
   ---
-  duration_ms: 0.595
+  duration_ms: 0.3581
   ...
 # Subtest: config: a real provider's currency is never assumed, and must be EUR
 ok 38 - config: a real provider's currency is never assumed, and must be EUR
   ---
-  duration_ms: 0.4912
+  duration_ms: 0.2729
   ...
 # Subtest: config: HTTPS is required outside development
 ok 39 - config: HTTPS is required outside development
   ---
-  duration_ms: 0.5131
+  duration_ms: 0.2889
   ...
 # Subtest: config: the bank adapter stays off until it is really implemented
 ok 40 - config: the bank adapter stays off until it is really implemented
   ---
-  duration_ms: 0.4804
+  duration_ms: 0.3036
   ...
 # Subtest: base URL: one variable, normalised, NEXT_PUBLIC_SITE_URL as fallback
 ok 41 - base URL: one variable, normalised, NEXT_PUBLIC_SITE_URL as fallback
   ---
-  duration_ms: 0.4899
+  duration_ms: 0.279
   ...
 # Subtest: status: the kitchen may not accept an unconfirmed card order, only cancel it
 ok 42 - status: the kitchen may not accept an unconfirmed card order, only cancel it
   ---
-  duration_ms: 0.2647
+  duration_ms: 0.1571
   ...
 # Subtest: status: the ticket tells the driver whether to collect money
 ok 43 - status: the ticket tells the driver whether to collect money
   ---
-  duration_ms: 0.2947
+  duration_ms: 0.1974
   ...
 # Subtest: status: order payment status follows the attempt outcome
 ok 44 - status: order payment status follows the attempt outcome
   ---
-  duration_ms: 0.1711
+  duration_ms: 0.1159
   ...
 # Subtest: status: what the customer sees never says paid unless the order is PAID
 ok 45 - status: what the customer sees never says paid unless the order is PAID
   ---
-  duration_ms: 0.2588
+  duration_ms: 0.197
   ...
 # Subtest: simulator: an untouched hosted page expires like a bank session
 ok 46 - simulator: an untouched hosted page expires like a bank session
   ---
-  duration_ms: 0.2361
+  duration_ms: 0.1385
   ...
 # Subtest: cart payload: any price, fee or status field is rejected outright
 ok 47 - cart payload: any price, fee or status field is rejected outright
   ---
-  duration_ms: 4.569
+  duration_ms: 3.0722
   ...
 # Subtest: i18n: every payment screen text exists in Bulgarian AND English
 ok 48 - i18n: every payment screen text exists in Bulgarian AND English
   ---
-  duration_ms: 5.2261
+  duration_ms: 2.6017
   ...
 # Subtest: demo cards: only the simulator's test numbers are accepted
 ok 49 - demo cards: only the simulator's test numbers are accepted
   ---
-  duration_ms: 2.4941
+  duration_ms: 1.8294
   ...
 # Subtest: demo cards: expiry and CVC are validated like a real form
 ok 50 - demo cards: expiry and CVC are validated like a real form
   ---
-  duration_ms: 0.6084
+  duration_ms: 1.0104
   ...
 # Subtest: e-mail: staging never delivers; EMAIL_DELIVERY=disabled switches it off anywhere
 ok 51 - e-mail: staging never delivers; EMAIL_DELIVERY=disabled switches it off anywhere
   ---
-  duration_ms: 0.2327
+  duration_ms: 0.1763
   ...
 # Subtest: base URL: staging may fall back to Render's own address, production never
 ok 52 - base URL: staging may fall back to Render's own address, production never
   ---
-  duration_ms: 0.2262
+  duration_ms: 0.1708
   ...
 1..52
 # tests 52
@@ -328,4 +328,4 @@ ok 52 - base URL: staging may fall back to Render's own address, production neve
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 9739.7701
+# duration_ms 11225.7457

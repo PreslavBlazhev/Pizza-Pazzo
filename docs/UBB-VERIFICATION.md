@@ -1,6 +1,6 @@
 # Проверки и доказателства — ОББ изисквания
 
-Изпълнено на **29.09.2026**, Windows 11, Node 21.5.0 (проектът иска 22 —
+Изпълнено на **29.09.2026**, повторено на **30.09.2026** след попълване на регистрацията в БАБХ, Windows 11, Node 21.5.0 (проектът иска 22 —
 npm предупреждава, без ефект), Next.js 15.5.20, Prisma 5.22, Chrome
 (инсталиран) през playwright-core. Всички отчети:
 `docs/ubb-evidence/reports/`, screenshots: `docs/ubb-evidence/screenshots/`
@@ -27,19 +27,20 @@ npm предупреждава, без ефект), Next.js 15.5.20, Prisma 5.22
 |---|---|---|---|
 | 1 | `npm run type-check` | OK, 0 грешки | `01-type-check.txt` |
 | 2 | `npm run lint` | OK, 0 грешки/предупреждения | `02-lint.txt` |
-| 3 | `npm run check:i18n` | 630 ключа, BG/EN в синхрон | `03-i18n.txt` |
+| 3 | `npm run check:i18n` | 631 ключа, BG/EN в синхрон | `03-i18n.txt` |
 | 4 | `npx prisma validate` + `migrate diff` | валидна; миграции == схема | `04-prisma.txt` |
 | 5 | `npm run smoke` | SMOKE OK | `05-smoke.txt` |
 | 6 | `npm run test:payments` | 52/52 pass | `06-test-payments.txt` |
 | 7 | `npm run test:ubb` | 18/18 pass | `07-test-ubb.txt` |
-| 8 | `npm run db:verify-migration` | 8/8 ✓ (копие с 5 стари поръчки) | `08-migration.txt` |
+| 8 | `npm run db:verify-migration` | 9/9 ✓ (копие с 5 стари поръчки) | `08-migration.txt` |
 | 9 | `npm run build` | OK, 86 страници; 2 стари предупреждения от `jose` в Edge | `09-build.txt` |
 | 10 | `npm run e2e:prod-guard` (local production build, съхранен демо режим EVERYONE) | 9/9 ✓ | `10-production-guard.txt` |
-| 11 | `npm run e2e:ubb` (browser, dev сървър без Resend) | 180 ✓, 0 ✗ | `11-e2e-ubb-browser.txt` |
+| 11 | `npm run e2e:ubb` (browser, dev сървър без Resend) | 181 ✓, 0 ✗ | `11-e2e-ubb-browser.txt` |
 | 12 | `npm run e2e:payments` (HTTP, **mock**) | E2E OK | `12-e2e-payments-http-mock.txt` |
 | 13 | `npm run e2e:browser` (browser, **mock**) | BROWSER E2E OK | `13-e2e-payments-browser-mock.txt` |
 | 14 | `npm run e2e:alarm` (кухненско табло, browser) | E2E OK, 6 сигнала | `14-e2e-kitchen-alarm.txt` |
 | 15 | `npx tsx scripts/preview-accepted-email.ts` | текст на имейла с търговеца и версиите | `15-accepted-email-preview.txt` |
+| 16 | регистър на БАБХ, `rest_v2/reports/public/kh/register_4_2_7692.csv?identifier=203300275` (public read-only) | 1 запис, активен | `registry/bfsa-register-4-2-catering-203300275.csv` |
 
 Не е пускано: Android unit тестовете (Kotlin кодът не е променян);
 реално Android устройство; банков sandbox.

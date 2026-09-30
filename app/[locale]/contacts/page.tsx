@@ -169,6 +169,18 @@ export default async function ContactsPage({ params }: PageProps) {
                 <dd>{company.registeredAddress}</dd>
                 <dt className="font-medium text-pizza-ink">{tLegal("correspondenceAddress")}</dt>
                 <dd>{company.correspondenceAddress}</dd>
+                {company.foodRegistration && (
+                  <>
+                    <dt className="font-medium text-pizza-ink">{tLegal("foodRegistration")}</dt>
+                    <dd>
+                      {tLegal("foodRegistrationValue", {
+                        number: company.foodRegistration.number,
+                        certificate: company.foodRegistration.certificate,
+                        authority: company.foodRegistration.authority,
+                      })}
+                    </dd>
+                  </>
+                )}
               </dl>
             </Card>
             <Card className="rounded-3xl" id="complaints">
