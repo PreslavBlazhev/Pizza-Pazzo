@@ -200,7 +200,7 @@ async function main() {
       await payWithCard(page, "4000 0000 0000 9995", "B");
       await page.waitForURL(/\/payment\/failed/, { timeout: 60_000 });
       const failedText = await page.locator("main").innerText();
-      check(failedText.includes("Плащането не беше извършено") && failedText.includes("Банката отказа"), "failure page with the decline reason");
+      check(failedText.includes("Плащането не е потвърдено") && failedText.includes("Банката отказа"), "failure page with the decline reason");
       await shot(page, "B-05-failed");
       check((await cartCount(page)) > 0, "cart kept after the decline");
       const declined = await db.order.findUniqueOrThrow({ where: { id: order.id } });

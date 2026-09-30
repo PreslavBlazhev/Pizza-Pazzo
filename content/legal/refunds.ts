@@ -171,6 +171,10 @@ export const refundsDoc: LegalDoc = {
               en: "a double payment for the same order — the extra payment;",
             },
             {
+              bg: "сума, изтеглена при плащане, което не е довело до изпълнена поръчка (установено при проверка на транзакцията) — цялата сума;",
+              en: "an amount taken by a payment that did not lead to a fulfilled order (established by checking the transaction) — the whole amount;",
+            },
+            {
               bg: "липсващ продукт или основателна рекламация, когато изберете възстановяване — сумата за съответния продукт (частично възстановяване);",
               en: "a missing product or a justified complaint where you choose a refund — the amount for that product (partial refund);",
             },
@@ -194,8 +198,8 @@ export const refundsDoc: LegalDoc = {
         },
         {
           p: {
-            bg: "Неуспешно плащане: ако банката не е потвърдила плащането, сума не се удържа и няма какво да бъде възстановено. Временно блокирана (неусвоена) сума се освобождава от банката, издала картата.",
-            en: "Failed payment: if the bank did not confirm the payment, nothing is charged and there is nothing to refund. An amount only held (not captured) on the card is released by the issuing bank.",
+            bg: "Непотвърдено плащане: ако банката не е потвърдила плащането, поръчката не се изпълнява. Липсата на потвърждение обаче не доказва, че по картата няма движение. Ако видите блокирана или изтеглена сума, свържете се с нас с номера на поръчката — проверяваме транзакцията в системата на банката. Ако сумата е изтеглена, а поръчката не е изпълнена, я възстановяваме по същата карта (т. 6). Блокирана, но неусвоена сума се освобождава от банката, издала картата, в нейните срокове.",
+            en: "Unconfirmed payment: if the bank has not confirmed the payment, the order is not carried out. A missing confirmation does not, however, prove that nothing moved on the card. If you see an amount held or taken, contact us with the order number — we check the transaction in the bank's system. If the amount was taken and the order not carried out, we refund it to the same card (section 6). An amount only held (not captured) is released by the bank that issued the card, on its own timescale.",
           },
         },
       ],

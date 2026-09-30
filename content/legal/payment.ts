@@ -58,8 +58,8 @@ export const paymentDoc: LegalDoc = {
               en: "You pay, in euro, exactly the order total calculated by our server.",
             },
             {
-              bg: "Поръчката стига до кухнята едва след като банката потвърди плащането директно на нашия сървър. Ако плащането бъде отказано или прекъснато, поръчката не се изпълнява и сума не се удържа — можете да опитате отново или да поръчате с плащане в брой.",
-              en: "The order reaches the kitchen only after the bank confirms the payment directly to our server. If the payment is declined or interrupted, the order is not carried out and nothing is charged — you can try again or order with cash payment.",
+              bg: "Поръчката стига до кухнята едва след като банката потвърди плащането директно на нашия сървър. Ако плащането бъде отказано, прекъснато или не бъде потвърдено, поръчката не се изпълнява — можете да опитате отново или да поръчате с плащане в брой. Ако видите блокирана или изтеглена сума без потвърдена поръчка, не плащайте повторно, а се свържете с нас: проверяваме транзакцията при банката.",
+              en: "The order reaches the kitchen only after the bank confirms the payment directly to our server. If the payment is declined, interrupted or not confirmed, the order is not carried out — you can try again or order with cash payment. If you see an amount held or taken without a confirmed order, do not pay again; contact us and we will check the transaction with the bank.",
             },
             {
               bg: "Възстановяване на сума, платена с карта, става само по същата карта — вижте „Отказ, връщане и рекламации“.",

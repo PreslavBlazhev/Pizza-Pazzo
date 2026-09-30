@@ -237,4 +237,11 @@ test("the texts never promise what the code does not do", () => {
   assert.ok(!/лв\.|BGN/.test(all), "the euro is the only currency");
   assert.ok(!/Apple Pay|Google Pay/.test(all.replace(/не предлагаме плащане с Apple Pay, Google Pay|do not save cards, make recurring or subscription payments, or offer Apple Pay, Google Pay/g, "")), "no wallet is offered");
   assert.ok(!/14 дни.{0,40}пиц/i.test(all), "no 14-day return for pizza");
+  // An unconfirmed payment is a transaction to CHECK, not proof that nothing
+  // was taken — neither the documents nor the payment pages may say otherwise.
+  const ui = readFileSync(join(process.cwd(), "messages", "bg.json"), "utf8") + readFileSync(join(process.cwd(), "messages", "en.json"), "utf8");
+  for (const claim of [/сума не се удържа/, /нищо не (ви )?се удържа/, /nothing is charged/i, /няма да бъдете таксувани/, /will not be charged twice/i, /няма какво да бъде възстановено/, /nothing to refund/i]) {
+    assert.ok(!claim.test(all) && !claim.test(ui), `unproven "not charged" claim: ${claim}`);
+  }
+  assert.ok(/проверяваме транзакцията/.test(all) && /check the transaction/.test(all), "the documents say the transaction is checked");
 });

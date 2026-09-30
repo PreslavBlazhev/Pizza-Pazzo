@@ -219,7 +219,7 @@
     "formDate": "Date: …",
     "formStrike": "(*) Delete as appropriate.",
     "contacts": "Contact",
-    "foodRegistrationValue": "reg. No. {number}, certificate No. {certificate}, {authority}"
+    "foodRegistrationValue": "catering establishment — reg. No. {number}, certificate No. {certificate}, {authority}"
   },
   "menu": {
     "hero": {
@@ -760,7 +760,7 @@
       "paying": "Redirecting to the bank…",
       "kitchenNotice": "Your order is sent to the restaurant only after the bank confirms the payment.",
       "changeOrder": "Change the order",
-      "resumeHint": "You have already started paying for this order. The button takes you back to the same bank page — you will not be charged twice."
+      "resumeHint": "You have already started a payment for this order. The button takes you back to the same bank page instead of starting a new payment."
     },
     "errors": {
       "DISABLED": "Card payment is not available right now. You can order with cash on delivery.",
@@ -793,7 +793,7 @@
     },
     "failed": {
       "metaTitle": "Payment not completed",
-      "title": "The payment did not go through",
+      "title": "The payment was not confirmed",
       "subtitle": "Your order has NOT been sent to the restaurant. Your cart is saved.",
       "reasonFAILED": "The bank declined the payment.",
       "reasonCANCELLED": "The payment was cancelled.",
@@ -801,7 +801,7 @@
       "reasonERROR": "The payment page could not be opened.",
       "retry": "Try the card again",
       "changeOrder": "Change the order or pay in cash",
-      "note": "If you still see money taken from your account, do not order again — call us on {phone}."
+      "note": "If you nevertheless see an amount held or taken, do not order again — call us on {phone} and we will check the transaction with the bank."
     },
     "cancelled": {
       "title": "The order was cancelled",

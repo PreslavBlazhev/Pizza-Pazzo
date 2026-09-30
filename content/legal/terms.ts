@@ -108,8 +108,8 @@ export const termsDoc: LegalDoc = {
         },
         {
           p: {
-            bg: "При плащане с карта плащането се извършва веднага след изпращане на поръчката, на защитената страница на банката. Поръчката стига до кухнята едва след като банката потвърди плащането. Ако плащането не бъде потвърдено, поръчката не се изпълнява и нищо не ви се удържа.",
-            en: "With card payment you pay right after submitting the order, on the bank's secure page. The order reaches the kitchen only once the bank confirms the payment. If the payment is not confirmed, the order is not carried out and nothing is charged.",
+            bg: "При плащане с карта плащането се извършва веднага след изпращане на поръчката, на защитената страница на банката. Поръчката стига до кухнята едва след като банката потвърди плащането. Ако плащането не бъде потвърдено, поръчката не се изпълнява. Ако въпреки това видите блокирана или изтеглена сума, свържете се с нас — проверяваме транзакцията при банката и изтеглена сума без изпълнена поръчка се възстановява по картата (т. 10).",
+            en: "With card payment you pay right after submitting the order, on the bank's secure page. The order reaches the kitchen only once the bank confirms the payment. If the payment is not confirmed, the order is not carried out. If you nevertheless see an amount held or taken, contact us — we check the transaction with the bank, and an amount taken without a fulfilled order is refunded to the card (section 10).",
           },
         },
         {

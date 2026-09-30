@@ -11,11 +11,11 @@
  * commit where the version was set), listed in docs/UBB-COMPLIANCE.md.
  */
 export const LEGAL_VERSIONS = {
-  terms: "2026-09-29",
-  refunds: "2026-09-29",
+  terms: "2026-09-30",
+  refunds: "2026-09-30",
   privacy: "2026-09-29",
   delivery: "2026-09-29",
-  payment: "2026-09-29",
+  payment: "2026-09-30",
   cookies: "2026-09-29",
 } as const;
 

@@ -2,96 +2,96 @@ TAP version 13
 # Subtest: UBB-16: a direct call without consentTerms is refused and creates nothing
 ok 1 - UBB-16: a direct call without consentTerms is refused and creates nothing
   ---
-  duration_ms: 28.358
+  duration_ms: 26.3336
   ...
 # Subtest: UBB-16: a direct call without consentRefunds is refused and creates nothing
 ok 2 - UBB-16: a direct call without consentRefunds is refused and creates nothing
   ---
-  duration_ms: 4.5068
+  duration_ms: 4.6465
   ...
 # Subtest: UBB-16: a direct call without consentPrivacy is refused and creates nothing
 ok 3 - UBB-16: a direct call without consentPrivacy is refused and creates nothing
   ---
-  duration_ms: 4.5208
+  duration_ms: 4.2818
   ...
 # Subtest: UBB-16: nothing ticked → all three refusals at once
 ok 4 - UBB-16: nothing ticked → all three refusals at once
   ---
-  duration_ms: 2.9961
+  duration_ms: 3.4089
   ...
 # Subtest: UBB-16: only a real tick counts — 'off', '', 'false', 0 and 'yes' are refused
 ok 5 - UBB-16: only a real tick counts — 'off', '', 'false', 0 and 'yes' are refused
   ---
-  duration_ms: 11.1703
+  duration_ms: 11.7478
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # Subtest: UBB-16: a valid order records the accepted versions and the server time — nothing else
 ok 6 - UBB-16: a valid order records the accepted versions and the server time — nothing else
   ---
-  duration_ms: 28.7232
+  duration_ms: 38.236
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # Subtest: UBB-16: a duplicate submission returns the first order, which carries the proof
 ok 7 - UBB-16: a duplicate submission returns the first order, which carries the proof
   ---
-  duration_ms: 19.7304
+  duration_ms: 19.818
   ...
 # Subtest: UBB-06: prices, totals, fees and currency sent by the client are rejected or ignored
 ok 8 - UBB-06: prices, totals, fees and currency sent by the client are rejected or ignored
   ---
-  duration_ms: 14.449
+  duration_ms: 15.7464
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # Subtest: UBB-06: the stored total is the menu price of the chosen variant × quantity
 ok 9 - UBB-06: the stored total is the menu price of the chosen variant × quantity
   ---
-  duration_ms: 20.2029
+  duration_ms: 21.4019
   ...
 # Subtest: UBB-08: an address outside Pleven is refused by the server
 ok 10 - UBB-08: an address outside Pleven is refused by the server
   ---
-  duration_ms: 8.335
+  duration_ms: 8.9186
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
 # Subtest: UBB-08: Pleven in any common spelling is accepted and stored canonically
 ok 11 - UBB-08: Pleven in any common spelling is accepted and stored canonically
   ---
-  duration_ms: 17.9997
+  duration_ms: 19.3008
   ...
 # Subtest: UBB-07: production reads a stored EVERYONE as STAFF; staging keeps it
 ok 12 - UBB-07: production reads a stored EVERYONE as STAFF; staging keeps it
   ---
-  duration_ms: 0.291
+  duration_ms: 0.2811
   ...
 # Subtest: UBB-07: in production only staff may open/decide the simulator page
 ok 13 - UBB-07: in production only staff may open/decide the simulator page
   ---
-  duration_ms: 0.1525
+  duration_ms: 0.1373
   ...
 # Subtest: every checkout refusal code has a Bulgarian and an English message
 ok 14 - every checkout refusal code has a Bulgarian and an English message
   ---
-  duration_ms: 2.3886
+  duration_ms: 2.016
   ...
 # Subtest: UBB-02: the merchant identity matches the Commercial Register / VIES record
 ok 15 - UBB-02: the merchant identity matches the Commercial Register / VIES record
   ---
-  duration_ms: 0.4613
+  duration_ms: 0.3633
   ...
 # Subtest: every legal document carries the version orders store, and unique anchors
 ok 16 - every legal document carries the version orders store, and unique anchors
   ---
-  duration_ms: 0.36
+  duration_ms: 0.357
   ...
 # Subtest: every linked legal route exists as a page
 ok 17 - every linked legal route exists as a page
   ---
-  duration_ms: 0.6065
+  duration_ms: 0.6002
   ...
 # Subtest: the texts never promise what the code does not do
 ok 18 - the texts never promise what the code does not do
   ---
-  duration_ms: 0.6396
+  duration_ms: 1.8707
   ...
 1..18
 # tests 18
@@ -101,4 +101,4 @@ ok 18 - the texts never promise what the code does not do
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 3451.7722
+# duration_ms 3217.9132
