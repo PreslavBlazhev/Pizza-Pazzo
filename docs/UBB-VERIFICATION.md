@@ -41,6 +41,7 @@ npm предупреждава, без ефект), Next.js 15.5.20, Prisma 5.22
 | 14 | `npm run e2e:alarm` (кухненско табло, browser) | E2E OK, 6 сигнала | `14-e2e-kitchen-alarm.txt` |
 | 15 | `npx tsx scripts/preview-accepted-email.ts` | текст на имейла с търговеца и версиите | `15-accepted-email-preview.txt` |
 | 16 | регистър на БАБХ, `rest_v2/reports/public/kh/register_4_2_7692.csv?identifier=203300275` (public read-only) | 1 запис, активен | `registry/bfsa-register-4-2-catering-203300275.csv` |
+| 17 | `npm run e2e:checkout-links` (browser, **без изпращане**: 0 POST, 0 поръчки) | преди поправката: 8 ✗ (`/payment` → 404) + 1 ✗ известие; след: 37 ✓ | `16-…BEFORE-fix.txt`, `16b-…BEFORE-fix.txt`, `17-…AFTER-fix.txt`, `checkout-links/` |
 
 Не е пускано: Android unit тестовете (Kotlin кодът не е променян);
 реално Android устройство; банков sandbox.
@@ -113,6 +114,9 @@ npm предупреждава, без ефект), Next.js 15.5.20, Prisma 5.22
    пъти“. Сега: транзакцията се проверява при банката, изтеглена сума без
    изпълнена поръчка се възстановява (версии 2026-09-30); тестът „texts never
    promise…“ забранява такива твърдения в документите и в messages/*.json.
+10. Линкът „Начини на плащане“ в checkout водеше към `/payment` (404) —
+    вече е `/payment-methods` (и типът на `docLink` не допуска стария път);
+    напомнянето за чакащо плащане вече не се крие на `/payment-methods`.
 
 ## Checkpoint (за продължаване)
 

@@ -30,7 +30,10 @@ export function PendingPaymentNotice() {
 
   if (!pending) return null;
   if (
-    pathname.startsWith("/payment") ||
+    // The payment result pages and the simulator — NOT /payment-methods,
+    // a public legal page where the reminder should still show.
+    pathname.startsWith("/payment/") ||
+    pathname.startsWith("/payment-simulator") ||
     pathname.startsWith("/checkout/pay") ||
     pathname.startsWith("/admin")
   ) {

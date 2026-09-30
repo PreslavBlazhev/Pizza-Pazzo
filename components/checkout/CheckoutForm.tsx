@@ -279,7 +279,7 @@ export function CheckoutForm({
 
   /** A document link inside a confirmation label. Opens in a new tab, so the
    *  cart (kept in this browser) and everything typed here stay untouched. */
-  const docLink = (href: "/terms" | "/refunds" | "/privacy" | "/delivery" | "/payment") =>
+  const docLink = (href: "/terms" | "/refunds" | "/privacy" | "/delivery" | "/payment-methods") =>
     function DocLink(chunks: React.ReactNode) {
       return (
         <Link
@@ -434,7 +434,7 @@ export function CheckoutForm({
             <li>
               {t.rich("deliveryMore", {
                 delivery: docLink("/delivery"),
-                payment: docLink("/payment"),
+                payment: docLink("/payment-methods"),
               })}
             </li>
           </ul>

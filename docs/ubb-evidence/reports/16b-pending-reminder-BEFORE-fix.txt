@@ -1,0 +1,51 @@
+
+BG · mobile
+  ✓ checkout links exactly the five documents
+  ✓ /delivery → 200, new tab, "Условия за доставка"
+  ✓ /payment-methods → 200, new tab, "Начини на плащане"
+  ✓ /terms → 200, new tab, "Общи условия"
+  ✓ /refunds → 200, new tab, "Отказ, връщане и рекламации"
+  ✓ /privacy → 200, new tab, "Политика за поверителност"
+  ✓ typed text kept on the checkout tab
+  ✓ cart kept on the checkout tab
+
+BG · desktop
+  ✓ checkout links exactly the five documents
+  ✓ /delivery → 200, new tab, "Условия за доставка"
+  ✓ /payment-methods → 200, new tab, "Начини на плащане"
+  ✓ /terms → 200, new tab, "Общи условия"
+  ✓ /refunds → 200, new tab, "Отказ, връщане и рекламации"
+  ✓ /privacy → 200, new tab, "Политика за поверителност"
+  ✓ typed text kept on the checkout tab
+  ✓ cart kept on the checkout tab
+
+EN · mobile
+  ✓ checkout links exactly the five documents
+  ✓ /en/delivery → 200, new tab, "Delivery Terms"
+  ✓ /en/payment-methods → 200, new tab, "Payment methods"
+  ✓ /en/terms → 200, new tab, "Terms and Conditions"
+  ✓ /en/refunds → 200, new tab, "Cancellation, Returns & Complaints"
+  ✓ /en/privacy → 200, new tab, "Privacy Policy"
+  ✓ typed text kept on the checkout tab
+  ✓ cart kept on the checkout tab
+
+EN · desktop
+  ✓ checkout links exactly the five documents
+  ✓ /en/delivery → 200, new tab, "Delivery Terms"
+  ✓ /en/payment-methods → 200, new tab, "Payment methods"
+  ✓ /en/terms → 200, new tab, "Terms and Conditions"
+  ✓ /en/refunds → 200, new tab, "Cancellation, Returns & Complaints"
+  ✓ /en/privacy → 200, new tab, "Privacy Policy"
+  ✓ typed text kept on the checkout tab
+  ✓ cart kept on the checkout tab
+
+pending-payment reminder
+  ✗ reminder shows on /payment-methods
+  ✓ still on the simulator URL
+  ✓ reminder hidden on /payment-simulator/*
+  ✓ no POST left the browser (nothing was submitted)
+  ✓ no order was created
+
+screenshots: C:\Users\The King\Desktop\Sites\08. Pizza Pazzo\docs\ubb-evidence\checkout-links
+
+CHECKOUT LINKS FAILED (1)
