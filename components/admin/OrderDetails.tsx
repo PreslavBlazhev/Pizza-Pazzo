@@ -222,6 +222,42 @@ export function OrderDetails({
         {priceRow("Общо", order.totalEur, true)}
       </section>
 
+      {/* Proof of the checkout confirmations (UBB-16). Orders from before
+          2026-09-29 have none — and none is invented for them. */}
+      <section className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm">
+        <h2 className="mb-1 text-sm font-semibold text-neutral-600">Потвърждения при поръчката</h2>
+        {order.consent.recordedAt ? (
+          <ul className="space-y-0.5 text-neutral-700">
+            <li>Общи условия — версия {order.consent.termsVersion}</li>
+            <li>Отказ, връщане и рекламации — версия {order.consent.refundsVersion}</li>
+            <li>Политика за поверителност (запознат) — версия {order.consent.privacyVersion}</li>
+            <li className="text-neutral-500">Сървърно време: {formatDateTime(order.consent.recordedAt)}</li>
+          </ul>
+        ) : (
+          <p className="text-neutral-500">
+            Няма записани потвърждения — поръчката е направена преди въвеждането им (29.09.2026).
+          </p>
+        )}
+      </section>
+
+      {/* A card order that was PAID and then cancelled: the money is still
+          with the restaurant. The refund is made in the bank's virtual-POS
+          portal — this site never "refunds" by changing a status. */}
+      {order.status === "CANCELLED" &&
+        order.paymentMethod === "CARD_ONLINE" &&
+        order.paymentStatus === "PAID" &&
+        !order.isTest && (
+          <section className="rounded-2xl border-2 border-red-300 bg-red-50 p-4 text-sm text-red-900">
+            <h2 className="font-bold">Дължи се възстановяване по картата</h2>
+            <p className="mt-1">
+              Поръчката е платена с карта и е отказана. Направете възстановяване на{" "}
+              <strong>{formatEurPrice(order.totalEur)}</strong> от портала на банката
+              (виртуалния ПОС) по същата карта — без неоправдано забавяне, най-късно до 14 дни.
+              Обадете се на клиента. Процедура: docs/UBB-OPERATIONS.md.
+            </p>
+          </section>
+        )}
+
       <section className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-neutral-600">Плащане</h2>
         <p className="text-sm font-bold text-neutral-800">

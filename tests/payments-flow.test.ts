@@ -33,6 +33,7 @@ import { getPendingOrders } from "@/lib/orders";
 import { getAdminReport } from "@/lib/reports";
 import { resolvePresetRange } from "@/lib/report-period";
 import {
+  ALL_CONSENTS,
   CONTACT,
   STANDARD_ITEMS,
   STANDARD_TOTAL_MINOR,
@@ -113,14 +114,14 @@ test("the browser cannot change prices, fees, the method or the status", async (
       itemsJson: JSON.stringify([{ productId: "prod_test_pizza", quantity: 1, priceEur: 0.01 }]),
       paymentMethod: "cash_on_delivery",
       checkoutKey: key(),
-      userId: null,
+      userId: null, consents: ALL_CONSENTS,
     },
     deps
   );
   assert.equal(tampered.ok, false);
 
   const badMethod = await placeOrder(
-    { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "PAID", checkoutKey: key(), userId: null },
+    { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "PAID", checkoutKey: key(), userId: null, consents: ALL_CONSENTS },
     deps
   );
   assert.equal(badMethod.ok, false);
@@ -131,7 +132,7 @@ test("the browser cannot change prices, fees, the method or the status", async (
       itemsJson: JSON.stringify([{ productId: "prod_test_gone", quantity: 1 }]),
       paymentMethod: "card_online",
       checkoutKey: key(),
-      userId: null,
+      userId: null, consents: ALL_CONSENTS,
     },
     deps
   );
@@ -183,7 +184,7 @@ test("card payment is refused when the switch is off — the order is not even c
   try {
     const before = await db.order.count();
     const r = await placeOrder(
-      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null },
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS },
       deps
     );
     assert.equal(r.ok, false);
@@ -631,8 +632,16 @@ test("demo: production refuses the env simulator, the demo switch decides who se
     assert.ok(admin.available && admin.demo && admin.config.isTest, "admin: demo card, test orders");
     assert.ok((await resolveCheckoutPayment("STAFF")).available, "staff: demo card");
 
+    // UBB (2026-09-29): the real site never shows the demo to the public —
+    // a stored EVERYONE is read as STAFF in production.
     await setDemo("EVERYONE");
-    assert.ok((await resolveCheckoutPayment(null)).available, "EVERYONE: guests see it too");
+    assert.equal(
+      (await resolveCheckoutPayment(null)).available,
+      false,
+      "production + EVERYONE: guests still get no demo card"
+    );
+    assert.equal((await resolveCheckoutPayment("CUSTOMER")).available, false, "nor do customers");
+    assert.ok((await resolveCheckoutPayment("STAFF")).available, "staff keep the demo");
 
     await setDemo("OFF");
     assert.equal((await resolveCheckoutPayment("SUPER_ADMIN")).available, false, "OFF: nobody");
@@ -645,13 +654,13 @@ test("demo: an admin pays with the test card on production — PAID, test order,
     await setDemo("STAFF");
     // A customer cannot sneak a card order through a crafted request.
     const refused = await placeOrder(
-      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, role: "CUSTOMER" },
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS, role: "CUSTOMER" },
       deps
     );
     assert.equal(refused.ok, false);
 
     const placed = await placeOrder(
-      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, role: "SUPER_ADMIN" },
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS, role: "SUPER_ADMIN" },
       deps
     );
     assert.ok(placed.ok && placed.accessToken);
@@ -669,7 +678,7 @@ test("demo: an admin pays with the test card on production — PAID, test order,
 
     // Switching the demo OFF stops NEW demo payments.
     const other = await placeOrder(
-      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, role: "ADMIN" },
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS, role: "ADMIN" },
       deps
     );
     assert.ok(other.ok);
@@ -680,15 +689,43 @@ test("demo: an admin pays with the test card on production — PAID, test order,
   await setDemo("STAFF");
 });
 
-test("demo EVERYONE: a guest with no account pays with the test card on production", async () => {
+test("demo EVERYONE on production: a guest's crafted card order is refused", async () => {
   await asProduction(async () => {
-    await setDemo("EVERYONE"); // what the live site runs on since 2026-09-27
+    await setDemo("EVERYONE");
+    const before = await db.order.count();
+    const refused = await placeOrder(
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS },
+      deps
+    );
+    assert.deepEqual(refused, { ok: false, error: "CARD_UNAVAILABLE" });
+    assert.equal(await db.order.count(), before, "no order is created");
+  });
+  await setDemo("STAFF");
+});
+
+/** Runs `fn` as a STAGING deployment (the public demo lives there). */
+async function asStaging<T>(fn: () => Promise<T>): Promise<T> {
+  const saved = { APP_ENV: process.env.APP_ENV, CARD_PAYMENTS_ENABLED: process.env.CARD_PAYMENTS_ENABLED, PAYMENT_PROVIDER: process.env.PAYMENT_PROVIDER, APP_BASE_URL: process.env.APP_BASE_URL };
+  process.env.APP_ENV = "staging";
+  process.env.APP_BASE_URL = "https://staging.example.test";
+  process.env.CARD_PAYMENTS_ENABLED = "false";
+  delete process.env.PAYMENT_PROVIDER;
+  try {
+    return await fn();
+  } finally {
+    Object.assign(process.env, saved);
+  }
+}
+
+test("demo EVERYONE on staging: a guest with no account pays with the test card", async () => {
+  await asStaging(async () => {
+    await setDemo("EVERYONE");
     const setup = await resolveCheckoutPayment(null);
     assert.ok(setup.available && setup.demo, "the guest sees the demo card option");
 
     // No session at all: no userId, no role.
     const placed = await placeOrder(
-      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null },
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS },
       deps
     );
     assert.ok(placed.ok && placed.accessToken, "the guest's card order is accepted");

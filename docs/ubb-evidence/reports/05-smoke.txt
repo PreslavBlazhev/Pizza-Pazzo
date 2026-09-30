@@ -1,0 +1,271 @@
+1) Menu data integrity (database)
+  ✓ 98 products, 10 categories, ids/slugs unique, prices sane
+2) Checkout price derivation
+  ✓ price derivable for 98 products
+  ✓ variant prices resolve exactly (84 variants)
+  ✓ bogus variant id is rejected
+3) Totals arithmetic
+  ✓ sample cart (2× margarita + 3× kashkavalina) = 33.25 €, no rounding drift
+4) Extras resolution & pricing
+  ✓ pizza 30 см + cheese_crust uses the 30 см addon variant
+  ✓ pizza 40 см + cheese_crust uses the 40 см addon variant
+  ✓ pizza 30 см + meat_addon + vegetable_addon
+  ✓ pizza + sauce ×2 totals unit × 2
+  ✓ main qty 2 line total = (base + extras) × 2 = 17.38 € (no drift)
+  ✓ lineId is order-independent for identical extras
+  ✓ different crusts produce different lineIds
+  ✓ sauce quantity is part of the lineId
+  ✓ no-extras lineId keeps the legacy format
+  ✓ fake sourceProductId (unknown-product)
+  ✓ sauce key pointing at a burger-addon product (wrong-category)
+  ✓ burger addon on a pizza (not-allowed-for-product)
+  ✓ pizza addon on a burger (not-allowed-for-product)
+  ✓ crust on a burger (not-allowed-for-product)
+  ✓ sauce on a drink (not-allowed-for-product)
+  ✓ sauce on a dessert (not-allowed-for-product)
+  ✓ two different crusts (multiple-crusts)
+  ✓ the same crust twice (duplicate-selection)
+  ✓ crust key with mismatched sourceProductId (key-product-mismatch)
+  ✓ main variant without a parsable size (no-main-size)
+  ✓ no addon variant for size 50 (no-size-variant)
+  ✓ variant-based addon without a main variant (no-main-size)
+  ✓ sauce quantity 11 (sauce-quantity)
+  ✓ duplicate sauces merging to 12 (sauce-quantity)
+  ✓ duplicate sauces merging to 4 are combined into one entry
+  ✓ 16 extras entries (too-many-extras)
+  ✓ unknown selection key (unknown-key)
+  ✓ burger + burger addon uses the addon's base price
+5) extrasJson parsing (mapper contract)
+  ✓ legacy "[]" → []
+  ✓ empty/null/undefined → []
+  ✓ invalid JSON → [] (no throw)
+  ✓ non-array JSON → []
+  ✓ valid snapshot entry parses
+  ✓ malformed entries are dropped, valid ones kept
+  ✓ negative quantity entry dropped
+  ✓ string price entry dropped
+  ✓ legacy snapshot with BGN keys still parses
+  ✓ legacy BGN keys are stripped from the parsed extra
+  ✓ legacy snapshot keeps its euro prices
+6) Extras display formatter
+  ✓ BG locale uses nameBg
+  ✓ EN locale uses nameEn
+  ✓ sizeContext is carried through
+  ✓ prices are carried through
+  ✓ internal identifiers are not exposed
+  ✓ EN falls back to BG when missing
+  ✓ BG falls back to EN when missing
+  ✓ empty/missing extras → []
+  ✓ quantity >1 is prefixed
+  ✓ quantity 1 has no prefix
+  ✓ per-unit hint only for multi-quantity lines
+7) Order emails with extras
+  ✓ new-order text lists the crust
+  ✓ new-order text lists the sauce with quantity
+  ✓ new-order HTML lists the extras
+  ✓ new-order HTML keeps the line total
+  ✓ new-order leaks no internal keys
+  ✓ new-order without extras still renders (legacy item)
+  ✓ accepted text lists extras with prices
+  ✓ accepted HTML lists extras
+  ✓ accepted without extras still renders
+  ✓ accepted single unit omits the per-item hint
+8) Ticket rendering (template-driven)
+  ✓ ticket prints the size line
+  ✓ ticket prints the crust
+  ✓ ticket keeps the line total
+  ✓ ticket marks extras as per-unit on multi-quantity lines
+  ✓ ticket shows the main quantity
+  ✓ ticket without extras prints no + lines
+  ✓ ticket wraps long extra names within 42 chars
+  ✓ ticket loses no characters when wrapping
+  ✓ ticket handles sauce quantity 10
+8b) Print templates drive the ticket
+  ✓ kitchen ticket hides every price
+  ✓ kitchen ticket still lists the dish
+  ✓ kitchen ticket still lists the extras
+  ✓ delivery ticket does show prices
+  ✓ a hidden section disappears
+  ✓ dividers can be switched off
+  ✓ footer text is printed
+  ✓ an empty footer prints nothing extra
+  ✓ header text comes from the template
+  ✓ scaled sections still fit the paper
+  ✓ scale reaches the built line
+  ✓ alignment reaches the built line
+  ✓ bold reaches the built line
+  ✓ everything hidden yields no content lines
+9) Android printer adapter
+  ✓ extras array is present on the item
+  ✓ extra name carries the per-unit hint
+  ✓ extra quantity stays its own field
+  ✓ extra price is the per-unit total
+  ✓ item without extras serializes to []
+  ✓ no internal identifiers are sent
+  ✓ payload stays far below the 100KB bridge limit
+10) Report periods (Europe/Sofia)
+  ✓ day starts at Sofia midnight, not UTC midnight
+  ✓ an order at 00:30 Sofia belongs to that Sofia day
+  ✓ winter day start uses +02
+  ✓ week starts on Monday 00:00 Sofia
+  ✓ Monday is its own week start
+  ✓ month starts on the 1st 00:00 Sofia
+  ✓ year starts on 1 January 00:00 Sofia (+02 in winter)
+  ✓ spring-forward day has 23 hours (got 23)
+  ✓ spring-forward day still starts at local midnight
+  ✓ fall-back day has 25 hours (got 25)
+  ✓ fall-back day still starts at local midnight
+  ✓ week just after the DST switch starts Monday 00:00 local
+  ✓ week containing the spring-forward is 167 hours (got 167)
+  ✓ custom from is inclusive (00:00 Sofia)
+  ✓ custom to is inclusive via next-day exclusive bound
+  ✓ custom range echoes its Sofia dates
+  ✓ single-day custom range spans exactly 24h in summer
+  ✓ from > to is rejected
+  ✓ impossible date 2026-02-31 is rejected
+  ✓ month 13 is rejected
+  ✓ garbage text is rejected
+  ✓ leap day 2028-02-29 is accepted
+  ✓ 366 days is allowed
+  ✓ 367 days is rejected
+  ✓ toSofiaDateString reads the Sofia calendar day
+  ✓ preset range ends exactly at now
+  ✓ preset day range starts before now
+11) Report money rounding
+  ✓ null aggregate sum → 0
+  ✓ float drift is rounded (95.48999999999999 → 95.49)
+  ✓ 23.02 + 2.5 float sum rounds to 25.52
+  ✓ already-clean values pass through
+  ✓ delivered count uses completedAt
+  ✓ accepted count uses acceptedAt and includes the delivered one
+  ✓ cancelled count uses cancelledAt
+  ✓ revenue excludes cancelled and pending
+  ✓ revenue excludes accepted-but-not-delivered
+  ✓ delivery is free: items = total
+12) Restaurant settings validation
+  ✓ current live settings validate
+  ✓ invalid email is rejected
+  ✓ empty BG address is rejected
+  ✓ empty EN address is rejected
+  ✓ invalid phone is rejected
+  ✓ valid HH:mm is accepted
+  ✓ 24:00 is accepted as a closing time (end of day)
+  ✓ 00:00 – 24:00 (open all day) is accepted
+  ✓ 24:00 is rejected as an opening time
+  ✓ 24:30 is rejected
+  ✓ 11:60 is rejected
+  ✓ seconds are rejected
+  ✓ open day without a start time is rejected
+  ✓ open day without an end time is rejected
+  ✓ from == to is rejected
+  ✓ from > to (overnight) is rejected
+  ✓ closed day needs no times
+  ✓ closed day's times are cleared
+  ✓ closed day discards stray times instead of failing
+  ✓ empty secondary phone normalises to ""
+  ✓ invalid secondary phone is rejected
+  ✓ over-long address is rejected
+  ✓ FormData: missing checkbox → closed
+13) Working hours presentation
+  ✓ Mon–Sat group into one row, Sunday separate
+  ✓ BG label reads „Понеделник – Събота“
+  ✓ EN label reads “Monday – Sunday” style
+  ✓ grouped hours string is „11:00 – 23:00“
+  ✓ Sunday keeps its own 22:30 close
+  ✓ identical week collapses to a single row
+  ✓ differing Sunday still splits
+  ✓ a closed midweek day splits the run into 3 rows
+  ✓ closed row carries no hours string
+  ✓ non-adjacent identical days are not merged
+  ✓ row order stays Monday → Sunday
+  ✓ JSON-LD has one entry per group
+  ✓ JSON-LD lists the 6 weekday names
+  ✓ JSON-LD opens/closes come from the day
+  ✓ a 24-hour day is flagged allDay
+  ✓ an ordinary day is not allDay
+  ✓ JSON-LD writes until-midnight as 23:59
+  ✓ closed days are absent from JSON-LD
+  ✓ all-closed week yields an empty JSON-LD array
+  ✓ tel href strips spaces and keeps +
+  ✓ tel href handles a local number
+14) Accepted email contact phone
+  ✓ accepted text prints the injected phone
+  ✓ accepted HTML prints the injected phone
+  ✓ the constants phone does NOT leak in
+  ✓ no settings internals reach the customer
+  ✓ the operational sender/recipient env is untouched by the template
+  ✓ template needs no database access
+  ✓ any phone format passes through verbatim
+
+12) Open / closed (opening hours + manual closure)
+  ✓ 24/7: open at 3 a.m. Sofia (summer)
+  ✓ 24/7: open at 23:59:59 Sofia
+  ✓ 24/7: open at exactly midnight Sofia
+  ✓ 24/7: open at 00:00:01 Sofia
+  ✓ 24/7: open at midnight Sunday → Monday, winter
+  ✓ 24/7: open at DST change night (Oct 25, 03:30 Sofia)
+  ✓ 24/7: a 24-hour day closes at the next midnight, where the next day opens
+  ✓ 24/7: the store status is open with no reopen time
+  ✓ midday Tuesday is open
+  ✓ closing time is exclusive — 23:00 sharp is already closed
+  ✓ opening time is inclusive — 11:00 sharp is open
+  ✓ early morning is closed
+  ✓ …and reopens the same day at 11:00 Sofia
+  ✓ after midnight is closed
+  ✓ …and reopens the NEXT day, not the one that just ended
+  ✓ Sunday 22:45 Sofia is closed (Sunday ends at 22:30)
+  ✓ …and the next opening is Monday 11:00 Sofia
+  ✓ DST — 11:00 Sofia in January is 09:00Z and is open
+  ✓ DST — 08:00Z in January is 10:00 Sofia and is still closed
+  ✓ a week with no open day reports closed
+  ✓ …with no next opening to promise
+  ✓ an unparsable time closes the day instead of throwing
+  ✓ a backwards window (to <= from) closes the day
+  ✓ an instant already inside a window returns itself
+  ✓ an instant after closing rolls to the next day's opening
+  ✓ no closure at midday → open
+  ✓ an open shop promises no reopening time
+  ✓ indefinite closure closes an otherwise open shop
+  ✓ …is labelled manual_indefinite
+  ✓ …and demands a human to reopen
+  ✓ …with no reopening time to show
+  ✓ a 30-minute pause closes the shop
+  ✓ …reopens exactly when the timer runs out
+  ✓ …and needs nobody to press anything
+  ✓ a timer ending after closing reopens at the next opening, not at the timer
+  ✓ an expired timer reopens the shop with no write
+  ✓ …and stops calling itself closed
+  ✓ an expired closure at night still reads closed — by hours
+  ✓ the status always carries the server clock
+  ✓ a forced opening takes orders outside the hours
+  ✓ …and says so, for the admin panel
+  ✓ …with no end time when it needs stopping by hand
+  ✓ …and no closed reason
+  ✓ a timed forced opening carries its deadline
+  ✓ …and lapses on its own, with no write
+  ✓ …back to the plain hours reason
+  ✓ a forced opening is invisible while the shop is open anyway
+  ✓ a closure still beats a forced opening
+  ✓ nothing forced → forcedOpen stays false
+  ✓ 11:00 Sofia formats as 11:00 in summer
+  ✓ 11:00 Sofia formats as 11:00 in winter
+  ✓ midnight formats as 00:00, never 24:00
+  ✓ same Sofia day → offset 0
+  ✓ 23:00 Sofia → 01:00 Sofia is 'tomorrow', not 'in two hours'
+
+14) Tablet shift session
+  ✓ nothing stored → no shift
+  ✓ a shift started this afternoon is still on at 22:30
+  ✓ …and is gone after Sofia midnight
+  ✓ the stale entry is not left behind
+  ✓ yesterday's shift does not come back
+  ✓ garbage is discarded, not thrown
+  ✓ a wrong shape is discarded too
+  ✓ blocked storage never breaks the board
+  ✓ the alarm gets exactly one audio context per shift
+  ✓ …and it is the one the siren reads
+  ✓ ending the shift hands the speaker back
+  ✓ …and the board then knows sound is off
+  ✓ a new shift gets a new context
+
+SMOKE OK

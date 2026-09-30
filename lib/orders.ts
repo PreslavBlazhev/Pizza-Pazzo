@@ -80,6 +80,12 @@ export function mapOrderRow(o: PrismaOrderRow): Order {
     cancelledAt: o.cancelledAt?.toISOString() ?? null,
     completedAt: o.completedAt?.toISOString() ?? null,
     anonymizedAt: o.anonymizedAt?.toISOString() ?? null,
+    consent: {
+      termsVersion: o.consentTermsVersion,
+      refundsVersion: o.consentRefundsVersion,
+      privacyVersion: o.consentPrivacyVersion,
+      recordedAt: o.consentRecordedAt?.toISOString() ?? null,
+    },
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
   };

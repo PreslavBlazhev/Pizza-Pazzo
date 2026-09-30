@@ -19,13 +19,14 @@ import type { LegalDoc } from "./types";
  */
 export const accountDeletionDoc: LegalDoc = {
   slug: "account-deletion",
+  version: "2026-08-24",
   updated: "24.08.2026",
   showCompanyBox: true,
   intro: [
     {
       p: {
-        bg: "Тази страница обяснява как да изтриете профила си в Pizza Pazzo — независимо дали го ползвате през сайта www.pizzapazzo.bg, или през Android приложението „Pizza Pazzo“.",
-        en: "This page explains how to delete your Pizza Pazzo account — whether you use it through the www.pizzapazzo.bg website or through the “Pizza Pazzo” Android app.",
+        bg: "Тази страница обяснява как да изтриете профила си в Pizza Pazzo — независимо дали го ползвате през сайта pizzapazzo.bg, или през Android приложението „Pizza Pazzo“.",
+        en: "This page explains how to delete your Pizza Pazzo account — whether you use it through the pizzapazzo.bg website or through the “Pizza Pazzo” Android app.",
       },
     },
   ],
@@ -39,8 +40,8 @@ export const accountDeletionDoc: LegalDoc = {
         {
           list: [
             {
-              bg: "Влезте в профила си на www.pizzapazzo.bg (или в приложението, което отваря същия сайт).",
-              en: "Sign in at www.pizzapazzo.bg (or in the app, which opens the same website).",
+              bg: "Влезте в профила си на pizzapazzo.bg (или в приложението, което отваря същия сайт).",
+              en: "Sign in at pizzapazzo.bg (or in the app, which opens the same website).",
             },
             {
               bg: "Отворете „Профил“.",

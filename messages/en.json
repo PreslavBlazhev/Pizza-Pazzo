@@ -43,6 +43,9 @@
       },
       "accountDeletion": {
         "description": "How to delete your Pizza Pazzo account — steps in the app and on the website, or a request by email."
+      },
+      "payment": {
+        "description": "How you can pay for a Pizza Pazzo order — cash on delivery, and online by card when it is active."
       }
     }
   },
@@ -169,7 +172,8 @@
     "contacts": "Contact",
     "legal": "Legal",
     "rights": "© {year} {legalName}. All rights reserved.",
-    "madeWith": "Made with ❤️ and plenty of mozzarella."
+    "madeWith": "Made with ❤️ and plenty of mozzarella.",
+    "merchant": "{legalName} · UIC {uic} · VAT No. {vat}"
   },
   "legal": {
     "eyebrow": "Legal information",
@@ -177,17 +181,45 @@
     "privacy": "Privacy Policy",
     "cookies": "Cookie Policy",
     "delivery": "Delivery Terms",
-    "refunds": "Cancellations, Complaints & Refunds",
+    "refunds": "Cancellation, Returns & Complaints",
     "updated": "Last updated: {date}",
     "uic": "Company ID (EIK)",
     "vatNumber": "VAT number",
-    "registeredAddress": "Registered address",
-    "managerName": "Manager",
-    "addressLabel": "Address",
+    "registeredAddress": "Registered seat and management address",
     "emailLabel": "Email",
     "phoneLabel": "Phone",
     "appPrivacy": "Privacy — mobile app",
-    "accountDeletion": "Account deletion"
+    "accountDeletion": "Account deletion",
+    "payment": "Payment methods",
+    "version": "Version {version}",
+    "toc": "Contents",
+    "correspondenceAddress": "Correspondence address",
+    "restaurantAddress": "Restaurant (premises) address",
+    "foodRegistration": "Food business registration (BFSA)",
+    "consumerAuthority": "Supervisory authority",
+    "consumerAuthorityName": "Commission for Consumer Protection",
+    "areaTowns": "We deliver only within {towns}.",
+    "areaFree": "Delivery is free.",
+    "areaNoMinimum": "There is no minimum order amount.",
+    "areaNoPickup": "Collecting the order yourself is not offered through the site.",
+    "payCash": "Cash on delivery",
+    "payActive": "active",
+    "payCashText": "You pay the courier on delivery.",
+    "payCard": "Online by debit or credit card",
+    "payCardActiveText": "You pay on the servicing bank's secure page (virtual POS terminal); card details are never entered on our site.",
+    "payCardInactiveText": "not active yet. Once activated it will appear as an option on the checkout page; until then payment is cash on delivery only.",
+    "formTitle": "Model withdrawal form",
+    "formHint": "(complete and return this form only if you wish to withdraw from the contract for the drinks under section 3)",
+    "formTo": "To",
+    "formBody": "I/We* hereby give notice that I/We* withdraw from my/our* contract of sale of the following goods: …",
+    "formOrdered": "Ordered on*/received on*: … · Order number: …",
+    "formName": "Name of consumer(s): …",
+    "formAddress": "Address of consumer(s): …",
+    "formSignature": "Signature of consumer(s) (only if this form is notified on paper): …",
+    "formDate": "Date: …",
+    "formStrike": "(*) Delete as appropriate.",
+    "contacts": "Contact",
+    "foodRegistrationValue": "catering establishment — reg. No. {number}, certificate No. {certificate}, {authority}"
   },
   "menu": {
     "hero": {
@@ -222,7 +254,8 @@
     "orderNowFor": "Order now: {name}",
     "addToCart": "Add to cart",
     "added": "Added ✓",
-    "addToCartSoon": "Add to cart — coming soon"
+    "addToCartSoon": "Add to cart — coming soon",
+    "illustrativeImage": "Illustrative image"
   },
   "extras": {
     "title": "Choose add-ons",
@@ -274,9 +307,15 @@
     "title": "Contact",
     "subtitle": "Call us, write to us, or drop by.",
     "phones": "Phone",
-    "addressAndEmail": "Address and email",
+    "addressAndEmail": "Restaurant and e-mail",
     "openInMaps": "Open in Google Maps →",
-    "mapTitle": "Map — {name}"
+    "mapTitle": "Map — {name}",
+    "restaurantAddress": "Restaurant address",
+    "merchantTitle": "Merchant",
+    "complaintsTitle": "Cancellations, complaints and refunds",
+    "complaintsText": "To cancel an order, complain or ask for a refund, call or e-mail us with the order number. How and when — in <link>Cancellation, Returns and Complaints</link>.",
+    "showMap": "Show the map",
+    "mapNotice": "The map loads from Google only after you press the button — Google then receives your IP address and may set its own cookies. <link>Cookie Policy</link>"
   },
   "allergens": {
     "title": "Allergens",
@@ -383,13 +422,12 @@
     "cityPlaceholder": "Pleven",
     "notes": "Delivery note",
     "notesPlaceholder": "Floor, flat, doorbell…",
-    "submit": "Place the order",
+    "submit": "Order with obligation to pay",
     "orderSummary": "Order summary",
     "fullName": "Full name",
     "address": "Delivery address",
     "addressPlaceholder": "street, number, entrance, floor, apartment",
     "payment": "Payment",
-    "agreeTerms": "By placing your order you agree to the <terms>Terms and Conditions</terms> and the <privacy>Privacy Policy</privacy>.",
     "placing": "Placing…",
     "required": "REQUIRED",
     "optional": "optional",
@@ -402,9 +440,47 @@
     "paymentCard": "Pay online by card",
     "paymentCardHint": "Card details are entered only on the bank's secure page. Amount to pay: {amount}.",
     "paymentCardUnavailable": "Card payment is not available at the moment.",
-    "submitCard": "Continue to card payment",
+    "submitCard": "Order and pay by card",
     "paymentCardDemo": "Demo card payment (test)",
-    "paymentCardDemoHint": "TEST SIMULATOR — no real money. The order is a test and is NOT prepared. Use the test card 4242 4242 4242 4242."
+    "paymentCardDemoHint": "TEST SIMULATOR — no real money. The order is a test and is NOT prepared. Use the test card 4242 4242 4242 4242.",
+    "submitCardDemo": "Send a test order (demo, no real payment)",
+    "submitCashNote": "Pressing it sends the order and commits you to paying the amount shown in cash on delivery.",
+    "submitCardNote": "Pressing it sends the order and takes you to the bank's secure page to pay the amount shown.",
+    "consentsTitle": "Confirmations (required)",
+    "consentTerms": "I have read and accept the <terms>Terms and Conditions</terms>.",
+    "consentRefunds": "I have read and accept the <refunds>Cancellation, Returns and Complaints terms</refunds>, including that the 14-day right of withdrawal does not apply to food prepared to order.",
+    "consentPrivacy": "I have read the <privacy>Privacy Policy</privacy> — how my data is processed to carry out the order.",
+    "consentTermsShort": "Accepting the Terms and Conditions",
+    "consentRefundsShort": "Accepting the Cancellation, Returns and Complaints terms",
+    "consentPrivacyShort": "Reading the Privacy Policy",
+    "consentRequired": "Please confirm this to send the order.",
+    "opensInNewTab": "(opens in a new tab)",
+    "deliveryAreaHint": "We deliver only within {towns}.",
+    "deliveryTermsTitle": "Delivery",
+    "deliveryOnlyTowns": "We deliver only within {towns}. Collecting the order yourself is not offered through the site.",
+    "deliveryFreeNoMinimum": "Delivery is free; there is no minimum order.",
+    "deliveryEta": "You will receive the estimated delivery time by e-mail when the restaurant accepts the order.",
+    "deliveryMore": "Details: <delivery>Delivery Terms</delivery> · <payment>Payment methods</payment>",
+    "finalTotal": "Total to pay",
+    "finalTotalNote": "in euro, VAT included; delivery is free",
+    "errors": {
+      "STORE_CLOSED": "The restaurant is closed right now and is not taking orders. Please try again when we are open.",
+      "PAYMENT_METHOD": "Please choose a payment method.",
+      "CARD_UNAVAILABLE": "Card payment is not available right now. Please choose cash on delivery.",
+      "CART_INVALID": "The cart is empty or invalid.",
+      "PRODUCT_UNAVAILABLE": "One of the products is no longer available. Please refresh your cart.",
+      "VARIANT_INVALID": "Invalid product size. Please refresh your cart.",
+      "EXTRAS_INVALID": "Invalid extras in the cart. Please refresh your cart and try again.",
+      "SAVE_FAILED": "The order could not be saved. Please try again.",
+      "NAME_SHORT": "The name must be at least 2 characters.",
+      "EMAIL_INVALID": "Please enter a valid e-mail address — your confirmation will be sent there.",
+      "PHONE_SHORT": "The phone number must be at least 8 characters.",
+      "CITY_OUTSIDE_AREA": "We deliver only within Pleven.",
+      "ADDRESS_SHORT": "The address must be at least 5 characters.",
+      "NOTE_TOO_LONG": "The note is too long (max. 300 characters).",
+      "CONSENT_REQUIRED": "Please confirm this to send the order.",
+      "FIELD_INVALID": "Invalid value."
+    }
   },
   "orderSuccess": {
     "metaTitle": "Order placed",
@@ -684,7 +760,7 @@
       "paying": "Redirecting to the bank…",
       "kitchenNotice": "Your order is sent to the restaurant only after the bank confirms the payment.",
       "changeOrder": "Change the order",
-      "resumeHint": "You have already started paying for this order. The button takes you back to the same bank page — you will not be charged twice."
+      "resumeHint": "You have already started a payment for this order. The button takes you back to the same bank page instead of starting a new payment."
     },
     "errors": {
       "DISABLED": "Card payment is not available right now. You can order with cash on delivery.",
@@ -717,7 +793,7 @@
     },
     "failed": {
       "metaTitle": "Payment not completed",
-      "title": "The payment did not go through",
+      "title": "The payment was not confirmed",
       "subtitle": "Your order has NOT been sent to the restaurant. Your cart is saved.",
       "reasonFAILED": "The bank declined the payment.",
       "reasonCANCELLED": "The payment was cancelled.",
@@ -725,7 +801,7 @@
       "reasonERROR": "The payment page could not be opened.",
       "retry": "Try the card again",
       "changeOrder": "Change the order or pay in cash",
-      "note": "If you still see money taken from your account, do not order again — call us on {phone}."
+      "note": "If you nevertheless see an amount held or taken, do not order again — call us on {phone} and we will check the transaction with the bank."
     },
     "cancelled": {
       "title": "The order was cancelled",
@@ -735,6 +811,7 @@
       "text": "Order #{number} is waiting for payment.",
       "action": "Check the payment",
       "dismiss": "Dismiss"
-    }
+    },
+    "acceptedCards": "We accept card payments"
   }
 }

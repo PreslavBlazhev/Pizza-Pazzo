@@ -44,6 +44,7 @@ export const SAMPLE_PRINT_ORDER: Order = {
   cancelledAt: null,
   completedAt: null,
   anonymizedAt: null,
+  consent: { termsVersion: null, refundsVersion: null, privacyVersion: null, recordedAt: null },
 
   createdAt: "2026-08-03T09:05:00.000Z",
   updatedAt: "2026-08-03T09:12:00.000Z",

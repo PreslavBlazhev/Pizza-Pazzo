@@ -142,6 +142,18 @@ export interface Order {
    */
   anonymizedAt: string | null;
 
+  /**
+   * Proof of the explicit checkout confirmations (UBB-16): the accepted
+   * document versions and the server time. Null on orders placed before the
+   * confirmations existed (2026-09-29) — never back-filled.
+   */
+  consent: {
+    termsVersion: string | null;
+    refundsVersion: string | null;
+    privacyVersion: string | null;
+    recordedAt: string | null;
+  };
+
   createdAt: string;
   updatedAt: string;
 

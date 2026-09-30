@@ -1,0 +1,10 @@
+
+C:\Users\The King\Desktop\Sites\08. Pizza Pazzo\scripts\verify-consent-migration.mjs
+  98:13  warning  'consentTermsVersion' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  98:34  warning  'consentRefundsVersion' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  98:57  warning  'consentPrivacyVersion' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  98:80  warning  'consentRecordedAt' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+✖ 4 problems (0 errors, 4 warnings)
+
+LINT OK

@@ -247,6 +247,9 @@ try {
       customerPhone: "0888000000",
       deliveryAddress: "ул. Тестова 1",
       status: "PENDING",
+      // A cash order is released to the kitchen at checkout; without this
+      // the board (RELEASED_TO_KITCHEN) never sees it — since 2026-09-26.
+      releasedToKitchenAt: new Date(),
       subtotalEur: 10,
       totalEur: 10,
       items: {

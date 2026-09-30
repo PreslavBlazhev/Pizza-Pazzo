@@ -3,6 +3,9 @@ import { Link } from "@/i18n/navigation";
 import { Logo } from "./Logo";
 import { NAV_LINKS } from "./Header";
 import { SITE } from "@/lib/constants";
+import { companyFor } from "@/content/legal/company";
+import { getCardBrandMarks } from "@/lib/payments/card-marks";
+import { CardBrandMarks } from "@/components/payment/CardBrandMarks";
 import {
   getRestaurantSettings,
   settingsAddress,
@@ -13,10 +16,12 @@ import type { Weekday } from "@/types/settings";
 
 const LEGAL_LINKS = [
   { href: "/terms", labelKey: "terms" },
+  { href: "/refunds", labelKey: "refunds" },
+  { href: "/delivery", labelKey: "delivery" },
+  { href: "/payment-methods", labelKey: "payment" },
   { href: "/privacy", labelKey: "privacy" },
   { href: "/cookies", labelKey: "cookies" },
-  { href: "/delivery", labelKey: "delivery" },
-  { href: "/refunds", labelKey: "refunds" },
+  { href: "/contacts", labelKey: "contacts" },
   // Google Play wants the account-deletion page reachable without being told
   // its URL, and a customer looking for it would look here.
   { href: "/account-deletion", labelKey: "accountDeletion" },
@@ -34,6 +39,7 @@ export async function Footer() {
   const locale = await getLocale();
 
   const settings = await getRestaurantSettings();
+  const company = companyFor(locale);
   const address = settingsAddress(settings, locale);
   const phones = settingsPhones(settings);
   const hourRows = groupWorkingHours(settings.hours);
@@ -132,11 +138,23 @@ export async function Footer() {
               ))}
             </ul>
           </nav>
+          {/* Card marks — only once real card payment is live (UBB-14). */}
+          <CardBrandMarks marks={getCardBrandMarks()} label={t("payment.acceptedCards")} />
+          {/* The seller, as the Commercial Register names it (UBB-02). */}
+          <p className="text-center">
+            {t("footer.merchant", {
+              legalName: company.legalName,
+              uic: company.uic,
+              vat: company.vatNumber,
+            })}
+            <br />
+            {tLegal("registeredAddress")}: {company.registeredAddress}
+          </p>
           <div className="flex w-full flex-col items-center justify-between gap-2 sm:flex-row">
             <p>
               {t("footer.rights", {
                 year: new Date().getFullYear(),
-                legalName: SITE.legalName,
+                legalName: company.legalName,
               })}
             </p>
             <p>{t("footer.madeWith")}</p>

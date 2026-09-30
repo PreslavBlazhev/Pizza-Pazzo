@@ -1,0 +1,23 @@
+(node:9176) [UNDICI-WS] Warning: WebSockets are experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+E2E: the alarm outside the live board
+
+  ✓ the live board loads
+  ✓ the start-shift button is pressable (clicked)
+  ✓ the shift is remembered on the device
+  ✓ a client-side navigation to Продукти happens
+  ✓ we are on Продукти now (/admin/products)
+  ✓ …and the shift survived the navigation
+  ✓ nothing is ringing while there are no orders
+  … created test order #1001
+  ✓ the alarm bar appears on Продукти
+  ✓ …and it links to the board
+  ✓ the siren actually sounded off the board (9 blasts)
+  ✓ …from a context the browser had actually resumed
+  ✓ the siren stops once nothing is pending
+  ✓ …and the bar goes away
+  ✓ the shift is still remembered after a real page load
+  … test order deleted
+
+E2E OK

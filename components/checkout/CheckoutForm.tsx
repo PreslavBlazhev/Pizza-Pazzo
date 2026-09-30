@@ -1,6 +1,14 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Input } from "@/components/ui/Input";
@@ -15,6 +23,10 @@ import {
   useCartStore,
 } from "@/store/cart-store";
 import { formatEurPrice } from "@/lib/format-price";
+import { deliveryTownsLabel, DELIVERY_AREA } from "@/lib/delivery-area";
+import { CONSENT_FIELDS, type ConsentField } from "@/lib/validators/checkout";
+import { CardBrandMarks } from "@/components/payment/CardBrandMarks";
+import type { CardBrandMark } from "@/lib/payments/card-marks";
 import { createOrder, type CheckoutResult } from "@/app/actions/checkout";
 import {
   clearPendingPayment,
@@ -33,6 +45,8 @@ interface Props {
   cardAvailable?: boolean;
   /** The card option is the live-site DEMO (simulator, no real money). */
   cardIsDemo?: boolean;
+  /** Approved card marks — empty until real card payment is live. */
+  cardMarks?: CardBrandMark[];
 }
 
 type PaymentChoice = "cash_on_delivery" | "card_online";
@@ -44,21 +58,38 @@ type PaymentChoice = "cash_on_delivery" | "card_online";
  *
  * The delivery note is deliberately absent — it is the one optional field.
  */
-const REQUIRED_FIELDS = [
+const TEXT_FIELDS = [
   "customerName",
   "customerPhone",
   "customerEmail",
-  "deliveryCity",
   "deliveryAddress",
 ] as const;
 
-type RequiredField = (typeof REQUIRED_FIELDS)[number];
-type FormValues = Record<RequiredField | "deliveryNote", string>;
+/**
+ * Text fields first, then the three explicit confirmations — the order the
+ * page scrolls through when several are missing. The confirmations are
+ * required on the SERVER too (lib/checkout/place-order.ts); this only says so
+ * before the round-trip.
+ */
+const REQUIRED_FIELDS = [...TEXT_FIELDS, ...CONSENT_FIELDS] as const;
 
-export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = false }: Props) {
+type TextField = (typeof TEXT_FIELDS)[number];
+type RequiredField = (typeof REQUIRED_FIELDS)[number];
+type FormValues = Record<TextField | "deliveryNote", string>;
+
+/** The one town we deliver to — shown, not typed (lib/delivery-area.ts). */
+const DELIVERY_TOWN = DELIVERY_AREA.towns[0].bg;
+
+export function CheckoutForm({
+  defaults,
+  cardAvailable = false,
+  cardIsDemo = false,
+  cardMarks = [],
+}: Props) {
   const t = useTranslations("checkout");
   const tCart = useTranslations("cart");
   const tCommon = useTranslations("common");
+  const tPayment = useTranslations("payment");
   const locale = useLocale();
   const router = useRouter();
 
@@ -84,7 +115,6 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
     customerName: defaults?.name ?? "",
     customerPhone: defaults?.phone ?? "",
     customerEmail: defaults?.email ?? "",
-    deliveryCity: "Плевен",
     deliveryAddress: "",
     deliveryNote: "",
   });
@@ -104,6 +134,17 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
 
   /** Fields this browser found empty on the last attempt to submit. */
   const [missing, setMissing] = useState<RequiredField[]>([]);
+
+  /** The confirmations start UNTICKED — the customer ticks each one. */
+  const [consents, setConsents] = useState<Record<ConsentField, boolean>>({
+    consentTerms: false,
+    consentRefunds: false,
+    consentPrivacy: false,
+  });
+  const setConsent = useCallback((field: ConsentField, checked: boolean) => {
+    setConsents((prev) => ({ ...prev, [field]: checked }));
+    if (checked) setMissing((prev) => prev.filter((f) => f !== field));
+  }, []);
   const formRef = useRef<HTMLFormElement>(null);
 
   const setValue = useCallback((field: keyof FormValues, value: string) => {
@@ -116,8 +157,10 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
     customerName: t("fullName"),
     customerPhone: t("phone"),
     customerEmail: t("emailRequired"),
-    deliveryCity: t("city"),
     deliveryAddress: t("address"),
+    consentTerms: t("consentTermsShort"),
+    consentRefunds: t("consentRefundsShort"),
+    consentPrivacy: t("consentPrivacyShort"),
   };
 
   /** Scrolls the field into view and puts the cursor in it. */
@@ -136,12 +179,23 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
    * round-trip and, more importantly, makes the reason visible.
    */
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    const empty = REQUIRED_FIELDS.filter((field) => values[field].trim() === "");
+    // Always submitted by hand, never by the native <form action>: React
+    // resets a form after its action returns, and that reset silently
+    // unticked the confirmation checkboxes in the DOM while their state still
+    // said "ticked" — the next submit then posted them as missing. Calling the
+    // action ourselves skips the reset; every field here is controlled.
+    event.preventDefault();
+    const empty = REQUIRED_FIELDS.filter((field) =>
+      (CONSENT_FIELDS as readonly string[]).includes(field)
+        ? !consents[field as ConsentField]
+        : values[field as TextField].trim() === ""
+    );
     if (empty.length === 0) {
       setMissing([]);
-      return; // let the action run
+      const data = new FormData(event.currentTarget);
+      startTransition(() => formAction(data));
+      return;
     }
-    event.preventDefault();
     setMissing(empty);
     revealField(empty[0]);
   }
@@ -216,10 +270,29 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
   const totals = totalsFn();
 
   /** A field's message: this browser's complaint first, then the server's. */
-  const errorFor = (field: keyof FormValues) =>
+  const errorFor = (field: keyof FormValues | ConsentField) =>
     missing.includes(field as RequiredField)
-      ? t("fieldRequired")
+      ? (CONSENT_FIELDS as readonly string[]).includes(field)
+        ? t("consentRequired")
+        : t("fieldRequired")
       : serverErrors[field];
+
+  /** A document link inside a confirmation label. Opens in a new tab, so the
+   *  cart (kept in this browser) and everything typed here stay untouched. */
+  const docLink = (href: "/terms" | "/refunds" | "/privacy" | "/delivery" | "/payment") =>
+    function DocLink(chunks: React.ReactNode) {
+      return (
+        <Link
+          href={href}
+          target="_blank"
+          rel="noopener"
+          className="font-semibold text-pizza-green underline underline-offset-2 hover:text-pizza-green-dark"
+        >
+          {chunks}
+          <span className="sr-only"> {t("opensInNewTab")}</span>
+        </Link>
+      );
+    };
 
   const requiredMark = t("required");
 
@@ -239,7 +312,6 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
 
       <form
         ref={formRef}
-        action={formAction}
         onSubmit={handleSubmit}
         className="space-y-6"
         noValidate
@@ -248,6 +320,7 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
 
         <input type="hidden" name="items" value={itemsPayload} />
         <input type="hidden" name="checkoutKey" value={checkoutKey} />
+        <input type="hidden" name="locale" value={locale} />
 
         <section className="space-y-3 rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
           <h2 className="text-lg font-semibold text-pizza-ink">{t("contactDetails")}</h2>
@@ -289,10 +362,12 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
           <Input
             label={t("city")}
             name="deliveryCity"
-            placeholder={requiredMark}
-            value={values.deliveryCity}
-            onChange={(e) => setValue("deliveryCity", e.target.value)}
-            error={errorFor("deliveryCity")}
+            value={DELIVERY_TOWN}
+            readOnly
+            aria-readonly
+            className="bg-pizza-cream/50"
+            hint={t("deliveryAreaHint", { towns: deliveryTownsLabel(locale) })}
+            error={serverErrors.deliveryCity}
           />
           <Textarea
             label={t("address")}
@@ -344,11 +419,73 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
               />
             ) : null}
           </div>
+          {cardAvailable && (
+            <CardBrandMarks className="mt-3" marks={cardMarks} label={tPayment("acceptedCards")} />
+          )}
+        </fieldset>
+
+        {/* What affects the order, stated BEFORE it is placed. */}
+        <section className="rounded-3xl border border-pizza-cream-dark bg-white p-6 text-sm text-pizza-muted shadow-card">
+          <h2 className="text-lg font-semibold text-pizza-ink">{t("deliveryTermsTitle")}</h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>{t("deliveryOnlyTowns", { towns: deliveryTownsLabel(locale) })}</li>
+            <li>{t("deliveryFreeNoMinimum")}</li>
+            <li>{t("deliveryEta")}</li>
+            <li>
+              {t.rich("deliveryMore", {
+                delivery: docLink("/delivery"),
+                payment: docLink("/payment"),
+              })}
+            </li>
+          </ul>
+        </section>
+
+        <fieldset className="space-y-3 rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
+          <legend className="sr-only">{t("consentsTitle")}</legend>
+          <h2 aria-hidden className="text-lg font-semibold text-pizza-ink">
+            {t("consentsTitle")}
+          </h2>
+          <ConsentCheckbox
+            name="consentTerms"
+            checked={consents.consentTerms}
+            onChange={(c) => setConsent("consentTerms", c)}
+            error={errorFor("consentTerms")}
+          >
+            {t.rich("consentTerms", { terms: docLink("/terms") })}
+          </ConsentCheckbox>
+          <ConsentCheckbox
+            name="consentRefunds"
+            checked={consents.consentRefunds}
+            onChange={(c) => setConsent("consentRefunds", c)}
+            error={errorFor("consentRefunds")}
+          >
+            {t.rich("consentRefunds", { refunds: docLink("/refunds") })}
+          </ConsentCheckbox>
+          <ConsentCheckbox
+            name="consentPrivacy"
+            checked={consents.consentPrivacy}
+            onChange={(c) => setConsent("consentPrivacy", c)}
+            error={errorFor("consentPrivacy")}
+          >
+            {t.rich("consentPrivacy", { privacy: docLink("/privacy") })}
+          </ConsentCheckbox>
         </fieldset>
 
         {/* `createOrder` refuses a closed shop on its own — this only spares
             the customer filling the whole form to be told no at the end. */}
         <StoreClosedBanner />
+
+        {/* The final amount, immediately before the binding action. */}
+        <div
+          className="flex items-baseline justify-between gap-3 rounded-2xl bg-pizza-cream/60 px-5 py-4 text-pizza-ink"
+          data-testid="checkout-final-total"
+        >
+          <span className="text-sm font-semibold">
+            {t("finalTotal")}
+            <span className="block text-xs font-normal text-pizza-muted">{t("finalTotalNote")}</span>
+          </span>
+          <span className="text-xl font-bold">{formatEurPrice(totals.total)}</span>
+        </div>
 
         <button
           type="submit"
@@ -358,32 +495,15 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
           {isPending
             ? t("placing")
             : paymentMethod === "card_online"
-              ? t("submitCard")
+              ? cardIsDemo
+                ? t("submitCardDemo")
+                : t("submitCard")
               : t("submit")}
         </button>
-
         <p className="text-center text-xs text-pizza-muted">
-          {t.rich("agreeTerms", {
-            terms: (chunks) => (
-              <Link
-                href="/terms"
-                target="_blank"
-                className="underline transition hover:text-brand"
-              >
-                {chunks}
-              </Link>
-            ),
-            privacy: (chunks) => (
-              <Link
-                href="/privacy"
-                target="_blank"
-                className="underline transition hover:text-brand"
-              >
-                {chunks}
-              </Link>
-            ),
-          })}
+          {paymentMethod === "card_online" ? t("submitCardNote") : t("submitCashNote")}
         </p>
+
       </form>
 
       {/* Order summary */}
@@ -421,6 +541,58 @@ export function CheckoutForm({ defaults, cardAvailable = false, cardIsDemo = fal
         </ul>
         <CartSummary totals={totals} />
       </aside>
+    </div>
+  );
+}
+
+/**
+ * One explicit confirmation. A real, unticked-by-default checkbox with a
+ * visible label (the whole row is clickable and keyboard-focusable), and the
+ * refusal read out by screen readers when it is missing.
+ */
+function ConsentCheckbox({
+  name,
+  checked,
+  onChange,
+  error,
+  children,
+}: {
+  name: ConsentField;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div
+        className={`flex items-start gap-3 rounded-2xl border-2 p-3 transition ${
+          error
+            ? "border-brand bg-red-50"
+            : checked
+              ? "border-pizza-green bg-pizza-green-light/30"
+              : "border-pizza-cream-dark"
+        }`}
+      >
+        <input
+          id={name}
+          type="checkbox"
+          name={name}
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${name}-error` : undefined}
+          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-pizza-green"
+        />
+        <label htmlFor={name} className="cursor-pointer text-sm leading-relaxed text-pizza-ink">
+          {children}
+        </label>
+      </div>
+      {error && (
+        <p id={`${name}-error`} role="alert" className="mt-1 pl-1 text-xs font-medium text-brand">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

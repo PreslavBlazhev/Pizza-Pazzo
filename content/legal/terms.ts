@@ -1,174 +1,310 @@
 import type { LegalDoc } from "./types";
+import { LEGAL_VERSIONS, versionDate } from "./versions";
 
 /**
- * Общи условия / Terms and Conditions — DRAFT for client + lawyer review.
- * Reflects how the system actually works today: online orders for delivery,
- * cash on delivery only, prices in EUR — the only currency used on the site.
+ * Общи условия / Terms and Conditions.
+ *
+ * Written against how the system actually works (verified in code on
+ * 2026-09-29): delivery only, the town of Pleven, free delivery, prices in EUR,
+ * cash on delivery always available, online card payment only while it is
+ * switched on (the "paymentMethods" block says which is true right now), the
+ * order statuses in lib/order-status.ts, the "order accepted" e-mail as the
+ * acceptance, and a phone call when the restaurant declines.
+ *
+ * The facts that live in configuration (merchant, contacts, hours, area,
+ * payment methods) are dynamic blocks — see ./types.ts.
  */
 export const termsDoc: LegalDoc = {
   slug: "terms",
-  updated: "27.09.2026",
-  showCompanyBox: true,
+  version: LEGAL_VERSIONS.terms,
+  updated: versionDate(LEGAL_VERSIONS.terms),
+  // The merchant is section 1 (anchor #merchant), so no separate box.
+  showCompanyBox: false,
   intro: [
     {
       p: {
-        bg: "Настоящите Общи условия уреждат отношенията между Pizza Pazzo LTD („ние“, „Ресторантът“) и потребителите („вие“, „Клиентът“) на сайта www.pizzapazzo.bg във връзка с разглеждането на менюто и подаването на онлайн поръчки за доставка на храна. Подавайки поръчка, вие декларирате, че сте се запознали с тези условия и ги приемате.",
-        en: "These Terms and Conditions govern the relationship between Pizza Pazzo LTD (“we”, “the Restaurant”) and the users (“you”, “the Customer”) of www.pizzapazzo.bg in connection with browsing the menu and placing online food-delivery orders. By placing an order you confirm that you have read and accept these terms.",
+        bg: "Настоящите Общи условия уреждат договора за покупко-продажба от разстояние между търговеца, посочен по-долу („Ресторантът“, „ние“), и всеки потребител („Клиентът“, „вие“), който поръчва храна и напитки чрез сайта pizzapazzo.bg или мобилното приложение Pizza Pazzo, което отваря същия сайт. Преди да подадете поръчка, трябва изрично да потвърдите, че приемате тези условия и Условията за отказ, връщане и рекламации, и че сте запознати с Политиката за поверителност.",
+        en: "These Terms and Conditions govern the distance sales contract between the merchant named below (“the Restaurant”, “we”) and every consumer (“the Customer”, “you”) who orders food and drinks through pizzapazzo.bg or the Pizza Pazzo mobile app, which opens the same website. Before you place an order you must expressly confirm that you accept these terms and the Cancellation, Returns and Complaints terms, and that you have read the Privacy Policy.",
       },
     },
   ],
   sections: [
     {
-      heading: { bg: "1. Услугата", en: "1. The service" },
+      id: "merchant",
+      heading: { bg: "1. Търговец", en: "1. The merchant" },
+      blocks: [{ dynamic: "merchant" }],
+    },
+    {
+      id: "subject",
+      heading: { bg: "2. Предмет", en: "2. Subject matter" },
       blocks: [
         {
           p: {
-            bg: "Сайтът предоставя дигитално меню и възможност за онлайн поръчка на храна и напитки с доставка до адрес. Поръчка може да се направи със или без регистрация (като гост).",
-            en: "The site provides a digital menu and the ability to order food and drinks online for delivery to an address. Orders can be placed with or without registration (as a guest).",
+            bg: "Ресторантът продава приготвена по поръчка храна (пици, бургери, салати, предястия, сосове, десерти) и напитки, които доставя до посочен от Клиента адрес. Сайтът показва менюто, цените, наличността и алергените и позволява поръчка с или без регистрация.",
+            en: "The Restaurant sells food prepared to order (pizzas, burgers, salads, starters, sauces, desserts) and drinks, delivered to an address the Customer provides. The site shows the menu, prices, availability and allergens and lets you order with or without an account.",
           },
         },
       ],
     },
     {
-      heading: { bg: "2. Цени", en: "2. Prices" },
+      id: "products",
+      heading: { bg: "3. Продукти, изображения и алергени", en: "3. Products, images and allergens" },
       blocks: [
         {
           p: {
-            bg: "Всички цени са в евро (EUR), с включен ДДС. Валидна е цената, показана в момента на подаване на поръчката. Доставката е безплатна.",
-            en: "All prices are shown in euro (EUR), VAT included. The price shown at the moment the order is placed applies. Delivery is free.",
+            bg: "Към всеки продукт са посочени наименование, описание (когато има), размер или грамаж, възможните добавки и цената им. Изображенията, отбелязани като илюстративни, не представят конкретния продукт. Продукт, отбелязан като неналичен, не може да бъде поръчан.",
+            en: "Each product shows its name, a description (where available), its size or weight, the extras that can be added and their prices. Images marked as illustrative do not show the actual product. A product marked unavailable cannot be ordered.",
+          },
+        },
+        {
+          p: {
+            bg: "Алергените по Регламент (ЕС) № 1169/2011 са посочени към всеки продукт. Когато при продукт пише, че информацията се уточнява, или ако имате алергия или непоносимост — свържете се с нас преди да поръчате. Храната се приготвя в обща кухня и следи от алергени не могат да бъдат изключени.",
+            en: "Allergens under Regulation (EU) No 1169/2011 are listed for each product. Where a product says the information is being confirmed, or if you have an allergy or intolerance, contact us before ordering. Food is prepared in a shared kitchen and traces of allergens cannot be excluded.",
           },
         },
       ],
     },
     {
-      heading: { bg: "3. Поръчка и сключване на договор", en: "3. Ordering and conclusion of contract" },
+      id: "prices",
+      heading: { bg: "4. Цени", en: "4. Prices" },
       blocks: [
         {
           p: {
-            bg: "Поръчката преминава през следните стъпки: избор на продукти в количката → въвеждане на данни за контакт и адрес → преглед и потвърждаване. Подадената поръчка представлява предложение от ваша страна. Договорът се счита за сключен, когато Ресторантът приеме поръчката — ще получите потвърждение с ориентировъчно време за доставка (по имейл и/или телефон).",
-            en: "An order goes through these steps: selecting products in the cart → entering contact details and address → review and confirmation. A submitted order constitutes an offer on your part. The contract is concluded when the Restaurant accepts the order — you will receive a confirmation with an estimated delivery time (by email and/or phone).",
+            bg: "Всички цени са крайни, в евро (EUR), с включен ДДС. Доставката е безплатна и към поръчката не се добавят такси за опаковка, обслужване или плащане. Цената на добавките се показва до всяка добавка и се включва в цената на продукта. Преди потвърждаване на поръчката виждате всеки продукт с размера и добавките му и общата сума за плащане.",
+            en: "All prices are final, in euro (EUR), VAT included. Delivery is free and no packaging, service or payment fee is added. The price of each extra is shown next to it and included in the product's price. Before confirming, you see every product with its size and extras and the total amount due.",
           },
         },
         {
           p: {
-            bg: "Ресторантът може да откаже поръчка при: изчерпан продукт, адрес извън районите за доставка, непълни или неверни данни за контакт, техническа грешка в цените, или извънредни обстоятелства. При отказ не дължите нищо; ще бъдете уведомени с причината.",
-            en: "The Restaurant may decline an order in case of: an out-of-stock product, an address outside the delivery areas, incomplete or incorrect contact details, a technical pricing error, or extraordinary circumstances. If declined, you owe nothing and will be notified with the reason.",
+            bg: "Дължимата сума се изчислява от нашия сървър по цените в менюто към момента на поръчката — стойност, променена в браузъра, не се взема предвид. При явна техническа грешка в цена ще се свържем с вас преди приемане на поръчката; можете да се откажете без разходи.",
+            en: "The amount due is calculated by our server from the menu prices at the time of the order — a value changed in the browser is ignored. If a price is obviously wrong because of a technical error, we will contact you before accepting the order and you may withdraw at no cost.",
           },
         },
       ],
     },
     {
-      heading: { bg: "4. Плащане", en: "4. Payment" },
+      id: "ordering",
+      heading: { bg: "5. Поръчка и сключване на договора", en: "5. Ordering and conclusion of the contract" },
       blocks: [
         {
+          list: [
+            {
+              bg: "Избирате продукти (размер и добавки) и ги добавяте в количката.",
+              en: "You choose products (size and extras) and add them to the cart.",
+            },
+            {
+              bg: "В страницата за поръчка въвеждате име, телефон, имейл и адрес за доставка, избирате начин на плащане и изрично потвърждавате условията.",
+              en: "On the checkout page you enter your name, phone, e-mail and delivery address, choose a payment method and expressly confirm the terms.",
+            },
+            {
+              bg: "С натискане на бутона „Поръчка със задължение за плащане“ (или „Поръчай и плати с карта“) изпращате поръчката. Това е вашето предложение за сключване на договор. Показваме номер на поръчката.",
+              en: "By pressing “Order with obligation to pay” (or “Order and pay by card”) you submit the order. This is your offer to conclude the contract. We show you the order number.",
+            },
+            {
+              bg: "Договорът се сключва, когато Ресторантът приеме поръчката. Тогава ви изпращаме имейл „Поръчката ви е приета“ с продуктите, общата сума, адреса и ориентировъчното време за доставка.",
+              en: "The contract is concluded when the Restaurant accepts the order. We then send you an “Your order has been accepted” e-mail with the products, the total, the address and the estimated delivery time.",
+            },
+          ],
+        },
+        {
           p: {
-            bg: "Към момента се приема само плащане с наложен платеж — в брой при получаване на доставката. Ако бъдат добавени други начини на плащане, те ще бъдат посочени при финализиране на поръчката.",
-            en: "Currently only cash on delivery is accepted — payment in cash upon receiving your order. If additional payment methods are added, they will be listed at checkout.",
+            bg: "При плащане с карта плащането се извършва веднага след изпращане на поръчката, на защитената страница на банката. Поръчката стига до кухнята едва след като банката потвърди плащането. Ако плащането не бъде потвърдено, поръчката не се изпълнява. Ако въпреки това видите блокирана или изтеглена сума, свържете се с нас — проверяваме транзакцията при банката и изтеглена сума без изпълнена поръчка се възстановява по картата (т. 10).",
+            en: "With card payment you pay right after submitting the order, on the bank's secure page. The order reaches the kitchen only once the bank confirms the payment. If the payment is not confirmed, the order is not carried out. If you nevertheless see an amount held or taken, contact us — we check the transaction with the bank, and an amount taken without a fulfilled order is refunded to the card (section 10).",
+          },
+        },
+        {
+          p: {
+            bg: "Ресторантът може да не приеме поръчка при изчерпан продукт, адрес извън района за доставка, непълни или неверни данни за контакт, явна техническа грешка в цена или обстоятелства, които правят изпълнението невъзможно. Тогава ви уведомяваме по телефона и не дължите нищо; платената с карта сума се възстановява изцяло (т. 10).",
+            en: "The Restaurant may decline an order if a product has run out, the address is outside the delivery area, contact details are incomplete or false, a price is obviously wrong because of a technical error, or circumstances make delivery impossible. We then tell you by phone and you owe nothing; an amount paid by card is refunded in full (section 10).",
           },
         },
       ],
     },
     {
-      heading: { bg: "5. Доставка", en: "5. Delivery" },
+      id: "payment",
+      heading: { bg: "6. Плащане", en: "6. Payment" },
       blocks: [
+        { dynamic: "paymentMethods" },
         {
           p: {
-            bg: "Условията за доставка (райони, срокове, получаване) са описани в отделния документ „Условия за доставка“, който е неразделна част от настоящите Общи условия.",
-            en: "Delivery conditions (areas, times, handover) are described in the separate “Delivery Terms” document, which forms an integral part of these Terms.",
+            bg: "Подробности — в страницата „Начини на плащане“. Не събираме и не съхраняваме номер, срок на валидност или CVV код на карта.",
+            en: "Details are on the “Payment methods” page. We never collect or store a card number, expiry date or CVV code.",
           },
         },
       ],
     },
     {
-      heading: { bg: "6. Право на отказ", en: "6. Right of withdrawal" },
+      id: "delivery",
+      heading: { bg: "7. Доставка и работно време", en: "7. Delivery and opening hours" },
       blocks: [
+        { dynamic: "deliveryArea" },
+        { dynamic: "workingHours" },
         {
           p: {
-            bg: "Приготвената по поръчка храна е бързоразвалящa се стока. Съгласно чл. 57 от Закона за защита на потребителите правото на отказ от договор от разстояние по чл. 50 ЗЗП не се прилага за доставка на храни и напитки, които подлежат на бързо разваляне или имат кратък срок на годност. Това не ограничава правата ви при рекламация (т. 7).",
-            en: "Food prepared to order is a perishable good. Under Art. 57 of the Bulgarian Consumer Protection Act, the right of withdrawal from a distance contract under Art. 50 does not apply to the delivery of food and drinks that are perishable or have a short shelf life. This does not limit your rights to complain (section 7).",
+            bg: "Ориентировъчното време за доставка ви съобщаваме при приемане на поръчката; то зависи от натовареността и разстоянието и не е гарантиран срок. Подробности — в „Условия за доставка“, които са част от тези Общи условия.",
+            en: "We tell you the estimated delivery time when we accept the order; it depends on how busy we are and on distance and is not a guaranteed deadline. Details are in the “Delivery Terms”, which form part of these Terms.",
           },
         },
       ],
     },
     {
-      heading: { bg: "7. Рекламации", en: "7. Complaints" },
+      id: "cancellation",
+      heading: { bg: "8. Отказ от направена поръчка", en: "8. Cancelling an order" },
       blocks: [
         {
           p: {
-            bg: "Моля, прегледайте поръчката при получаване. При липсващ, сгрешен или негоден продукт се свържете с нас незабавно на телефона или имейла, посочени по-долу. При основателна рекламация ще предложим замяна на продукта или възстановяване на платената за него сума. Правата ви по Закона за защита на потребителите не се ограничават от тези условия.",
-            en: "Please check your order upon receipt. If an item is missing, wrong or unfit, contact us immediately using the phone or email below. For a justified complaint we will offer a replacement or a refund of the amount paid for the item. Your rights under the Consumer Protection Act are not limited by these terms.",
+            bg: "Можете да откажете поръчката без никакви разходи, докато кухнята не е започнала да я приготвя — обадете се на телефона на Ресторанта (най-бързият начин) или пишете на имейла ни с номера на поръчката. След започване на приготвянето поръчката не може да бъде отменена, защото храната се приготвя специално за вас; дължи се цената на поръчката. Ресторантът не начислява неустойки или допълнителни такси за отказ. Подробности и сроковете за възстановяване — в „Отказ, връщане и рекламации“.",
+            en: "You may cancel the order at no cost as long as the kitchen has not started preparing it — call the Restaurant (the fastest way) or e-mail us with the order number. Once preparation has started the order cannot be cancelled, because the food is made specially for you; the order price is then due. The Restaurant charges no penalties or extra fees for cancelling. Details and refund times are in “Cancellation, Returns and Complaints”.",
           },
         },
       ],
     },
     {
-      heading: { bg: "8. Алергени", en: "8. Allergens" },
+      id: "withdrawal",
+      heading: { bg: "9. Право на отказ от договора (14 дни)", en: "9. Right of withdrawal (14 days)" },
       blocks: [
         {
           p: {
-            bg: "Информация за алергените по Регламент (ЕС) 1169/2011 е посочена към всеки продукт в менюто. Когато при продукт е отбелязано, че информацията се уточнява, или ако имате алергия — моля, свържете се с нас преди да поръчате. Храните се приготвят в обща кухня и следи от алергени не могат да бъдат напълно изключени.",
-            en: "Allergen information under Regulation (EU) 1169/2011 is listed on each product in the menu. Where a product notes that the information is being confirmed, or if you have an allergy — please contact us before ordering. Food is prepared in a shared kitchen and traces of allergens cannot be fully excluded.",
+            bg: "Правото на отказ от договор от разстояние в 14-дневен срок (чл. 50 от Закона за защита на потребителите) не се прилага за храна, приготвена по поръчка, и за стоки, които могат бързо да се развалят или имат кратък срок на годност (чл. 57, т. 3 и т. 4 ЗЗП; чл. 16, б. „в“ и „г“ от Директива 2011/83/ЕС). Това се отнася за всички ястия, сосове и десерти в менюто.",
+            en: "The 14-day right of withdrawal from a distance contract (Art. 50 of the Bulgarian Consumer Protection Act) does not apply to food made to order and to goods that can deteriorate quickly or have a short shelf life (Art. 57(3) and (4) of the Act; Art. 16(c) and (d) of Directive 2011/83/EU). This covers every dish, sauce and dessert on the menu.",
+          },
+        },
+        {
+          p: {
+            bg: "За неотворени фабрично затворени напитки с дълъг срок на годност (например бутилирани безалкохолни напитки, вода и бира) правото на отказ се запазва: можете да се откажете в 14 дни от получаването им. Как — в „Отказ, връщане и рекламации“, където е и стандартният формуляр за отказ.",
+            en: "For unopened factory-sealed drinks with a long shelf life (for example bottled soft drinks, water and beer) the right of withdrawal remains: you may withdraw within 14 days of receiving them. How to do it — and the standard withdrawal form — is in “Cancellation, Returns and Complaints”.",
+          },
+        },
+        {
+          p: {
+            bg: "Изключението от правото на отказ не ограничава правото ви на рекламация, когато получената поръчка не отговаря на договореното (т. 11).",
+            en: "The exception from the right of withdrawal does not limit your right to complain when the order you received does not match what was agreed (section 11).",
           },
         },
       ],
     },
     {
-      heading: { bg: "9. Профили", en: "9. Accounts" },
+      id: "refunds",
+      heading: { bg: "10. Възстановяване на суми", en: "10. Refunds" },
       blocks: [
         {
           p: {
-            bg: "При регистрация се задължавате да предоставите верни данни и да пазите паролата си. Вие отговаряте за действията, извършени през профила ви. Можем да ограничим профил при злоупотреба (напр. системно неприемани поръчки, подадени с неверни данни).",
-            en: "When registering you undertake to provide accurate details and to keep your password safe. You are responsible for activity performed through your account. We may restrict an account in case of abuse (e.g. repeated orders placed with false details).",
+            bg: "Сума, платена с карта чрез виртуалния ПОС терминал, се възстановява само по картата, с която е направено плащането. Ресторантът нарежда възстановяването без неоправдано забавяне и не по-късно от 14 дни от възникване на основанието. Кога сумата ще се отрази по сметката ви зависи от банката, издала картата, и от картовата организация. Случаите и процедурата са описани в „Отказ, връщане и рекламации“.",
+            en: "An amount paid by card through the virtual POS terminal is refunded only to the card used for the payment. The Restaurant orders the refund without undue delay and no later than 14 days after the reason for it arises. When it appears on your account depends on the bank that issued your card and on the card scheme. The cases and the procedure are described in “Cancellation, Returns and Complaints”.",
           },
         },
       ],
     },
     {
-      heading: { bg: "10. Интелектуална собственост", en: "10. Intellectual property" },
+      id: "complaints",
+      heading: { bg: "11. Рекламации", en: "11. Complaints" },
       blocks: [
         {
           p: {
-            bg: "Съдържанието на сайта — текстове, изображения, лого и оформление — е собственост на Pizza Pazzo LTD или се използва с разрешение и не може да се възпроизвежда без съгласие.",
-            en: "The content of the site — texts, images, logo and layout — is the property of Pizza Pazzo LTD or used with permission, and may not be reproduced without consent.",
+            bg: "Моля, прегледайте поръчката при получаване. При липсващ, сгрешен, увреден или негоден продукт се свържете с нас възможно най-скоро, по възможност още в деня на доставката, по телефона или имейла на Ресторанта, с номера на поръчката и описание (по възможност и снимка). При основателна рекламация доставяме липсващия или верния продукт или възстановяваме платената за него сума, по ваш избор, без разходи за вас. Отговаряме на всяка рекламация и ви уведомяваме за решението.",
+            en: "Please check your order on delivery. If a product is missing, wrong, damaged or unfit, contact us as soon as possible, ideally on the day of delivery, by the Restaurant's phone or e-mail, with the order number and a description (a photo helps). For a justified complaint we deliver the missing or correct product or refund what you paid for it, as you prefer, at no cost to you. We answer every complaint and tell you the decision.",
+          },
+        },
+        {
+          p: {
+            bg: "Правата ви като потребител по българското законодателство, включително при несъответствие на стоката с договора, не се ограничават от тези условия.",
+            en: "Your consumer rights under Bulgarian law, including for goods that do not conform to the contract, are not limited by these terms.",
           },
         },
       ],
     },
     {
-      heading: { bg: "11. Отговорност", en: "11. Liability" },
+      id: "warranty",
+      heading: { bg: "12. Гаранционен и извънгаранционен сервиз", en: "12. Warranty and after-sales service" },
       blocks: [
         {
           p: {
-            bg: "Полагаме грижа информацията на сайта да е точна и актуална, но не носим отговорност за вреди от невярно подадени от клиента данни (напр. грешен адрес или телефон), от независещи от нас технически прекъсвания, или от обстоятелства извън разумния ни контрол. Нищо в тези условия не изключва отговорност, която по закон не може да бъде изключена.",
-            en: "We take care to keep the information on the site accurate and up to date, but we are not liable for damages caused by incorrect details provided by the customer (e.g. a wrong address or phone number), by technical interruptions beyond our control, or by circumstances outside our reasonable control. Nothing in these terms excludes liability that cannot be excluded by law.",
+            bg: "Ресторантът продава само храна и напитки за незабавна консумация. За тях търговска гаранция и технически сервиз (гаранционен или извънгаранционен) не са приложими, защото няма какво да бъде ремонтирано или поддържано. Това не отменя правото на рекламация по т. 11 и законовите права при несъответствие.",
+            en: "The Restaurant sells only food and drinks for immediate consumption. A commercial guarantee and technical (in- or out-of-warranty) service do not apply to them, because there is nothing to repair or maintain. This does not remove the right to complain under section 11 or the statutory rights for non-conforming goods.",
           },
         },
       ],
     },
     {
-      heading: { bg: "12. Изменения", en: "12. Changes" },
+      id: "subscriptions",
+      heading: { bg: "13. Абонаменти", en: "13. Subscriptions" },
       blocks: [
         {
           p: {
-            bg: "Можем да актуализираме тези условия. Актуалната версия с датата на последна промяна е винаги достъпна на тази страница. За вече подадени поръчки важат условията към момента на поръчката.",
-            en: "We may update these terms. The current version with its revision date is always available on this page. Orders already placed are governed by the terms in force at the time of ordering.",
+            bg: "Всяка поръчка е еднократна. Сайтът не предлага абонаменти, периодични доставки или автоматични повтарящи се плащания и не запазва данни на карти.",
+            en: "Every order is a one-off. The site offers no subscriptions, recurring deliveries or automatic repeat payments and does not store card details.",
           },
         },
       ],
     },
     {
-      heading: { bg: "13. Приложимо право и спорове", en: "13. Governing law and disputes" },
+      id: "accounts",
+      heading: { bg: "14. Профили", en: "14. Accounts" },
       blocks: [
         {
           p: {
-            bg: "Прилага се българското законодателство. Надзорен орган: Комисия за защита на потребителите (КЗП) — www.kzp.bg. При спор можете да използвате и Европейската платформа за онлайн решаване на спорове: ec.europa.eu/consumers/odr.",
-            en: "Bulgarian law applies. Supervisory authority: the Bulgarian Commission for Consumer Protection (CPC) — www.kzp.bg. In case of a dispute you may also use the European Online Dispute Resolution platform: ec.europa.eu/consumers/odr.",
+            bg: "Регистрацията не е задължителна. Ако създадете профил, се задължавате да посочите верни данни и да пазите паролата си. Можете да изтриете профила си по всяко време от страницата на профила.",
+            en: "An account is optional. If you create one, you undertake to give accurate details and keep your password safe. You can delete your account at any time from your profile page.",
+          },
+        },
+      ],
+    },
+    {
+      id: "personal-data",
+      heading: { bg: "15. Лични данни", en: "15. Personal data" },
+      blocks: [
+        {
+          p: {
+            bg: "Обработваме данните ви, за да изпълним поръчката — как и на какво основание, е описано в Политиката за поверителност. Не е нужно да давате съгласие за това, а маркетингови съобщения не изпращаме.",
+            en: "We process your data to carry out the order — how and on which legal basis is described in the Privacy Policy. Your consent is not needed for this, and we send no marketing messages.",
+          },
+        },
+      ],
+    },
+    {
+      id: "liability",
+      heading: { bg: "16. Отговорност", en: "16. Liability" },
+      blocks: [
+        {
+          p: {
+            bg: "Не отговаряме за забавяне или неизпълнение, причинени от неверни данни, подадени от Клиента (например грешен адрес или телефон), или от обстоятелства извън разумния ни контрол. Нищо в тези условия не изключва отговорност, която по закон не може да бъде изключена.",
+            en: "We are not liable for delay or non-performance caused by wrong details given by the Customer (e.g. a wrong address or phone number) or by circumstances outside our reasonable control. Nothing in these terms excludes liability that cannot be excluded by law.",
           },
         },
         {
           p: {
-            bg: "При несъответствие между българската и английската версия на тези условия предимство има българската.",
-            en: "In case of any discrepancy between the Bulgarian and the English version of these terms, the Bulgarian version prevails.",
+            bg: "Съдържанието на сайта — текстове, изображения, лого и оформление — принадлежи на Ресторанта или се използва с разрешение.",
+            en: "The content of the site — texts, images, logo and layout — belongs to the Restaurant or is used with permission.",
+          },
+        },
+      ],
+    },
+    {
+      id: "changes",
+      heading: { bg: "17. Изменения и версии", en: "17. Changes and versions" },
+      blocks: [
+        {
+          p: {
+            bg: "Датата и версията на тези условия са посочени в началото. При промяна публикуваме нова версия. За всяка поръчка важи версията, която сте приели при поръчката — тя се записва заедно с поръчката.",
+            en: "The date and version of these terms are shown at the top. When they change we publish a new version. Each order is governed by the version you accepted when ordering — it is recorded with the order.",
+          },
+        },
+      ],
+    },
+    {
+      id: "disputes",
+      heading: { bg: "18. Приложимо право и спорове", en: "18. Governing law and disputes" },
+      blocks: [
+        {
+          p: {
+            bg: "Прилага се българското право. Ако не сме разрешили спора помежду си, можете да се обърнете към Комисията за защита на потребителите (www.kzp.bg) или към помирителните комисии към нея за извънсъдебно решаване на потребителски спорове, както и към компетентния български съд.",
+            en: "Bulgarian law applies. If we have not resolved a dispute between us, you may turn to the Bulgarian Commission for Consumer Protection (www.kzp.bg) or its conciliation committees for out-of-court resolution of consumer disputes, and to the competent Bulgarian court.",
+          },
+        },
+        {
+          p: {
+            bg: "При несъответствие между българския и английския текст предимство има българският.",
+            en: "If the Bulgarian and English texts differ, the Bulgarian text prevails.",
           },
         },
       ],

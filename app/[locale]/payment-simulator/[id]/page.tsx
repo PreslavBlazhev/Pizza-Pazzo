@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getSimulatorConfig } from "@/lib/payments/providers";
+import { simulatorPageAllowed } from "@/lib/payments/demo";
+import { getSessionUser } from "@/lib/auth";
 import {
   mapSimulatorState,
   SIMULATOR_SCENARIOS,
@@ -53,6 +55,9 @@ export default async function PaymentSimulatorPage({ params }: PageProps) {
   setRequestLocale(locale);
 
   if (!(await getSimulatorConfig())) notFound();
+  // Production: the demo "bank page" exists only for signed-in staff.
+  const viewer = await getSessionUser();
+  if (!simulatorPageAllowed(viewer?.role ?? null)) notFound();
 
   const session = await db.paymentSimulatorSession.findUnique({ where: { id } });
   if (!session) notFound();

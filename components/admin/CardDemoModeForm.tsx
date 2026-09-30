@@ -22,7 +22,15 @@ const DESCRIPTIONS: Record<CardDemoMode, { title: string; text: string }> = {
 };
 
 /** The live-site card demo switch (Admin → Settings). */
-export function CardDemoModeForm({ mode }: { mode: CardDemoMode }) {
+export function CardDemoModeForm({
+  mode,
+  publicAllowed,
+}: {
+  /** The EFFECTIVE mode (production reads a stored EVERYONE as STAFF). */
+  mode: CardDemoMode;
+  /** False on the real site: the demo is never shown to customers there. */
+  publicAllowed: boolean;
+}) {
   const [state, formAction, isPending] = useActionState<ActionResult | null, FormData>(
     setCardDemoModeAction,
     null
@@ -46,11 +54,16 @@ export function CardDemoModeForm({ mode }: { mode: CardDemoMode }) {
               name="cardDemoMode"
               value={m}
               defaultChecked={m === mode}
+              disabled={m === "EVERYONE" && !publicAllowed}
               className="mt-1 h-4 w-4 accent-pizza-green"
             />
             <span>
               <span className="block text-sm font-semibold text-pizza-ink">{DESCRIPTIONS[m].title}</span>
-              <span className="block text-xs text-pizza-muted">{DESCRIPTIONS[m].text}</span>
+              <span className="block text-xs text-pizza-muted">
+                {m === "EVERYONE" && !publicAllowed
+                  ? "Недостъпно на истинския сайт: клиентите не трябва да виждат тестово „плащане с карта“, докато банковият ПОС не е активен. Ползвайте staging за публично демо."
+                  : DESCRIPTIONS[m].text}
+              </span>
             </span>
           </label>
         ))}

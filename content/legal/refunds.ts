@@ -1,150 +1,217 @@
 import type { LegalDoc } from "./types";
+import { LEGAL_VERSIONS, versionDate } from "./versions";
 
 /**
- * Откази, рекламации и възстановяване / Cancellations, Complaints & Refunds
- * — DRAFT for client + lawyer review. Expands on Terms §§6–7 (право на отказ /
- * рекламации) with the practical detail customers actually look for. Reflects
- * how the system works today: cash-on-delivery only, no card payments yet, so
- * "refund" in practice means either not charging the customer or a cash
- * hand-back — the wording is written to stay correct once card payments exist.
+ * Отказ, връщане, рекламации и възстановяване на суми / Cancellation, Returns,
+ * Complaints and Refunds — the document a customer accepts at checkout
+ * together with the Terms.
+ *
+ * Mirrors the real process (docs/UBB-OPERATIONS.md):
+ *   - cancellation is by phone/e-mail; staff cancel the order in the admin
+ *     while it is PENDING or ACCEPTED (before PREPARING);
+ *   - a card refund is made by the restaurant in the bank's virtual-POS
+ *     merchant portal — the site never "refunds" by changing a status;
+ *   - the bank's crediting time is not promised.
+ * Section ids are linked from checkout and the Terms.
  */
 export const refundsDoc: LegalDoc = {
   slug: "refunds",
-  updated: "20.07.2026",
+  version: LEGAL_VERSIONS.refunds,
+  updated: versionDate(LEGAL_VERSIONS.refunds),
   showCompanyBox: true,
   intro: [
     {
       p: {
-        bg: "Тази страница обяснява кога и как можете да анулирате поръчка, как подавате рекламация и как работи възстановяването на суми. Тя доразвива Общите условия (т. 6 и 7) с практическите стъпки и не ги замества.",
-        en: "This page explains when and how you can cancel an order, how to file a complaint, and how refunds work. It expands on the Terms and Conditions (sections 6 and 7) with the practical steps and does not replace them.",
+        bg: "Тук е описано как и до кога можете да откажете поръчка, кога имате право на отказ от договора и как се връща стока, как се подава рекламация и как и в какъв срок се възстановяват платени суми. Документът е част от Общите условия.",
+        en: "This page explains how and until when you can cancel an order, when you have a right of withdrawal and how goods are returned, how to complain, and how and when amounts paid are refunded. It forms part of the Terms and Conditions.",
       },
     },
   ],
   sections: [
     {
-      heading: {
-        bg: "1. Анулиране преди началото на приготвянето",
-        en: "1. Cancelling before preparation starts",
-      },
-      blocks: [
-        {
-          p: {
-            bg: "Можете да анулирате поръчката безплатно, докато тя все още не е приета от ресторанта или в кратък период веднага след приемането, преди кухнята да е започнала приготвянето ѝ. Обадете се на телефона по-долу възможно най-скоро — колкото по-рано, толкова по-сигурно е анулирането да е безплатно.",
-            en: "You may cancel free of charge while the order has not yet been accepted by the restaurant, or in the short window right after acceptance, before the kitchen has started preparing it. Call the phone number below as soon as possible — the earlier you call, the more certain a free cancellation is.",
-          },
-        },
-      ],
-    },
-    {
-      heading: {
-        bg: "2. Ограничения при вече приготвена храна",
-        en: "2. Limits once food has been prepared",
-      },
-      blocks: [
-        {
-          p: {
-            bg: "Храната се приготвя по поръчка. Съгласно чл. 57 от Закона за защита на потребителите, правото на отказ по чл. 50 ЗЗП не се прилага за бързоразвалящи се хранителни продукти — затова поръчка, чието приготвяне вече е започнало или е приключило, не може да бъде анулирана безплатно и не подлежи на връщане поради „размислих“. Това не засяга правото ви на рекламация при проблем с получената поръчка (т. 3–4 по-долу).",
-            en: "Food is prepared to order. Under Art. 57 of the Bulgarian Consumer Protection Act, the right of withdrawal under Art. 50 does not apply to perishable food — so an order whose preparation has started or finished cannot be cancelled free of charge or returned simply because you changed your mind. This does not affect your right to complain about a problem with the order you received (sections 3–4 below).",
-          },
-        },
-      ],
-    },
-    {
-      heading: {
-        bg: "3. Грешна или липсваща позиция",
-        en: "3. Wrong or missing item",
-      },
-      blocks: [
-        {
-          p: {
-            bg: "Прегледайте поръчката веднага при получаване. Ако липсва продукт или е доставен различен от поръчания, свържете се с нас незабавно — най-лесно е проблемът да се реши на място или в рамките на същия ден. Ще предложим доставка на липсващия/верния продукт или възстановяване на платената за него сума.",
-            en: "Please check your order as soon as it arrives. If an item is missing or the wrong item was delivered, contact us immediately — it is easiest to resolve on the spot or the same day. We will offer delivery of the missing/correct item or a refund of the amount paid for it.",
-          },
-        },
-      ],
-    },
-    {
-      heading: {
-        bg: "4. Проблем с качеството",
-        en: "4. A quality problem",
-      },
-      blocks: [
-        {
-          p: {
-            bg: "Ако получен продукт е с нарушено качество (напр. студен извън разумното при доставка, недопечен, увреден при транспорт), уведомете ни в деня на доставката. При основателна рекламация ще предложим замяна на засегнатия продукт или възстановяване на стойността му. Правата ви по Закона за защита на потребителите не се ограничават от тази страница.",
-            en: "If a delivered item has a quality issue (e.g. unreasonably cold on arrival, undercooked, damaged in transit), let us know on the day of delivery. For a justified complaint we will offer a replacement of the affected item or a refund of its value. Your rights under the Consumer Protection Act are not limited by this page.",
-          },
-        },
-      ],
-    },
-    {
-      heading: {
-        bg: "5. Как да подадете рекламация",
-        en: "5. How to file a complaint",
-      },
+      id: "cancel",
+      heading: { bg: "1. Отказ от поръчка от ваша страна", en: "1. Cancelling your order" },
       blocks: [
         {
           list: [
             {
-              bg: "Свържете се с нас на телефона или имейла, посочени на страница „Контакти“ — по телефона получавате най-бърз отговор.",
-              en: "Contact us at the phone number or email on the Contacts page — phone gets you the fastest response.",
+              bg: "До кога: докато кухнята не е започнала приготвянето — т.е. докато поръчката е в статус „Очаква потвърждение“ или „Прието“ (преди „Приготвя се“). Отказът е безплатен.",
+              en: "Until when: as long as the kitchen has not started preparing it — that is, while the order is “Awaiting confirmation” or “Accepted” (before “Preparing”). Cancelling is free.",
             },
             {
-              bg: "Направете го възможно най-скоро, в деня на доставката — така проблемът се проверява и решава най-лесно.",
-              en: "Do it as soon as possible, on the day of delivery — that makes the issue easiest to verify and resolve.",
+              bg: "Как: обадете се на телефона на Ресторанта (най-бързо) или пишете на имейла ни с номера на поръчката. Отказът е в сила, когато персоналът го потвърди.",
+              en: "How: call the Restaurant (fastest) or e-mail us with the order number. The cancellation takes effect when our staff confirm it.",
+            },
+            {
+              bg: "След започване на приготвянето поръчката не може да бъде отменена: храната се приготвя специално за вас и дължите цената ѝ. Платена с карта сума в този случай не се възстановява.",
+              en: "Once preparation has started the order cannot be cancelled: the food is made specially for you and its price is due. An amount paid by card is not refunded in that case.",
+            },
+            {
+              bg: "Неустойки: Ресторантът не начислява неустойки или други такси за отказ.",
+              en: "Penalties: the Restaurant charges no penalties or other cancellation fees.",
+            },
+          ],
+        },
+        { dynamic: "contactChannels" },
+      ],
+    },
+    {
+      id: "restaurant-cancel",
+      heading: { bg: "2. Когато Ресторантът откаже поръчката", en: "2. When the Restaurant declines the order" },
+      blocks: [
+        {
+          p: {
+            bg: "Ако не можем да изпълним поръчката (изчерпан продукт, адрес извън района, невъзможност за доставка), ви се обаждаме на посочения телефон. Не дължите нищо. Ако сте платили с карта, възстановяваме цялата сума по картата (т. 6).",
+            en: "If we cannot fulfil the order (a product has run out, the address is outside the area, delivery is impossible), we call you on the phone number you gave. You owe nothing. If you paid by card, we refund the whole amount to the card (section 6).",
+          },
+        },
+      ],
+    },
+    {
+      id: "withdrawal",
+      heading: { bg: "3. Право на отказ от договора (14 дни)", en: "3. Right of withdrawal (14 days)" },
+      blocks: [
+        {
+          p: {
+            bg: "Не се прилага за храната: всички ястия, сосове и десерти се приготвят по поръчка и бързо се развалят, затова по чл. 57, т. 3 и т. 4 от Закона за защита на потребителите (чл. 16, б. „в“ и „г“ от Директива 2011/83/ЕС) за тях няма право на отказ. Това не засяга правото на рекламация (т. 5).",
+            en: "Not applicable to food: every dish, sauce and dessert is prepared to order and perishes quickly, so under Art. 57(3) and (4) of the Bulgarian Consumer Protection Act (Art. 16(c) and (d) of Directive 2011/83/EU) there is no right of withdrawal for them. This does not affect your right to complain (section 5).",
+          },
+        },
+        {
+          p: {
+            bg: "Прилага се за неотворени фабрично затворени напитки с дълъг срок на годност (например бутилирани безалкохолни напитки, вода и бира):",
+            en: "Applies to unopened factory-sealed drinks with a long shelf life (for example bottled soft drinks, water and beer):",
+          },
+        },
+        {
+          list: [
+            {
+              bg: "Срок: 14 дни от деня, в който сте получили напитките, без да посочвате причина.",
+              en: "Deadline: 14 days from the day you received the drinks, without giving any reason.",
+            },
+            {
+              bg: "Как: изпратете ни ясно изявление (например имейл) или попълнения стандартен формуляр по-долу на имейла или на адреса за кореспонденция. Достатъчно е да го изпратите преди изтичане на срока.",
+              en: "How: send us a clear statement (for example an e-mail) or the completed standard form below, to our e-mail or correspondence address. Sending it before the deadline is enough.",
+            },
+            {
+              bg: "Връщане: върнете неотворените напитки в оригиналната им опаковка до 14 дни след изявлението — като ги донесете в ресторанта (без разходи) или ги изпратите за своя сметка. Ако предпочитате, уговорете с нас да ги вземем при следваща доставка.",
+              en: "Return: return the unopened drinks in their original packaging within 14 days of your statement — by bringing them to the restaurant (no cost) or sending them at your own expense. If you prefer, arrange with us to collect them with a later delivery.",
+            },
+            {
+              bg: "Отговорност: отговаряте за намалената стойност на напитка, която е отворена или повредена.",
+              en: "Liability: you are responsible for the reduced value of a drink that has been opened or damaged.",
+            },
+            {
+              bg: "Възстановяване: връщаме платената за напитките цена без неоправдано забавяне и не по-късно от 14 дни от получаване на изявлението, със същото платежно средство. Можем да го задържим, докато получим напитките обратно. Доставката е безплатна, затова няма такса за доставка за възстановяване.",
+              en: "Refund: we refund the price paid for the drinks without undue delay and no later than 14 days after receiving your statement, using the same means of payment. We may withhold it until we have the drinks back. Delivery is free, so there is no delivery charge to refund.",
             },
           ],
         },
       ],
     },
     {
-      heading: {
-        bg: "6. Каква информация ни е нужна",
-        en: "6. What information we need",
-      },
+      id: "form",
+      heading: { bg: "4. Стандартен формуляр за отказ", en: "4. Standard withdrawal form" },
+      blocks: [{ dynamic: "withdrawalForm" }],
+    },
+    {
+      id: "complaints",
+      heading: { bg: "5. Рекламации", en: "5. Complaints" },
       blocks: [
         {
           list: [
             {
-              bg: "Номер на поръчката (изпратен ви при потвърждението).",
-              en: "Your order number (sent to you in the confirmation).",
+              bg: "Кога: възможно най-скоро след получаване, по възможност в деня на доставката — прясната храна може да бъде проверена само тогава.",
+              en: "When: as soon as possible after delivery, ideally on the same day — fresh food can only be checked then.",
             },
             {
-              bg: "Кратко описание на проблема — какво липсва, какво е сгрешено или какъв е дефектът.",
-              en: "A short description of the problem — what is missing, what is wrong, or what the defect is.",
+              bg: "Как: по телефона или имейла на Ресторанта, или писмено на адреса за кореспонденция.",
+              en: "How: by the Restaurant's phone or e-mail, or in writing to the correspondence address.",
             },
             {
-              bg: "По възможност снимка на получената поръчка, ако проблемът е видим.",
-              en: "A photo of the order you received, if the problem is visible, where possible.",
+              bg: "Какво да посочите: номер на поръчката, какво липсва, какво е сгрешено или какъв е проблемът, и по възможност снимка. Запазете продукта, докато го прегледаме.",
+              en: "What to include: the order number, what is missing or wrong or what the problem is, and a photo if you can. Keep the product until we have looked at it.",
+            },
+            {
+              bg: "Решение: при основателна рекламация доставяме липсващия или верния продукт или възстановяваме платената за него сума, по ваш избор, без разходи за вас. Отговаряме на всяка рекламация и ви съобщаваме решението.",
+              en: "Outcome: for a justified complaint we deliver the missing or correct product or refund what you paid for it, as you prefer, at no cost to you. We answer every complaint and tell you the decision.",
             },
           ],
         },
-      ],
-    },
-    {
-      heading: {
-        bg: "7. Начин и срок за възстановяване",
-        en: "7. Refund method and timeframe",
-      },
-      blocks: [
         {
           p: {
-            bg: "Плащането е с наложен платеж (в брой при доставка), затова при основателна рекламация възстановяването обичайно става веднага — в брой при повторна доставка на верния продукт, или чрез намаляване на дължимата сума при следваща поръчка, по договорка с вас. Ако бъдат добавени други начини на плащане (напр. с карта), възстановяването ще се извършва по същия начин, по който е платено, обичайно в срок до 14 дни от потвърждаване на основателността на рекламацията.",
-            en: "Payment is cash on delivery, so for a justified complaint a refund is usually handled immediately — in cash on redelivery of the correct item, or offset against your next order, as agreed with you. If other payment methods (e.g. card) are added, refunds will be made using the same method used to pay, normally within 14 days of the complaint being confirmed as justified.",
+            bg: "За храната няма гаранционен или извънгаранционен сервиз — не е приложим за продукти за незабавна консумация. Това не ограничава правото на рекламация и законовите ви права при несъответствие с договора.",
+            en: "There is no in- or out-of-warranty service for food — it does not apply to products for immediate consumption. This does not limit your right to complain or your statutory rights for goods that do not conform to the contract.",
           },
         },
       ],
     },
     {
-      heading: {
-        bg: "8. Приложимо право",
-        en: "8. Governing law",
-      },
+      id: "refunds",
+      heading: { bg: "6. Възстановяване на платени суми", en: "6. Refunds of amounts paid" },
       blocks: [
         {
           p: {
-            bg: "Прилага се българското законодателство, включително Законът за защита на потребителите. Надзорен орган: Комисия за защита на потребителите (КЗП) — www.kzp.bg. Съдържанието на тази страница е обща информация и не представлява индивидуална правна консултация.",
-            en: "Bulgarian law applies, including the Consumer Protection Act. Supervisory authority: the Bulgarian Commission for Consumer Protection (CPC) — www.kzp.bg. The content of this page is general information and does not constitute individual legal advice.",
+            bg: "Кога възстановяваме:",
+            en: "When we refund:",
+          },
+        },
+        {
+          list: [
+            {
+              bg: "поръчка, платена с карта, която Ресторантът не е приел или е отказал — цялата сума;",
+              en: "a card-paid order the Restaurant did not accept or declined — the whole amount;",
+            },
+            {
+              bg: "поръчка, отказана от вас преди започване на приготвянето — цялата сума;",
+              en: "an order you cancelled before preparation started — the whole amount;",
+            },
+            {
+              bg: "двойно плащане на една и съща поръчка — излишното плащане;",
+              en: "a double payment for the same order — the extra payment;",
+            },
+            {
+              bg: "сума, изтеглена при плащане, което не е довело до изпълнена поръчка (установено при проверка на транзакцията) — цялата сума;",
+              en: "an amount taken by a payment that did not lead to a fulfilled order (established by checking the transaction) — the whole amount;",
+            },
+            {
+              bg: "липсващ продукт или основателна рекламация, когато изберете възстановяване — сумата за съответния продукт (частично възстановяване);",
+              en: "a missing product or a justified complaint where you choose a refund — the amount for that product (partial refund);",
+            },
+            {
+              bg: "упражнено право на отказ за напитки (т. 3) — цената на върнатите напитки.",
+              en: "a withdrawal for drinks (section 3) — the price of the drinks returned.",
+            },
+          ],
+        },
+        {
+          p: {
+            bg: "Как: сума, платена с карта чрез виртуалния ПОС терминал, се възстановява само по картата, с която е направено плащането. Възстановяването се нарежда от Ресторанта през системата на обслужващата банка — не в брой и не по друга сметка. Сума, платена в брой, се връща в брой или по посочена от вас банкова сметка.",
+            en: "How: an amount paid by card through the virtual POS terminal is refunded only to the card used for the payment. The Restaurant orders the refund through the servicing bank's system — not in cash and not to another account. An amount paid in cash is returned in cash or to a bank account you give us.",
+          },
+        },
+        {
+          p: {
+            bg: "Срок: Ресторантът нарежда възстановяването без неоправдано забавяне и не по-късно от 14 дни от възникване на основанието. Кога сумата ще се отрази по сметката ви не зависи от нас — определя се от банката, издала картата ви, и от картовата организация (Visa, Mastercard и др.). При нужда ви изпращаме потвърждение, че възстановяването е наредено.",
+            en: "Timing: the Restaurant orders the refund without undue delay and no later than 14 days after the reason for it arises. When the money appears on your account does not depend on us — the bank that issued your card and the card scheme (Visa, Mastercard, etc.) decide it. On request we send you confirmation that the refund has been ordered.",
+          },
+        },
+        {
+          p: {
+            bg: "Непотвърдено плащане: ако банката не е потвърдила плащането, поръчката не се изпълнява. Липсата на потвърждение обаче не доказва, че по картата няма движение. Ако видите блокирана или изтеглена сума, свържете се с нас с номера на поръчката — проверяваме транзакцията в системата на банката. Ако сумата е изтеглена, а поръчката не е изпълнена, я възстановяваме по същата карта (т. 6). Блокирана, но неусвоена сума се освобождава от банката, издала картата, в нейните срокове.",
+            en: "Unconfirmed payment: if the bank has not confirmed the payment, the order is not carried out. A missing confirmation does not, however, prove that nothing moved on the card. If you see an amount held or taken, contact us with the order number — we check the transaction in the bank's system. If the amount was taken and the order not carried out, we refund it to the same card (section 6). An amount only held (not captured) is released by the bank that issued the card, on its own timescale.",
+          },
+        },
+      ],
+    },
+    {
+      id: "law",
+      heading: { bg: "7. Приложимо право", en: "7. Governing law" },
+      blocks: [
+        {
+          p: {
+            bg: "Прилага се българското законодателство. Нищо в този документ не ограничава правата ви по Закона за защита на потребителите. Можете да се обърнете към Комисията за защита на потребителите (www.kzp.bg) и към помирителните комисии към нея.",
+            en: "Bulgarian law applies. Nothing in this document limits your rights under the Consumer Protection Act. You may turn to the Commission for Consumer Protection (www.kzp.bg) and its conciliation committees.",
           },
         },
       ],

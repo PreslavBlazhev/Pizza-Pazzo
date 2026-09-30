@@ -75,8 +75,12 @@ async function checkoutByCard(page: Page, slug: string, tag: string): Promise<st
   await page.locator('[name="customerEmail"]').fill("browser-e2e@example.test");
   await page.locator('[name="deliveryAddress"]').fill(`ул. Тестова 5 (${tag})`);
   await page.getByText("Плащане онлайн с карта").click();
+  // The three explicit confirmations (UBB-16) start unticked.
+  for (const name of ["consentTerms", "consentRefunds", "consentPrivacy"]) {
+    await page.locator(`input[name="${name}"]`).check();
+  }
   await shot(page, `${tag}-01-checkout`);
-  await page.getByRole("button", { name: "Продължи към плащане с карта" }).click();
+  await page.getByRole("button", { name: "Поръчай и плати с карта" }).click();
   await page.waitForURL(/\/checkout\/pay\//, { timeout: 30_000 });
   const token = page.url().split("/checkout/pay/")[1].split("?")[0];
   const order = await db.order.findUniqueOrThrow({ where: { accessToken: token } });
@@ -196,7 +200,7 @@ async function main() {
       await payWithCard(page, "4000 0000 0000 9995", "B");
       await page.waitForURL(/\/payment\/failed/, { timeout: 60_000 });
       const failedText = await page.locator("main").innerText();
-      check(failedText.includes("Плащането не беше извършено") && failedText.includes("Банката отказа"), "failure page with the decline reason");
+      check(failedText.includes("Плащането не е потвърдено") && failedText.includes("Банката отказа"), "failure page with the decline reason");
       await shot(page, "B-05-failed");
       check((await cartCount(page)) > 0, "cart kept after the decline");
       const declined = await db.order.findUniqueOrThrow({ where: { id: order.id } });

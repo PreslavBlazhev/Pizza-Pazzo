@@ -1,50 +1,83 @@
 import { SITE } from "@/lib/constants";
+import type { L } from "./types";
 
 /**
- * Merchant identity shown in the legal pages, contacts page and footer — the
- * single central source for company/restaurant data (`restaurantConfig` in
- * the brief). Names build on the existing `SITE` constant instead of
- * duplicating it; new legal-only fields are added here.
+ * The merchant — the ONE source of the seller's identity for the legal pages,
+ * the contacts page, the footer, checkout and the customer e-mails.
  *
- * ⚠️ TODO — FIELDS STILL PENDING FROM THE CLIENT, marked "ЗА ПОПЪЛВАНЕ" below.
- * None of these are guessed; do not fill them with placeholder-looking real
- * data. Legally REQUIRED before launch (чл. 4 ЗЕТ, чл. 47 ЗЗП): `uic`.
- * The company box on the legal pages renders each row only when it is
- * non-empty, so an unfilled field simply does not show yet.
- *  - `uic`              — ЕИК/Булстат.
- *  - `vatNumber`        — ДДС номер (only if VAT-registered).
- *  - `registeredAddress` — адрес на управление, if different from the
- *    restaurant's serving address (`address` below).
- *  - `managerName`       — управител / лице за контакт по ЗЗП.
+ * Every registry field below was checked against an official source on
+ * 2026-09-29 (details and the raw evidence: docs/UBB-BUSINESS-DATA.md):
+ *   - Търговски регистър (portal.registryagency.bg, ЕИК 203300275):
+ *     name „ПИЦА ПАЦО“, legal form ЕООД, English name PIZZA PAZZO LTD,
+ *     седалище и адрес на управление гр. Плевен 5800,
+ *     ул. „Димитър Константинов“ № 37, ет. 4, ап. 5.
+ *   - VIES (European Commission): BG203300275 is a VALID VAT number.
  *
- * `city` is RESOLVED (2026-07-20, developer confirmation): Плевен — not
- * Варна, which was the placeholder default throughout the app until now
- * (checkout, saved addresses, Prisma column defaults, i18n placeholders —
- * all switched together with this field, see docs/client-questions.md #Q
- * "Градът за доставка: Варна или Плевен?" and client-delivery-questions.md).
+ * The seat/management address (№ 37) is NOT the restaurant. The restaurant
+ * (обект) address, the phones and the public e-mail are operational data the
+ * owner edits in Admin → Settings (lib/restaurant-settings.ts); the older
+ * "№ 35" found in early notes matches no official record and is not used.
+ *
+ * Nothing here belongs to the web developer / agency — the site's builder is
+ * deliberately not named anywhere as a party to the contract.
  */
 export const COMPANY = {
-  legalName: SITE.legalName,
+  /** Registered name incl. legal form, as the Commercial Register writes it. */
+  legalName: { bg: "„ПИЦА ПАЦО“ ЕООД", en: "PIZZA PAZZO LTD" } satisfies L,
+  /** Trading name customers know. */
   displayName: SITE.name,
-  /** ЕИК — FILL BEFORE LAUNCH. */
-  uic: "",
-  /** ДДС номер — only applicable once/if VAT-registered. */
-  vatNumber: "",
+  /** ЕИК (Unified Identification Code). */
+  uic: "203300275",
+  /** ДДС номер — confirmed valid in VIES on 2026-09-29. */
+  vatNumber: "BG203300275",
+  /** Седалище и адрес на управление — Търговски регистър. */
+  registeredAddress: {
+    bg: "гр. Плевен 5800, ул. „Димитър Константинов“ № 37, ет. 4, ап. 5",
+    en: "37 Dimitar Konstantinov St., floor 4, apt. 5, 5800 Pleven, Bulgaria",
+  } satisfies L,
   /**
-   * Restaurant / service address.
-   *
-   * ⚠️ FALLBACK ONLY since the settings table exists: the address, email and
-   * phone the legal pages actually print come from the admin-editable
-   * RestaurantSettings row and are passed into <LegalArticle /> by each legal
-   * page. These values are what renders if that read fails.
+   * Адрес за кореспонденция. The register holds no separate one, so the
+   * registered seat is the address for written correspondence (and for
+   * written withdrawal notices and complaints).
    */
-  address: SITE.address,
-  city: "Плевен",
-  /** Адрес на управление, if it differs from `address`. */
-  registeredAddress: "",
-  /** Управител / лице за контакт. */
-  managerName: "",
-  email: SITE.email,
-  phone: SITE.phone,
-  website: SITE.website,
+  correspondenceAddress: {
+    bg: "гр. Плевен 5800, ул. „Димитър Константинов“ № 37, ет. 4, ап. 5",
+    en: "37 Dimitar Konstantinov St., floor 4, apt. 5, 5800 Pleven, Bulgaria",
+  } satisfies L,
+  website: "pizzapazzo.bg",
+  /**
+   * Registration of the food business with the Bulgarian Food Safety Agency
+   * (БАБХ), Art. 24 of the Food Act — verified 2026-09-30 in BFSA's public
+   * "Регистър на обекти за обществено хранене (ОХ)" (public-iisr.bfsa.bg,
+   * report register_4_2, ЕИК 203300275): рег. № 152700478, удостоверение
+   * № 101-7892/16.04.2015, „Пицария с доставка по домовете“, бул. „Георги
+   * Кочев“ № 13, Плевен, status Активен, ОДБХ Плевен. Evidence:
+   * docs/ubb-evidence/registry/.
+   */
+  foodRegistration: {
+    number: "152700478",
+    certificate: "101-7892/16.04.2015",
+    authority: { bg: "ОДБХ – Плевен", en: "RFSD Pleven (BFSA)" },
+  } as null | { number: string; certificate: string; authority: L },
 } as const;
+
+/** Plain strings of the merchant identity for one locale. */
+export function companyFor(locale: string) {
+  const pick = (value: L) => (locale === "en" ? value.en : value.bg);
+  return {
+    legalName: pick(COMPANY.legalName),
+    displayName: COMPANY.displayName,
+    uic: COMPANY.uic,
+    vatNumber: COMPANY.vatNumber,
+    registeredAddress: pick(COMPANY.registeredAddress),
+    correspondenceAddress: pick(COMPANY.correspondenceAddress),
+    website: COMPANY.website,
+    foodRegistration: COMPANY.foodRegistration
+      ? {
+          number: COMPANY.foodRegistration.number,
+          certificate: COMPANY.foodRegistration.certificate,
+          authority: pick(COMPANY.foodRegistration.authority),
+        }
+      : null,
+  };
+}

@@ -19,23 +19,27 @@ import { getAppBaseUrl } from "@/lib/app-env";
  */
 export const SITE = {
   name: "Pizza Pazzo",
-  legalName: "Pizza Pazzo LTD",
+  /** English registered name — the full BG/EN identity lives in content/legal/company.ts. */
+  legalName: "PIZZA PAZZO LTD",
   foundedYear: 2012,
   /** Public contact phones (primary first). */
-  phones: ["+359 88 248 4777", "+359 801 999"],
+  // The second number was stored as "+359 801 999" (no area code) until
+  // 2026-09-29; the owner's own site publishes it as 064 801 999 (tel:+35964801999).
+  phones: ["+359 88 248 4777", "+359 64 801 999"],
   /** Primary phone (kept for convenience). */
   phone: "+359 88 248 4777",
   email: "pr2.blazhev@gmail.com",
   /** Full display address (BG) as shown to visitors. Updated 2026-07. */
-  address: "Плевен, ул. Георги Кочев 13 (Срещу Технополис)",
+  // "бул.", as the BFSA register and the owner's own site write it (2026-09-30).
+  address: "Плевен, бул. „Георги Кочев“ 13 (срещу Технополис)",
   /** Full display address for the English pages. */
-  addressEn: "13 Georgi Kochev St., Pleven (opposite Technopolis)",
+  addressEn: "13 Georgi Kochev Blvd., Pleven (opposite Technopolis)",
   /** Street only — for schema.org streetAddress and Maps queries, where the
    *  "(Срещу Технополис)" landmark hint would just add noise. */
-  streetAddress: "ул. Георги Кочев 13",
+  streetAddress: "бул. „Георги Кочев“ 13",
   city: "Плевен",
   cityEn: "Pleven",
-  website: "www.pizzapazzo.bg",
+  website: "pizzapazzo.bg",
 } as const;
 
 // `getSiteAddress(locale)` used to live here. It was removed with the settings
@@ -52,7 +56,7 @@ export const SITE = {
  * the new domain is one setting (see docs/domain-and-deploy.md). The literal
  * below is only the last-resort fallback for a server with neither set.
  */
-export const SITE_URL = getAppBaseUrl() || "https://www.pizzapazzo.bg";
+export const SITE_URL = getAppBaseUrl() || "https://pizzapazzo.bg";
 
 /**
  * Working hours, grouped for display.

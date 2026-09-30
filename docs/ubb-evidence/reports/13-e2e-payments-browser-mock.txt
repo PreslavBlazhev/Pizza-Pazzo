@@ -1,0 +1,39 @@
+A. successful test card
+  ✓ checkout created the order unpaid, not in the kitchen
+  ✓ exactly one order for this checkout
+  ✓ review shows the order number
+  ✓ review shows the product from the server
+  ✓ review shows the server total (6.65 €)
+  ✓ simulator shows the same amount
+  ✓ a real-looking card number is refused
+  ✓ …and cleared from the field
+  ✓ 'Обработваме плащането…' is shown
+  ✓ thank-you page: right number and amount
+  ✓ cart emptied only after the confirmed payment
+  ✓ order PAID and released to the kitchen
+  ✓ one attempt, PAID
+  ✓ simulator ledger recorded PAID (the 'bank' side)
+  ✓ TEST order; restaurant e-mail deliberately not sent, decided once
+  ✓ refresh/back: no second payment, no second release
+  ✓ no second order
+  ✓ on the staging kitchen board exactly once
+  ✓ admin shows the TEST marker
+  ✓ admin shows 'ПЛАТЕНО ОНЛАЙН С КАРТА — НЕ СЪБИРАЙ ПАРИ'
+  ✓ kitchen ticket: 'ТЕСТ — НЕ ПРИГОТВЯЙ' (even though it hides payment)
+  ✓ delivery ticket: 'ТЕСТ' + 'ПЛАТЕНО ОНЛАЙН С КАРТА — НЕ СЪБИРАЙ ПАРИ'
+B. declined test card, then retry with simulated 3-D Secure
+  ✓ failure page with the decline reason
+  ✓ cart kept after the decline
+  ✓ declined order FAILED and not in the kitchen
+  ✓ 3-D Secure step is clearly a simulation
+  ✓ retry paid the SAME order (2 attempts, 1 order)
+C/D/E. pending, cancel, late confirmation
+  ✓ pending card → 'Чакаме потвърждение'
+  ✓ pending order not in the kitchen
+  ✓ cancel on the hosted page → 'Плащането беше прекъснато'
+  ✓ late confirmation: the pending page moved to 'paid' by itself
+  ✓ no request carried card digits (538 requests inspected)
+
+cleaned up 5 test orders; screenshots in docs/ubb-evidence/reports/../payment-screenshots
+
+BROWSER E2E OK

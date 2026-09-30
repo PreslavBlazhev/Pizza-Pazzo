@@ -1,0 +1,189 @@
+   ▲ Next.js 15.5.20
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings in 21.6s
+
+./node_modules/jose/dist/webapi/lib/deflate.js
+A Node.js API is used (CompressionStream at line: 10) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+./node_modules/jose/dist/webapi/lib/deflate.js
+./node_modules/jose/dist/webapi/jwe/flattened/decrypt.js
+./node_modules/jose/dist/webapi/index.js
+./lib/auth/jwt.ts
+
+./node_modules/jose/dist/webapi/lib/deflate.js
+A Node.js API is used (DecompressionStream at line: 26) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+./node_modules/jose/dist/webapi/lib/deflate.js
+./node_modules/jose/dist/webapi/jwe/flattened/decrypt.js
+./node_modules/jose/dist/webapi/index.js
+./lib/auth/jwt.ts
+
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/86) ...
+   Generating static pages (21/86) 
+   Generating static pages (42/86) 
+   Generating static pages (64/86) 
+ ✓ Generating static pages (86/86)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS  Revalidate  Expire
+┌ ○ /_not-found                            998 B         103 kB
+├ ● /[locale]                              416 B         132 kB
+├   ├ /bg
+├   └ /en
+├ ● /[locale]/account-deleted              137 B         131 kB          5m      1y
+├   ├ /bg/account-deleted                                                5m      1y
+├   └ /en/account-deleted                                                5m      1y
+├ ● /[locale]/account-deletion             137 B         131 kB          5m      1y
+├   ├ /bg/account-deletion                                               5m      1y
+├   └ /en/account-deletion                                               5m      1y
+├ ● /[locale]/admin                        184 B         119 kB
+├   ├ /bg/admin
+├   └ /en/admin
+├ ● /[locale]/admin/categories           1.99 kB         121 kB
+├   ├ /bg/admin/categories
+├   └ /en/admin/categories
+├ ● /[locale]/admin/menu                   184 B         119 kB
+├   ├ /bg/admin/menu
+├   └ /en/admin/menu
+├ ● /[locale]/admin/orders                 184 B         119 kB
+├   ├ /bg/admin/orders
+├   └ /en/admin/orders
+├ ƒ /[locale]/admin/orders/[id]          3.49 kB         125 kB
+├ ƒ /[locale]/admin/orders/[id]/print      419 B         119 kB
+├ ● /[locale]/admin/orders/live          5.45 kB         113 kB
+├   ├ /bg/admin/orders/live
+├   └ /en/admin/orders/live
+├ ● /[locale]/admin/products               936 B         120 kB
+├   ├ /bg/admin/products
+├   └ /en/admin/products
+├ ƒ /[locale]/admin/products/[id]          132 B         129 kB
+├ ● /[locale]/admin/products/new           132 B         129 kB
+├   ├ /bg/admin/products/new
+├   └ /en/admin/products/new
+├ ● /[locale]/admin/reports              2.65 kB         122 kB
+├   ├ /bg/admin/reports
+├   └ /en/admin/reports
+├ ● /[locale]/admin/settings              3.9 kB         123 kB
+├   ├ /bg/admin/settings
+├   └ /en/admin/settings
+├ ● /[locale]/admin/settings/print        6.9 kB         129 kB
+├   ├ /bg/admin/settings/print
+├   └ /en/admin/settings/print
+├ ● /[locale]/admin/users                4.51 kB         124 kB
+├   ├ /bg/admin/users
+├   └ /en/admin/users
+├ ● /[locale]/app-privacy                  137 B         131 kB          5m      1y
+├   ├ /bg/app-privacy                                                    5m      1y
+├   └ /en/app-privacy                                                    5m      1y
+├ ● /[locale]/auth/check-email             137 B         131 kB
+├   ├ /bg/auth/check-email
+├   └ /en/auth/check-email
+├ ● /[locale]/auth/login                 3.66 kB         132 kB
+├   ├ /bg/auth/login
+├   └ /en/auth/login
+├ ● /[locale]/auth/register              3.92 kB         133 kB
+├   ├ /bg/auth/register
+├   └ /en/auth/register
+├ ● /[locale]/cart                       3.84 kB         134 kB          5m      1y
+├   ├ /bg/cart                                                           5m      1y
+├   └ /en/cart                                                           5m      1y
+├ ● /[locale]/checkout                   23.7 kB         154 kB
+├   ├ /bg/checkout
+├   └ /en/checkout
+├ ƒ /[locale]/checkout/pay/[token]       2.69 kB         131 kB
+├ ● /[locale]/contacts                   2.74 kB         131 kB          5m      1y
+├   ├ /bg/contacts                                                       5m      1y
+├   └ /en/contacts                                                       5m      1y
+├ ● /[locale]/cookies                      137 B         131 kB          5m      1y
+├   ├ /bg/cookies                                                        5m      1y
+├   └ /en/cookies                                                        5m      1y
+├ ● /[locale]/delivery                     137 B         131 kB          5m      1y
+├   ├ /bg/delivery                                                       5m      1y
+├   └ /en/delivery                                                       5m      1y
+├ ● /[locale]/gallery                      221 B         132 kB          5m      1y
+├   ├ /bg/gallery                                                        5m      1y
+├   └ /en/gallery                                                        5m      1y
+├ ● /[locale]/menu                        1.2 kB         133 kB
+├   ├ /bg/menu
+├   └ /en/menu
+├ ƒ /[locale]/menu/[category]              420 B         132 kB
+├ ƒ /[locale]/opengraph-image              167 B         103 kB
+├ ● /[locale]/order-success                137 B         131 kB
+├   ├ /bg/order-success
+├   └ /en/order-success
+├ ● /[locale]/payment-methods              137 B         131 kB          5m      1y
+├   ├ /bg/payment-methods                                                5m      1y
+├   └ /en/payment-methods                                                5m      1y
+├ ƒ /[locale]/payment-simulator/[id]     4.55 kB         124 kB
+├ ● /[locale]/payment/failed               220 B         132 kB
+├   ├ /bg/payment/failed
+├   └ /en/payment/failed
+├ ● /[locale]/payment/pending              664 B         132 kB
+├   ├ /bg/payment/pending
+├   └ /en/payment/pending
+├ ● /[locale]/payment/return               220 B         132 kB
+├   ├ /bg/payment/return
+├   └ /en/payment/return
+├ ● /[locale]/payment/success              221 B         132 kB
+├   ├ /bg/payment/success
+├   └ /en/payment/success
+├ ● /[locale]/popular                      420 B         132 kB
+├   ├ /bg/popular
+├   └ /en/popular
+├ ● /[locale]/privacy                      136 B         131 kB          5m      1y
+├   ├ /bg/privacy                                                        5m      1y
+├   └ /en/privacy                                                        5m      1y
+├ ƒ /[locale]/product/[id]               3.77 kB         136 kB
+├ ● /[locale]/profile                    5.97 kB         135 kB
+├   ├ /bg/profile
+├   └ /en/profile
+├ ● /[locale]/profile/orders               137 B         131 kB
+├   ├ /bg/profile/orders
+├   └ /en/profile/orders
+├ ● /[locale]/refunds                      137 B         131 kB          5m      1y
+├   ├ /bg/refunds                                                        5m      1y
+├   └ /en/refunds                                                        5m      1y
+├ ● /[locale]/reviews                      136 B         131 kB          5m      1y
+├   ├ /bg/reviews                                                        5m      1y
+├   └ /en/reviews                                                        5m      1y
+├ ● /[locale]/terms                        137 B         131 kB          5m      1y
+├   ├ /bg/terms                                                          5m      1y
+├   └ /en/terms                                                          5m      1y
+├ ƒ /[locale]/twitter-image                167 B         103 kB
+├ ● /[locale]/unauthorized                 137 B         131 kB          5m      1y
+├   ├ /bg/unauthorized                                                   5m      1y
+├   └ /en/unauthorized                                                   5m      1y
+├ ƒ /api/admin/pending-orders              184 B         119 kB
+├ ƒ /api/admin/upload-product-image        184 B         119 kB
+├ ƒ /api/auth/session                      167 B         103 kB
+├ ƒ /api/orders                            167 B         103 kB
+├ ƒ /api/payments/callback/[provider]      167 B         103 kB
+├ ƒ /api/payments/return                   167 B         103 kB
+├ ƒ /api/payments/start                    167 B         103 kB
+├ ƒ /api/payments/status                   167 B         103 kB
+├ ƒ /api/print                             167 B         103 kB
+├ ƒ /api/store-status                      167 B         103 kB
+├ ○ /robots.txt                            167 B         103 kB
+├ ○ /sitemap.xml                           167 B         103 kB
+└ ƒ /uploads/products/[filename]           167 B         103 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/1255-d90f22433f14e976.js      46.2 kB
+  ├ chunks/4bd1b696-f785427dddbba9fb.js  54.2 kB
+  └ other shared chunks (total)             2 kB
+
+
+ƒ Middleware                             98.2 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
