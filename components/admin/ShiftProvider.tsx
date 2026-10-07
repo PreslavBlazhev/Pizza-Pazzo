@@ -21,6 +21,7 @@ import {
 import type { Order, OrderWithItems } from "@/types/order";
 import { PRINT_TEMPLATE_IDS, defaultPrintTemplate, type PrintTemplateData } from "@/types/print";
 import type { StoreStatus } from "@/types/store-status";
+import type { PaymentAttentionItem } from "@/lib/payments/admin";
 
 /**
  * The shift, for the WHOLE admin panel.
@@ -70,6 +71,8 @@ interface ShiftContextValue {
   audioBlocked: boolean;
   orders: Order[];
   acceptedOrders: OrderWithItems[];
+  /** Card payments a person must decide about (late confirmation, alerts). */
+  paymentAttention: PaymentAttentionItem[];
   printTemplates: PrintTemplateData[];
   storeStatus: StoreStatus | null;
   connectionLost: boolean;
@@ -103,6 +106,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
   // Orders accepted this shift, kept so their kitchen ticket can still be
   // printed. They now survive leaving the board, like the shift itself.
   const [acceptedOrders, setAcceptedOrders] = useState<OrderWithItems[]>([]);
+  const [paymentAttention, setPaymentAttention] = useState<PaymentAttentionItem[]>([]);
 
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const hasPending = orders.length > 0;
@@ -129,8 +133,10 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         orders: Order[];
         printTemplates?: PrintTemplateData[];
         storeStatus?: StoreStatus;
+        paymentAttention?: PaymentAttentionItem[];
       };
       setOrders(data.orders);
+      setPaymentAttention(data.paymentAttention ?? []);
       if (data.printTemplates?.length) setPrintTemplates(data.printTemplates);
       // A timed closure ends here: the poll after the deadline simply reports
       // the shop open again, and the notice disappears on its own.
@@ -309,6 +315,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         audioBlocked,
         orders,
         acceptedOrders,
+        paymentAttention,
         printTemplates,
         storeStatus,
         connectionLost,
