@@ -92,6 +92,7 @@ checkout ──► Order { CARD_ONLINE, AWAITING_PAYMENT, releasedToKitchenAt = 
 | `PAYMENT_ENV` | `sandbox` / `production` | Само за банка. sandbox е забранен при APP_ENV=production, production е позволен само при APP_ENV=production |
 | `PAYMENT_CURRENCY` | `EUR` | Задължителна за банка (по договора). Сайтът таксува само в EUR |
 | `PAYMENT_SIMULATOR_SECRET` | дълъг случаен низ (≥16) | Подписва callback-ите на симулатора |
+| `PAYMENT_RECONCILE_SECRET` | дълъг случаен низ (≥32) | По избор; включва `POST /api/payments/reconcile` за Render Cron Job (без нея — 404). Виж docs/UBB-VPOS-INTEGRATION.md |
 | `STAGING_BASIC_AUTH` | `потребител:парола` | По избор; парола пред целия staging (не засяга `/api`) |
 
 Правилата са в код и са тествани: **симулаторът не може да се включи при
