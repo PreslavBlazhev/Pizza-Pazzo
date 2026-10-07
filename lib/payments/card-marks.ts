@@ -19,7 +19,7 @@
  * docs/UBB-COMPLIANCE.md UBB-14). So the footer shows the schemes named in
  * ОББ's virtual-POS request form whether or not card payment is live — but
  * still only from official files in public/payment-marks/ (provenance in
- * public/payment-marks/SOURCES.md), and never worded as "online card payment
+ * docs/UBB-COMPLIANCE.md, UBB-14), and never worded as "online card payment
  * works" while isCardPaymentLive() is false.
  *
  * Nothing is drawn by us; a missing file simply means no mark.

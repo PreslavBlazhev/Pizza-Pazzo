@@ -55,7 +55,7 @@ async function main() {
     // The footer carries the card-scheme logos ОББ asked for (UBB-14); the
     // checkout form's own marks ("pay with this card here") must stay off.
     check(/\\?"cardMarks\\?":\[\]/.test(guestCheckout), "guest checkout: no card logos at the payment choice");
-    check(guestCheckout.includes("все още не е активно"), "footer: card payment stated as NOT active next to the logos");
+    check(guestCheckout.includes("все още не е активно"), "checkout: card payment stated as NOT active");
 
     const staffCheckout = await (await fetch(`${BASE}/checkout`, { headers: { cookie } })).text();
     check(
