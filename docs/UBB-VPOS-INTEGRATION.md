@@ -168,7 +168,21 @@ sandbox; нова версия на приложението **не е публ�
 **Rollback:** `CARD_PAYMENTS_ENABLED=false` (аварийният ключ) — плащането в
 брой продължава. Миграцията е само добавяща; при връщане на по-стар код
 новите колони/таблици просто не се четат и платежните данни остават.
-Преди deploy — `npm run db:backup`.
+
+**Резервно копие преди миграцията:** `render.yaml` стартира с
+`node scripts/backup-before-migrate.mjs`, преди `prisma migrate deploy`. Когато
+има чакаща миграция, то пише проверено копие (`VACUUM INTO` +
+`integrity_check`) в `/var/data/backups/pre-migrate-<миграция>-<време>.db`; ако
+копието не успее, стартът спира и Render оставя предишния deploy. **Важно:**
+това важи, само ако Start Command в Render dashboard е синхронизиран с
+`render.yaml` (Blueprint). Иначе в Settings → Start Command трябва да е:
+`node scripts/backup-before-migrate.mjs && npx prisma migrate deploy && npm start`.
+Независимо от това Render пази дневни snapshot-и на persistent диска.
+
+**Production настройки, които PR #8 изисква:** нито една задължителна.
+`PAYMENT_RECONCILE_SECRET` е по избор (без нея `/api/payments/reconcile`
+връща 404, а проверката върви при опресняване на кухненското табло); Cron Job
+има смисъл едва когато реалният ПОС бъде активиран.
 
 ## 10. Лични данни / Data Safety
 
