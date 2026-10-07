@@ -132,6 +132,17 @@ npm предупреждава, без ефект), Next.js 15.5.20, Prisma 5.22
 | `e2e:footer-marks` срещу https://pizzapazzo.bg | **FAIL (80)** — логата липсват, защото няма официални файлове. Забележката на ОББ **не е отстранена** |
 | Банков sandbox, реален портфейл, реално устройство | не е правено — няма достъп |
 
+## 07.10.2026 — PR #10: логата във футъра на живия сайт
+
+| Проверка | Резултат |
+|---|---|
+| `npm test` — платежни 71/71, UBB 21/21 (вкл. трите файла: PNG, пропорции, резолюция) | OK |
+| `tsc`, `eslint`, `check:i18n` (638), production build, `e2e:prod-guard` | OK |
+| https://pizzapazzo.bg/payment-marks/visa.png, mastercard.png, borica-company.png | 200, image/png |
+| `e2e:footer-marks` срещу https://pizzapazzo.bg — 5 страници × BG/EN × телефон/desktop (426 проверки): трите лога се зареждат и виждат, БОРИКА извън списъка с марки, текстът „не е активно“, checkout без марки и без картова опция | OK (`ubb-evidence/production-2026-10-07-logos/`) |
+| Production checkout: само в брой, без Google/Apple Pay, без 5xx (поръчка НЕ е изпращана) | OK |
+| Потвърждение от ОББ, че забележката е приета | **чака** |
+
 ## Checkpoint (за продължаване)
 
 - Клон: `feat/ubb-compliance` (от `master` @ ff70e34).
