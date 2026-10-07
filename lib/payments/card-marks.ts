@@ -47,10 +47,19 @@ export interface CardBrandMark {
 const MARKS_DIR = join(process.cwd(), "public", "payment-marks");
 
 /**
- * The card schemes named in ОББ's virtual-POS request form, in that order.
- * Nothing else is added by assumption.
+ * The international card brands shown in the footer (ОББ's remark names
+ * "international card organisations"; the request form lists Visa and
+ * Mastercard). Nothing else is added by assumption.
  */
-export const FOOTER_SCHEME_IDS = ["visa", "mastercard", "borica"] as const satisfies readonly CardBrandId[];
+export const FOOTER_SCHEME_IDS = ["visa", "mastercard"] as const satisfies readonly CardBrandId[];
+
+/**
+ * BORICA's COMPANY logo ("БОРИКА Банкови услуги"), supplied by the owner for
+ * the footer. It is not a card brand, so it lives under its own file name
+ * (never picked up as the "borica" card mark in checkout) and is shown apart
+ * from the card brands, without any acceptance claim.
+ */
+const BORICA_COMPANY_FILE = "borica-company.png";
 
 function markFor(id: CardBrandId, dir: string): CardBrandMark | null {
   const file = ["svg", "png"].find((ext) => existsSync(join(dir, `${id}.${ext}`)));
@@ -79,7 +88,12 @@ export function getCardBrandMarks(env: NodeJS.ProcessEnv = process.env): CardBra
   return marks;
 }
 
-/** Footer marks: every scheme from the request form whose official file is present. */
+/** Footer marks: every footer card brand whose file is present. */
 export function getFooterSchemeMarks(dir: string = MARKS_DIR): CardBrandMark[] {
   return FOOTER_SCHEME_IDS.map((id) => markFor(id, dir)).filter((m): m is CardBrandMark => m !== null);
+}
+
+/** Public URL of BORICA's company logo, or null without the file. */
+export function getBoricaCompanyLogo(dir: string = MARKS_DIR): string | null {
+  return existsSync(join(dir, BORICA_COMPANY_FILE)) ? `/payment-marks/${BORICA_COMPANY_FILE}` : null;
 }

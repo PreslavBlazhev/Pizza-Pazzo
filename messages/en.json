@@ -817,7 +817,8 @@
       "dismiss": "Dismiss"
     },
     "acceptedCards": "We accept card payments",
-    "cardSchemes": "Card schemes",
+    "cardSchemes": "Card brands",
+    "boricaLogoAlt": "BORICA – Banking Services logo",
     "cardNotActiveYet": "Online card payment is not active yet — orders are currently paid in cash on delivery."
   }
 }

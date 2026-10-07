@@ -8,7 +8,7 @@
  * footer must say so, and nothing may claim cards are accepted.
  *
  *   E2E_BASE_URL=https://pizzapazzo.bg npm run e2e:footer-marks
- *   E2E_EXPECT_MARKS=visa,mastercard,borica   (default)
+ *   E2E_EXPECT_MARKS=visa,mastercard,borica-company   (default)
  *   E2E_SHOTS=<folder for screenshots>
  *
  * Read-only: opens public pages, creates nothing.
@@ -19,8 +19,8 @@ import path from "node:path";
 
 const BASE = (process.env.E2E_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const SHOTS = process.env.E2E_SHOTS ?? path.join(process.env.TEMP ?? ".", "pp-footer-shots");
-const LABELS: Record<string, string> = { visa: "Visa", mastercard: "Mastercard", borica: "Borica" };
-const EXPECT = (process.env.E2E_EXPECT_MARKS ?? "visa,mastercard,borica")
+const LABELS: Record<string, string> = { visa: "Visa", mastercard: "Mastercard", "borica-company": "BORICA company logo" };
+const EXPECT = (process.env.E2E_EXPECT_MARKS ?? "visa,mastercard,borica-company")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
@@ -40,7 +40,15 @@ async function footerMarks(page: Page) {
   return page.$$eval("footer img", (imgs) =>
     (imgs as HTMLImageElement[]).map((i) => {
       const r = i.getBoundingClientRect();
-      return { alt: i.alt, src: i.currentSrc || i.src, ok: i.complete && i.naturalWidth > 0, w: r.width, h: r.height };
+      return {
+        mark: i.dataset.mark ?? "",
+        alt: i.alt,
+        inBrandList: !!i.closest("ul"),
+        src: i.currentSrc || i.src,
+        ok: i.complete && i.naturalWidth > 0,
+        w: r.width,
+        h: r.height,
+      };
     })
   );
 }
@@ -66,12 +74,17 @@ async function main() {
           await footer.scrollIntoViewIfNeeded();
           const marks = await footerMarks(page);
           for (const id of EXPECT) {
-            const m = marks.find((x) => x.alt === LABELS[id]);
+            const m = marks.find((x) => x.mark === id);
             check(!!m, `footer shows ${LABELS[id]}`);
             if (m) {
               check(m.ok, `${LABELS[id]} image loaded`, m.src);
               check(m.h >= 20 && m.w >= 20, `${LABELS[id]} visibly sized`, `${m.w.toFixed(0)}×${m.h.toFixed(0)}`);
-              check(await page.locator(`footer img[alt="${LABELS[id]}"]`).isVisible(), `${LABELS[id]} visible`);
+              check(await page.locator(`footer img[data-mark="${id}"]`).isVisible(), `${LABELS[id]} visible`);
+              check(m.alt.length > 2, `${LABELS[id]} has alt text`, m.alt);
+              check(
+                id === "borica-company" ? !m.inBrandList : m.inBrandList,
+                id === "borica-company" ? "BORICA logo is NOT listed as a card brand" : `${LABELS[id]} is in the card-brand list`
+              );
             }
           }
           const text = await footer.innerText();
