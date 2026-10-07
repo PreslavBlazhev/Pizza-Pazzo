@@ -4,7 +4,7 @@ import { Logo } from "./Logo";
 import { NAV_LINKS } from "./Header";
 import { SITE } from "@/lib/constants";
 import { companyFor } from "@/content/legal/company";
-import { getFooterSchemeMarks, isCardPaymentLive } from "@/lib/payments/card-marks";
+import { getBoricaCompanyLogo, getFooterSchemeMarks, isCardPaymentLive } from "@/lib/payments/card-marks";
 import { CardBrandMarks } from "@/components/payment/CardBrandMarks";
 import {
   getRestaurantSettings,
@@ -44,6 +44,12 @@ export async function Footer() {
   const phones = settingsPhones(settings);
   const hourRows = groupWorkingHours(settings.hours);
   const dayName = (day: Weekday) => tHours(day);
+  // BORICA's company logo — shown next to the card brands, but it is not one.
+  const boricaSrc = getBoricaCompanyLogo();
+  const boricaLogo = boricaSrc ? (
+    // eslint-disable-next-line @next/next/no-img-element -- supplied artwork, shown untouched
+    <img src={boricaSrc} alt={t("payment.boricaLogoAlt")} data-mark="borica-company" className="h-8 w-auto" />
+  ) : null;
 
   return (
     <footer className="border-t border-pizza-cream-dark bg-white">
@@ -142,11 +148,12 @@ export async function Footer() {
               Shown from the official files whether or not card payment is
               live — but only claimed as accepted once it really is. */}
           {isCardPaymentLive() ? (
-            <CardBrandMarks marks={getFooterSchemeMarks()} label={t("payment.acceptedCards")} />
+            <CardBrandMarks marks={getFooterSchemeMarks()} label={t("payment.acceptedCards")} extra={boricaLogo} />
           ) : (
             <CardBrandMarks
               marks={getFooterSchemeMarks()}
               label={t("payment.cardSchemes")}
+              extra={boricaLogo}
               note={
                 <>
                   {t("payment.cardNotActiveYet")}{" "}

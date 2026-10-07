@@ -248,25 +248,26 @@ test("the texts never promise what the code does not do", () => {
 
 // ── UBB-14: card-scheme logos in the footer (ОББ feedback, 07.10.2026) ────
 
-test("UBB-14: footer shows the request form's schemes from official files, independent of the POS", async () => {
+test("UBB-14: footer shows the card brands from their files, independent of the POS", async () => {
   const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
   const { tmpdir } = await import("node:os");
-  const { getFooterSchemeMarks, getCardBrandMarks, isCardPaymentLive, FOOTER_SCHEME_IDS } = await import(
-    "@/lib/payments/card-marks"
-  );
-  assert.deepEqual([...FOOTER_SCHEME_IDS], ["visa", "mastercard", "borica"], "only the schemes in ОББ's form");
+  const { getFooterSchemeMarks, getCardBrandMarks, getBoricaCompanyLogo, isCardPaymentLive, FOOTER_SCHEME_IDS } =
+    await import("@/lib/payments/card-marks");
+  assert.deepEqual([...FOOTER_SCHEME_IDS], ["visa", "mastercard"], "only the international card brands");
 
   const dir = mkdtempSync(join(tmpdir(), "pp-marks-"));
   try {
-    assert.deepEqual(getFooterSchemeMarks(dir), [], "no official file → no mark, nothing drawn");
-    for (const f of ["visa.svg", "mastercard.svg", "maestro.svg", "amex.svg"]) writeFileSync(join(dir, f), "<svg/>");
+    assert.deepEqual(getFooterSchemeMarks(dir), [], "no file → no mark, nothing drawn");
+    assert.equal(getBoricaCompanyLogo(dir), null);
+    for (const f of ["visa.svg", "mastercard.svg", "maestro.svg", "amex.svg", "borica-company.png"]) writeFileSync(join(dir, f), "<svg/>");
+    assert.equal(getBoricaCompanyLogo(dir), "/payment-marks/borica-company.png", "BORICA's company logo is separate");
     assert.deepEqual(
       getFooterSchemeMarks(dir).map((m) => [m.id, m.label, m.src]),
       [
         ["visa", "Visa", "/payment-marks/visa.svg"],
         ["mastercard", "Mastercard", "/payment-marks/mastercard.svg"],
       ],
-      "a file for a brand outside the form is ignored"
+      "a file for another brand is ignored; BORICA's company logo is not a card brand"
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -288,5 +289,26 @@ test("UBB-14: while card payment is off the footer never claims cards are accept
     assert.ok(m.cardSchemes && m.cardNotActiveYet, locale);
     assert.match(m.cardNotActiveYet, locale === "bg" ? /не е активно/ : /not active/);
     assert.doesNotMatch(`${m.cardSchemes} ${m.cardNotActiveYet}`, /приемаме|we accept|google pay|apple pay/i);
+  }
+});
+
+test("UBB-14: the three logo files the owner supplied are published, readable and well proportioned", async () => {
+  const sharp = (await import("sharp")).default;
+  const { getFooterSchemeMarks, getBoricaCompanyLogo } = await import("@/lib/payments/card-marks");
+  // NOT conditional: these exact files must be in the repository.
+  assert.deepEqual(getFooterSchemeMarks().map((m) => m.src), ["/payment-marks/visa.png", "/payment-marks/mastercard.png"]);
+  assert.equal(getBoricaCompanyLogo(), "/payment-marks/borica-company.png");
+  const expected: Record<string, [number, number]> = {
+    "visa.png": [3.08, 144], // ratio of the supplied file, pixel height
+    "mastercard.png": [1.29, 144],
+    "borica-company.png": [5.84, 93],
+  };
+  for (const [file, [ratio, height]] of Object.entries(expected)) {
+    const m = await sharp(join(process.cwd(), "public", "payment-marks", file)).metadata();
+    assert.equal(m.format, "png", file);
+    assert.equal(m.height, height, `${file} height`);
+    assert.ok(Math.abs(m.width! / m.height! - ratio) < 0.02, `${file}: proportions kept`);
+    // Shown 32 px high: at least 2.5× for sharp phone screens.
+    assert.ok(m.height! >= 32 * 2.5, `${file}: enough pixels for a 32 px display`);
   }
 });
