@@ -34,7 +34,8 @@
     "db:verify-migration": "node scripts/verify-consent-migration.mjs",
     "e2e:ubb": "node --env-file=.env --import tsx scripts/e2e-ubb-browser.ts",
     "e2e:prod-guard": "node --env-file=.env --import tsx scripts/e2e-production-guard.ts",
-    "e2e:checkout-links": "node --env-file=.env --import tsx scripts/e2e-checkout-links.ts"
+    "e2e:checkout-links": "node --env-file=.env --import tsx scripts/e2e-checkout-links.ts",
+    "e2e:footer-marks": "node --import tsx scripts/e2e-footer-marks.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"

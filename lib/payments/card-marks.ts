@@ -1,21 +1,28 @@
 /**
  * Card-acceptance marks (Visa, Mastercard, Borica…) — SERVER ONLY.
  *
- * UBB-14: the bank requires the accepted card brands to be shown visibly —
- * but only the marks the bank actually approved, drawn from the official
- * artwork, and only once card payment is really live. So a mark is shown
- * when ALL of these hold, and never otherwise:
+ * UBB-14: the accepted card brands must be shown visibly, drawn from the
+ * official artwork only. Two places, two rules:
  *
+ * CHECKOUT (getCardBrandMarks) — next to the card option, a mark says "you
+ * can pay with this card here", so it is shown only when ALL of these hold:
  *   1. real card payments are enabled (a production provider — never the
  *      simulator, the staff demo or a sandbox);
  *   2. CARD_BRAND_MARKS lists the brand (comma-separated ids, set from what
  *      the merchant contract / bank confirms, e.g. "visa,mastercard,borica");
  *   3. the official artwork file exists at public/payment-marks/<id>.svg or
- *      .png (supplied by the bank or downloaded from the scheme's brand
- *      centre — none is bundled, none is drawn by us).
+ *      .png.
  *
- * Until then the function returns [] and no logo, badge or "we accept cards"
- * claim appears anywhere.
+ * FOOTER (getFooterSchemeMarks) — ОББ asked, BEFORE handing over the
+ * technical integration, for the logos of the international card
+ * organisations to be visible in the site footer (bank feedback, 07.10.2026;
+ * docs/UBB-COMPLIANCE.md UBB-14). So the footer shows the schemes named in
+ * ОББ's virtual-POS request form whether or not card payment is live — but
+ * still only from official files in public/payment-marks/ (provenance in
+ * docs/UBB-COMPLIANCE.md, UBB-14), and never worded as "online card payment
+ * works" while isCardPaymentLive() is false.
+ *
+ * Nothing is drawn by us; a missing file simply means no mark.
  */
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -39,9 +46,25 @@ export interface CardBrandMark {
 
 const MARKS_DIR = join(process.cwd(), "public", "payment-marks");
 
-export function getCardBrandMarks(env: NodeJS.ProcessEnv = process.env): CardBrandMark[] {
+/**
+ * The card schemes named in ОББ's virtual-POS request form, in that order.
+ * Nothing else is added by assumption.
+ */
+export const FOOTER_SCHEME_IDS = ["visa", "mastercard", "borica"] as const satisfies readonly CardBrandId[];
+
+function markFor(id: CardBrandId, dir: string): CardBrandMark | null {
+  const file = ["svg", "png"].find((ext) => existsSync(join(dir, `${id}.${ext}`)));
+  return file ? { id, label: BRANDS[id], src: `/payment-marks/${id}.${file}` } : null;
+}
+
+/** Real (production, non-test) card payment is switched on. */
+export function isCardPaymentLive(env: NodeJS.ProcessEnv = process.env): boolean {
   const config = getEffectivePaymentConfig(env);
-  if (!config.enabled || config.isTest || config.environment !== "production") return [];
+  return config.enabled && !config.isTest && config.environment === "production";
+}
+
+export function getCardBrandMarks(env: NodeJS.ProcessEnv = process.env): CardBrandMark[] {
+  if (!isCardPaymentLive(env)) return [];
 
   const wanted = (env.CARD_BRAND_MARKS ?? "")
     .split(",")
@@ -50,8 +73,13 @@ export function getCardBrandMarks(env: NodeJS.ProcessEnv = process.env): CardBra
 
   const marks: CardBrandMark[] = [];
   for (const id of [...new Set(wanted)]) {
-    const file = ["svg", "png"].find((ext) => existsSync(join(MARKS_DIR, `${id}.${ext}`)));
-    if (file) marks.push({ id, label: BRANDS[id], src: `/payment-marks/${id}.${file}` });
+    const mark = markFor(id, MARKS_DIR);
+    if (mark) marks.push(mark);
   }
   return marks;
+}
+
+/** Footer marks: every scheme from the request form whose official file is present. */
+export function getFooterSchemeMarks(dir: string = MARKS_DIR): CardBrandMark[] {
+  return FOOTER_SCHEME_IDS.map((id) => markFor(id, dir)).filter((m): m is CardBrandMark => m !== null);
 }
