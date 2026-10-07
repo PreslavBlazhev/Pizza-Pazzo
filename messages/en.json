@@ -770,7 +770,9 @@
       "NOT_FOUND": "Order not found.",
       "NOT_CARD": "This order is paid in cash on delivery.",
       "ALREADY_PAID": "This order has already been paid.",
-      "ORDER_CANCELLED": "This order was cancelled."
+      "ORDER_CANCELLED": "This order was cancelled.",
+      "UNCONFIRMED": "The previous attempt to open the payment page got no clear answer from the bank. We are checking it before starting a new payment — please do not pay another way until the check is done. Try again in a minute.",
+      "RATE_LIMITED": "Too many attempts in a short time. Please wait a minute and try again."
     },
     "success": {
       "metaTitle": "Order paid",

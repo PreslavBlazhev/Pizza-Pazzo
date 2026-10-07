@@ -4,6 +4,8 @@ import { getPendingOrders } from "@/lib/orders";
 import { getPrintTemplates } from "@/lib/print-templates";
 import { getStoreStatus } from "@/lib/store-status";
 import { retryFailedNotifications } from "@/lib/payments/service";
+import { reconcileOpenPayments } from "@/lib/payments/reconcile";
+import { getPaymentAttention } from "@/lib/payments/admin";
 
 /**
  * Pending orders for the live board (`/admin/orders/live`), which polls this
@@ -32,14 +34,20 @@ export async function GET() {
   await retryFailedNotifications().catch((err) =>
     console.error("[email] notification retry failed:", (err as Error).message)
   );
+  // Card payments nobody is watching any more are re-checked here too, a few
+  // per poll, with per-attempt backoff (lib/payments/reconcile.ts).
+  await reconcileOpenPayments({ limit: 3 }).catch((err) =>
+    console.error("[payments] reconcile on poll failed:", (err as Error).message)
+  );
 
-  const [orders, printTemplates, storeStatus] = await Promise.all([
+  const [orders, printTemplates, storeStatus, paymentAttention] = await Promise.all([
     getPendingOrders(),
     getPrintTemplates(),
     getStoreStatus(),
+    getPaymentAttention(),
   ]);
   return NextResponse.json(
-    { orders, printTemplates, storeStatus, serverTime: new Date().toISOString() },
+    { orders, printTemplates, storeStatus, paymentAttention, serverTime: new Date().toISOString() },
     { headers: { "Cache-Control": "no-store" } }
   );
 }

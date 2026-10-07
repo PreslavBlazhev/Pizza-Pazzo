@@ -267,6 +267,10 @@ model Order {
   /// lib/payments/status.ts) — e.g. a payment confirmed only after the
   /// customer gave up, or a second successful attempt on the same order.
   paymentAlert          String?
+  /// When a member of staff acknowledged `paymentAlert` (it then leaves the
+  /// live board's attention list; the alert itself stays as history), and who.
+  paymentAlertAckAt     DateTime?
+  paymentAlertAckBy     String?
 
   /// Checkout confirmations (UBB-16, docs/UBB-COMPLIANCE.md). The version
   /// identifiers of the Terms, the Cancellation/Returns terms and the Privacy
@@ -297,6 +301,8 @@ model Order {
 
   items                 OrderItem[]
   paymentAttempts       PaymentAttempt[]
+  paymentEvents         PaymentAuditEvent[]
+  paymentRefunds        PaymentRefundRecord[]
 
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
@@ -331,6 +337,10 @@ model PaymentAttempt {
   providerPaymentId  String?
   /// Hosted payment page the customer is sent to.
   redirectUrl        String?
+  /// When the provider's page must be opened with a form POST (BORICA- and
+  /// UPC-style gateways), the exact fields to post, as JSON. They are signed
+  /// request fields, never credentials or card data. Null = a plain GET.
+  redirectFormJson   String?
 
   /// Amount in the currency's smallest unit (euro cents), copied from the
   /// stored order total; the provider must confirm exactly this.
@@ -356,6 +366,54 @@ model PaymentAttempt {
   @@index([orderId])
   @@index([providerPaymentId])
   @@index([status])
+}
+
+/// Who did what to the money side of an order, and when — staff releasing a
+/// held paid order to the kitchen, acknowledging an alert, recording a refund
+/// made in the bank's portal. Append-only; never edited, never deleted with
+/// the person (actorEmail is a copy so the trail survives account deletion).
+model PaymentAuditEvent {
+  id           String   @id @default(cuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// RELEASE_HELD_PAID_ORDER | ACK_PAYMENT_ALERT | REFUND_RECORDED
+  action       String
+  actorUserId  String?
+  actorEmail   String?
+  /// Small JSON with the facts of the action (amounts, references). No card data.
+  detailsJson  String?
+  createdAt    DateTime @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+/// A refund (or reversal) that staff MADE IN THE BANK'S ADMIN PANEL and then
+/// recorded here. The site never moves money back itself: ОББ's terms (т. 14.3)
+/// put refunds in the bank's panel and no refund API has been provided. A row
+/// here means "a person states the bank accepted this refund", with the bank's
+/// own reference — not that the site performed it.
+model PaymentRefundRecord {
+  id               String   @id @default(cuid())
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// The PAID attempt the money is returned against.
+  attemptId        String
+  amountMinor      Int
+  currency         String
+  /// "REFUND" (partial or full, later day) or "REVERSAL" (same-day cancel).
+  kind             String
+  /// The reference the bank's panel shows for the refund operation.
+  bankReference    String
+  note             String?
+  recordedById     String?
+  recordedByEmail  String?
+  /// Client-generated per form, so a double submit records one refund.
+  idempotencyKey   String   @unique
+  createdAt        DateTime @default(now())
+
+  @@index([orderId])
+  @@index([attemptId])
 }
 
 /// The payment SIMULATOR's own ledger. It plays the bank's database, so the

@@ -1,10 +1,21 @@
 /**
  * Placeholder for the REAL bank adapter (PAYMENT_PROVIDER=bank).
  *
- * The bank for Pizza Pazzo has not been chosen, so there is no protocol to
- * implement yet — and none is guessed here. Selecting this provider keeps
- * card payments switched OFF with an explicit reason in the admin, instead of
- * pretending to work.
+ * The bank is ОББ (virtual POS), but its TECHNICAL INTERFACE for this
+ * terminal has not been provided. ОББ runs virtual POS terminals on two
+ * different platforms — BORICA and UPC (ubb.bg, virtual POS page, 2026) —
+ * with different protocols, signatures and endpoints, and its general terms
+ * (т. 14.1) oblige the bank to hand the merchant the specification. Until it
+ * arrives, no protocol is guessed here: selecting this provider keeps card
+ * payments switched OFF with an explicit reason in the admin.
+ * What is missing, exactly: docs/UBB-VPOS-INTEGRATION.md §6.
+ *
+ * Both candidate platforms open their hosted page with a signed form POST —
+ * return it as CreateSessionResult.postFields; /api/payments/start posts it.
+ * If session creation is a server call and it times out, throw
+ * PaymentProviderError(…, "unknown"); only a definite refusal is "rejected".
+ * getStatus must answer a query by REFERENCE alone (providerPaymentId null)
+ * and say NOT_FOUND only when the gateway positively has no such order.
  *
  * When the bank's official integration documentation and sandbox access
  * arrive, replace `bankConfigProblems` and `createBankProvider` with the real
@@ -44,7 +55,7 @@ export const BANK_PROVIDER_ID = "BANK";
  */
 export function bankConfigProblems(): string[] {
   return [
-    "Адаптерът за банката не е реализиран: банката още не е избрана и няма официална документация и sandbox достъп.",
+    "Адаптерът за ОББ не е реализиран: няма техническа спецификация за терминала (платформа BORICA или UPC, адреси, идентификатори, подписване) и няма тестов достъп — вижте docs/UBB-VPOS-INTEGRATION.md.",
   ];
 }
 

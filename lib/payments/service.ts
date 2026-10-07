@@ -36,7 +36,7 @@ import {
   PAYMENT_ALERTS,
   type AttemptStatus,
 } from "./status";
-import type { CallbackRequest, StatusResult } from "./types";
+import { PaymentProviderError, type CallbackRequest, type StatusResult } from "./types";
 import { isPaymentMethod, isPaymentStatus } from "@/types/order";
 
 type AttemptRow = Prisma.PaymentAttemptGetPayload<Record<string, never>>;
@@ -47,6 +47,14 @@ const PAYMENT_LOCK_MS = 30_000;
 const STALE_CREATION_MS = 60_000;
 /** Snapshots of provider answers are for diagnosis, not archives. */
 const MAX_PROVIDER_RESPONSE = 4000;
+/**
+ * failureReason of an OPEN attempt whose createSession outcome is unknown
+ * (timeout / dropped connection / crash). It has no provider id yet and is
+ * verified by our reference before the order may get another session.
+ */
+export const CREATION_UNCONFIRMED = "CREATION_UNCONFIRMED";
+/** Signed POST fields are small; anything bigger is not a gateway form. */
+const MAX_POST_FIELDS_JSON = 8000;
 
 export function newAccessToken(): string {
   return randomBytes(24).toString("base64url");
@@ -251,8 +259,15 @@ function buildNewOrderEmail(
 
 // ── Starting a payment ─────────────────────────────────────────────────────
 
+/** How the customer's browser reaches the provider's hosted page. */
+export interface HostedRedirect {
+  url: string;
+  /** Present = auto-submitted form POST of exactly these fields. */
+  postFields?: Record<string, string>;
+}
+
 export type StartPaymentResult =
-  | { ok: true; redirectUrl: string; reused: boolean }
+  | { ok: true; redirect: HostedRedirect; reused: boolean }
   | {
       ok: false;
       code:
@@ -262,11 +277,49 @@ export type StartPaymentResult =
         | "ORDER_CANCELLED"
         | "DISABLED"
         | "BUSY"
-        | "PROVIDER_ERROR";
+        | "PROVIDER_ERROR"
+        /** A previous session's creation has an unknown outcome and is being checked. */
+        | "UNCONFIRMED";
     };
 
 async function latestAttempt(orderId: string): Promise<AttemptRow | null> {
   return db.paymentAttempt.findFirst({ where: { orderId }, orderBy: { createdAt: "desc" } });
+}
+
+/**
+ * An open attempt whose session the customer never received (creation timed
+ * out or crashed). It blocks a new session until the provider gives a final
+ * answer — even after a query by reference has taught us the provider id.
+ */
+function isUnconfirmedCreation(a: Pick<AttemptRow, "status" | "redirectUrl" | "failureReason">): boolean {
+  return isOpenAttempt(a.status) && !a.redirectUrl && a.failureReason === CREATION_UNCONFIRMED;
+}
+
+/** Validates an adapter's POST fields and serialises them, or null if unusable. */
+function serializePostFields(fields: Record<string, string> | undefined): string | null | false {
+  if (!fields) return null;
+  const entries = Object.entries(fields);
+  if (entries.length === 0 || entries.length > 60) return false;
+  for (const [k, v] of entries) {
+    if (typeof v !== "string" || !/^[A-Za-z0-9_.\-[\]]{1,64}$/.test(k)) return false;
+  }
+  const json = JSON.stringify(fields);
+  return json.length <= MAX_POST_FIELDS_JSON ? json : false;
+}
+
+function redirectOf(a: Pick<AttemptRow, "redirectUrl" | "redirectFormJson">): HostedRedirect | null {
+  if (!a.redirectUrl) return null;
+  if (!a.redirectFormJson) return { url: a.redirectUrl };
+  try {
+    return { url: a.redirectUrl, postFields: JSON.parse(a.redirectFormJson) as Record<string, string> };
+  } catch {
+    return null;
+  }
+}
+
+export interface StartPaymentDeps {
+  /** Test seam; production always uses the registry. */
+  providerForNewPayment?: typeof getProviderForNewPayment;
 }
 
 /**
@@ -278,10 +331,13 @@ async function latestAttempt(orderId: string): Promise<AttemptRow | null> {
  * previous one ended without money (declined, cancelled, expired), so a
  * customer can never be charged twice by us opening two sessions.
  */
-export async function startCardPayment(input: {
-  accessToken: string;
-  locale: "bg" | "en";
-}): Promise<StartPaymentResult> {
+export async function startCardPayment(
+  input: {
+    accessToken: string;
+    locale: "bg" | "en";
+  },
+  deps: StartPaymentDeps = {}
+): Promise<StartPaymentResult> {
   const order = await db.order.findUnique({ where: { accessToken: input.accessToken } });
   if (!order) return { ok: false, code: "NOT_FOUND" };
   if (order.paymentMethod !== "CARD_ONLINE") return { ok: false, code: "NOT_CARD" };
@@ -289,11 +345,16 @@ export async function startCardPayment(input: {
   if (order.status === "CANCELLED") return { ok: false, code: "ORDER_CANCELLED" };
 
   const reuse = await reusableSession(order.id);
-  if (reuse) return { ok: true, redirectUrl: reuse, reused: true };
+  if (reuse) return { ok: true, redirect: reuse, reused: true };
+
+  // A previous creation may have reached the provider. Ask by reference
+  // first; only a definite "no such payment" frees the order for a new one.
+  const blocked = await unconfirmedCreationBlocks(order.id);
+  if (blocked) return blocked;
 
   // A demo order (isTest) is paid through the simulator, a real one through
   // the configured provider — see getProviderForNewPayment.
-  const setup = await getProviderForNewPayment(order);
+  const setup = await (deps.providerForNewPayment ?? getProviderForNewPayment)(order);
   if (!setup) return { ok: false, code: "DISABLED" };
   const { provider, config } = setup;
 
@@ -312,8 +373,8 @@ export async function startCardPayment(input: {
     // Wait for it and send this click to the same page.
     for (let i = 0; i < 20; i++) {
       await new Promise((r) => setTimeout(r, 250));
-      const url = await reusableSession(order.id);
-      if (url) return { ok: true, redirectUrl: url, reused: true };
+      const redirect = await reusableSession(order.id);
+      if (redirect) return { ok: true, redirect, reused: true };
     }
     return { ok: false, code: "BUSY" };
   }
@@ -321,7 +382,9 @@ export async function startCardPayment(input: {
   try {
     // Re-check under the lock: the previous holder may have just finished.
     const again = await reusableSession(order.id);
-    if (again) return { ok: true, redirectUrl: again, reused: true };
+    if (again) return { ok: true, redirect: again, reused: true };
+    const stillBlocked = await unconfirmedCreationBlocks(order.id);
+    if (stillBlocked) return stillBlocked;
 
     const fresh = await db.order.findUnique({ where: { id: order.id } });
     if (!fresh || fresh.paymentStatus === "PAID") return { ok: false, code: "ALREADY_PAID" };
@@ -354,21 +417,41 @@ export async function startCardPayment(input: {
         locale: input.locale,
       });
     } catch (err) {
+      const definite = err instanceof PaymentProviderError && err.outcome === "rejected";
       console.error(
-        `[payments] createSession failed for ${attempt.reference}: ${(err as Error).message}`
+        `[payments] createSession failed for ${attempt.reference} ` +
+          `(${definite ? "rejected" : "outcome unknown"}): ${(err as Error).message}`
       );
+      if (definite) {
+        await db.paymentAttempt.update({
+          where: { id: attempt.id },
+          data: { status: "ERROR", failureReason: "PROVIDER_UNAVAILABLE", finalizedAt: new Date() },
+        });
+        return { ok: false, code: "PROVIDER_ERROR" };
+      }
+      // The provider may have registered it. Keep it OPEN and unpaid-looking
+      // to nobody: it is verified by reference (customer pages, the admin,
+      // reconciliation) before the order can get a second session.
       await db.paymentAttempt.update({
         where: { id: attempt.id },
-        data: { status: "ERROR", failureReason: "PROVIDER_UNAVAILABLE", finalizedAt: new Date() },
+        data: { status: "PENDING", failureReason: CREATION_UNCONFIRMED },
       });
-      return { ok: false, code: "PROVIDER_ERROR" };
+      return { ok: false, code: "UNCONFIRMED" };
     }
 
-    if (!isAcceptableRedirect(session.redirectUrl, config.appEnv)) {
+    const postFieldsJson = serializePostFields(session.postFields);
+    if (!isAcceptableRedirect(session.redirectUrl, config.appEnv) || postFieldsJson === false) {
+      // The provider DID register a session we cannot open. It is closed on
+      // our side; if anyone ever pays it, the status check still finds it.
       console.error(`[payments] provider returned an unusable redirect for ${attempt.reference}`);
       await db.paymentAttempt.update({
         where: { id: attempt.id },
-        data: { status: "ERROR", failureReason: "BAD_REDIRECT", finalizedAt: new Date() },
+        data: {
+          status: "ERROR",
+          providerPaymentId: session.providerPaymentId,
+          failureReason: "BAD_REDIRECT",
+          finalizedAt: new Date(),
+        },
       });
       return { ok: false, code: "PROVIDER_ERROR" };
     }
@@ -379,6 +462,7 @@ export async function startCardPayment(input: {
         status: "REDIRECTED",
         providerPaymentId: session.providerPaymentId,
         redirectUrl: session.redirectUrl,
+        redirectFormJson: postFieldsJson,
         providerResponse: snapshot(session.safeDetails),
       },
     });
@@ -388,25 +472,46 @@ export async function startCardPayment(input: {
       data: { paymentStatus: "AWAITING_PAYMENT" },
     });
     console.log(`[payments] ${attempt.reference} → hosted page (${provider.id}/${provider.environment})`);
-    return { ok: true, redirectUrl: session.redirectUrl, reused: false };
+    return {
+      ok: true,
+      redirect: { url: session.redirectUrl, ...(session.postFields && { postFields: session.postFields }) },
+      reused: false,
+    };
   } finally {
     await db.order.updateMany({ where: { id: order.id }, data: { paymentLockedUntil: null } });
   }
 }
 
 /** The hosted page of the latest attempt if it can still be paid, else null. */
-async function reusableSession(orderId: string): Promise<string | null> {
+async function reusableSession(orderId: string): Promise<HostedRedirect | null> {
   const latest = await latestAttempt(orderId);
   if (!latest || !isOpenAttempt(latest.status)) return null;
-  if (latest.redirectUrl) return latest.redirectUrl;
+  const redirect = redirectOf(latest);
+  if (redirect) return redirect;
   // CREATED with no page: either in flight right now, or a creation that
-  // crashed. A crashed one is closed so it cannot block the order forever.
+  // crashed half-way — and a crash may have happened AFTER the provider
+  // registered it. So it is not closed as an error: it becomes an
+  // unconfirmed creation and is verified by reference like a timeout.
   if (Date.now() - latest.createdAt.getTime() > STALE_CREATION_MS) {
     await db.paymentAttempt.updateMany({
       where: { id: latest.id, status: "CREATED", redirectUrl: null },
-      data: { status: "ERROR", failureReason: "CREATION_INTERRUPTED", finalizedAt: new Date() },
+      data: { status: "PENDING", failureReason: CREATION_UNCONFIRMED },
     });
   }
+  return null;
+}
+
+/**
+ * If the latest attempt is an unconfirmed creation, asks the provider about
+ * it now. Returns a refusal while it stays unresolved; null when the order is
+ * free for a new session (the provider said it has no such payment).
+ */
+async function unconfirmedCreationBlocks(orderId: string): Promise<StartPaymentResult | null> {
+  const latest = await latestAttempt(orderId);
+  if (!latest || !isUnconfirmedCreation(latest)) return null;
+  const after = await syncAttempt(latest.id, { minIntervalMs: 0 });
+  if (after?.status === "PAID") return { ok: false, code: "ALREADY_PAID" };
+  if (after && isOpenAttempt(after.status)) return { ok: false, code: "UNCONFIRMED" };
   return null;
 }
 
@@ -436,7 +541,9 @@ export async function syncAttempt(
   const attempt = await db.paymentAttempt.findUnique({ where: { id: attemptId } });
   if (!attempt) return null;
   if (attempt.status === "PAID") return attempt; // final, nothing can change it
-  if (!attempt.providerPaymentId) return attempt; // the provider never saw it
+  // No provider id: either the provider never saw it, or its creation had an
+  // unknown outcome — only the latter is worth a query (by our reference).
+  if (!attempt.providerPaymentId && !isUnconfirmedCreation(attempt)) return attempt;
 
   const min = options.minIntervalMs ?? 0;
   if (min > 0 && attempt.lastCheckedAt && Date.now() - attempt.lastCheckedAt.getTime() < min) {
@@ -477,7 +584,32 @@ export async function applyProviderStatus(attempt: AttemptRow, result: StatusRes
   const common = {
     providerStatus: result.rawStatus.slice(0, 100),
     providerResponse: snapshot(result.safeDetails),
+    // A query by reference may be how we first learn the provider's own id.
+    ...(!attempt.providerPaymentId && result.providerPaymentId && { providerPaymentId: result.providerPaymentId }),
   };
+
+  if (result.state === "NOT_FOUND") {
+    if (attempt.providerPaymentId) {
+      // The provider gave us this id itself; "unknown" now is an anomaly,
+      // not a verdict. Nothing changes; a human can look in the bank panel.
+      console.error(`[payments] provider no longer knows ${attempt.reference} — left unchanged`);
+      return;
+    }
+    // A definite "never registered" for an unconfirmed creation: no money
+    // can move on it, so the order is free for a new session.
+    await db.paymentAttempt.updateMany({
+      where: { id: attempt.id, status: { in: ["CREATED", "PENDING"] }, providerPaymentId: null },
+      data: { ...common, status: "ERROR", failureReason: "NOT_REGISTERED_AT_PROVIDER", finalizedAt: now },
+    });
+    const latestNow = await latestAttempt(attempt.orderId);
+    if (latestNow?.id === attempt.id) {
+      await db.order.updateMany({
+        where: { id: attempt.orderId, paymentMethod: "CARD_ONLINE", paymentStatus: { not: "PAID" } },
+        data: { paymentStatus: orderPaymentStatusFor("ERROR") },
+      });
+    }
+    return;
+  }
 
   if (result.state === "PAID") {
     const amountOk =
@@ -497,7 +629,7 @@ export async function applyProviderStatus(attempt: AttemptRow, result: StatusRes
       });
       await db.order.update({
         where: { id: attempt.orderId },
-        data: { paymentAlert: PAYMENT_ALERTS.AMOUNT_MISMATCH },
+        data: { paymentAlert: PAYMENT_ALERTS.AMOUNT_MISMATCH, paymentAlertAckAt: null, paymentAlertAckBy: null },
       });
       return;
     }
@@ -522,7 +654,7 @@ export async function applyProviderStatus(attempt: AttemptRow, result: StatusRes
       console.error(`[payments] DUPLICATE PAYMENT on order #${order.orderNumber} (${attempt.reference})`);
       await db.order.update({
         where: { id: order.id },
-        data: { paymentAlert: PAYMENT_ALERTS.DUPLICATE_PAYMENT },
+        data: { paymentAlert: PAYMENT_ALERTS.DUPLICATE_PAYMENT, paymentAlertAckAt: null, paymentAlertAckBy: null },
       });
       return;
     }
@@ -531,16 +663,29 @@ export async function applyProviderStatus(attempt: AttemptRow, result: StatusRes
       console.error(`[payments] payment confirmed for CANCELLED order #${order.orderNumber}`);
       await db.order.update({
         where: { id: order.id },
-        data: { paymentAlert: PAYMENT_ALERTS.PAID_AFTER_CANCEL },
+        data: { paymentAlert: PAYMENT_ALERTS.PAID_AFTER_CANCEL, paymentAlertAckAt: null, paymentAlertAckBy: null },
       });
       return; // never cook a cancelled order
     }
 
-    if (looked) {
+    if (looked || order.paymentAlert === PAYMENT_ALERTS.UNRESOLVED_PAYMENT) {
+      // Money that arrives after the customer saw "failed" (or after hours
+      // without an answer) is real, but the order may no longer be wanted —
+      // the customer may have ordered again, or left. It is PAID and kept
+      // visible to staff, never started automatically: a person decides
+      // (releaseHeldPaidOrder, or cancel + refund in the bank's panel).
       await db.order.update({
         where: { id: order.id },
-        data: { paymentAlert: PAYMENT_ALERTS.LATE_CONFIRMATION },
+        data: {
+          paymentAlert: PAYMENT_ALERTS.LATE_CONFIRMATION,
+          paymentAlertAckAt: null,
+          paymentAlertAckBy: null,
+        },
       });
+      console.warn(
+        `[payments] ${attempt.reference} PAID late → order #${order.orderNumber} HELD for staff, not released`
+      );
+      return;
     }
 
     console.log(`[payments] ${attempt.reference} PAID → order #${order.orderNumber} released to the kitchen`);
@@ -558,7 +703,12 @@ export async function applyProviderStatus(attempt: AttemptRow, result: StatusRes
     data: {
       ...common,
       status: next,
-      failureReason: result.failureReason ?? null,
+      // An unconfirmed creation that is still pending keeps its marker: it
+      // still blocks a second session (see isUnconfirmedCreation).
+      failureReason:
+        next === "PENDING" && isUnconfirmedCreation(attempt)
+          ? CREATION_UNCONFIRMED
+          : (result.failureReason ?? null),
       ...(isFinal && { finalizedAt: now }),
     },
   });

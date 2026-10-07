@@ -38,6 +38,13 @@ export interface CreateSessionResult {
   providerPaymentId: string;
   /** Absolute HTTPS URL of the hosted payment page. */
   redirectUrl: string;
+  /**
+   * Set when the hosted page must be opened with a form POST of these exact
+   * fields (BORICA- and UPC-style gateways sign the request and expect the
+   * customer's browser to post it). Omitted = a plain GET of `redirectUrl`.
+   * Signed request fields only — never a secret, never card data.
+   */
+  postFields?: Record<string, string>;
   safeDetails?: Record<string, unknown>;
 }
 
@@ -55,6 +62,8 @@ export interface StatusResult {
   currency?: string;
   /** Short, customer-safe reason for a failure (no codes that leak internals). */
   failureReason?: string;
+  /** The provider's id, when a query by reference is how we first learn it. */
+  providerPaymentId?: string;
   safeDetails?: Record<string, unknown>;
 }
 
@@ -84,10 +93,25 @@ export interface PaymentProvider {
   identifyCallback(request: CallbackRequest): Promise<CallbackIdentification>;
 }
 
-/** Thrown for a problem the customer cannot fix (misconfiguration, provider down). */
+/**
+ * Thrown for a problem the customer cannot fix (misconfiguration, provider down).
+ *
+ * `outcome` matters only for createSession and is the adapter's promise:
+ *   "rejected" — the provider definitely did NOT register a payment (a
+ *                validation error it answered with, or we never sent the
+ *                request). A new session may be opened.
+ *   "unknown"  — the request may have reached the provider (timeout, dropped
+ *                connection, an unreadable answer). The attempt is kept OPEN
+ *                and checked by reference before anything else happens, so a
+ *                second session is never opened blindly next to a first one
+ *                that might be payable.
+ * When an adapter cannot tell, it must say "unknown".
+ */
 export class PaymentProviderError extends Error {
-  constructor(message: string) {
+  readonly outcome: "rejected" | "unknown";
+  constructor(message: string, outcome: "rejected" | "unknown" = "unknown") {
     super(message);
     this.name = "PaymentProviderError";
+    this.outcome = outcome;
   }
 }

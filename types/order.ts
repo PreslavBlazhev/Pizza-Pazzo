@@ -118,6 +118,9 @@ export interface Order {
   isTest: boolean;
   /** A money problem a human must look at (see lib/payments/status.ts). */
   paymentAlert: string | null;
+  /** When staff acknowledged paymentAlert (ISO), and who. */
+  paymentAlertAckAt: string | null;
+  paymentAlertAckBy: string | null;
   /** The restaurant e-mail: null | SENDING | SENT | SKIPPED | FAILED | LEGACY. */
   notificationStatus: string | null;
   notificationAttempts: number;

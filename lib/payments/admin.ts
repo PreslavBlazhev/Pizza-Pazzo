@@ -44,6 +44,103 @@ export async function getPaymentAttemptsForOrder(orderId: string): Promise<Admin
   }));
 }
 
+/**
+ * Orders whose money needs a person, for the live board: an alert nobody has
+ * acknowledged yet, or a PAID card order that was held back from the kitchen.
+ */
+export interface PaymentAttentionItem {
+  id: string;
+  orderNumber: number;
+  alert: string | null;
+  /** PAID but not released — waiting for a staff decision. */
+  heldPaid: boolean;
+  isTest: boolean;
+}
+
+export async function getPaymentAttention(): Promise<PaymentAttentionItem[]> {
+  const rows = await db.order.findMany({
+    where: {
+      OR: [
+        { paymentAlert: { not: null }, paymentAlertAckAt: null },
+        {
+          paymentMethod: "CARD_ONLINE",
+          paymentStatus: "PAID",
+          releasedToKitchenAt: null,
+          status: { not: "CANCELLED" },
+        },
+      ],
+    },
+    orderBy: { createdAt: "asc" },
+    take: 20,
+    select: {
+      id: true,
+      orderNumber: true,
+      paymentAlert: true,
+      paymentStatus: true,
+      releasedToKitchenAt: true,
+      status: true,
+      isTest: true,
+    },
+  });
+  return rows.map((o) => ({
+    id: o.id,
+    orderNumber: o.orderNumber,
+    alert: o.paymentAlert,
+    heldPaid: o.paymentStatus === "PAID" && !o.releasedToKitchenAt && o.status !== "CANCELLED",
+    isTest: o.isTest,
+  }));
+}
+
+/** Refunds recorded from the bank's panel and the money-side audit trail. */
+export interface AdminRefundRecord {
+  id: string;
+  attemptId: string;
+  amountMinor: number;
+  currency: string;
+  kind: string;
+  bankReference: string;
+  note: string | null;
+  recordedByEmail: string | null;
+  createdAt: string;
+}
+
+export interface AdminPaymentEvent {
+  id: string;
+  action: string;
+  actorEmail: string | null;
+  details: string | null;
+  createdAt: string;
+}
+
+export async function getPaymentRecordsForOrder(
+  orderId: string
+): Promise<{ refunds: AdminRefundRecord[]; events: AdminPaymentEvent[] }> {
+  const [refunds, events] = await Promise.all([
+    db.paymentRefundRecord.findMany({ where: { orderId }, orderBy: { createdAt: "asc" } }),
+    db.paymentAuditEvent.findMany({ where: { orderId }, orderBy: { createdAt: "asc" } }),
+  ]);
+  return {
+    refunds: refunds.map((r) => ({
+      id: r.id,
+      attemptId: r.attemptId,
+      amountMinor: r.amountMinor,
+      currency: r.currency,
+      kind: r.kind,
+      bankReference: r.bankReference,
+      note: r.note,
+      recordedByEmail: r.recordedByEmail,
+      createdAt: r.createdAt.toISOString(),
+    })),
+    events: events.map((e) => ({
+      id: e.id,
+      action: e.action,
+      actorEmail: e.actorEmail,
+      details: e.detailsJson,
+      createdAt: e.createdAt.toISOString(),
+    })),
+  };
+}
+
 /** What the admin settings page shows about card payments — no secrets. */
 export interface PaymentStatusSummary {
   enabled: boolean;
