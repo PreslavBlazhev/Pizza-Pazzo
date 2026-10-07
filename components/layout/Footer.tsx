@@ -4,7 +4,7 @@ import { Logo } from "./Logo";
 import { NAV_LINKS } from "./Header";
 import { SITE } from "@/lib/constants";
 import { companyFor } from "@/content/legal/company";
-import { getCardBrandMarks } from "@/lib/payments/card-marks";
+import { getFooterSchemeMarks, isCardPaymentLive } from "@/lib/payments/card-marks";
 import { CardBrandMarks } from "@/components/payment/CardBrandMarks";
 import {
   getRestaurantSettings,
@@ -138,8 +138,25 @@ export async function Footer() {
               ))}
             </ul>
           </nav>
-          {/* Card marks — only once real card payment is live (UBB-14). */}
-          <CardBrandMarks marks={getCardBrandMarks()} label={t("payment.acceptedCards")} />
+          {/* Card-scheme logos, asked for by ОББ before the integration (UBB-14).
+              Shown from the official files whether or not card payment is
+              live — but only claimed as accepted once it really is. */}
+          {isCardPaymentLive() ? (
+            <CardBrandMarks marks={getFooterSchemeMarks()} label={t("payment.acceptedCards")} />
+          ) : (
+            <CardBrandMarks
+              marks={getFooterSchemeMarks()}
+              label={t("payment.cardSchemes")}
+              note={
+                <>
+                  {t("payment.cardNotActiveYet")}{" "}
+                  <Link href="/payment-methods" className="underline transition hover:text-brand">
+                    {tLegal("payment")}
+                  </Link>
+                </>
+              }
+            />
+          )}
           {/* The seller, as the Commercial Register names it (UBB-02). */}
           <p className="text-center">
             {t("footer.merchant", {

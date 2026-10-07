@@ -52,7 +52,10 @@ async function main() {
     const guestCheckout = await guestRes.text();
     check(guestRes.status === 200, "guest checkout → 200");
     check(/\\?"cardAvailable\\?":false/.test(guestCheckout), "guest checkout: the server offers NO card option");
-    check(!guestCheckout.includes("/payment-marks/"), "guest checkout: no card logos");
+    // The footer carries the card-scheme logos ОББ asked for (UBB-14); the
+    // checkout form's own marks ("pay with this card here") must stay off.
+    check(/\\?"cardMarks\\?":\[\]/.test(guestCheckout), "guest checkout: no card logos at the payment choice");
+    check(guestCheckout.includes("все още не е активно"), "footer: card payment stated as NOT active next to the logos");
 
     const staffCheckout = await (await fetch(`${BASE}/checkout`, { headers: { cookie } })).text();
     check(

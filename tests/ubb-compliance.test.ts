@@ -245,3 +245,48 @@ test("the texts never promise what the code does not do", () => {
   }
   assert.ok(/проверяваме транзакцията/.test(all) && /check the transaction/.test(all), "the documents say the transaction is checked");
 });
+
+// ── UBB-14: card-scheme logos in the footer (ОББ feedback, 07.10.2026) ────
+
+test("UBB-14: footer shows the request form's schemes from official files, independent of the POS", async () => {
+  const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { getFooterSchemeMarks, getCardBrandMarks, isCardPaymentLive, FOOTER_SCHEME_IDS } = await import(
+    "@/lib/payments/card-marks"
+  );
+  assert.deepEqual([...FOOTER_SCHEME_IDS], ["visa", "mastercard", "borica"], "only the schemes in ОББ's form");
+
+  const dir = mkdtempSync(join(tmpdir(), "pp-marks-"));
+  try {
+    assert.deepEqual(getFooterSchemeMarks(dir), [], "no official file → no mark, nothing drawn");
+    for (const f of ["visa.svg", "mastercard.svg", "maestro.svg", "amex.svg"]) writeFileSync(join(dir, f), "<svg/>");
+    assert.deepEqual(
+      getFooterSchemeMarks(dir).map((m) => [m.id, m.label, m.src]),
+      [
+        ["visa", "Visa", "/payment-marks/visa.svg"],
+        ["mastercard", "Mastercard", "/payment-marks/mastercard.svg"],
+      ],
+      "a file for a brand outside the form is ignored"
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+
+  // Card payment itself stays off: the footer logos do not switch it on, and
+  // the checkout marks (which say "pay with this card here") stay hidden.
+  for (const e of [env({ APP_ENV: "production" }), env({ APP_ENV: "staging", CARD_PAYMENTS_ENABLED: "true", PAYMENT_PROVIDER: "simulator", PAYMENT_SIMULATOR_SECRET: "x".repeat(32) })]) {
+    assert.equal(isCardPaymentLive(e), false);
+    assert.deepEqual(getCardBrandMarks({ ...e, CARD_BRAND_MARKS: "visa,mastercard,borica" } as NodeJS.ProcessEnv), []);
+  }
+});
+
+test("UBB-14: while card payment is off the footer never claims cards are accepted", () => {
+  const footer = readFileSync(join(process.cwd(), "components", "layout", "Footer.tsx"), "utf8");
+  assert.match(footer, /isCardPaymentLive\(\) \?[\s\S]*payment\.acceptedCards[\s\S]*payment\.cardSchemes[\s\S]*payment\.cardNotActiveYet/);
+  for (const locale of ["bg", "en"]) {
+    const m = JSON.parse(readFileSync(join(process.cwd(), "messages", `${locale}.json`), "utf8")).payment;
+    assert.ok(m.cardSchemes && m.cardNotActiveYet, locale);
+    assert.match(m.cardNotActiveYet, locale === "bg" ? /не е активно/ : /not active/);
+    assert.doesNotMatch(`${m.cardSchemes} ${m.cardNotActiveYet}`, /приемаме|we accept|google pay|apple pay/i);
+  }
+});
