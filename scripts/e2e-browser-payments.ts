@@ -256,6 +256,83 @@ async function main() {
       await ctx.close();
     }
 
+    // ── F. looked declined, bank confirms later → HELD; staff decide ───────
+    console.log("F. late confirmation after a decline: held, on the board, released by staff, refund recorded");
+    {
+      const { ctx, page } = await newCustomer(browser);
+      const token = await checkoutByCard(page, pizza.slug, "F");
+      await page.getByRole("button", { name: /Плати с карта/ }).click();
+      await page.waitForURL(/\/payment-simulator\//);
+      await page.locator("details summary").click();
+      await page.getByRole("button", { name: /Изглежда отказано, но банката го потвърждава/ }).click();
+      await page.waitForURL(/\/payment\/failed/, { timeout: 60_000 });
+      const failedText = await page.locator("main").innerText();
+      check(!/не е удържана|not been charged/i.test(failedText), "failure page never claims 'not charged'");
+      const order = await db.order.findUniqueOrThrow({ where: { accessToken: token } });
+      // The bank confirms 20 s later; the status poll / staff re-check finds it.
+      await page.waitForTimeout(22_000);
+      await ctx.request.get(`${BASE}/api/payments/status?t=${token}`);
+      const held = await db.order.findUniqueOrThrow({ where: { id: order.id } });
+      check(held.paymentStatus === "PAID" && !held.releasedToKitchenAt, "PAID late → HELD, not in the kitchen");
+      check(held.paymentAlert === "LATE_CONFIRMATION", "flagged LATE_CONFIRMATION");
+
+      await ctx.addCookies([{ name: SESSION_COOKIE, value: staffCookie, url: BASE }]);
+      const board = await (await ctx.request.get(`${BASE}/api/admin/pending-orders`)).json();
+      check(
+        !board.orders.some((o: { id: string }) => o.id === order.id) &&
+          board.paymentAttention.some((i: { id: string; heldPaid: boolean }) => i.id === order.id && i.heldPaid),
+        "not among orders to cook; on the board's 'needs a decision' list"
+      );
+      await page.goto(`${BASE}/admin/orders/live`);
+      await page.getByText("Плащания, които изискват решение").waitFor({ timeout: 20_000 });
+      await shot(page, "F-01-board-attention");
+
+      await page.goto(`${BASE}/admin/orders/${order.id}`);
+      await page.getByText("Платена, но задържана").waitFor();
+      await shot(page, "F-02-admin-held");
+      await page.getByRole("button", { name: "Пусни към кухнята" }).click();
+      // The held block disappears once the order is released; the journal stays.
+      await page.getByText("Пусната ръчно към кухнята").waitFor({ timeout: 20_000 });
+      check(!(await page.getByText("Платена, но задържана").isVisible()), "the held notice is gone after the release");
+      const released = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { paymentEvents: true } });
+      check(!!released.releasedToKitchenAt && released.paymentEvents.filter((e) => e.action === "RELEASE_HELD_PAID_ORDER").length === 1, "released by staff once, audited");
+
+      // Recording a refund made in the bank's panel (no money moves here).
+      await page.reload();
+      await page.getByRole("button", { name: /Отрази възстановяване/ }).click();
+      await page.locator('input[name="amountEur"]').fill("999");
+      await page.locator('input[name="bankReference"]').fill("E2E-REF-1");
+      await page.getByRole("button", { name: "Запиши възстановяването" }).click();
+      await page.getByText(/надвишава оставащата/).waitFor({ timeout: 20_000 });
+      check((await db.paymentRefundRecord.count({ where: { orderId: order.id } })) === 0, "a refund above the paid amount is refused");
+      await page.locator('input[name="amountEur"]').fill("1.00");
+      await page.locator('input[name="bankReference"]').fill("E2E-REF-1");
+      await page.getByRole("button", { name: "Запиши възстановяването" }).click();
+      await page.getByText("Възстановяването е отразено.").waitFor({ timeout: 20_000 });
+      await shot(page, "F-03-admin-refund-recorded");
+      const refunds = await db.paymentRefundRecord.findMany({ where: { orderId: order.id } });
+      check(refunds.length === 1 && refunds[0].amountMinor === 100, "one refund record of 1,00 € with the bank's reference");
+      await ctx.close();
+    }
+
+    // ── G. English, desktop: the review page before the bank ───────────────
+    console.log("G. English desktop review page");
+    {
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, locale: "en-GB" });
+      const page = await ctx.newPage();
+      page.on("request", (r) => traffic.push(`${r.method()} ${r.url()} ${r.postData() ?? ""}`));
+      // The order itself is placed through the Bulgarian flow (same server
+      // checks); the review page is then opened in English.
+      const token = await checkoutByCard(page, pizza.slug, "G");
+      const order = await db.order.findUniqueOrThrow({ where: { accessToken: token } });
+      await page.goto(`${BASE}/en/checkout/pay/${token}`);
+      const text = await page.locator("main").innerText();
+      check(text.includes(`${Number(order.totalEur).toFixed(2)} €`) || text.includes(`€${Number(order.totalEur).toFixed(2)}`), "EN review shows the server total in EUR");
+      check(!/google pay|apple pay/i.test(await page.content()), "no Google Pay / Apple Pay claim on the review page");
+      await shot(page, "G-01-review-en-desktop");
+      await ctx.close();
+    }
+
     // ── Card data never left the browser ───────────────────────────────────
     const leaked = traffic.filter((t) => CARD_DIGITS.some((d) => t.replace(/[\s%20+-]/g, "").includes(d)));
     check(leaked.length === 0, `no request carried card digits (${traffic.length} requests inspected)`, leaked.slice(0, 2).join(" | "));

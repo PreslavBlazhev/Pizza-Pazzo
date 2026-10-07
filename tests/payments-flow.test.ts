@@ -215,7 +215,7 @@ test("double click on 'Pay': one provider session, every click to the same page"
     Array.from({ length: 6 }, () => startCardPayment({ accessToken: r.accessToken!, locale: "bg" }))
   );
   assert.ok(results.every((x) => x.ok));
-  const urls = new Set(results.map((x) => (x.ok ? x.redirectUrl : "")));
+  const urls = new Set(results.map((x) => (x.ok ? x.redirect.url : "")));
   assert.equal(urls.size, 1);
   assert.equal(await db.paymentAttempt.count({ where: { order: { orderNumber: r.orderNumber } } }), 1);
 });
@@ -374,7 +374,7 @@ test("late confirmation: pending first, PAID later — released once", async () 
   assert.equal(row.paymentAlert, null, "pending → paid is a normal flow, not an alert");
 });
 
-test("looked declined, bank confirms later: PAID, released, flagged for the staff", async () => {
+test("looked declined, bank confirms later: PAID, HELD for the staff, never auto-cooked", async () => {
   const r = await order("card_online");
   const a = await payWith(r.accessToken!, "lateAfterDecline");
   await quiet(() => syncAttempt(a.id));
@@ -383,8 +383,9 @@ test("looked declined, bank confirms later: PAID, released, flagged for the staf
   await quiet(() => refreshOrderPayment(a.orderId));
   const row = await orderRow(r.orderNumber);
   assert.equal(row.paymentStatus, "PAID", "a real payment is never hidden");
-  assert.ok(row.releasedToKitchenAt);
+  assert.equal(row.releasedToKitchenAt, null, "the customer may no longer want it — a person decides");
   assert.equal(row.paymentAlert, "LATE_CONFIRMATION");
+  assert.ok(!(await kitchenNumbers()).includes(r.orderNumber));
 });
 
 test("provider timeout: nothing changes, no failure is invented; later answer wins", async () => {
