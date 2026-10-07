@@ -8,7 +8,8 @@ import { PrintOrderButtons } from "./PrintOrderButton";
 import type { PrintTemplateData } from "@/types/print";
 import { PaymentBadge } from "./PaymentBadge";
 import { RecheckPaymentButton } from "./RecheckPaymentButton";
-import type { AdminPaymentAttempt } from "@/lib/payments/admin";
+import { PaymentStaffActions } from "./PaymentStaffActions";
+import type { AdminPaymentAttempt, AdminPaymentEvent, AdminRefundRecord } from "@/lib/payments/admin";
 import { formatMinor } from "@/lib/payments/money";
 import {
   ATTEMPT_STATUS_LABELS_BG,
@@ -42,10 +43,14 @@ export function OrderDetails({
   order,
   printTemplates,
   paymentAttempts = [],
+  paymentRecords = { refunds: [], events: [] },
+  canRecordRefunds = false,
 }: {
   order: Order;
   printTemplates: PrintTemplateData[];
   paymentAttempts?: AdminPaymentAttempt[];
+  paymentRecords?: { refunds: AdminRefundRecord[]; events: AdminPaymentEvent[] };
+  canRecordRefunds?: boolean;
 }) {
   // A card order the provider has not confirmed is not an order to cook: it
   // can only be cancelled (e.g. an abandoned payment) — see order-admin.ts.
@@ -328,10 +333,21 @@ export function OrderDetails({
             {order.paymentStatus !== "PAID" && paymentAttempts.length > 0 && (
               <RecheckPaymentButton orderId={order.id} />
             )}
+            <PaymentStaffActions
+              orderId={order.id}
+              heldPaid={
+                order.paymentStatus === "PAID" && !order.releasedToKitchenAt && order.status !== "CANCELLED"
+              }
+              alertOpen={!!order.paymentAlert && !order.paymentAlertAckAt}
+              attempts={paymentAttempts}
+              refunds={paymentRecords.refunds}
+              events={paymentRecords.events}
+              canRecordRefunds={canRecordRefunds}
+            />
             {order.paymentStatus === "PAID" && order.status === "CANCELLED" && (
               <p className="text-sm font-semibold text-red-700">
                 Отказана, но платена поръчка: възстановяването се прави ръчно през портала на
-                банката. Сайтът не връща пари и не отбелязва възстановяване сам.
+                банката. Сайтът не връща пари сам — след като го направите в портала, отразете го по-долу.
               </p>
             )}
           </>

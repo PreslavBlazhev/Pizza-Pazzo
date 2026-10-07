@@ -4,7 +4,8 @@ import { OrderDetails } from "@/components/admin/OrderDetails";
 import { Button } from "@/components/ui/Button";
 import { getOrderById } from "@/lib/orders";
 import { getPrintTemplates } from "@/lib/print-templates";
-import { getPaymentAttemptsForOrder } from "@/lib/payments/admin";
+import { getPaymentAttemptsForOrder, getPaymentRecordsForOrder } from "@/lib/payments/admin";
+import { getSessionUser } from "@/lib/auth";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -12,10 +13,12 @@ interface PageProps {
 
 export default async function AdminOrderDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const [order, printTemplates, paymentAttempts] = await Promise.all([
+  const [order, printTemplates, paymentAttempts, paymentRecords, user] = await Promise.all([
     getOrderById(id),
     getPrintTemplates(),
     getPaymentAttemptsForOrder(id),
+    getPaymentRecordsForOrder(id),
+    getSessionUser(),
   ]);
   if (!order) notFound();
 
@@ -33,6 +36,8 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
         order={order}
         printTemplates={printTemplates}
         paymentAttempts={paymentAttempts}
+        paymentRecords={paymentRecords}
+        canRecordRefunds={user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"}
       />
     </div>
   );

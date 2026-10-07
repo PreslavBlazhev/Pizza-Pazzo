@@ -153,6 +153,11 @@ export function createSimulatorProvider(config: PaymentConfig): PaymentProvider 
         ? await db.paymentSimulatorSession.findUnique({ where: { id: query.providerPaymentId } })
         : await db.paymentSimulatorSession.findUnique({ where: { reference: query.reference } });
       if (!session) {
+        // Asked by our reference only (a creation whose outcome was unknown):
+        // "no such payment" is a definite answer, like a bank's status query.
+        if (!query.providerPaymentId) {
+          return { state: "NOT_FOUND", rawStatus: "NOT_FOUND", safeDetails: { simulatorState: "NOT_FOUND" } };
+        }
         throw new PaymentProviderError(`Симулаторът не познава ${query.reference}.`);
       }
 
@@ -175,6 +180,7 @@ export function createSimulatorProvider(config: PaymentConfig): PaymentProvider 
         rawStatus: session.state,
         amountMinor: session.amountMinor,
         currency: session.currency,
+        providerPaymentId: session.id,
         failureReason:
           state === "FAILED" ? "Картата е отказана (симулация)." : undefined,
         safeDetails: { simulatorState: session.state },

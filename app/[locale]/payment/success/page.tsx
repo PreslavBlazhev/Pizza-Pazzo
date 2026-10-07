@@ -43,11 +43,14 @@ export default async function PaymentSuccessPage({ params, searchParams }: PageP
   const { order } = view!;
   const t = await getTranslations("payment");
   const settings = await getRestaurantSettings();
+  // PAID but not sent to the kitchen: a late confirmation held for staff, or
+  // a payment for an order already cancelled. Never say it is on its way.
+  const held = !order.releasedToKitchenAt;
 
   return (
     <PaymentShell testNotice={view!.isTest ? t("testMode") : null}>
       <PaymentSettled token={token} />
-      <PaymentHeading icon="✓" tone="success" title={t("success.title")} subtitle={t("success.subtitle")} />
+      <PaymentHeading icon="✓" tone="success" title={t("success.title")} subtitle={t(held ? "success.subtitleHeld" : "success.subtitle")} />
 
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         <span className="rounded-full bg-pizza-green-light px-4 py-1.5 font-semibold text-pizza-green-dark">
@@ -65,7 +68,7 @@ export default async function PaymentSuccessPage({ params, searchParams }: PageP
       <section className="mt-8 rounded-2xl bg-pizza-cream p-5">
         <h2 className="font-semibold text-pizza-ink">{t("success.nextTitle")}</h2>
         <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-pizza-muted">
-          <li>{t("success.next1")}</li>
+          <li>{t(held ? "success.next1Held" : "success.next1")}</li>
           <li>{t("success.next2")}</li>
           <li>{t("success.next3", { phone: settings.primaryPhone })}</li>
         </ol>

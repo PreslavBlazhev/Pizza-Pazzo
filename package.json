@@ -24,7 +24,7 @@
     "e2e:alarm": "node --experimental-websocket scripts/e2e-alarm.mjs",
     "icons:android": "node scripts/generate-android-icons.mjs",
     "icons:play": "node scripts/generate-play-assets.mjs",
-    "test:payments": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/payments-unit.test.ts tests/payments-flow.test.ts",
+    "test:payments": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/payments-unit.test.ts tests/payments-flow.test.ts tests/payments-readiness.test.ts",
     "e2e:payments": "node --env-file=.env --import tsx scripts/e2e-card-payment.ts",
     "db:backup": "node scripts/backup-db.mjs",
     "db:seed-staging": "node scripts/seed-staging.mjs",

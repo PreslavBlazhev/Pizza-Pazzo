@@ -15,8 +15,11 @@ services:
     # migrate deploy runs at START, not build: the Persistent Disk (and so the
     # SQLite file) is NOT mounted during builds. Pages that read the menu render
     # dynamically for the same reason (see docs/admin-menu-db-plan.md).
+    # When a migration is pending, a checked VACUUM INTO backup is written to
+    # /var/data/backups/ first; if it fails, the start stops before migrating
+    # and Render keeps the previous deploy (scripts/backup-before-migrate.mjs).
     buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npx prisma migrate deploy && npm start
+    startCommand: node scripts/backup-before-migrate.mjs && npx prisma migrate deploy && npm start
 
     # SQLite file lives on this disk so it survives redeploys/restarts.
     disk:

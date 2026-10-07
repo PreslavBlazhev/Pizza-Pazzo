@@ -40,6 +40,8 @@ const ERROR_CODES = [
   "NOT_CARD",
   "ALREADY_PAID",
   "ORDER_CANCELLED",
+  "UNCONFIRMED",
+  "RATE_LIMITED",
 ] as const;
 type ErrorCode = (typeof ERROR_CODES)[number];
 

@@ -53,8 +53,18 @@ export function isRetryableAttempt(status: string): boolean {
   return (RETRYABLE_ATTEMPT_STATUSES as readonly string[]).includes(status);
 }
 
-/** Provider-agnostic outcome an adapter translates its own codes into. */
-export type ProviderPaymentState = "PENDING" | "PAID" | "FAILED" | "CANCELLED" | "EXPIRED";
+/**
+ * Provider-agnostic outcome an adapter translates its own codes into.
+ *
+ * PAID means the money is the merchant's: a completed sale, or a captured
+ * authorization. An authorization that still needs a capture is PENDING —
+ * the kitchen never cooks on a hold.
+ *
+ * NOT_FOUND is only meaningful for a query BY REFERENCE (no provider id yet,
+ * after a createSession whose outcome was unknown): the provider positively
+ * states it has no payment under our reference. Never inferred from a timeout.
+ */
+export type ProviderPaymentState = "PENDING" | "PAID" | "FAILED" | "CANCELLED" | "EXPIRED" | "NOT_FOUND";
 
 /**
  * Money problems a human must look at. Stored on Order.paymentAlert and shown
@@ -70,18 +80,26 @@ export const PAYMENT_ALERTS = {
   AMOUNT_MISMATCH: "AMOUNT_MISMATCH",
   /** Payment confirmed for an order the staff had already cancelled. */
   PAID_AFTER_CANCEL: "PAID_AFTER_CANCEL",
+  /**
+   * The provider has not given a final answer for a long time (see
+   * UNRESOLVED_AFTER_MS in reconcile.ts). Nothing is decided automatically:
+   * staff look the reference up in the bank's panel.
+   */
+  UNRESOLVED_PAYMENT: "UNRESOLVED_PAYMENT",
 } as const;
 export type PaymentAlert = (typeof PAYMENT_ALERTS)[keyof typeof PAYMENT_ALERTS];
 
 export const PAYMENT_ALERT_LABELS_BG: Record<PaymentAlert, string> = {
   LATE_CONFIRMATION:
-    "Плащането е потвърдено със закъснение. Проверете с клиента дали не е направил втора поръчка.",
+    "Плащането е потвърдено със закъснение, след като опитът изглеждаше неуспешен. Поръчката НЕ е пусната автоматично към кухнята — свържете се с клиента (дали още я иска, дали няма втора поръчка) и я пуснете ръчно или я откажете и възстановете сумата през банковия портал.",
   DUPLICATE_PAYMENT:
     "По поръчката има ДВЕ успешни плащания. Едното трябва да се възстанови ръчно през банката.",
   AMOUNT_MISMATCH:
     "Банката потвърди сума или валута, различна от поръчката. Поръчката НЕ е пусната към кухнята — проверете в банковия портал.",
   PAID_AFTER_CANCEL:
     "Плащането е потвърдено след отказа на поръчката. Сумата трябва да се възстанови ръчно през банката.",
+  UNRESOLVED_PAYMENT:
+    "Банката дълго не дава окончателен отговор за плащането. Нищо не е решено автоматично — проверете референцията в административния панел на банката.",
 };
 
 export function paymentAlertLabel(alert: string | null): string | null {

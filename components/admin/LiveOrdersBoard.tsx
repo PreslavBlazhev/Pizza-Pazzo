@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Link } from "@/i18n/navigation";
 import { openStoreAction } from "@/app/actions/store-closure";
 import { formatEurPrice } from "@/lib/format-price";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
@@ -10,7 +11,8 @@ import { PrintOrderButtons } from "./PrintOrderButton";
 import { closureEndsShift, useShift } from "./ShiftProvider";
 import type { Order } from "@/types/order";
 import type { StoreStatus } from "@/types/store-status";
-import { collectInstructionBg } from "@/lib/payments/status";
+import { collectInstructionBg, paymentAlertLabel } from "@/lib/payments/status";
+import type { PaymentAttentionItem } from "@/lib/payments/admin";
 
 const QUICK_TIMES = [20, 30, 45, 60];
 
@@ -32,6 +34,7 @@ export function LiveOrdersBoard() {
     audioBlocked,
     orders,
     acceptedOrders,
+    paymentAttention,
     printTemplates,
     storeStatus,
     connectionLost,
@@ -114,6 +117,8 @@ export function LiveOrdersBoard() {
       )}
 
       <StoreClosedNotice status={storeStatus} onReopened={refresh} />
+
+      <PaymentAttentionList items={paymentAttention} />
 
       {closingAfterLastOrder && (
         <p className="mb-4 rounded-2xl border-2 border-amber-400 bg-white px-5 py-3 font-semibold text-amber-900">
@@ -521,6 +526,34 @@ function StoreClosedNotice({
       )}
 
       {error && <p className="mt-2 font-semibold text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+/**
+ * Card payments a person must decide about. Deliberately NOT on the order
+ * list and NOT accepted from here: a late payment may be for an order the
+ * customer no longer wants, so it opens the order's page, where staff release
+ * it to the kitchen or cancel it.
+ */
+function PaymentAttentionList({ items }: { items: PaymentAttentionItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div role="alert" className="mb-4 rounded-2xl border-2 border-red-600 bg-red-50 px-5 py-3 text-red-900">
+      <p className="font-bold">⚠ Плащания, които изискват решение</p>
+      <ul className="mt-2 space-y-1 text-sm">
+        {items.map((i) => (
+          <li key={i.id}>
+            <Link href={`/admin/orders/${i.id}`} className="font-semibold underline">
+              #{i.orderNumber}
+            </Link>
+            {i.isTest && " (тест)"}{" — "}
+            {i.heldPaid
+              ? "ПЛАТЕНА, но задържана: не е пусната към кухнята. Отворете поръчката и решете."
+              : paymentAlertLabel(i.alert)}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

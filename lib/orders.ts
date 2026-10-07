@@ -67,6 +67,8 @@ export function mapOrderRow(o: PrismaOrderRow): Order {
     releasedToKitchenAt: o.releasedToKitchenAt?.toISOString() ?? null,
     isTest: o.isTest,
     paymentAlert: o.paymentAlert,
+    paymentAlertAckAt: o.paymentAlertAckAt?.toISOString() ?? null,
+    paymentAlertAckBy: o.paymentAlertAckBy ?? null,
     notificationStatus: o.notificationStatus,
     notificationAttempts: o.notificationAttempts,
     notificationError: o.notificationError,
