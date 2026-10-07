@@ -778,6 +778,8 @@
       "metaTitle": "Order paid",
       "title": "Payment successful — thank you!",
       "subtitle": "The bank confirmed your payment and the order has been sent to the restaurant.",
+      "subtitleHeld": "The bank confirmed your payment late, so the order has NOT been sent for preparation yet.",
+      "next1Held": "The restaurant will contact you to confirm you still want the order. If not, the amount is refunded to the card you paid with.",
       "paid": "Paid by card: {amount}",
       "nextTitle": "What happens next",
       "next1": "The restaurant will accept your order and e-mail you the estimated delivery time.",

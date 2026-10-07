@@ -275,6 +275,13 @@ async function main() {
       const held = await db.order.findUniqueOrThrow({ where: { id: order.id } });
       check(held.paymentStatus === "PAID" && !held.releasedToKitchenAt, "PAID late → HELD, not in the kitchen");
       check(held.paymentAlert === "LATE_CONFIRMATION", "flagged LATE_CONFIRMATION");
+      await page.goto(`${BASE}/payment/success?t=${token}`);
+      const heldText = await page.locator("main").innerText();
+      check(
+        heldText.includes("още НЕ е изпратена") && !heldText.includes("изпратена към ресторанта"),
+        "customer's page: paid, but NOT 'sent to the restaurant' while held"
+      );
+      await shot(page, "F-00-customer-held");
 
       await ctx.addCookies([{ name: SESSION_COOKIE, value: staffCookie, url: BASE }]);
       const board = await (await ctx.request.get(`${BASE}/api/admin/pending-orders`)).json();
