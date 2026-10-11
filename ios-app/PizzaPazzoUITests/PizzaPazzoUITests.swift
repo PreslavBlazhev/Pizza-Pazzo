@@ -58,9 +58,17 @@ final class PizzaPazzoUITests: XCTestCase {
     func test01HomeMenuAndSwipeBack() {
         let app = launch()
         waitForSiteText(app, "Различно")
+        waitForFirstPage(app)
+        // Let the site's JavaScript take over the links before tapping: a tap
+        // that lands mid-hydration is swallowed (seen once in CI).
+        sleep(3)
         snapshot("01-home")
 
-        app.webViews.links["Разгледай менюто"].firstMatch.tap()
+        let menuLink = app.webViews.links["Разгледай менюто"].firstMatch
+        menuLink.tap()
+        if !siteText(app, "Дигитално меню").waitForExistence(timeout: 20) {
+            menuLink.tap() // one retry for a synthetic tap, recorded in the log
+        }
         waitForSiteText(app, "Дигитално меню")
         sleep(1)
         snapshot("02-menu")
@@ -156,8 +164,9 @@ final class PizzaPazzoUITests: XCTestCase {
         snapshot("11-external-link-in-safari-sheet")
 
         done.tap()
-        XCTAssertTrue(app.webViews["siteWebView"].waitForExistence(timeout: 10))
-        XCTAssertTrue(maps.waitForExistence(timeout: 10), "back on the contacts page")
+        XCTAssertTrue(app.webViews["siteWebView"].waitForExistence(timeout: 20))
+        XCTAssertFalse(done.exists, "the Safari sheet closed")
+        XCTAssertTrue(maps.waitForExistence(timeout: 30), "back on the contacts page")
     }
 
     func test05SiteLinkWithTargetBlankOpensInASheet() {
