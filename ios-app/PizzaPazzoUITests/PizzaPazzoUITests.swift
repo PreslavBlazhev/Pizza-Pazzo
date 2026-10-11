@@ -66,8 +66,13 @@ final class PizzaPazzoUITests: XCTestCase {
         snapshot("02-menu")
 
         // iOS back: swipe from the left edge of the screen.
-        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0.005, dy: 0.5))
-        edge.press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)))
+        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5))
+        edge.press(
+            forDuration: 0.01,
+            thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)),
+            withVelocity: .fast,
+            thenHoldForDuration: 0
+        )
         waitForSiteText(app, "Различно")
         sleep(1)
         snapshot("03-back-to-home")
