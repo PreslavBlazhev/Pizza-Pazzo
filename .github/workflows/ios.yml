@@ -101,6 +101,16 @@ jobs:
           sudo cp /etc/hosts.pp-backup /etc/hosts; flush
           grep -q "TEST SUCCEEDED" "$RUNNER_TEMP/offline.log"
 
+      - name: Collect crash reports and the app's log
+        if: always()
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/results/diagnostics"
+          find ~/Library/Logs/DiagnosticReports -name '*PizzaPazzo*' -exec cp {} "$GITHUB_WORKSPACE/results/diagnostics/" \; 2>/dev/null || true
+          xcrun simctl spawn "${{ steps.sim.outputs.udid }}" log show --last 60m --style compact \
+            --predicate 'process == "PizzaPazzo" AND (subsystem == "bg.pizzapazzo.app" OR messageType == error OR messageType == fault OR eventMessage CONTAINS[c] "crash" OR eventMessage CONTAINS[c] "fatal")' \
+            > "$GITHUB_WORKSPACE/results/diagnostics/app-log.txt" 2>&1 || true
+          ls -la "$GITHUB_WORKSPACE/results/diagnostics"
+
       - name: Export screenshots from the test results
         if: always()
         run: |

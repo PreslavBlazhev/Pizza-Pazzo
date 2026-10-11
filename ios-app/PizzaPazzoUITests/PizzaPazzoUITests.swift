@@ -79,7 +79,8 @@ final class PizzaPazzoUITests: XCTestCase {
         sleep(1)
         snapshot("04-product")
 
-        let add = app.webViews.buttons["Добави в количката"].firstMatch
+        // The site's label is "🛒 Добави в количката".
+        let add = app.webViews.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Добави в количката")).firstMatch
         XCTAssertTrue(add.waitForExistence(timeout: pageTimeout))
         guard add.isEnabled else {
             snapshot("04b-store-closed")
@@ -148,8 +149,15 @@ final class PizzaPazzoUITests: XCTestCase {
 
     func test05SiteLinkWithTargetBlankOpensInASheet() {
         let app = launch(path: "/auth/register")
+        waitForSiteText(app, "Създайте профил")
         let terms = app.webViews.links.matching(NSPredicate(format: "label CONTAINS %@", "Общите условия")).firstMatch
-        XCTAssertTrue(terms.waitForExistence(timeout: pageTimeout))
+        if !terms.waitForExistence(timeout: 10) {
+            let tree = XCTAttachment(string: app.webViews.firstMatch.debugDescription)
+            tree.name = "register-page-tree"
+            tree.lifetime = .keepAlways
+            add(tree)
+        }
+        XCTAssertTrue(terms.exists, "the terms link is not exposed as a link")
         terms.tap()
 
         let done = app.buttons["popupDone"]

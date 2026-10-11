@@ -1,7 +1,15 @@
 import Combine
 import Network
+import os
 import UIKit
 import WebKit
+
+/// Navigation trace — debug builds only (URLs can carry an order token).
+func debugTrace(_ message: @autoclosure () -> String) {
+    #if DEBUG
+    Logger(subsystem: "bg.pizzapazzo.app", category: "web").notice("\(message(), privacy: .public)")
+    #endif
+}
 
 /// The whole app behind one screen: a web view onto the Pizza Pazzo site.
 ///
@@ -218,6 +226,7 @@ final class WebViewModel: NSObject, ObservableObject {
     private func handleLoadError(_ error: Error) {
         refreshControl.endRefreshing()
         let nsError = error as NSError
+        debugTrace("load error \(nsError.domain) \(nsError.code)")
 
         // A navigation this class cancelled itself (an external link handed to
         // Safari, a blocked URL, a new load replacing an old one) is not an error.
@@ -267,6 +276,7 @@ extension WebViewModel: WKNavigationDelegate {
         if decision == .allow, origins.isAllowed(url.absoluteString), !origins.isAllowed(url) {
             decision = .block
         }
+        debugTrace("policy \(decision) main=\(targetFrame.isMainFrame) type=\(navigationAction.navigationType.rawValue) \(url.absoluteString)")
 
         switch decision {
         case .allow:
@@ -385,6 +395,7 @@ extension WebViewModel: WKUIDelegate {
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
         guard let url = navigationAction.request.url else { return nil }
+        debugTrace("new window \(url.absoluteString)")
         if origins.isAllowed(url) {
             SitePopupViewController.present(url: url, origins: origins, printBridge: printBridge)
             return nil
