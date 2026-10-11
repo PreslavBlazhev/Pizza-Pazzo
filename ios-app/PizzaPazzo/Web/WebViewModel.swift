@@ -7,7 +7,8 @@ import WebKit
 /// Navigation trace — debug builds only (URLs can carry an order token).
 func debugTrace(_ message: @autoclosure () -> String) {
     #if DEBUG
-    Logger(subsystem: "bg.pizzapazzo.app", category: "web").notice("\(message(), privacy: .public)")
+    let text = message()
+    Logger(subsystem: "bg.pizzapazzo.app", category: "web").notice("\(text, privacy: .public)")
     #endif
 }
 
