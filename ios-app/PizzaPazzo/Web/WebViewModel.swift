@@ -35,7 +35,12 @@ final class WebViewModel: NSObject, ObservableObject {
     /// False until the first page has rendered — the launch overlay shows until then.
     @Published private(set) var hasLoadedOnce = false
 
-    let webView: WKWebView
+    /// Created on first use, from the view hierarchy — never in `App.init`.
+    /// A WKWebView built before UIApplicationMain has set up event handling
+    /// crashes on the first tap (UIKit "UIGestureGraphEdge … targetNode"
+    /// assertion, rdar://28209432) — seen in this app's own UI tests.
+    private(set) lazy var webView: WKWebView = makeWebView()
+    private var started = false
     private let config: AppConfig
     private let policy: NavigationPolicy
     private let printBridge: PrintBridge
@@ -65,9 +70,12 @@ final class WebViewModel: NSObject, ObservableObject {
         self.config = config
         self.policy = NavigationPolicy(origins: config.origins)
         self.printBridge = PrintBridge(origins: config.origins)
-        self.webView = WebViewFactory.makeWebView(printBridge: printBridge)
         super.init()
+        watchConnectivity()
+    }
 
+    private func makeWebView() -> WKWebView {
+        let webView = WebViewFactory.makeWebView(printBridge: printBridge)
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.accessibilityIdentifier = "siteWebView"
@@ -75,14 +83,21 @@ final class WebViewModel: NSObject, ObservableObject {
         refreshControl.addTarget(self, action: #selector(pullToRefresh), for: .valueChanged)
         webView.scrollView.refreshControl = refreshControl
 
-        observeWebView()
-        watchConnectivity()
+        observe(webView)
+        return webView
     }
 
     // MARK: - Loading
 
+    /// Called once the screen is on display (ContentView.onAppear).
+    func startIfNeeded(debugStartPath: String?) {
+        guard !started else { return }
+        started = true
+        start(debugStartPath: debugStartPath)
+    }
+
     /// Opens the first page: an interrupted payment's status page, or the site.
-    func start(debugStartPath: String?) {
+    private func start(debugStartPath: String?) {
         if let interrupted = paymentStore.load(), !interrupted.isExpired(now: Date()),
            let url = URL(string: interrupted.resumeURL), origins.isAllowed(url) {
             // iOS ended the app while the customer was at the bank. The bank
@@ -123,7 +138,7 @@ final class WebViewModel: NSObject, ObservableObject {
 
     // MARK: - Observation
 
-    private func observeWebView() {
+    private func observe(_ webView: WKWebView) {
         webView.publisher(for: \.estimatedProgress)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] value in self?.progress = value }

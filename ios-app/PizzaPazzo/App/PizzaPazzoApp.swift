@@ -13,11 +13,7 @@ struct PizzaPazzoApp: App {
             // once rather than open something that is not the site.
             fatalError("Pizza Pazzo: invalid site configuration in Config/App.xcconfig: \(error)")
         }
-        let model = WebViewModel(config: config)
-        if !Self.isRunningUnitTests {
-            model.start(debugStartPath: UserDefaults.standard.string(forKey: "PPStartPath"))
-        }
-        _model = StateObject(wrappedValue: model)
+        _model = StateObject(wrappedValue: WebViewModel(config: config))
     }
 
     var body: some Scene {
@@ -26,6 +22,12 @@ struct PizzaPazzoApp: App {
                 // The site has no dark theme; keep alerts and the status bar
                 // readable on its cream background.
                 .preferredColorScheme(.light)
+                .onAppear {
+                    // Only now, with the window on screen, is the web view
+                    // created and the site loaded (see WebViewModel.webView).
+                    guard !Self.isRunningUnitTests else { return }
+                    model.startIfNeeded(debugStartPath: UserDefaults.standard.string(forKey: "PPStartPath"))
+                }
         }
     }
 
