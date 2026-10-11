@@ -3,7 +3,7 @@
 //
 // Your Team ID: Xcode ▸ Settings ▸ Accounts ▸ (your Apple Account) ▸ the team
 // "… (Personal Team)" — or leave this line out and pick the team in Xcode.
-// DEVELOPMENT_TEAM = ABCDE12345
+// DEVELOPMENT_TEAM = <десетте знака на вашия Team ID>
 //
 // A temporary bundle id for the free Personal Team, if bg.pizzapazzo.app is
 // refused ("cannot be registered"). Anything unique and reverse-DNS works:
