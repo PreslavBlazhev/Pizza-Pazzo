@@ -1,8 +1,8 @@
 # Builds and tests the iOS app (ios-app/) on a GitHub-hosted Mac.
 #
 # No signing, no Apple account, no secrets: the device build is unsigned
-# (CODE_SIGNING_ALLOWED=NO) and only proves the code compiles for a real
-# iPhone; the tests run on an iPhone 11 Pro simulator against the live site,
+# (CODE_SIGNING_ALLOWED=NO); it proves the code compiles for a real iPhone
+# and is also published as an unsigned .ipa for Sideloadly; the tests run on an iPhone 11 Pro simulator against the live site,
 # read-only (no order, login or account is ever submitted).
 name: iOS app
 
@@ -54,6 +54,31 @@ jobs:
           plutil -p "$APP/Info.plist" | grep -E "CFBundleDisplayName|CFBundleIdentifier|CFBundleShortVersionString|CFBundleVersion|MinimumOSVersion|PPStartURL|PPSiteHosts|UILaunchScreen|UIUserInterfaceStyle" || true
           lipo -info "$APP/PizzaPazzo"
           ls "$APP" | grep -E "Assets.car|PrivacyInfo"
+
+      # The same unsigned build, zipped as an .ipa for installing from Windows
+      # with Sideloadly, which signs it with the user's own free Apple Account
+      # on their PC (ios-app/README.md, "Инсталиране от Windows"). Nothing is
+      # signed here and no Apple account is involved.
+      - name: Package an unsigned .ipa (for Sideloadly)
+        run: |
+          APP="$RUNNER_TEMP/dd-device/Build/Products/Release-iphoneos/PizzaPazzo.app"
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Info.plist")
+          BUILD=$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Info.plist")
+          STAGE="$RUNNER_TEMP/ipa-stage"
+          rm -rf "$STAGE" && mkdir -p "$STAGE/Payload" "$GITHUB_WORKSPACE/ipa"
+          cp -R "$APP" "$STAGE/Payload/"
+          test ! -e "$STAGE/Payload/PizzaPazzo.app/embedded.mobileprovision"
+          IPA="$GITHUB_WORKSPACE/ipa/PizzaPazzo-$VERSION-$BUILD-unsigned.ipa"
+          (cd "$STAGE" && zip -qry "$IPA" Payload)
+          unzip -l "$IPA" | grep -E "Payload/PizzaPazzo.app/(PizzaPazzo|Info.plist)$"
+          ls -lh "$IPA"
+          shasum -a 256 "$IPA" | tee "$IPA.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PizzaPazzo-ipa-unsigned
+          path: ipa/
+          retention-days: 30
 
       - name: Create an iPhone 11 Pro simulator
         id: sim
