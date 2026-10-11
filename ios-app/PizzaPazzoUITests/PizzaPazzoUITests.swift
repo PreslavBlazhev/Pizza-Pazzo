@@ -180,9 +180,16 @@ final class PizzaPazzoUITests: XCTestCase {
             add(tree)
         }
         XCTAssertTrue(terms.exists, "the terms link is not exposed as a link")
+        // As in test01: a tap that lands mid-hydration is swallowed (seen once
+        // in CI), so wait for the page to settle and retry once.
+        waitForFirstPage(app)
+        sleep(3)
         terms.tap()
 
         let done = app.buttons["popupDone"]
+        if !done.waitForExistence(timeout: 20) {
+            terms.tap() // one retry for a synthetic tap, recorded in the log
+        }
         XCTAssertTrue(done.waitForExistence(timeout: 20), "the terms did not open in a sheet")
         sleep(4)
         snapshot("12-terms-in-sheet-over-registration")
