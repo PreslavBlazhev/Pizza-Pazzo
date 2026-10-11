@@ -1,0 +1,32 @@
+// Pizza Pazzo iOS — the ONE place for the app's identity and its site.
+//
+// Careful: "//" starts a comment in .xcconfig files, so every URL below is
+// written as  https:/$()/host/  — the empty $() keeps the two slashes apart.
+// AppConfigTests checks the value that really reaches the app.
+
+// ── Bundle identifier ────────────────────────────────────────────────────────
+// The real one. If Xcode cannot register it for your free Personal Team, do
+// NOT edit it here — put a temporary one in Config/Local.xcconfig instead
+// (see Local.xcconfig.example and ios-app/README.md).
+PP_BUNDLE_ID = bg.pizzapazzo.app
+PRODUCT_BUNDLE_IDENTIFIER = $(PP_BUNDLE_ID)
+
+// ── Version ──────────────────────────────────────────────────────────────────
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+// iOS 16.0: iPhone 11 Pro runs iOS 13 up to the current iOS 26, so it is
+// covered as long as the phone has been updated at least once since 2022.
+IPHONEOS_DEPLOYMENT_TARGET = 16.0
+
+// ── The site ─────────────────────────────────────────────────────────────────
+// Start page, and the allowlist: only these HTTPS hosts open as "the app"
+// (the same three hosts as android-app/gradle.properties). pizzapazzo.bg is
+// the live domain; www. redirects to it; onrender.com is the same service.
+PP_START_URL = https:/$()/pizzapazzo.bg/
+PP_SITE_HOSTS = pizzapazzo.bg,www.pizzapazzo.bg,pizza-pazzo.onrender.com
+
+// ── Your machine only ────────────────────────────────────────────────────────
+// Team ID and a temporary bundle id live in Config/Local.xcconfig, which is
+// gitignored. Missing file = fine (CI builds without signing).
+#include? "Local.xcconfig"
