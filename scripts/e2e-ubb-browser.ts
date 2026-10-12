@@ -73,6 +73,15 @@ async function addPizzaToCart(page: Page) {
   await page.goto(`${BASE}/product/${product.slug}`);
   await page.getByRole("button", { name: "Добави в количката" }).first().click();
   await page.waitForFunction(() => (localStorage.getItem("pp-cart") ?? "").includes("productId") || (localStorage.getItem("pp-cart") ?? "").includes('"items":[{'));
+  // One item can be under the 10 € delivery minimum, which disables the order
+  // button: take enough of it to clear the minimum.
+  await page.evaluate(() => {
+    const cart = JSON.parse(localStorage.getItem("pp-cart")!);
+    const item = cart.state.items[0];
+    const unit = item.selectedVariant?.priceEur ?? item.product.priceEur;
+    item.quantity = Math.max(1, Math.ceil(10.01 / unit));
+    localStorage.setItem("pp-cart", JSON.stringify(cart));
+  });
 }
 
 async function fillContact(page: Page, tag: string) {

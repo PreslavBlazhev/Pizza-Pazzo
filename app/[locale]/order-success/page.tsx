@@ -4,10 +4,13 @@ import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import type { Locale } from "@/i18n/routing";
+import { db } from "@/lib/db";
+import { isValidOrderReceipt } from "@/lib/checkout/receipt";
+import { CallNowButton } from "@/components/layout/CallNow";
 
 interface PageProps {
   params: Promise<{ locale: Locale }>;
-  searchParams: Promise<{ n?: string }>;
+  searchParams: Promise<{ n?: string; r?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -23,9 +26,41 @@ export default async function OrderSuccessPage({ params, searchParams }: PagePro
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const { n } = await searchParams;
-  const orderNumber = n && /^\d+$/.test(n) ? n : null;
+  const { n, r } = await searchParams;
   const t = await getTranslations("orderSuccess");
+
+  // "Received" only for an order that exists AND that this server just handed
+  // to this browser (the signed receipt) — never for a bare ?n= in the URL.
+  const number = n && /^\d{1,9}$/.test(n) ? Number(n) : null;
+  const confirmed =
+    number !== null &&
+    isValidOrderReceipt(number, r) &&
+    (await db.order.findUnique({ where: { orderNumber: number }, select: { id: true } })) !== null;
+  const orderNumber = confirmed ? String(number) : null;
+
+  if (!confirmed) {
+    return (
+      <>
+        <Header />
+        <main className="container flex flex-col items-center py-20 text-center sm:py-28">
+          <h1 className="font-display text-3xl font-bold text-pizza-ink sm:text-4xl">
+            {t("unconfirmedTitle")}
+          </h1>
+          <p className="mt-4 max-w-lg leading-relaxed text-pizza-muted">{t("unconfirmedBody")}</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/checkout"
+              className="rounded-full bg-brand px-8 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark"
+            >
+              {t("backToCheckout")}
+            </Link>
+            <CallNowButton />
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>

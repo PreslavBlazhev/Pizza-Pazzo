@@ -4,7 +4,8 @@ import { getTranslations } from "next-intl/server";
 import { getSessionUser } from "@/lib/auth";
 import { getProductById } from "@/lib/menu-data";
 import { getStoreStatus } from "@/lib/store-status";
-import { placeOrder } from "@/lib/checkout/place-order";
+import { findOrderForCheckoutKey, placeOrder } from "@/lib/checkout/place-order";
+import { orderReceipt } from "@/lib/checkout/receipt";
 import { isLocale } from "@/i18n/routing";
 import { DELIVERY_AREA } from "@/lib/delivery-area";
 import { formatEurPrice } from "@/lib/format-price";
@@ -25,6 +26,8 @@ export interface CheckoutResult {
   /** "CARD_ONLINE" → continue to /checkout/pay/{accessToken}; cash is done. */
   paymentMethod?: "CASH_ON_DELIVERY" | "CARD_ONLINE";
   accessToken?: string;
+  /** Signed proof for the confirmation page (lib/checkout/receipt.ts). */
+  receipt?: string;
   error?: string;
   fieldErrors?: Record<string, string>;
 }
@@ -74,6 +77,12 @@ export async function createOrder(
   );
 
   if (!result.ok) {
+    // Codes only — no personal data. Makes a refused checkout traceable in
+    // the server log (a refusal used to leave no trace at all).
+    console.info(
+      "[checkout] refused:",
+      result.error ?? Object.entries(result.fieldErrors ?? {}).map(([f, c]) => `${f}=${c}`).join(",")
+    );
     const fieldErrors = result.fieldErrors
       ? Object.fromEntries(Object.entries(result.fieldErrors).map(([field, code]) => [field, t(code)]))
       : undefined;
@@ -86,5 +95,24 @@ export async function createOrder(
     orderNumber: result.orderNumber,
     paymentMethod: result.paymentMethod,
     accessToken: result.accessToken,
+    receipt: orderReceipt(result.orderNumber) ?? undefined,
+  };
+}
+
+/**
+ * The answer to an attempt whose response never reached the browser: if the
+ * order exists, the same result `createOrder` would have returned; otherwise
+ * null and the customer may submit again (with the same key — so even then a
+ * second order cannot appear).
+ */
+export async function checkoutAttemptStatus(checkoutKey: unknown): Promise<CheckoutResult | null> {
+  const found = await findOrderForCheckoutKey(checkoutKey);
+  if (!found || !found.ok) return null;
+  return {
+    ok: true,
+    orderNumber: found.orderNumber,
+    paymentMethod: found.paymentMethod,
+    accessToken: found.accessToken,
+    receipt: orderReceipt(found.orderNumber) ?? undefined,
   };
 }

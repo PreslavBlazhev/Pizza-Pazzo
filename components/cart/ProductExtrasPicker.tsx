@@ -83,7 +83,11 @@ function ExtrasDisclosure({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+    // On CLICK, not mousedown. Closing on mousedown collapsed the panel
+    // mid-click: everything below it (the "Add to basket" / "Save changes"
+    // button) jumped up before the mouseup, the press ended on another
+    // element, and the first click after opening a list did nothing.
+    const onOutsideClick = (e: MouseEvent) => {
       const node = wrapperRef.current;
       if (node && e.target instanceof Node && !node.contains(e.target)) {
         setOpen(false);
@@ -91,10 +95,10 @@ function ExtrasDisclosure({
     };
 
     document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("click", onOutsideClick);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("click", onOutsideClick);
     };
   }, [open]);
 

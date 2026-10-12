@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  startTransition,
-  useActionState,
   useCallback,
   useEffect,
   useMemo,
@@ -34,7 +32,11 @@ import { cartExtraName, cartProductName, cartVariantName } from "@/lib/cart-disp
 import { CONSENT_FIELDS, type ConsentField } from "@/lib/validators/checkout";
 import { CardBrandMarks } from "@/components/payment/CardBrandMarks";
 import type { CardBrandMark } from "@/lib/payments/card-marks";
-import { createOrder, type CheckoutResult } from "@/app/actions/checkout";
+import {
+  checkoutAttemptStatus,
+  createOrder,
+  type CheckoutResult,
+} from "@/app/actions/checkout";
 import {
   clearPendingPayment,
   newCheckoutKey,
@@ -111,6 +113,33 @@ function readDraft(): CheckoutDraft | null {
   }
 }
 
+/**
+ * The idempotency key of the checkout attempt in progress, kept for this tab
+ * until an order is confirmed. It used to be drawn afresh on every mount, so
+ * an order whose reply was lost (a reload, a language switch or a navigation
+ * mid-request, a dropped connection) could be submitted again under a NEW key
+ * — a second, duplicate order. Kept here, the retry carries the same key and
+ * the server hands back the order that already exists.
+ */
+const KEY_STORAGE = "pp-checkout-key";
+
+function readStoredKey(): string | null {
+  try {
+    return window.sessionStorage.getItem(KEY_STORAGE);
+  } catch {
+    return null;
+  }
+}
+
+function storeKey(key: string | null): void {
+  try {
+    if (key) window.sessionStorage.setItem(KEY_STORAGE, key);
+    else window.sessionStorage.removeItem(KEY_STORAGE);
+  } catch {
+    // Storage blocked — the key still lives for this page.
+  }
+}
+
 function writeDraft(draft: CheckoutDraft | null): void {
   try {
     if (draft) window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
@@ -139,10 +168,20 @@ export function CheckoutForm({
   const clear = useCartStore((s) => s.clear);
   const storeClosed = useStoreClosed();
 
-  const [state, formAction, isPending] = useActionState<CheckoutResult | null, FormData>(
-    createOrder,
-    null
-  );
+  /**
+   * The last answer from the server, and whether one is being awaited. The
+   * action is called by hand (not through useActionState) so that a request
+   * that FAILS — a 500, a dropped connection, a timeout — lands in the catch
+   * below as a readable message, with the form intact. Through useActionState
+   * the rejection was rethrown during render and took the whole page down
+   * ("Application error: a client-side exception has occurred").
+   */
+  const [state, setState] = useState<CheckoutResult | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  /** Synchronous guard: a second click before React re-renders is ignored. */
+  const inFlight = useRef(false);
+  /** True while an earlier attempt's fate is being looked up on mount. */
+  const [checkingPrevious, setCheckingPrevious] = useState(false);
 
   /**
    * The form is CONTROLLED, and that is the whole fix for "it wiped
@@ -169,7 +208,33 @@ export function CheckoutForm({
    */
   const [checkoutKey, setCheckoutKey] = useState<string>("");
   useEffect(() => {
-    setCheckoutKey(newCheckoutKey());
+    const stored = readStoredKey();
+    if (!stored) {
+      const fresh = newCheckoutKey();
+      storeKey(fresh);
+      setCheckoutKey(fresh);
+      return;
+    }
+    // An earlier attempt from this tab never got (or never showed) its
+    // answer. Ask the server whether it created an order before offering
+    // the button again.
+    setCheckoutKey(stored);
+    let cancelled = false;
+    setCheckingPrevious(true);
+    checkoutAttemptStatus(stored)
+      .then((found) => {
+        if (!cancelled && found?.ok) setState(found);
+      })
+      .catch(() => {
+        // Unreachable server: the same key goes with the next submit, so it
+        // still cannot create a second order.
+      })
+      .finally(() => {
+        if (!cancelled) setCheckingPrevious(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /** Fields this browser found empty on the last attempt to submit. */
@@ -268,12 +333,38 @@ export function CheckoutForm({
     );
     if (empty.length === 0) {
       setMissing([]);
-      const data = new FormData(event.currentTarget);
-      startTransition(() => formAction(data));
+      void submitOrder(new FormData(event.currentTarget));
       return;
     }
     setMissing(empty);
     revealField(empty[0]);
+  }
+
+  /**
+   * Sends the order once. Whatever happens — refusal, server error, lost
+   * connection — the customer stays on this page with everything they typed;
+   * only a confirmed order moves them on (the effect below).
+   */
+  async function submitOrder(data: FormData) {
+    if (inFlight.current || !checkoutKey) return;
+    inFlight.current = true;
+    setIsPending(true);
+    try {
+      setState(await createOrder(null, data));
+    } catch {
+      // The request may have reached the server before failing. Ask with the
+      // same key; if an order exists, that IS the answer.
+      let found: CheckoutResult | null = null;
+      try {
+        found = await checkoutAttemptStatus(checkoutKey);
+      } catch {
+        /* still unreachable */
+      }
+      setState(found?.ok ? found : { ok: false, error: t("errors.NETWORK") });
+    } finally {
+      inFlight.current = false;
+      setIsPending(false);
+    }
   }
 
   // A rejection from the server deserves the same treatment: jump to the
@@ -312,7 +403,8 @@ export function CheckoutForm({
   // cart); the payment review screen takes over.
   useEffect(() => {
     if (!state?.ok || !state.orderNumber) return;
-    setCheckoutKey(newCheckoutKey());
+    // This attempt is settled: the next checkout gets a new key.
+    storeKey(null);
     if (state.paymentMethod === "CARD_ONLINE" && state.accessToken) {
       writeDraft(null);
       rememberPendingPayment({ token: state.accessToken, orderNumber: state.orderNumber });
@@ -323,7 +415,10 @@ export function CheckoutForm({
     writeDraft(null);
     // A cash order replaces any card payment the customer walked away from.
     clearPendingPayment();
-    router.push({ pathname: "/order-success", query: { n: String(state.orderNumber) } });
+    router.push({
+      pathname: "/order-success",
+      query: { n: String(state.orderNumber), ...(state.receipt ? { r: state.receipt } : {}) },
+    });
   }, [state, clear, router]);
 
   if (!hydrated) {
@@ -576,10 +671,12 @@ export function CheckoutForm({
 
         <button
           type="submit"
-          disabled={isPending || storeClosed || belowMinimum}
+          disabled={isPending || checkingPrevious || !checkoutKey || storeClosed || belowMinimum}
           className="w-full rounded-full bg-brand px-6 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark disabled:opacity-60"
         >
-          {isPending
+          {checkingPrevious
+            ? t("checkingPrevious")
+            : isPending
             ? t("placing")
             : paymentMethod === "card_online"
               ? cardIsDemo

@@ -133,6 +133,20 @@ function resultForExisting(order: {
   };
 }
 
+/**
+ * Did this checkout attempt already create an order? Asked by the checkout
+ * page when it reopens with an attempt whose answer never arrived (a lost
+ * response, a reload, a navigation mid-request), so the customer is told
+ * about the order that exists instead of being invited to place a second one.
+ * An unknown or malformed key is simply "no".
+ */
+export async function findOrderForCheckoutKey(rawKey: unknown): Promise<PlaceOrderResult | null> {
+  const parsed = checkoutKeySchema.safeParse(rawKey);
+  if (!parsed.success) return null;
+  const existing = await db.order.findUnique({ where: { checkoutKey: parsed.data } });
+  return existing ? resultForExisting(existing) : null;
+}
+
 export async function placeOrder(
   input: PlaceOrderInput,
   deps: PlaceOrderDeps

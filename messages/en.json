@@ -499,16 +499,21 @@
       "NOTE_TOO_LONG": "The note is too long (max. 300 characters).",
       "CONSENT_REQUIRED": "Please confirm this to send the order.",
       "FIELD_INVALID": "Invalid value.",
-      "BELOW_MINIMUM": "The minimum order for delivery is {amount}. Please add more items to your basket."
+      "BELOW_MINIMUM": "The minimum order for delivery is {amount}. Please add more items to your basket.",
+      "NETWORK": "We did not get a reply from the server, so your order is not confirmed. Your details and basket are kept. Please try again — if the order has already been accepted, a second one will not be created."
     },
-    "deliveryFreeMinimum": "Delivery is free; the minimum order is {amount}."
+    "deliveryFreeMinimum": "Delivery is free; the minimum order is {amount}.",
+    "checkingPrevious": "Checking your previous order attempt…"
   },
   "orderSuccess": {
     "metaTitle": "Order placed",
     "title": "Thank you for your order!",
     "subtitle": "We've received your order. You'll be notified once the restaurant accepts it.",
     "orderNumber": "Order number: #{number}",
-    "backToMenu": "Back to the menu"
+    "backToMenu": "Back to the menu",
+    "unconfirmedTitle": "We cannot confirm an order from this page",
+    "unconfirmedBody": "This page does not show an accepted order. If you have just ordered, go back to checkout — your details and basket are kept, and sending again will not create a second order. You can also call us.",
+    "backToCheckout": "Back to checkout"
   },
   "auth": {
     "notConfigured": "This section will be enabled once Supabase is configured.",
