@@ -6,6 +6,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { CartExtraSelection, CartItem, CartTotals } from "@/types/cart";
 import type { Product, ProductVariant } from "@/types/product";
 import { lineIdFor } from "@/lib/extras-rules";
+import { cartTotals } from "@/lib/cart-totals";
 
 interface CartState {
   items: CartItem[];
@@ -39,32 +40,14 @@ interface PersistedCart {
   items: CartItem[];
 }
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** The server accepts 1–99 per line (lib/checkout/place-order.ts). */
 export const MAX_LINE_QUANTITY = 99;
 const clampQty = (n: number) => Math.min(MAX_LINE_QUANTITY, Math.max(1, Math.floor(n)));
 
-/**
- * PREVIEW extras total per one main unit, from the display snapshots captured
- * at add time. UI-only — the checkout server re-derives real prices from the
- * database; an extra without a display snapshot simply previews as 0.
- */
-export function extrasPreviewUnitEur(item: CartItem): number {
-  return round2(
-    (item.extras ?? []).reduce((s, e) => s + (e.display?.unitPriceEur ?? 0) * e.quantity, 0)
-  );
-}
-
-/** PREVIEW price of ONE unit of the line: base + its extras. */
-export function lineUnitPreviewEur(item: CartItem): number {
-  return round2(item.unitPrice + extrasPreviewUnitEur(item));
-}
-
-/** PREVIEW line total including extras: (base unit + extras unit) × quantity. */
-export function linePreviewTotalEur(item: CartItem): number {
-  return round2(round2(item.unitPrice + extrasPreviewUnitEur(item)) * item.quantity);
-}
+// The preview money helpers live in lib/cart-totals.ts (pure, testable);
+// re-exported here for the components that already import them from the store.
+export { extrasPreviewUnitEur, lineUnitPreviewEur, linePreviewTotalEur } from "@/lib/cart-totals";
 
 // ── Persist migration (unknown → PersistedCart, never throws) ───────────────
 
@@ -234,15 +217,9 @@ export const useCartStore = create<CartState>()(
 
       clear: () => set({ items: [] }),
 
-      totals: () => {
-        const items = get().items;
-        const itemsCount = items.reduce((n, i) => n + i.quantity, 0);
-        // Line totals include the extras PREVIEW prices (display snapshots);
-        // the authoritative totals are recomputed server-side at checkout.
-        // Delivery is free, so the items are the whole bill.
-        const total = items.reduce((s, i) => round2(s + linePreviewTotalEur(i)), 0);
-        return { itemsCount, total };
-      },
+      // Preview prices incl. extras and the „Грешна математика“ discount;
+      // the server recomputes all of it at checkout (lib/cart-totals.ts).
+      totals: () => cartTotals(get().items),
     }),
     {
       name: "pp-cart",

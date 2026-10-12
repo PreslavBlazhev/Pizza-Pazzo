@@ -224,6 +224,12 @@ export function OrderDetails({
       </section>
 
       <section className="max-w-xs space-y-2 text-sm">
+        {order.discountEur > 0 && (
+          <>
+            {priceRow("Продукти", order.subtotalEur)}
+            {priceRow("Отстъпка „Грешна математика“", -order.discountEur)}
+          </>
+        )}
         {priceRow("Общо", order.totalEur, true)}
       </section>
 

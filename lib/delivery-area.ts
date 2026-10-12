@@ -10,9 +10,10 @@
  *     order flow (Order.deliveryMethod is always DELIVERY);
  *   - the minimum order for DELIVERY is 10 € (owner, 2026-10-12). It is a
  *     minimum VALUE of the order, not a fee: delivery stays free. It is
- *     measured on the products (base prices + chosen extras, × quantity),
- *     which is also the whole bill — there are no discounts and no fee to
- *     include or leave out. Every site order is a delivery, so it applies to
+ *     measured on the products (base prices + chosen extras, × quantity)
+ *     AFTER the offers („Грешна математика“, lib/pizza-math.ts) — the owner,
+ *     2026-10-12: 9.99 € is refused, 10.00 € is accepted. A delivery fee
+ *     (none today) would never count towards it. Every site order is a delivery, so it applies to
  *     every order; a pickup option would NOT inherit it without a rule.
  *
  * NOT confirmed and therefore NOT modelled: a list of districts/villages or a

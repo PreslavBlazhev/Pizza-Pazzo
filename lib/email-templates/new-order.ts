@@ -25,6 +25,8 @@ export interface NewOrderEmailData {
   deliveryAddress: string;
   deliveryNote?: string | null;
   totalEur: number;
+  /** „Грешна математика“ discount already taken off totalEur; 0 = none. */
+  discountEur?: number;
   items: NewOrderEmailItem[];
   /**
    * How the money is handled, e.g. "ПЛАТЕНО ОНЛАЙН С КАРТА — НЕ СЪБИРАЙ ПАРИ"
@@ -71,6 +73,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
     `Поръчка:`,
     ...itemLines,
     ``,
+    ...(data.discountEur ? [`Отстъпка „Грешна математика“: -${eur(data.discountEur)}`] : []),
     `Общо: ${eur(data.totalEur)}`,
     `Плащане: ${paymentLine}`,
   ]
@@ -110,6 +113,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
   <p style="margin:4px 0;"><strong>Адрес:</strong> ${data.deliveryAddress}, ${data.deliveryCity}</p>
   ${data.deliveryNote ? `<p style="margin:4px 0;"><strong>Бележка:</strong> ${data.deliveryNote}</p>` : ""}
   <table style="width:100%;border-collapse:collapse;margin:16px 0;">${itemRows}</table>
+  ${data.discountEur ? `<p style="margin:4px 0;">Отстъпка „Грешна математика“: -${eur(data.discountEur)}</p>` : ""}
   <p style="font-size:18px;"><strong>Общо: ${eur(data.totalEur)}</strong></p>
   <p style="font-weight:bold;">Плащане: ${paymentLine}</p>
 </div>`;

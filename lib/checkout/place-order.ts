@@ -29,6 +29,7 @@ import {
 import { LEGAL_VERSIONS } from "@/content/legal/versions";
 import { resolveOrderItemExtras, type ExtraSourceProduct } from "@/lib/extras-resolve";
 import { minimumOrderShortfallEur } from "@/lib/delivery-area";
+import { pizzaMathDiscount, type PizzaMathLine } from "@/lib/pizza-math";
 import { EXTRAS_LIMITS, type OrderItemExtra } from "@/lib/extras-rules";
 import { resolveCheckoutPayment } from "@/lib/payments/providers";
 import { newAccessToken, releaseToKitchenAndNotify } from "@/lib/payments/service";
@@ -103,6 +104,8 @@ export type PlaceOrderResult =
       error?: CheckoutFormError;
       /** Per-field refusals, as codes (checkout.errors.<code>). */
       fieldErrors?: Record<string, CheckoutFieldError>;
+      /** BELOW_MINIMUM only: how much is missing, after the offers. */
+      shortfallEur?: number;
     };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -232,6 +235,7 @@ export async function placeOrder(
   }[] = [];
 
   let subtotalEur = 0;
+  const pizzaMathLines: PizzaMathLine[] = [];
 
   for (const it of itemsParsed.data) {
     const pBg = await deps.getProduct(it.productId, "bg");
@@ -305,6 +309,13 @@ export async function placeOrder(
     const lineEur = round2(perUnitEur * it.quantity);
     subtotalEur = round2(subtotalEur + lineEur);
 
+    pizzaMathLines.push({
+      categoryId: pBg.categoryId,
+      variantName: mainVariantNameBg ?? null,
+      baseUnitEur: unitEur,
+      quantity: it.quantity,
+    });
+
     lineData.push({
       productId: it.productId,
       productSlug: pBg.slug,
@@ -320,16 +331,20 @@ export async function placeOrder(
     });
   }
 
-  // ── 3b. Minimum order for delivery — on the SERVER-priced subtotal, so a
-  //    tampered cart cannot slip under it. Delivery is free and there are no
-  //    discounts, so the products are both the base of the minimum and the
-  //    whole bill. Every site order is a delivery.
-  if (minimumOrderShortfallEur(subtotalEur) > 0) {
-    return { ok: false, error: "BELOW_MINIMUM" };
-  }
+  // ── 3b. „Грешна математика“ — the two-pizza combo, priced from the
+  //    SERVER's own menu rows (lib/pizza-math.ts; the basket previews the
+  //    same function). It lowers only the two base prices; extras stay on top.
+  const discountEur = pizzaMathDiscount(pizzaMathLines).discountEur;
+  // Delivery is free: the items after the discount are the whole bill.
+  const totalEur = round2(subtotalEur - discountEur);
 
-  // Delivery is free: the items are the whole bill.
-  const totalEur = subtotalEur;
+  // ── 3c. Minimum order for delivery — on the server-priced total AFTER the
+  //    discount, so a tampered cart cannot slip under it. No delivery fee
+  //    counts towards it. Every site order is a delivery.
+  const shortfallEur = minimumOrderShortfallEur(totalEur);
+  if (shortfallEur > 0) {
+    return { ok: false, error: "BELOW_MINIMUM", shortfallEur };
+  }
   const d = parsed.data;
   const card = method === "card_online";
 
@@ -365,6 +380,7 @@ export async function placeOrder(
             deliveryMethod: "DELIVERY",
             status: "PENDING",
             subtotalEur,
+            discountEur,
             totalEur,
             // Proof of the explicit confirmations: WHICH versions were
             // accepted, and when (server clock). Nothing else is recorded —

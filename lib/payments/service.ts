@@ -245,6 +245,7 @@ function buildNewOrderEmail(
     deliveryAddress: order.deliveryAddress,
     deliveryNote: order.deliveryNote,
     totalEur,
+    discountEur: Number(order.discountEur),
     paymentLine: collectInstructionBg(method, status, `${totalEur.toFixed(2)} €`),
     isTest: order.isTest,
     items: order.items.map((i) => ({

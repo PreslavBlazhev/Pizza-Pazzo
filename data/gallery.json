@@ -2,49 +2,85 @@
   {
     "id": "g1",
     "src": "/images/products/placeholder-pizza.svg",
-    "caption": { "bg": "Пица", "en": "Pizza" },
-    "alt": { "bg": "Пица от менюто на Pizza Pazzo", "en": "A pizza from the Pizza Pazzo menu" }
-  },
-  {
-    "id": "g2",
-    "src": "/images/products/placeholder-pasta.svg",
-    "caption": { "bg": "Паста", "en": "Pasta" },
-    "alt": { "bg": "Паста от Pizza Pazzo", "en": "Pasta from Pizza Pazzo" }
+    "caption": {
+      "bg": "Пица",
+      "en": "Pizza"
+    },
+    "alt": {
+      "bg": "Пица от менюто на Pizza Pazzo",
+      "en": "A pizza from the Pizza Pazzo menu"
+    }
   },
   {
     "id": "g3",
     "src": "/images/products/placeholder-salad.svg",
-    "caption": { "bg": "Салата", "en": "Salad" },
-    "alt": { "bg": "Салата от менюто", "en": "A salad from the menu" }
+    "caption": {
+      "bg": "Салата",
+      "en": "Salad"
+    },
+    "alt": {
+      "bg": "Салата от менюто",
+      "en": "A salad from the menu"
+    }
   },
   {
     "id": "g4",
     "src": "/images/products/placeholder-dessert.svg",
-    "caption": { "bg": "Десерт", "en": "Dessert" },
-    "alt": { "bg": "Десерт от менюто", "en": "A dessert from the menu" }
+    "caption": {
+      "bg": "Десерт",
+      "en": "Dessert"
+    },
+    "alt": {
+      "bg": "Десерт от менюто",
+      "en": "A dessert from the menu"
+    }
   },
   {
     "id": "g5",
     "src": "/images/products/placeholder-pizza.svg",
-    "caption": { "bg": "Пеперони Макс", "en": "Pepperoni Max" },
-    "alt": { "bg": "Пица Пеперони Макс", "en": "Pepperoni Max pizza" }
+    "caption": {
+      "bg": "Пеперони Макс",
+      "en": "Pepperoni Max"
+    },
+    "alt": {
+      "bg": "Пица Пеперони Макс",
+      "en": "Pepperoni Max pizza"
+    }
   },
   {
     "id": "g6",
     "src": "/images/products/placeholder-food.svg",
-    "caption": { "bg": "Ястие от менюто", "en": "From the menu" },
-    "alt": { "bg": "Ястие от менюто на Pizza Pazzo", "en": "A dish from the Pizza Pazzo menu" }
+    "caption": {
+      "bg": "Ястие от менюто",
+      "en": "From the menu"
+    },
+    "alt": {
+      "bg": "Ястие от менюто на Pizza Pazzo",
+      "en": "A dish from the Pizza Pazzo menu"
+    }
   },
   {
     "id": "g7",
     "src": "/images/products/placeholder-drink.svg",
-    "caption": { "bg": "Напитка", "en": "Drink" },
-    "alt": { "bg": "Напитка от менюто", "en": "A drink from the menu" }
+    "caption": {
+      "bg": "Напитка",
+      "en": "Drink"
+    },
+    "alt": {
+      "bg": "Напитка от менюто",
+      "en": "A drink from the menu"
+    }
   },
   {
     "id": "g8",
     "src": "/images/products/placeholder-pizza.svg",
-    "caption": { "bg": "Маргарита", "en": "Margherita" },
-    "alt": { "bg": "Пица Маргарита", "en": "Margherita pizza" }
+    "caption": {
+      "bg": "Маргарита",
+      "en": "Margherita"
+    },
+    "alt": {
+      "bg": "Пица Маргарита",
+      "en": "Margherita pizza"
+    }
   }
 ]

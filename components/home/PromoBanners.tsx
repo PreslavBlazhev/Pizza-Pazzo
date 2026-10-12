@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
  *
  * Everything here is real text in a coloured panel — no image of a banner, no
  * canvas, no SVG text — so the offers stay selectable, translatable and sharp
- * at any size. The whole board is one link to the menu; there is no pricing
- * logic behind them, they are display only.
+ * at any size. The whole board is one link to the menu. The boards only
+ * advertise: the „Грешна математика“ price is applied by lib/pizza-math.ts.
  *
  * The two content blocks are exported separately because the desktop layout
  * puts one on each side of the hero, while narrow screens scroll through both

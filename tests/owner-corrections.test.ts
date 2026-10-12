@@ -149,13 +149,13 @@ test("minimum: shortfall in whole cents — 9.99 short by 0.01, 10.00 and 10.01 
 test("minimum: the server refuses 9.99 € and saves nothing", async () => {
   const before = await db.order.count();
   const r = await placeOrder(input([{ productId: "prod_999", quantity: 1 }]), deps);
-  assert.deepEqual(r, { ok: false, error: "BELOW_MINIMUM" });
+  assert.deepEqual(r, { ok: false, error: "BELOW_MINIMUM", shortfallEur: 0.01 });
   assert.equal(await db.order.count(), before);
 });
 
 test("minimum: the server refuses 3 × 3.33 = 9.99 € (floating point cannot sneak under)", async () => {
   const r = await placeOrder(input([{ productId: "prod_333", quantity: 3 }]), deps);
-  assert.deepEqual(r, { ok: false, error: "BELOW_MINIMUM" });
+  assert.deepEqual(r, { ok: false, error: "BELOW_MINIMUM", shortfallEur: 0.01 });
 });
 
 for (const [id, expected] of [["prod_1000", 10], ["prod_1001", 10.01]] as const) {
@@ -260,7 +260,10 @@ const payload = (lines: CartItem[]) =>
     extras: i.extras.map(({ key: k, sourceProductId, quantity }) => ({ key: k, sourceProductId, quantity })),
   }));
 
-test("maths: 2 × «Моята Пацо» 30 cm with 3 free + 1 paid = (9.71 + 2.56) × 2 = 24.54 €", async () => {
+// Two pizzas are also the „Грешна математика“ pair (30 + 30 → 16.87 €): the
+// two bases 19.42 € become 16.87 € (−2.55 €); the paid topping stays on top.
+// tests/pizza-math.test.ts covers the offer itself.
+test("maths: 2 × «Моята Пацо» 30 cm with 3 free + 1 paid = 24.54 € − 2.55 € offer = 21.99 €", async () => {
   const line = cartLine("prod_moyata_patso", 0, 2, [
     { sel: MEAT, price: 0 },
     { sel: DAIRY, price: 0 },
@@ -277,7 +280,9 @@ test("maths: 2 × «Моята Пацо» 30 cm with 3 free + 1 paid = (9.71 + 2
     where: { orderNumber: r.orderNumber },
     include: { items: true },
   });
-  assert.equal(Number(row?.totalEur), 24.54);
+  assert.equal(Number(row?.subtotalEur), 24.54);
+  assert.equal(Number(row?.discountEur), 2.55);
+  assert.equal(Number(row?.totalEur), 21.99);
   const item = row!.items[0];
   assert.equal(item.quantity, 2);
   assert.equal(Number(item.unitPriceEur), 9.71); // base only

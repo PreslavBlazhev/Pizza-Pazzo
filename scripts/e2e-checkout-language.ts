@@ -16,6 +16,12 @@
  *      the order and confirms it; still one order
  *   H. slow server + triple click → one order
  *   I. a hand-made /order-success?n=… (no receipt) does NOT say "received"
+ *   K. „Грешна математика“ in the basket, BG and EN: 2 pizzas → discount
+ *      line; a 3rd → normal prices and the hint; back to 2 → discount again;
+ *      checkout shows the same total the order is saved with
+ *   L. below the minimum after the offer: the remaining amount is named and
+ *      the way forward is closed
+ *   M. an old basket with a product no longer on sale: named, blocked
  *
  * Cash orders only, tagged with their own e-mail and deleted at the end.
  * Start the server WITHOUT the Resend key so nothing is e-mailed:
@@ -173,8 +179,14 @@ async function main() {
         where: { customerEmail: EMAIL, deliveryAddress: { contains: "(C)" } },
         include: { items: true },
       });
-      check(shown === "25.56", "the page showed 2 × 12.78 = 25.56 € (40 cm, free topping 0 €)", shown);
+      // 2 × 12.78 = 25.56 €, free topping 0 €; the pair 40 + 40 → 23.01 €.
+      check(shown === "23.01", "the page showed 25.56 − 2.55 offer = 23.01 €", shown);
       check(Number(order?.totalEur).toFixed(2) === shown, "saved total equals the shown total", `${order?.totalEur} vs ${shown}`);
+      check(
+        Number(order?.subtotalEur) === 25.56 && Number(order?.discountEur) === 2.55,
+        "saved: items 25.56, discount 2.55",
+        `${order?.subtotalEur} / ${order?.discountEur}`
+      );
       check(order?.items[0]?.extrasJson.includes("free_meat_topping") ?? false, "the free topping is on the saved line");
       await ctx.close();
     }
@@ -287,6 +299,109 @@ async function main() {
         .waitForFunction(() => (localStorage.getItem("pp-cart") ?? "").includes("meat_addon"), undefined, { timeout: 5_000 })
         .then(() => true, () => false);
       check(added, "the first click adds the pizza with its paid topping");
+      await ctx.close();
+    }
+
+    // ── K ──
+    for (const locale of ["bg", "en"] as const) {
+      console.log(`K. „Грешна математика“ in the basket (${locale})`);
+      const { ctx, page } = await freshCheckout(browser, locale);
+      const prefix = locale === "en" ? "/en" : "";
+      const money = async (id: string) =>
+        (await page.locator(`[data-testid="${id}"]`).first().innerText()).match(/(\d+\.\d{2})/)?.[1] ?? null;
+      await page.goto(`${BASE}${prefix}/cart`);
+      await page.locator('[data-testid="cart-total"]').waitFor();
+      check((await money("cart-subtotal")) === "19.42", "2 × 30 cm: items 19.42 €");
+      check((await money("cart-discount")) === "2.55", "offer line −2.55 €");
+      check((await money("cart-total")) === "16.87", "total 16.87 €");
+      const offerName = locale === "en" ? /Wrong maths/ : /Грешна математика/;
+      check(offerName.test(await page.locator("aside").first().innerText()), "the offer is named in this language");
+
+      await page.getByRole("button", { name: locale === "en" ? /^Increase the quantity/ : /^Увеличи количеството/ }).click();
+      await page.waitForFunction(() => !document.querySelector('[data-testid="cart-discount"]'));
+      check((await money("cart-total")) === "29.13", "3 pizzas: normal prices, 29.13 €");
+      check(await page.locator('[data-testid="pizza-math-hint"]').isVisible(), "the hint says when the offer applies");
+
+      await page.getByRole("button", { name: locale === "en" ? /^Reduce the quantity/ : /^Намали количеството/ }).click();
+      await page.locator('[data-testid="cart-discount"]').waitFor();
+      check((await money("cart-total")) === "16.87", "back to 2: 16.87 € again");
+
+      await page.goto(`${BASE}${prefix}/checkout`);
+      await page.locator('[name="customerName"]').waitFor();
+      const final = (await page.locator('[data-testid="checkout-final-total"]').innerText()).match(/(\d+\.\d{2})\s*€/)?.[1];
+      check(final === "16.87", "checkout: final amount 16.87 €", final);
+      check((await money("cart-discount")) === "2.55", "checkout summary shows the discount");
+      const before = await ordersMade();
+      await fill(page, `K-${locale}`);
+      await submit(page);
+      check(await confirmed(page), "confirmation shown");
+      check((await ordersMade()) === before + 1, "exactly one order saved");
+      const order = await db.order.findFirst({ where: { customerEmail: EMAIL, deliveryAddress: { contains: `(K-${locale})` } } });
+      check(
+        Number(order?.subtotalEur) === 19.42 && Number(order?.discountEur) === 2.55 && Number(order?.totalEur) === 16.87,
+        "saved 19.42 − 2.55 = 16.87",
+        `${order?.subtotalEur} / ${order?.discountEur} / ${order?.totalEur}`
+      );
+      await ctx.close();
+    }
+
+    // ── L ──
+    console.log("L. below the minimum");
+    {
+      const { ctx, page } = await freshCheckout(browser, "bg");
+      // One Маргарита 30 cm, 6.65 € — 3.35 € short of 10 €.
+      await page.evaluate(() => {
+        const c = JSON.parse(localStorage.getItem("pp-cart")!);
+        const it = c.state.items[0];
+        it.product = { ...it.product, id: "prod_margarita", slug: "margarita", categoryId: "cat_pizzas_standard" };
+        it.selectedVariant = { ...it.selectedVariant, id: "var_margarita_1", priceEur: 6.65 };
+        it.unitPrice = 6.65;
+        it.quantity = 1;
+        it.extras = [];
+        it.lineId = "prod_margarita::var_margarita_1";
+        localStorage.setItem("pp-cart", JSON.stringify(c));
+      });
+      const variantOk = await db.menuVariant.findFirst({ where: { id: "var_margarita_1", productId: "prod_margarita" } });
+      check(!!variantOk, "the local menu has var_margarita_1");
+      await page.goto(`${BASE}/cart`);
+      const notice = page.locator('[data-testid="minimum-order-shortfall"]');
+      await notice.waitFor();
+      check(/още 3\.35 €/.test(await notice.innerText()), "the remaining 3.35 € is named", await notice.innerText());
+      check(!(await page.getByRole("link", { name: "Към поръчката" }).count()), "no link to checkout");
+      await page.goto(`${BASE}/checkout`);
+      await page.locator('[name="customerName"]').waitFor();
+      check(await page.locator('form button[type="submit"]').isDisabled(), "the order button is disabled");
+      await ctx.close();
+    }
+
+    // ── M ──
+    console.log("M. an old basket with a product no longer on sale");
+    {
+      const { ctx, page } = await freshCheckout(browser, "en");
+      await page.evaluate(() => {
+        const c = JSON.parse(localStorage.getItem("pp-cart")!);
+        const gone = JSON.parse(JSON.stringify(c.state.items[0]));
+        gone.product = { ...gone.product, id: "prod_hot_dog_retired", slug: "hot-dog", name: "Hot dog", names: { bg: "Хотдог", en: "Hot dog" }, categoryId: "cat_starters" };
+        gone.selectedVariant = undefined;
+        gone.extras = [];
+        gone.quantity = 1;
+        gone.unitPrice = 4;
+        gone.lineId = "prod_hot_dog_retired";
+        c.state.items.push(gone);
+        localStorage.setItem("pp-cart", JSON.stringify(c));
+      });
+      await page.goto(`${BASE}/en/cart`);
+      await page.locator('[data-testid="cart-line-unavailable"]').waitFor({ timeout: 10_000 });
+      check((await page.locator('[data-testid="cart-line-unavailable"]').count()) === 1, "only the retired line is flagged");
+      check(!(await page.getByRole("link", { name: "Go to checkout" }).count()), "checkout is closed while it is there");
+      await page.goto(`${BASE}/en/checkout`);
+      await page.locator('[data-testid="checkout-unavailable"]').waitFor({ timeout: 10_000 });
+      check(/Hot dog/.test(await page.locator('[data-testid="checkout-unavailable"]').innerText()), "checkout names it");
+      check(await page.locator('form button[type="submit"]').isDisabled(), "the order button is disabled");
+      await page.goto(`${BASE}/en/cart`);
+      await page.getByRole("button", { name: "Remove Hot dog" }).click();
+      await page.waitForFunction(() => !document.querySelector('[data-testid="cart-line-unavailable"]'));
+      check((await page.getByRole("link", { name: "Go to checkout" }).count()) === 1, "removed → checkout open again");
       await ctx.close();
     }
 

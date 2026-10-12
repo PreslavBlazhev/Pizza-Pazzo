@@ -234,6 +234,9 @@ export function buildTicket(
   divider();
 
   // ── Money ──
+  if (order.discountEur > 0) {
+    push("payment", "Отстъпка „Грешна математика“", { right: `-${formatEurPrice(order.discountEur)}` });
+  }
   push("payment", `Плащане: ${paymentLabel(order)}`);
   push("grandTotal", "ОБЩО", { right: formatEurPrice(order.totalEur) });
 

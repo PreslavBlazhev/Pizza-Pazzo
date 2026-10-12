@@ -129,6 +129,8 @@ export interface Order {
   status: OrderStatus;
 
   subtotalEur: number;
+  /** „Грешна математика“ discount; 0 = none. totalEur = subtotalEur − discountEur. */
+  discountEur: number;
   totalEur: number;
 
   estimatedTimeMinutes: number | null;

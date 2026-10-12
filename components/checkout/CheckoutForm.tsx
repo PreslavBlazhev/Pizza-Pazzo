@@ -15,6 +15,7 @@ import { FormAlert } from "@/components/ui/FormAlert";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
 import { useStoreClosed } from "@/components/store/StoreStatusProvider";
+import { useUnavailableProducts } from "@/components/cart/useUnavailableProducts";
 import {
   linePreviewTotalEur,
   lineUnitPreviewEur,
@@ -167,6 +168,7 @@ export function CheckoutForm({
   const totalsFn = useCartStore((s) => s.totals);
   const clear = useCartStore((s) => s.clear);
   const storeClosed = useStoreClosed();
+  const unavailable = useUnavailableProducts(items);
 
   /**
    * The last answer from the server, and whether one is being awaited. The
@@ -444,6 +446,8 @@ export function CheckoutForm({
   // The delivery minimum, on the same preview total the customer sees; the
   // server checks it again on its own prices.
   const belowMinimum = minimumOrderShortfallEur(totals.total) > 0;
+  // A basket line whose product is no longer on sale (an old basket).
+  const unavailableLines = items.filter((i) => unavailable.has(i.product.id));
 
   /** A field's message: this browser's complaint first, then the server's. */
   const errorFor = (field: keyof FormValues | ConsentField) =>
@@ -657,6 +661,18 @@ export function CheckoutForm({
 
         <MinimumOrderNotice subtotalEur={totals.total} />
 
+        {unavailableLines.length > 0 && (
+          <p
+            role="status"
+            data-testid="checkout-unavailable"
+            className="rounded-2xl border border-brand/30 bg-pizza-red-light px-4 py-3 text-sm font-medium text-brand-dark"
+          >
+            {tCart("unavailableAtCheckout", {
+              names: unavailableLines.map((i) => cartProductName(i, locale)).join(", "),
+            })}
+          </p>
+        )}
+
         {/* The final amount, immediately before the binding action. */}
         <div
           className="flex items-baseline justify-between gap-3 rounded-2xl bg-pizza-cream/60 px-5 py-4 text-pizza-ink"
@@ -671,7 +687,14 @@ export function CheckoutForm({
 
         <button
           type="submit"
-          disabled={isPending || checkingPrevious || !checkoutKey || storeClosed || belowMinimum}
+          disabled={
+            isPending ||
+            checkingPrevious ||
+            !checkoutKey ||
+            storeClosed ||
+            belowMinimum ||
+            unavailableLines.length > 0
+          }
           className="w-full rounded-full bg-brand px-6 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark disabled:opacity-60"
         >
           {checkingPrevious

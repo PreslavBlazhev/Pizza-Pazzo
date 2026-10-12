@@ -37,6 +37,7 @@ export const SAMPLE_PRINT_ORDER: Order = {
   status: "ACCEPTED",
 
   subtotalEur: 34.19,
+  discountEur: 0,
   totalEur: 36.69,
 
   estimatedTimeMinutes: 30,

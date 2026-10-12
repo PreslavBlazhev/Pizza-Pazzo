@@ -126,6 +126,7 @@ export function customerOrderAcceptedEmail(
     `Вашата поръчка:`,
     ...textItems,
     ``,
+    ...(order.discountEur > 0 ? [`Отстъпка „Грешна математика“: -${eur(order.discountEur)}`] : []),
     `Обща сума: ${eur(order.totalEur)} (${paymentNote})`,
     ``,
     `Адрес за доставка: ${order.deliveryAddress}, ${order.deliveryCity}`,
@@ -167,7 +168,11 @@ export function customerOrderAcceptedEmail(
   } минути</p>
   <table style="width:100%;border-collapse:collapse;margin:12px 0;">
 ${htmlRows}
-    <tr>
+${order.discountEur > 0 ? `    <tr>
+      <td style="padding:6px 8px;">Отстъпка „Грешна математика“</td>
+      <td style="padding:6px 8px;text-align:right;white-space:nowrap;">-${eur(order.discountEur)}</td>
+    </tr>
+` : ""}    <tr>
       <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;">Обща сума (${paymentNote})</td>
       <td style="padding:6px 8px;font-weight:bold;border-top:2px solid #222;text-align:right;white-space:nowrap;">${eur(order.totalEur)}</td>
     </tr>

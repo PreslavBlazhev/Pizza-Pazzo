@@ -9,6 +9,7 @@ import { CartItem } from "./CartItem";
 import { CartSummary } from "./CartSummary";
 import { MinimumOrderNotice } from "./MinimumOrderNotice";
 import { minimumOrderShortfallEur } from "@/lib/delivery-area";
+import { useUnavailableProducts } from "./useUnavailableProducts";
 
 /** The interactive cart. Rendered inside the server cart page shell. */
 export function CartView() {
@@ -19,6 +20,7 @@ export function CartView() {
   const totalsFn = useCartStore((s) => s.totals);
   const clear = useCartStore((s) => s.clear);
   const storeClosed = useStoreClosed();
+  const unavailable = useUnavailableProducts(items);
 
   // Until the persisted cart is read, render a stable placeholder so the server
   // and first client paint match.
@@ -45,14 +47,17 @@ export function CartView() {
   // Below the delivery minimum the way forward is closed, like when the shop
   // is closed — the basket itself is kept.
   const belowMinimum = minimumOrderShortfallEur(totals.total) > 0;
-  const blocked = storeClosed || belowMinimum;
+  // A product taken off sale since it was added: named on its line, and the
+  // way forward stays closed until it is removed.
+  const hasUnavailable = items.some((i) => unavailable.has(i.product.id));
+  const blocked = storeClosed || belowMinimum || hasUnavailable;
 
   return (
     <div className="mx-auto grid max-w-4xl gap-8 lg:grid-cols-[1fr_20rem]">
       {/* Lines */}
       <div className="rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
         {items.map((item) => (
-          <CartItem key={item.lineId} item={item} />
+          <CartItem key={item.lineId} item={item} unavailable={unavailable.has(item.product.id)} />
         ))}
         <button
           type="button"

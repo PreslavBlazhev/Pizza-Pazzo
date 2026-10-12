@@ -117,3 +117,36 @@ test("order receipt: without AUTH_SECRET nothing is signed and nothing verifies"
     process.env.AUTH_SECRET = saved;
   }
 });
+
+test("an old basket: a product taken off sale or deleted is named before checkout", async () => {
+  const { unavailableCartProducts } = await import("@/app/actions/cart");
+  await db.menuCategory.upsert({
+    where: { id: "cat_resilience" },
+    update: {},
+    create: { id: "cat_resilience", slug: "cat-resilience", nameBg: "Тест", nameEn: "Test" },
+  });
+  for (const [id, isAvailable] of [["prod_res_on", true], ["prod_res_off", false]] as const) {
+    await db.menuProduct.upsert({
+      where: { id },
+      update: { isAvailable },
+      create: { id, slug: id, nameBg: id, nameEn: id, categoryId: "cat_resilience", priceEur: 5, isAvailable },
+    });
+  }
+  assert.deepEqual(
+    await unavailableCartProducts(["prod_res_on", "prod_res_off", "prod_res_deleted", "prod_res_on"]),
+    ["prod_res_off", "prod_res_deleted"]
+  );
+  assert.deepEqual(await unavailableCartProducts(["prod_res_on"]), []);
+  for (const junk of [null, "prod_res_off", [42], Array(51).fill("x")]) {
+    assert.deepEqual(await unavailableCartProducts(junk), [], `junk ${JSON.stringify(junk)?.slice(0, 20)}`);
+  }
+  // …and placing it anyway is still refused by the server on its own.
+  const gone = await placeOrder(
+    {
+      ...input(key()),
+      itemsJson: JSON.stringify([{ productId: "prod_res_off", quantity: 3 }]),
+    },
+    { getProduct: async () => ({ ...PIZZA, id: "prod_res_off", isAvailable: false }) }
+  );
+  assert.deepEqual(gone, { ok: false, error: "PRODUCT_UNAVAILABLE" });
+});

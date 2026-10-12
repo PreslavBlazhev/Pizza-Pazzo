@@ -89,7 +89,14 @@ export interface CartItem {
 /** Cart money totals — EUR amounts. */
 export interface CartTotals {
   itemsCount: number;
+  /** Lines incl. extras, before any offer. */
+  subtotal: number;
+  /** „Грешна математика“ discount (lib/pizza-math.ts); 0 = none. */
+  discount: number;
+  /** What the customer pays: subtotal − discount (delivery is free). */
   total: number;
+  /** Pizzas in the basket by quantity, speciality pizzas included. */
+  pizzaCount: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

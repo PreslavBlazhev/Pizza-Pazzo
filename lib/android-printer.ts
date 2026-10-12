@@ -153,7 +153,7 @@ export function buildPrintableOrderJson(
     ),
     isTest: order.isTest,
     customerNote: order.deliveryNote,
-    discount: 0,
+    discount: order.discountEur,
     total: order.totalEur,
     currency: "EUR",
     isReprint,

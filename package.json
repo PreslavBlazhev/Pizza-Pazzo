@@ -30,7 +30,7 @@
     "db:seed-staging": "node scripts/seed-staging.mjs",
     "e2e:browser": "node --env-file=.env --import tsx scripts/e2e-browser-payments.ts",
     "test:ubb": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/ubb-compliance.test.ts",
-    "test:owner": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/owner-corrections.test.ts tests/checkout-resilience.test.ts",
+    "test:owner": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/owner-corrections.test.ts tests/checkout-resilience.test.ts tests/pizza-math.test.ts",
     "test": "npm run test:payments && npm run test:ubb && npm run test:owner",
     "db:verify-migration": "node scripts/verify-consent-migration.mjs",
     "e2e:ubb": "node --env-file=.env --import tsx scripts/e2e-ubb-browser.ts",

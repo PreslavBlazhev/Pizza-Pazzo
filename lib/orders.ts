@@ -75,6 +75,7 @@ export function mapOrderRow(o: PrismaOrderRow): Order {
     deliveryMethod: "DELIVERY",
     status: isOrderStatus(o.status) ? o.status : "PENDING",
     subtotalEur: Number(o.subtotalEur),
+    discountEur: Number(o.discountEur),
     totalEur: Number(o.totalEur),
     estimatedTimeMinutes: o.estimatedTimeMinutes,
     adminNote: o.adminNote,

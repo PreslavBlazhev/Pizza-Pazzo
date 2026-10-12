@@ -13,7 +13,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  * A single basket line with its extras, quantity controls, an edit link back
  * to the product page and a remove button. Names follow the active language.
  */
-export function CartItem({ item }: { item: CartItemType }) {
+export function CartItem({ item, unavailable = false }: { item: CartItemType; unavailable?: boolean }) {
   const t = useTranslations("cart");
   const locale = useLocale();
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -28,6 +28,11 @@ export function CartItem({ item }: { item: CartItemType }) {
       <div className="min-w-0">
         <p className="font-medium text-pizza-ink">{name}</p>
         {variantName && <p className="text-xs text-pizza-muted">{variantName}</p>}
+        {unavailable && (
+          <p role="status" data-testid="cart-line-unavailable" className="mt-1 text-xs font-medium text-brand-dark">
+            {t("unavailable")}
+          </p>
+        )}
 
         {/* Chosen extras — display preview captured at add time; "Edit"
             reopens the product with them pre-selected. */}
@@ -77,13 +82,13 @@ export function CartItem({ item }: { item: CartItemType }) {
             </button>
           </div>
 
-          <Link
+          {!unavailable && <Link
             href={{ pathname: `/product/${item.product.slug || item.product.id}`, query: { edit: item.lineId } }}
             aria-label={t("editItem", { name })}
             className="text-xs font-medium text-pizza-green underline-offset-2 transition hover:underline"
           >
             {t("edit")}
-          </Link>
+          </Link>}
 
           <button
             type="button"

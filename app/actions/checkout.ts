@@ -86,9 +86,14 @@ export async function createOrder(
     const fieldErrors = result.fieldErrors
       ? Object.fromEntries(Object.entries(result.fieldErrors).map(([field, code]) => [field, t(code)]))
       : undefined;
-    // Only BELOW_MINIMUM uses {amount}; the other messages ignore it.
+    // Only BELOW_MINIMUM uses {amount}/{remaining}; the other messages ignore them.
     const amount = formatEurPrice(DELIVERY_AREA.minimumOrderEur ?? 0);
-    return { ok: false, error: result.error ? t(result.error, { amount }) : undefined, fieldErrors };
+    const remaining = formatEurPrice(result.shortfallEur ?? 0);
+    return {
+      ok: false,
+      error: result.error ? t(result.error, { amount, remaining }) : undefined,
+      fieldErrors,
+    };
   }
   return {
     ok: true,

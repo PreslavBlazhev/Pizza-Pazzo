@@ -391,6 +391,9 @@
     "comingSoon": "Online ordering is on its way. Very soon you'll be able to add dishes here and order straight from the site. Until then, give us a call — we take orders by phone.",
     "empty": "Your basket is empty.",
     "total": "Total",
+    "subtotal": "Items",
+    "pizzaMathDiscount": "‘Wrong maths’ offer",
+    "pizzaMathHint": "‘Wrong maths’: 30 + 30 cm for 16.87 €, 40 + 30 cm for 19.43 €, 40 + 40 cm for 23.01 € — when the order has exactly 2 pizzas, speciality pizzas excluded. Paid toppings are charged separately.",
     "quantity": "Quantity",
     "quantityShort": "Qty: {count}",
     "remove": "Remove",
@@ -403,9 +406,11 @@
     "removeItem": "Remove {name}",
     "decreaseQuantity": "Reduce the quantity of {name}",
     "increaseQuantity": "Increase the quantity of {name}",
-    "minimumOrder": "Minimum order for delivery: {amount}.",
-    "minimumOrderShortfall": "The minimum order for delivery is {amount}. Add {remaining} more to continue. This is not a charge — delivery is free.",
-    "extrasPerItem": "Extras apply to each item."
+    "minimumOrder": "Minimum order for delivery: {amount} after discounts.",
+    "minimumOrderShortfall": "The minimum order for delivery is {amount} after discounts. Add {remaining} more to continue. This is not a charge — delivery is free.",
+    "extrasPerItem": "Extras apply to each item.",
+    "unavailable": "This item is no longer available. Remove it to continue.",
+    "unavailableAtCheckout": "No longer available: {names}. Remove it from your basket to order."
   },
   "store": {
     "closedTitle": "The restaurant is closed",
@@ -499,7 +504,7 @@
       "NOTE_TOO_LONG": "The note is too long (max. 300 characters).",
       "CONSENT_REQUIRED": "Please confirm this to send the order.",
       "FIELD_INVALID": "Invalid value.",
-      "BELOW_MINIMUM": "The minimum order for delivery is {amount}. Please add more items to your basket.",
+      "BELOW_MINIMUM": "The minimum order for delivery is {amount} after discounts. Please add {remaining} more to your basket.",
       "NETWORK": "We did not get a reply from the server, so your order is not confirmed. Your details and basket are kept. Please try again — if the order has already been accepted, a second one will not be created."
     },
     "deliveryFreeMinimum": "Delivery is free; the minimum order is {amount}.",
