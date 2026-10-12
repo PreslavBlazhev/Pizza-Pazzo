@@ -40,6 +40,10 @@ export async function createOrder(
   const rawLocale = formData.get("locale");
   const locale = isLocale(rawLocale) ? rawLocale : "bg";
   const t = await getTranslations({ locale, namespace: "checkout.errors" });
+  // The browser's anonymous attempt id (lib/checkout/trace.ts) — only to
+  // match this request's log line with a trail the browser reports later.
+  const rawTrace = formData.get("traceId");
+  const trace = typeof rawTrace === "string" && /^[a-z0-9]{12}$/.test(rawTrace) ? rawTrace : "-";
 
   // ── Is the restaurant taking orders at all? ──
   // The authoritative check. The buttons and the dialog in the browser are a
@@ -47,6 +51,7 @@ export async function createOrder(
   // a stale tab, a resubmitted form or a crafted request.
   const storeStatus = await getStoreStatus();
   if (!storeStatus.isOpen) {
+    console.info(`[checkout] trace=${trace} refused: STORE_CLOSED`);
     return { ok: false, error: t("STORE_CLOSED") };
   }
 
@@ -80,7 +85,7 @@ export async function createOrder(
     // Codes only — no personal data. Makes a refused checkout traceable in
     // the server log (a refusal used to leave no trace at all).
     console.info(
-      "[checkout] refused:",
+      `[checkout] trace=${trace} refused:`,
       result.error ?? Object.entries(result.fieldErrors ?? {}).map(([f, c]) => `${f}=${c}`).join(",")
     );
     const fieldErrors = result.fieldErrors
@@ -95,6 +100,7 @@ export async function createOrder(
       fieldErrors,
     };
   }
+  console.info(`[checkout] trace=${trace} ok #${result.orderNumber}${result.duplicate ? " (repeat)" : ""}`);
   return {
     ok: true,
     orderNumber: result.orderNumber,

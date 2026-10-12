@@ -16,6 +16,7 @@ import { CartSummary } from "@/components/cart/CartSummary";
 import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
 import { useStoreClosed } from "@/components/store/StoreStatusProvider";
 import { useUnavailableProducts } from "@/components/cart/useUnavailableProducts";
+import { armCheckoutTrace, traceStage } from "@/lib/checkout/trace";
 import {
   linePreviewTotalEur,
   lineUnitPreviewEur,
@@ -239,6 +240,10 @@ export function CheckoutForm({
     };
   }, []);
 
+  // Diagnostics: report an attempt this tab left unfinished (lib/checkout/trace.ts).
+  useEffect(() => armCheckoutTrace(), []);
+  const traceLocale = locale === "en" ? "en" : "bg";
+
   /** Fields this browser found empty on the last attempt to submit. */
   const [missing, setMissing] = useState<RequiredField[]>([]);
 
@@ -328,6 +333,7 @@ export function CheckoutForm({
     // said "ticked" — the next submit then posted them as missing. Calling the
     // action ourselves skips the reset; every field here is controlled.
     event.preventDefault();
+    traceStage("click", traceLocale);
     const empty = REQUIRED_FIELDS.filter((field) =>
       (CONSENT_FIELDS as readonly string[]).includes(field)
         ? !consents[field as ConsentField]
@@ -338,6 +344,7 @@ export function CheckoutForm({
       void submitOrder(new FormData(event.currentTarget));
       return;
     }
+    traceStage("invalid", traceLocale);
     setMissing(empty);
     revealField(empty[0]);
   }
@@ -351,9 +358,13 @@ export function CheckoutForm({
     if (inFlight.current || !checkoutKey) return;
     inFlight.current = true;
     setIsPending(true);
+    data.set("traceId", traceStage("sent", traceLocale));
     try {
-      setState(await createOrder(null, data));
+      const result = await createOrder(null, data);
+      traceStage(result.ok ? "ok" : "refused", traceLocale);
+      setState(result);
     } catch {
+      traceStage("failed", traceLocale);
       // The request may have reached the server before failing. Ask with the
       // same key; if an order exists, that IS the answer.
       let found: CheckoutResult | null = null;
@@ -362,6 +373,7 @@ export function CheckoutForm({
       } catch {
         /* still unreachable */
       }
+      if (found?.ok) traceStage("recovered", traceLocale);
       setState(found?.ok ? found : { ok: false, error: t("errors.NETWORK") });
     } finally {
       inFlight.current = false;
@@ -407,6 +419,7 @@ export function CheckoutForm({
     if (!state?.ok || !state.orderNumber) return;
     // This attempt is settled: the next checkout gets a new key.
     storeKey(null);
+    traceStage("confirm", locale === "en" ? "en" : "bg");
     if (state.paymentMethod === "CARD_ONLINE" && state.accessToken) {
       writeDraft(null);
       rememberPendingPayment({ token: state.accessToken, orderNumber: state.orderNumber });
@@ -421,7 +434,7 @@ export function CheckoutForm({
       pathname: "/order-success",
       query: { n: String(state.orderNumber), ...(state.receipt ? { r: state.receipt } : {}) },
     });
-  }, [state, clear, router]);
+  }, [state, clear, router, locale]);
 
   if (!hydrated) {
     return <div className="h-64 animate-pulse rounded-3xl bg-pizza-cream-dark/40" />;
@@ -685,8 +698,13 @@ export function CheckoutForm({
           <span className="text-xl font-bold">{formatEurPrice(totals.total)}</span>
         </div>
 
+        {/* data-testid: the ONE order button. A signed-in visitor also has a
+            "Sign out" submit button in the header, earlier in the page — a
+            generic "form button[type=submit]" picks that one (it signed the
+            tester out and landed on the home page, with no order). */}
         <button
           type="submit"
+          data-testid="place-order"
           disabled={
             isPending ||
             checkingPrevious ||

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { redirect } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
@@ -141,6 +142,16 @@ export async function loginUser(
 
 export async function logoutUser(): Promise<void> {
   const locale = await getLocale();
+  // One line, no account details: the page the sign-out came from. A sign-out
+  // lands on the home page; without this line, one pressed on the checkout
+  // page looked like an order that vanished without a trace.
+  let from = "?";
+  try {
+    from = new URL((await headers()).get("referer") ?? "").pathname;
+  } catch {
+    /* no or bad referer */
+  }
+  console.info(`[auth] signed out from ${from}`);
   await clearSessionCookie();
 
   revalidatePath("/", "layout");

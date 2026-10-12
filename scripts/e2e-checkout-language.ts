@@ -22,6 +22,13 @@
  *   L. below the minimum after the offer: the remaining amount is named and
  *      the way forward is closed
  *   M. an old basket with a product no longer on sale: named, blocked
+ *   N. SIGNED IN: the header has its own "Sign out" submit button EARLIER in
+ *      the page. The order button orders and keeps the session; the generic
+ *      "first submit button" is Sign out → home page, no order — the cause of
+ *      the old "landed on / without an order" report. The sign-out and an
+ *      abandoned attempt both leave a line in the server log (E2E_SERVER_LOG)
+ *
+ * Every page is also watched for hydration errors (React #418 and kin).
  *
  * Cash orders only, tagged with their own e-mail and deleted at the end.
  * Start the server WITHOUT the Resend key so nothing is e-mailed:
@@ -29,7 +36,9 @@
  *   E2E_BASE_URL=http://localhost:3000 npm run e2e:checkout-language
  */
 import { chromium, type Browser, type BrowserContext, type Page, type Route } from "playwright-core";
+import { readFileSync } from "node:fs";
 import { db } from "@/lib/db";
+import { hashPassword } from "@/lib/auth/password";
 import { getAppEnv } from "@/lib/app-env";
 
 const BASE = (process.env.E2E_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -49,6 +58,23 @@ function check(ok: boolean, label: string, detail = "") {
 const ordersMade = () => db.order.count({ where: { customerEmail: EMAIL } });
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+const HYDRATION = /hydrat|did not match|didn't match|Minified React error #(418|419|421|422|423|425)/i;
+
+/** Every page error and hydration message fails the run. */
+function watchPage(page: Page) {
+  page.on("console", (m) => {
+    if (m.type() === "error") console.log("    [browser]", m.text().slice(0, 300));
+    if ((m.type() === "error" || m.type() === "warning") && HYDRATION.test(m.text())) {
+      check(false, "no hydration message", m.text().slice(0, 600));
+    }
+  });
+  page.on("pageerror", (e) => check(false, "no page error", e.message.slice(0, 600)));
+}
+
+/** The server log written so far (E2E_SERVER_LOG), or null when not given. */
+const SERVER_LOG = process.env.E2E_SERVER_LOG;
+const serverLog = () => (SERVER_LOG ? readFileSync(SERVER_LOG, "utf8") : null);
+
 const isOrderAction = (route: Route) =>
   route.request().method() === "POST" && !!route.request().headers()["next-action"];
 
@@ -56,10 +82,7 @@ const isOrderAction = (route: Route) =>
 async function freshCheckout(browser: Browser, locale: "bg" | "en"): Promise<{ ctx: BrowserContext; page: Page }> {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
-  page.on("console", (m) => {
-    if (m.type() === "error") console.log("    [browser]", m.text().slice(0, 300));
-  });
-  page.on("pageerror", (e) => console.log("    [pageerror]", e.message.slice(0, 300)));
+  watchPage(page);
   const prefix = locale === "en" ? "/en" : "";
   await page.goto(`${BASE}${prefix}/product/moyata-patso`);
   await page.getByRole("button", { name: locale === "en" ? "Add to basket" : "Добави в количката" }).first().click();
@@ -99,7 +122,7 @@ async function formKept(page: Page, tag: string): Promise<boolean> {
   return name === "Език Тест" && addr.includes(tag) && ticks.every(Boolean);
 }
 
-const submit = (page: Page) => page.locator('form button[type="submit"]').click();
+const submit = (page: Page) => page.locator('[data-testid="place-order"]').click();
 
 async function confirmed(page: Page): Promise<boolean> {
   await page.waitForURL(/order-success/, { timeout: 30_000 });
@@ -211,7 +234,7 @@ async function main() {
       check(true, "a readable error is shown");
       check(!(await page.getByText("Application error").count()), "no client-side crash");
       check(await formKept(page, fault), "everything typed is kept");
-      check(await page.locator('form button[type="submit"]').isEnabled(), "the button can be pressed again");
+      check(await page.locator('[data-testid="place-order"]').isEnabled(), "the button can be pressed again");
       check((await ordersMade()) === before, "no order saved");
       await page.unroute("**/*");
       await submit(page);
@@ -274,7 +297,7 @@ async function main() {
         await sleep(3000);
         return route.continue();
       });
-      const button = page.locator('form button[type="submit"]');
+      const button = page.locator('[data-testid="place-order"]');
       await button.click();
       await button.click({ force: true }).catch(() => {});
       await button.click({ force: true }).catch(() => {});
@@ -370,7 +393,7 @@ async function main() {
       check(!(await page.getByRole("link", { name: "Към поръчката" }).count()), "no link to checkout");
       await page.goto(`${BASE}/checkout`);
       await page.locator('[name="customerName"]').waitFor();
-      check(await page.locator('form button[type="submit"]').isDisabled(), "the order button is disabled");
+      check(await page.locator('[data-testid="place-order"]').isDisabled(), "the order button is disabled");
       await ctx.close();
     }
 
@@ -397,12 +420,104 @@ async function main() {
       await page.goto(`${BASE}/en/checkout`);
       await page.locator('[data-testid="checkout-unavailable"]').waitFor({ timeout: 10_000 });
       check(/Hot dog/.test(await page.locator('[data-testid="checkout-unavailable"]').innerText()), "checkout names it");
-      check(await page.locator('form button[type="submit"]').isDisabled(), "the order button is disabled");
+      check(await page.locator('[data-testid="place-order"]').isDisabled(), "the order button is disabled");
       await page.goto(`${BASE}/en/cart`);
       await page.getByRole("button", { name: "Remove Hot dog" }).click();
       await page.waitForFunction(() => !document.querySelector('[data-testid="cart-line-unavailable"]'));
       check((await page.getByRole("link", { name: "Go to checkout" }).count()) === 1, "removed → checkout open again");
       await ctx.close();
+    }
+
+    // ── N ──
+    console.log("N. signed in: the order button vs the header's Sign out");
+    {
+      const email = `n-e2e-${Date.now()}@example.test`;
+      const password = `e2e-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+      await db.user.create({ data: { email, passwordHash: await hashPassword(password), fullName: "Език Тест" } });
+      try {
+        const signIn = async (page: Page) => {
+          await page.goto(`${BASE}/auth/login`);
+          await page.locator('main [name="email"]').fill(email);
+          await page.locator('main [name="password"]').fill(password);
+          await page.locator('main button[type="submit"]').click();
+          await page.waitForURL((u) => !u.pathname.includes("/auth/login"), { timeout: 20_000 });
+        };
+        const signedIn = (page: Page) =>
+          page.evaluate(() => fetch("/api/auth/session").then((r) => r.json()).then((s) => !!s.signedIn));
+
+        // 1. Ordering with the order button: one order, still signed in.
+        {
+          const { ctx, page } = await freshCheckout(browser, "en");
+          await signIn(page);
+          await page.goto(`${BASE}/en/checkout`);
+          await page.locator('[data-testid="place-order"]').waitFor();
+          const first = await page.evaluate(() => document.querySelector("form button[type=submit]")?.textContent?.trim());
+          check(first === "Sign out", "signed in: the FIRST submit button in the page is the header's Sign out", first);
+          const before = await ordersMade();
+          await fill(page, "N1");
+          await switchTo(page, "bg");
+          await submit(page);
+          check(await confirmed(page), "the order button orders and confirms");
+          check((await ordersMade()) === before + 1, "exactly one order");
+          check(await signedIn(page), "still signed in");
+          await ctx.close();
+        }
+
+        // 2. The old report's exact click: the first submit button → Sign out.
+        {
+          const { ctx, page } = await freshCheckout(browser, "en");
+          await signIn(page);
+          await page.goto(`${BASE}/en/checkout`);
+          await page.locator('[data-testid="place-order"]').waitFor();
+          const before = await ordersMade();
+          await fill(page, "N2");
+          await switchTo(page, "bg");
+          // As in the original run (it slept 3 s after the switch): the header
+          // reloads its sign-in state after a language switch; once it has,
+          // its Sign out button is the first submit button in the page.
+          await page.locator("header form button[type=submit]").first().waitFor({ state: "attached" });
+          const logBefore = serverLog()?.length ?? 0;
+          await page.evaluate(() => (document.querySelector("form button[type=submit]") as HTMLButtonElement).click());
+          await page.waitForURL((u) => u.pathname === "/", { timeout: 20_000 });
+          check(true, 'the generic click lands on "/"');
+          check((await ordersMade()) === before, "no order — exactly the old report");
+          check(!(await signedIn(page)), "because it signed the customer out");
+          const log = serverLog();
+          if (log !== null) {
+            await sleep(500);
+            const fresh = (serverLog() ?? "").slice(logBefore);
+            check(/\[auth\] signed out from \/checkout/.test(fresh), "the server log names the sign-out and its page", fresh.slice(0, 200));
+          } else {
+            console.log("    (E2E_SERVER_LOG not set — server-log checks skipped)");
+          }
+          await ctx.close();
+        }
+      } finally {
+        await db.user.deleteMany({ where: { email } });
+      }
+    }
+
+    // ── T ──
+    console.log("T. an attempt left unfinished is reported by the next checkout page");
+    if (SERVER_LOG) {
+      const { ctx, page } = await freshCheckout(browser, "bg");
+      await fill(page, "T");
+      // The order request never gets an answer; the customer reloads.
+      await page.route("**/*", (route) => (isOrderAction(route) && route.request().postData()?.includes("customerName") ? route.abort() : route.continue()));
+      const logBefore = serverLog()!.length;
+      await submit(page);
+      await page.getByText(NETWORK_ERROR).waitFor({ timeout: 20_000 });
+      await page.unroute("**/*");
+      await page.reload();
+      await page.locator('[name="customerName"]').waitFor();
+      await sleep(1500);
+      const fresh = serverLog()!.slice(logBefore);
+      const line = fresh.split("\n").find((l) => l.startsWith("[checkout-trace]")) ?? "";
+      check(/id=[a-z0-9]{12} version=\S+ locale=bg path=\/checkout stages=click@\d+,sent@\d+,failed@\d+/.test(line), "one [checkout-trace] line: click, sent, failed", line || fresh.slice(0, 300));
+      check(!/Език Тест|0888111444|example\.test|Тестова/.test(line), "the line carries no personal data");
+      await ctx.close();
+    } else {
+      console.log("    (E2E_SERVER_LOG not set — skipped)");
     }
 
     // ── I ──
