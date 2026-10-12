@@ -44,7 +44,7 @@ const PRODUCTS_EN = {
   prod_tsezar: ["Caesar", "cream base, chicken fillet, Parmesan, Caesar sauce, rocket"],
   prod_karbonara: ["Carbonara", "Hollandaise sauce, kashkaval cheese, mushrooms, smoked bacon and chicken fillet"],
   prod_angliyska_zakuska: ["English Breakfast", "tomato sauce, kashkaval cheese, mushrooms, smoked bacon and egg"],
-  prod_amerikanski_burger: ["American Burger", "tomato sauce, kashkaval cheese, pickles, beef patty and smoked bacon"],
+  prod_amerikanski_burger: ["American Burger", "tomato sauce, kashkaval cheese, gherkins, beef patty and smoked bacon"],
   prod_nyu_york_hot_dog: ["New York Hot Dog", "honey mustard base, red onion and frankfurter"],
   prod_teksasko_bbq: ["Texas BBQ", "tomato sauce, kashkaval cheese, red onion, chicken ham, smoked bacon and BBQ sauce"],
   prod_meksiko: ["Mexico", "tomato sauce, kashkaval cheese, red onion, red pepper, spicy beef and jalapeño"],
@@ -53,7 +53,7 @@ const PRODUCTS_EN = {
   prod_printsesa: ["Princess", "tomato sauce, kashkaval cheese, white cheese, lukanka and egg"],
   prod_pile: ["Chicken", "tomato sauce, kashkaval cheese, sweet corn, chicken ham and BBQ sauce"],
   prod_indiysko_pile: ["Indian Chicken", "tomato sauce, kashkaval cheese, sweet corn, chicken fillet with Indian spices"],
-  prod_rancho: ["Ranch", "tomato sauce, kashkaval cheese, pickles, processed cheese and chicken ham"],
+  prod_rancho: ["Ranch", "tomato sauce, kashkaval cheese, gherkins, processed cheese and chicken ham"],
   prod_byalo_pile: ["White Chicken", "garlic base, kashkaval cheese, mushrooms and chicken ham"],
   prod_nikulden: ["St Nicholas", "tomato sauce, kashkaval cheese, crab sticks, tuna and anchovies"],
   prod_okeana: ["Oceana", "tomato sauce, kashkaval cheese, red onion, olives, tuna, fresh basil and sun-dried tomatoes"],
@@ -74,8 +74,8 @@ const PRODUCTS_EN = {
   prod_chesnova_bageta: ["Garlic baguette", ""],
   prod_chesnova_bageta_s_kashkaval: ["Garlic baguette with kashkaval cheese", ""],
   prod_lucheni_kragcheta: ["Onion rings", "with garlic sauce"],
-  prod_parzheni_kartofi: ["French fries", ""],
-  prod_parzheni_kartofi_sas_sirene: ["French fries with cheese", ""],
+  prod_parzheni_kartofi: ["Chips", ""],
+  prod_parzheni_kartofi_sas_sirene: ["Chips with cheese", ""],
   prod_proletni_rultsa: ["Spring rolls", "with vegetables, served with sweet chilli"],
   prod_proletni_rultsa_s_pile: ["Spring rolls with chicken", "served with sweet chilli"],
   prod_kartofeni_rezanki: ["Potato wedges", "with BBQ sauce"],
@@ -92,13 +92,13 @@ const PRODUCTS_EN = {
   prod_pikantni_kartofi_2: ["Spicy potatoes", ""],
 
   // ── Burgers ──
-  prod_pileshki: ["Chicken", "chicken patty, cheddar, pickles, onion, iceberg lettuce, BBQ sauce, mayonnaise"],
-  prod_hrupkavo_pile: ["Crispy Chicken", "chicken tenderloin, cheddar, spinach, honey mustard, tomato, pickles and ketchup"],
-  prod_vege_2: ["Veggie", "2 potato patties, cheddar, iceberg lettuce, onion, mayonnaise, pickles, ketchup"],
-  prod_teleshki: ["Beef", "beef patty, cheddar, bacon, onion, pickles, tomato, iceberg lettuce"],
+  prod_pileshki: ["Chicken", "chicken patty, cheddar, gherkins, onion, iceberg lettuce, BBQ sauce, mayonnaise"],
+  prod_hrupkavo_pile: ["Crispy Chicken", "chicken tenderloin, cheddar, spinach, honey mustard, tomato, gherkins and ketchup"],
+  prod_vege_2: ["Veggie", "2 potato patties, cheddar, iceberg lettuce, onion, mayonnaise, gherkins, ketchup"],
+  prod_teleshki: ["Beef", "beef patty, cheddar, bacon, onion, gherkins, tomato, iceberg lettuce"],
   prod_syomga_2: ["Salmon", "Philadelphia, salmon patty, cucumber, dill, lemon dressing, iceberg lettuce"],
-  prod_rastitelen: ["Plant-based", "burger sauce, iceberg lettuce, onion, pickles, bacon, cheddar"],
-  prod_yaytse_i_bekon: ["Egg and Bacon", "mayonnaise, double egg, pickles, iceberg lettuce, bacon, cheddar"],
+  prod_rastitelen: ["Plant-based", "burger sauce, iceberg lettuce, onion, gherkins, bacon, cheddar"],
+  prod_yaytse_i_bekon: ["Egg and Bacon", "mayonnaise, double egg, gherkins, iceberg lettuce, bacon, cheddar"],
 
   // ── Burger add-ons ──
   prod_yaytse_pecheno: ["Fried egg", ""],
@@ -148,11 +148,11 @@ const PRODUCTS_EN = {
 
 /** id → English name/description for categories. */
 const CATEGORIES_EN = {
-  cat_pizzas_standard: ["Standard pizzas", "Classic wood-fired pizzas in two sizes — 30 and 40 cm."],
+  cat_pizzas_standard: ["Standard pizzas", "Classic pizzas in two sizes — 30 and 40 cm."],
   cat_pizzas_special: ["Special pizzas", "Signature pizzas with premium ingredients."],
   cat_pizza_addons: ["Pizza toppings", "Extra ingredients for your pizza."],
   cat_starters: ["Starters", "Light starters and nibbles to begin."],
-  cat_burgers: ["Burgers", "Juicy burgers served with fries and a drink."],
+  cat_burgers: ["Burgers", "Juicy burgers served with chips and a drink."],
   cat_burger_addons: ["Burger extras", "Extra ingredients for your burger."],
   cat_salads: ["Salads", "Fresh seasonal salads."],
   cat_sauces: ["Sauces", "House-made sauces for your meal."],
@@ -163,7 +163,7 @@ const CATEGORIES_EN = {
 /** Sizes are formulaic ("300 г", "330 мл"), so units are mapped mechanically. */
 const SIZE_OVERRIDES = {
   "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл":
-    "with fries 100 g, ketchup and a 330 ml can of Coca-Cola",
+    "with 100 g of chips, ketchup and a 330 ml can of Coca-Cola",
 };
 
 /**

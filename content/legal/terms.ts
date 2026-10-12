@@ -90,11 +90,11 @@ export const termsDoc: LegalDoc = {
           list: [
             {
               bg: "Избирате продукти (размер и добавки) и ги добавяте в количката.",
-              en: "You choose products (size and extras) and add them to the cart.",
+              en: "You choose products (size and extras) and add them to the basket.",
             },
             {
               bg: "В страницата за поръчка въвеждате име, телефон, имейл и адрес за доставка, избирате начин на плащане и изрично потвърждавате условията.",
-              en: "On the checkout page you enter your name, phone, e-mail and delivery address, choose a payment method and expressly confirm the terms.",
+              en: "On the checkout page you enter your name, phone, email and delivery address, choose a payment method and expressly confirm the terms.",
             },
             {
               bg: "С натискане на бутона „Поръчка със задължение за плащане“ (или „Поръчай и плати с карта“) изпращате поръчката. Това е вашето предложение за сключване на договор. Показваме номер на поръчката.",
@@ -102,7 +102,7 @@ export const termsDoc: LegalDoc = {
             },
             {
               bg: "Договорът се сключва, когато Ресторантът приеме поръчката. Тогава ви изпращаме имейл „Поръчката ви е приета“ с продуктите, общата сума, адреса и ориентировъчното време за доставка.",
-              en: "The contract is concluded when the Restaurant accepts the order. We then send you an “Your order has been accepted” e-mail with the products, the total, the address and the estimated delivery time.",
+              en: "The contract is concluded when the Restaurant accepts the order. We then send you an “Your order has been accepted” email with the products, the total, the address and the estimated delivery time.",
             },
           ],
         },
@@ -154,7 +154,7 @@ export const termsDoc: LegalDoc = {
         {
           p: {
             bg: "Можете да откажете поръчката без никакви разходи, докато кухнята не е започнала да я приготвя — обадете се на телефона на Ресторанта (най-бързият начин) или пишете на имейла ни с номера на поръчката. След започване на приготвянето поръчката не може да бъде отменена, защото храната се приготвя специално за вас; дължи се цената на поръчката. Ресторантът не начислява неустойки или допълнителни такси за отказ. Подробности и сроковете за възстановяване — в „Отказ, връщане и рекламации“.",
-            en: "You may cancel the order at no cost as long as the kitchen has not started preparing it — call the Restaurant (the fastest way) or e-mail us with the order number. Once preparation has started the order cannot be cancelled, because the food is made specially for you; the order price is then due. The Restaurant charges no penalties or extra fees for cancelling. Details and refund times are in “Cancellation, Returns and Complaints”.",
+            en: "You may cancel the order at no cost as long as the kitchen has not started preparing it — call the Restaurant (the fastest way) or email us with the order number. Once preparation has started the order cannot be cancelled, because the food is made specially for you; the order price is then due. The Restaurant charges no penalties or extra fees for cancelling. Details and refund times are in “Cancellation, Returns and Complaints”.",
           },
         },
       ],
@@ -202,7 +202,7 @@ export const termsDoc: LegalDoc = {
         {
           p: {
             bg: "Моля, прегледайте поръчката при получаване. При липсващ, сгрешен, увреден или негоден продукт се свържете с нас възможно най-скоро, по възможност още в деня на доставката, по телефона или имейла на Ресторанта, с номера на поръчката и описание (по възможност и снимка). При основателна рекламация доставяме липсващия или верния продукт или възстановяваме платената за него сума, по ваш избор, без разходи за вас. Отговаряме на всяка рекламация и ви уведомяваме за решението.",
-            en: "Please check your order on delivery. If a product is missing, wrong, damaged or unfit, contact us as soon as possible, ideally on the day of delivery, by the Restaurant's phone or e-mail, with the order number and a description (a photo helps). For a justified complaint we deliver the missing or correct product or refund what you paid for it, as you prefer, at no cost to you. We answer every complaint and tell you the decision.",
+            en: "Please check your order on delivery. If a product is missing, wrong, damaged or unfit, contact us as soon as possible, ideally on the day of delivery, by the Restaurant's phone or email, with the order number and a description (a photo helps). For a justified complaint we deliver the missing or correct product or refund what you paid for it, as you prefer, at no cost to you. We answer every complaint and tell you the decision.",
           },
         },
         {

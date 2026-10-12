@@ -7,7 +7,8 @@ import { LEGAL_VERSIONS, versionDate } from "./versions";
  * The area, the hours and the payment methods are dynamic blocks rendered
  * from lib/delivery-area.ts, Admin → Settings and the payment configuration,
  * so this page always says what checkout enforces. Delivery is free (owner
- * decision 2026-09-27); there is no minimum order and no pickup in the site.
+ * decision 2026-09-27); delivery orders have a minimum value (lib/delivery-area.ts,
+ * 10 € since 2026-10-12) and there is no pickup in the site.
  */
 export const deliveryDoc: LegalDoc = {
   slug: "delivery",
@@ -53,8 +54,8 @@ export const deliveryDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Доставката е безплатна — плащате само поръчаните продукти. Сайтът не изисква минимална сума на поръчката.",
-            en: "Delivery is free — you pay only for the products ordered. The site requires no minimum order amount.",
+            bg: "Доставката е безплатна — плащате само поръчаните продукти. За поръчка с доставка има минимална сума, посочена в т. 2: сборът от цените на продуктите, заедно с избраните добавки. Минималната сума не е такса за доставка. Поръчка под нея не може да бъде изпратена — сайтът и нашият сървър я отказват и показват колко още липсва.",
+            en: "Delivery is free — you pay only for the products ordered. Delivery orders have a minimum value, stated in section 2: the total of the product prices, including any extras chosen. The minimum is not a delivery charge. An order below it cannot be placed — the site and our server refuse it and show how much more is needed.",
           },
         },
       ],
@@ -79,7 +80,7 @@ export const deliveryDoc: LegalDoc = {
         {
           p: {
             bg: "Не обещаваме фиксиран срок. При приемане на поръчката ви изпращаме имейл с ориентировъчното време за доставка, което персоналът определя според натовареността и разстоянието. При значително закъснение ще ви се обадим.",
-            en: "We do not promise a fixed time. When we accept the order we e-mail you the estimated delivery time, which our staff set according to how busy we are and the distance. If there is a significant delay we will call you.",
+            en: "We do not promise a fixed time. When we accept the order we email you the estimated delivery time, which our staff set according to how busy we are and the distance. If there is a significant delay we will call you.",
           },
         },
       ],
@@ -91,7 +92,7 @@ export const deliveryDoc: LegalDoc = {
         {
           p: {
             bg: "Посочете точен адрес (вход, етаж, апартамент) и телефон, на който отговаряте. Ако куриерът не може да ви открие на адреса и по телефона в разумен срок, доставката се счита за неуспешна поради причина у Клиента.",
-            en: "Give an exact address (entrance, floor, apartment) and a phone number you answer. If the courier cannot find you at the address or by phone within a reasonable time, the delivery is treated as failed for a reason on the Customer's side.",
+            en: "Give an exact address (entrance, floor, flat) and a phone number you answer. If the courier cannot find you at the address or by phone within a reasonable time, the delivery is treated as failed for a reason on the Customer's side.",
           },
         },
         {

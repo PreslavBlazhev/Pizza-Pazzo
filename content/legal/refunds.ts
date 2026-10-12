@@ -40,7 +40,7 @@ export const refundsDoc: LegalDoc = {
             },
             {
               bg: "Как: обадете се на телефона на Ресторанта (най-бързо) или пишете на имейла ни с номера на поръчката. Отказът е в сила, когато персоналът го потвърди.",
-              en: "How: call the Restaurant (fastest) or e-mail us with the order number. The cancellation takes effect when our staff confirm it.",
+              en: "How: call the Restaurant (fastest) or email us with the order number. The cancellation takes effect when our staff confirm it.",
             },
             {
               bg: "След започване на приготвянето поръчката не може да бъде отменена: храната се приготвя специално за вас и дължите цената ѝ. Платена с карта сума в този случай не се възстановява.",
@@ -91,7 +91,7 @@ export const refundsDoc: LegalDoc = {
             },
             {
               bg: "Как: изпратете ни ясно изявление (например имейл) или попълнения стандартен формуляр по-долу на имейла или на адреса за кореспонденция. Достатъчно е да го изпратите преди изтичане на срока.",
-              en: "How: send us a clear statement (for example an e-mail) or the completed standard form below, to our e-mail or correspondence address. Sending it before the deadline is enough.",
+              en: "How: send us a clear statement (for example an email) or the completed standard form below, to our email or correspondence address. Sending it before the deadline is enough.",
             },
             {
               bg: "Връщане: върнете неотворените напитки в оригиналната им опаковка до 14 дни след изявлението — като ги донесете в ресторанта (без разходи) или ги изпратите за своя сметка. Ако предпочитате, уговорете с нас да ги вземем при следваща доставка.",
@@ -126,7 +126,7 @@ export const refundsDoc: LegalDoc = {
             },
             {
               bg: "Как: по телефона или имейла на Ресторанта, или писмено на адреса за кореспонденция.",
-              en: "How: by the Restaurant's phone or e-mail, or in writing to the correspondence address.",
+              en: "How: by the Restaurant's phone or email, or in writing to the correspondence address.",
             },
             {
               bg: "Какво да посочите: номер на поръчката, какво липсва, какво е сгрешено или какъв е проблемът, и по възможност снимка. Запазете продукта, докато го прегледаме.",

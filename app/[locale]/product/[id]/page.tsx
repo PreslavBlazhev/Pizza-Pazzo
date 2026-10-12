@@ -9,6 +9,8 @@ import { type Locale } from "@/i18n/routing";
 
 interface PageProps {
   params: Promise<{ id: string; locale: Locale }>;
+  /** `?edit=<lineId>` — reopened from the basket to change a line. */
+  searchParams?: Promise<{ edit?: string | string[] }>;
 }
 
 // Rendered on demand: the menu lives in the DB, unavailable at build time on
@@ -25,8 +27,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function ProductPage({ params }: PageProps) {
+export default async function ProductPage({ params, searchParams }: PageProps) {
   const { id, locale } = await params;
+  const edit = (await searchParams)?.edit;
+  const editLineId = typeof edit === "string" && edit.length <= 2000 ? edit : undefined;
   setRequestLocale(locale);
 
   const product = await findProduct(id, locale);
@@ -35,13 +39,18 @@ export default async function ProductPage({ params }: PageProps) {
   const category = await getCategoryById(product.categoryId, locale);
   // The extras offer (crusts/addons/sauces) for this product's category — null
   // for drinks/desserts, which render no picker at all.
-  const extras = await getExtrasForProduct(product.categoryId);
+  const extras = await getExtrasForProduct(product);
 
   return (
     <>
       <Header />
       <main className="container py-10 sm:py-14">
-        <ProductDetails product={product} category={category} extras={extras} />
+        <ProductDetails
+          product={product}
+          category={category}
+          extras={extras}
+          editLineId={editLineId}
+        />
       </main>
       <Footer />
     </>

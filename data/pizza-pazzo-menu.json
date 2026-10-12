@@ -755,7 +755,7 @@
     "slug": "amerikanski-burger",
     "description": {
       "bg": "доматен сос, кашкавал, кисели краставички, телешки бургер и пушен бекон",
-      "en": "tomato sauce, kashkaval cheese, pickles, beef patty and smoked bacon"
+      "en": "tomato sauce, kashkaval cheese, gherkins, beef patty and smoked bacon"
     },
     "categoryId": "cat_pizzas_standard",
     "priceEur": 9.71,
@@ -1111,7 +1111,7 @@
     "slug": "rancho",
     "description": {
       "bg": "доматен сос, кашкавал, кисели краставички, топено сирене и пилешка шунка",
-      "en": "tomato sauce, kashkaval cheese, pickles, processed cheese and chicken ham"
+      "en": "tomato sauce, kashkaval cheese, gherkins, processed cheese and chicken ham"
     },
     "categoryId": "cat_pizzas_standard",
     "priceEur": 9.71,
@@ -1638,7 +1638,7 @@
     "id": "prod_parzheni_kartofi",
     "name": {
       "bg": "Пържени картофи",
-      "en": "French fries"
+      "en": "Chips"
     },
     "slug": "parzheni-kartofi",
     "description": {
@@ -1661,7 +1661,7 @@
     "id": "prod_parzheni_kartofi_sas_sirene",
     "name": {
       "bg": "Пържени картофи със сирене",
-      "en": "French fries with cheese"
+      "en": "Chips with cheese"
     },
     "slug": "parzheni-kartofi-sas-sirene",
     "description": {
@@ -2024,7 +2024,7 @@
     "slug": "pileshki",
     "description": {
       "bg": "пилешко кюфте, чедър, кисели краставички, лук, айсберг, BBQ сос, майонеза",
-      "en": "chicken patty, cheddar, pickles, onion, iceberg lettuce, BBQ sauce, mayonnaise"
+      "en": "chicken patty, cheddar, gherkins, onion, iceberg lettuce, BBQ sauce, mayonnaise"
     },
     "categoryId": "cat_burgers",
     "priceEur": 7.67,
@@ -2038,7 +2038,7 @@
     "sortOrder": 1,
     "size": {
       "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
-      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+      "en": "with 100 g of chips, ketchup and a 330 ml can of Coca-Cola"
     }
   },
   {
@@ -2050,7 +2050,7 @@
     "slug": "hrupkavo-pile",
     "description": {
       "bg": "пилешко бон филе, чедър, спанак, медена горчица, домат, кисели краставички и кетчуп",
-      "en": "chicken tenderloin, cheddar, spinach, honey mustard, tomato, pickles and ketchup"
+      "en": "chicken tenderloin, cheddar, spinach, honey mustard, tomato, gherkins and ketchup"
     },
     "categoryId": "cat_burgers",
     "priceEur": 7.67,
@@ -2064,7 +2064,7 @@
     "sortOrder": 2,
     "size": {
       "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
-      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+      "en": "with 100 g of chips, ketchup and a 330 ml can of Coca-Cola"
     }
   },
   {
@@ -2076,7 +2076,7 @@
     "slug": "vege-2",
     "description": {
       "bg": "2 бр. картофени кюфтета, чедър, айсберг, лук, майонеза, кисели краставички, кетчуп",
-      "en": "2 potato patties, cheddar, iceberg lettuce, onion, mayonnaise, pickles, ketchup"
+      "en": "2 potato patties, cheddar, iceberg lettuce, onion, mayonnaise, gherkins, ketchup"
     },
     "categoryId": "cat_burgers",
     "priceEur": 6.14,
@@ -2090,7 +2090,7 @@
     "sortOrder": 3,
     "size": {
       "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
-      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+      "en": "with 100 g of chips, ketchup and a 330 ml can of Coca-Cola"
     }
   },
   {
@@ -2102,7 +2102,7 @@
     "slug": "teleshki",
     "description": {
       "bg": "телешко кюфте, чедър, бекон, лук, кисели краставички, домат, айсберг",
-      "en": "beef patty, cheddar, bacon, onion, pickles, tomato, iceberg lettuce"
+      "en": "beef patty, cheddar, bacon, onion, gherkins, tomato, iceberg lettuce"
     },
     "categoryId": "cat_burgers",
     "priceEur": 8.18,
@@ -2116,7 +2116,7 @@
     "sortOrder": 4,
     "size": {
       "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
-      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+      "en": "with 100 g of chips, ketchup and a 330 ml can of Coca-Cola"
     },
     "isPopular": true
   },
@@ -2143,7 +2143,7 @@
     "sortOrder": 5,
     "size": {
       "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
-      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+      "en": "with 100 g of chips, ketchup and a 330 ml can of Coca-Cola"
     }
   },
   {
@@ -2155,7 +2155,7 @@
     "slug": "rastitelen",
     "description": {
       "bg": "бургер сос, айсберг, лук, кисели краставички, бекон, чедър",
-      "en": "burger sauce, iceberg lettuce, onion, pickles, bacon, cheddar"
+      "en": "burger sauce, iceberg lettuce, onion, gherkins, bacon, cheddar"
     },
     "categoryId": "cat_burgers",
     "priceEur": 8.69,
@@ -2168,7 +2168,7 @@
     "sortOrder": 6,
     "size": {
       "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
-      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+      "en": "with 100 g of chips, ketchup and a 330 ml can of Coca-Cola"
     }
   },
   {
@@ -2180,7 +2180,7 @@
     "slug": "yaytse-i-bekon",
     "description": {
       "bg": "майонеза, двойно яйце, кисели краставички, айсберг, бекон, чедър",
-      "en": "mayonnaise, double egg, pickles, iceberg lettuce, bacon, cheddar"
+      "en": "mayonnaise, double egg, gherkins, iceberg lettuce, bacon, cheddar"
     },
     "categoryId": "cat_burgers",
     "priceEur": 6.65,
@@ -2194,7 +2194,7 @@
     "sortOrder": 7,
     "size": {
       "bg": "с картофи 100 г, кетчуп и Coca-Cola кен 330 мл",
-      "en": "with fries 100 g, ketchup and a 330 ml can of Coca-Cola"
+      "en": "with 100 g of chips, ketchup and a 330 ml can of Coca-Cola"
     }
   },
   {

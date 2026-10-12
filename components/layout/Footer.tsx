@@ -1,7 +1,8 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Logo } from "./Logo";
-import { NAV_LINKS } from "./Header";
+import { CallNowButton } from "./CallNow";
+import { NAV_LINKS } from "./nav-links";
 import { SITE } from "@/lib/constants";
 import { companyFor } from "@/content/legal/company";
 import { getBoricaCompanyLogo, getFooterSchemeMarks, isCardPaymentLive } from "@/lib/payments/card-marks";
@@ -105,6 +106,8 @@ export async function Footer() {
               </a>
             </li>
           </ul>
+          {/* "Call now" at the end of every page — same number as above. */}
+          <CallNowButton className="mt-5 w-full sm:w-auto" />
         </div>
 
         {/* Hours */}

@@ -1,24 +1,20 @@
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Logo } from "./Logo";
 import { HeaderShell } from "./HeaderShell";
 import { MobileNav } from "./MobileNav";
 import { HeaderAuth } from "./HeaderAuth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { LogoPhone } from "./CallNow";
+import { NAV_LINKS } from "./nav-links";
 import { CartBadge } from "@/components/cart/CartBadge";
 
-/** Nav targets. Labels come from the `nav` namespace, keyed by `labelKey`. */
-export const NAV_LINKS = [
-  { href: "/", labelKey: "home" },
-  { href: "/menu", labelKey: "menu" },
-  { href: "/gallery", labelKey: "gallery" },
-  { href: "/reviews", labelKey: "reviews" },
-  { href: "/contacts", labelKey: "contacts" },
-] as const;
+export { NAV_LINKS };
 
 /**
  * Site header. Stays a server component: the auth-dependent part is isolated in
- * <HeaderAuth />, so pages using this header can still be statically rendered.
+ * <HeaderAuth />, and the phone under the logo is a cached settings read, so
+ * pages using this header can still be statically rendered.
  *
  * Note the desktop breakpoint is `lg`, not `md` — the auth controls added
  * enough width that the nav wrapped on tablets.
@@ -26,14 +22,15 @@ export const NAV_LINKS = [
 interface HeaderProps {
   /**
    * "home": transparent over the hero until the first scroll, and no brand
-   * logo in the bar — the hero right below shows the big one. Every other
-   * page uses "default": solid background and the logo from the start.
+   * logo in the bar — the hero right below shows the big one (with the phone
+   * under it). Every other page uses "default": solid background and the
+   * logo with the phone from the start.
    */
   variant?: "default" | "home";
 }
 
-export function Header({ variant = "default" }: HeaderProps) {
-  const t = useTranslations("nav");
+export async function Header({ variant = "default" }: HeaderProps) {
+  const t = await getTranslations("nav");
   const isHome = variant === "home";
 
   return (
@@ -41,7 +38,14 @@ export function Header({ variant = "default" }: HeaderProps) {
       <div className="container flex h-20 items-center justify-between gap-4">
         {/* On the homepage the logo is hidden; the empty span keeps
             justify-between so the nav stays pinned to the right. */}
-        {isHome ? <span aria-hidden /> : <Logo className="h-12 sm:h-14" priority />}
+        {isHome ? (
+          <span aria-hidden />
+        ) : (
+          <div className="flex flex-col items-start gap-0.5">
+            <Logo className="h-10 sm:h-11" priority />
+            <LogoPhone className="text-xs sm:text-sm" />
+          </div>
+        )}
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-6 lg:flex" aria-label={t("mainNav")}>
@@ -70,8 +74,10 @@ export function Header({ variant = "default" }: HeaderProps) {
           </Link>
         </nav>
 
-        {/* Mobile: cart + hamburger */}
-        <div className="flex items-center gap-1 lg:hidden">
+        {/* Mobile: language flag + cart + hamburger. The switcher sits in the
+            bar itself (not only inside the menu) so English is one tap away. */}
+        <div className="flex items-center gap-1.5 lg:hidden">
+          <LanguageSwitcher compact />
           <Link
             href="/cart"
             aria-label={t("cart")}

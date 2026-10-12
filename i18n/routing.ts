@@ -33,7 +33,7 @@ export function isLocale(value: unknown): value is Locale {
 /** Human-readable names for the language switcher (each in its own language). */
 export const LOCALE_LABELS: Record<Locale, string> = {
   bg: "Български",
-  en: "English",
+  en: "English (UK)",
 };
 
 /** Short labels for the compact switcher in the header. */

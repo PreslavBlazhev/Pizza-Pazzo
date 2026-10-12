@@ -40,8 +40,8 @@ export async function getRestaurantJsonLd(locale: Locale) {
     },
     servesCuisine:
       locale === "en"
-        ? ["Pizza", "Italian", "Burgers"]
-        : ["Пица", "Италианска кухня", "Бургери"],
+        ? ["Pizza", "Burgers"]
+        : ["Пица", "Бургери"],
     priceRange: "€€",
     foundingDate: String(SITE.foundedYear),
     menu: menuUrl,

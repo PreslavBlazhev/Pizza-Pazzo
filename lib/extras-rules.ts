@@ -39,9 +39,20 @@ export const EXTRAS_LIMITS = {
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-export type ExtraType = "pizza_crust" | "pizza_addon" | "burger_addon" | "sauce";
+export type ExtraType =
+  | "pizza_crust"
+  | "pizza_addon"
+  | "pizza_free_topping"
+  | "burger_addon"
+  | "sauce";
 
-const EXTRA_TYPES: readonly ExtraType[] = ["pizza_crust", "pizza_addon", "burger_addon", "sauce"];
+const EXTRA_TYPES: readonly ExtraType[] = [
+  "pizza_crust",
+  "pizza_addon",
+  "pizza_free_topping",
+  "burger_addon",
+  "sauce",
+];
 
 /**
  * What the CLIENT sends for one chosen extra. No names, no prices — the
@@ -151,6 +162,74 @@ export type PizzaSelectionKey = keyof typeof PIZZA_SELECTIONS;
 
 export function isPizzaSelectionKey(key: string): key is PizzaSelectionKey {
   return Object.prototype.hasOwnProperty.call(PIZZA_SELECTIONS, key);
+}
+
+// ── Free toppings (only on products whose price includes them) ──────────────
+
+/**
+ * Products whose price INCLUDES a number of toppings of the customer's choice,
+ * and how many. Keyed by stable product id — never by name — and deliberately
+ * a short explicit list: free toppings are NOT a property of pizzas in
+ * general.
+ *
+ * "Моята Пацо" / "My Pazzo": "маргарита с три добавки по ваш избор" — the
+ * restaurant's own menu (Pizza_Pazzo_Digital_Menu_Products_Allergens_Prices
+ * .docx), confirmed again by the owner on 2026-10-12 ("до 3 безплатни").
+ */
+export const FREE_TOPPINGS_BY_PRODUCT: Readonly<Record<string, number>> = {
+  prod_moyata_patso: 3,
+};
+
+/** How many free toppings a product comes with — 0 for every other product. */
+export function freeToppingsLimitFor(productId: string): number {
+  return Object.prototype.hasOwnProperty.call(FREE_TOPPINGS_BY_PRODUCT, productId)
+    ? FREE_TOPPINGS_BY_PRODUCT[productId]
+    : 0;
+}
+
+export interface FreeToppingDefinition {
+  /** The paid add-on this is a free one of. It must be on sale for the free
+   *  choice to be offered or accepted; its price is never used. */
+  sourceProductId: string;
+  /** Name stored on the order (and read by the kitchen). */
+  nameBg: string;
+  nameEn: string;
+}
+
+/**
+ * What a free slot can be filled with: the same four kinds of add-on the menu
+ * sells (месна / млечна / рибна / зеленчукова), with no more detail than the
+ * paid add-ons carry. Each kind at most ONCE per pizza — the same no-repeat
+ * rule the paid add-ons follow; nothing in the menu says a free topping may
+ * be doubled.
+ */
+export const FREE_TOPPING_SELECTIONS = {
+  free_meat_topping: {
+    sourceProductId: PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID,
+    nameBg: "Безплатна добавка: месна",
+    nameEn: "Free topping: meat",
+  },
+  free_dairy_topping: {
+    sourceProductId: PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID,
+    nameBg: "Безплатна добавка: млечна",
+    nameEn: "Free topping: dairy",
+  },
+  free_fish_topping: {
+    sourceProductId: PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID,
+    nameBg: "Безплатна добавка: рибна",
+    nameEn: "Free topping: fish",
+  },
+  free_vegetable_topping: {
+    sourceProductId: PIZZA_VEGETABLE_ADDON_SOURCE_PRODUCT_ID,
+    nameBg: "Безплатна добавка: зеленчукова",
+    nameEn: "Free topping: vegetable",
+  },
+} as const satisfies Record<string, FreeToppingDefinition>;
+
+export type FreeToppingKey = keyof typeof FREE_TOPPING_SELECTIONS;
+
+export function isFreeToppingKey(key: string): key is FreeToppingKey {
+  return Object.prototype.hasOwnProperty.call(FREE_TOPPING_SELECTIONS, key);
 }
 
 // ── Category helpers ────────────────────────────────────────────────────────

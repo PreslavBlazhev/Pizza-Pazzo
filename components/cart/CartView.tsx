@@ -7,6 +7,8 @@ import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
 import { useStoreClosed } from "@/components/store/StoreStatusProvider";
 import { CartItem } from "./CartItem";
 import { CartSummary } from "./CartSummary";
+import { MinimumOrderNotice } from "./MinimumOrderNotice";
+import { minimumOrderShortfallEur } from "@/lib/delivery-area";
 
 /** The interactive cart. Rendered inside the server cart page shell. */
 export function CartView() {
@@ -40,6 +42,10 @@ export function CartView() {
   }
 
   const totals = totalsFn();
+  // Below the delivery minimum the way forward is closed, like when the shop
+  // is closed — the basket itself is kept.
+  const belowMinimum = minimumOrderShortfallEur(totals.total) > 0;
+  const blocked = storeClosed || belowMinimum;
 
   return (
     <div className="mx-auto grid max-w-4xl gap-8 lg:grid-cols-[1fr_20rem]">
@@ -60,13 +66,14 @@ export function CartView() {
       {/* Summary */}
       <aside className="h-fit rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
         <CartSummary totals={totals} />
+        <MinimumOrderNotice subtotalEur={totals.total} className="mt-4" />
 
         <StoreClosedBanner className="mt-6" />
 
         {/* Closed: the cart is kept (nothing is thrown away) but the way
             forward is a dead button rather than a link into a checkout that
             would only be refused on submit. */}
-        {storeClosed ? (
+        {blocked ? (
           <span
             aria-disabled
             className="mt-6 block cursor-not-allowed rounded-full bg-pizza-cream-dark px-6 py-3.5 text-center font-semibold text-pizza-muted"

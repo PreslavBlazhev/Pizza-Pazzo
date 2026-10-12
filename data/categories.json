@@ -7,8 +7,8 @@
     },
     "slug": "pizzas-standard",
     "description": {
-      "bg": "Класически пици на дърва в два размера — 30 и 40 см.",
-      "en": "Classic wood-fired pizzas in two sizes — 30 and 40 cm."
+      "bg": "Класически пици в два размера — 30 и 40 см.",
+      "en": "Classic pizzas in two sizes — 30 and 40 cm."
     },
     "icon": "🍕",
     "sortOrder": 1,
@@ -68,7 +68,7 @@
     "slug": "burgers",
     "description": {
       "bg": "Сочни бургери, сервирани с картофи и напитка.",
-      "en": "Juicy burgers served with fries and a drink."
+      "en": "Juicy burgers served with chips and a drink."
     },
     "icon": "🍔",
     "sortOrder": 5,

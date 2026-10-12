@@ -22,12 +22,15 @@ export const SITE = {
   /** English registered name — the full BG/EN identity lives in content/legal/company.ts. */
   legalName: "PIZZA PAZZO LTD",
   foundedYear: 2012,
-  /** Public contact phones (primary first). */
-  // The second number was stored as "+359 801 999" (no area code) until
-  // 2026-09-29; the owner's own site publishes it as 064 801 999 (tel:+35964801999).
-  phones: ["+359 88 248 4777", "+359 64 801 999"],
-  /** Primary phone (kept for convenience). */
-  phone: "+359 88 248 4777",
+  /**
+   * The restaurant's ONE public phone, confirmed by the owner 2026-10-12.
+   * Written the way the owner writes it; `telHref` turns it into the
+   * dialable tel:+35964801999. The older +359 88 248 4777 contradicted it and
+   * is no longer published.
+   */
+  phones: ["064 801 999"] as readonly string[],
+  /** The same number (kept for convenience). */
+  phone: "064 801 999",
   email: "pr2.blazhev@gmail.com",
   /** Full display address (BG) as shown to visitors. Updated 2026-07. */
   // "бул.", as the BFSA register and the owner's own site write it (2026-09-30).
@@ -72,10 +75,9 @@ export const SITE_URL = getAppBaseUrl() || "https://pizzapazzo.bg";
  * paint Sunday red, which would have silently stopped working in English.
  */
 export const WORKING_HOURS = [
-  // Open around the clock since 2026-09-26 (owner's decision): "24:00" is
-  // the end of the day, so consecutive days join into 24/7.
-  { dayKey: "mondayToSaturday", hours: "00:00 – 24:00", closed: false },
-  { dayKey: "sunday", hours: "00:00 – 24:00", closed: false },
+  // 11:00 – 22:30 on every day the restaurant works (owner, 2026-10-12).
+  { dayKey: "mondayToSaturday", hours: "11:00 – 22:30", closed: false },
+  { dayKey: "sunday", hours: "11:00 – 22:30", closed: false },
 ] as const satisfies readonly {
   dayKey: "mondayToSaturday" | "sunday";
   hours: string | null;

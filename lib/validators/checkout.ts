@@ -37,6 +37,8 @@ export const CHECKOUT_FORM_ERRORS = [
   "PRODUCT_UNAVAILABLE",
   "VARIANT_INVALID",
   "EXTRAS_INVALID",
+  /** The products add up to less than the delivery minimum (lib/delivery-area.ts). */
+  "BELOW_MINIMUM",
   "SAVE_FAILED",
 ] as const;
 export type CheckoutFormError = (typeof CHECKOUT_FORM_ERRORS)[number];

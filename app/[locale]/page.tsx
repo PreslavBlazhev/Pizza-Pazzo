@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Logo } from "@/components/layout/Logo";
+import { CallNowButton, LogoPhone } from "@/components/layout/CallNow";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ProductCard } from "@/components/menu/ProductCard";
 import { GallerySection } from "@/components/home/GallerySection";
@@ -16,9 +17,10 @@ import { getCategories, getPopularProducts } from "@/lib/menu-data";
 import { SITE } from "@/lib/constants";
 import type { Locale } from "@/i18n/routing";
 
-/** Keys into the `home.values` namespace, paired with their icon. */
+/** Keys into the `home.values` namespace, paired with their icon.
+ *  ("wood" / "Печени на дърва" was removed on the owner's instruction,
+ *  2026-10-12: the claim is not true.) */
 const VALUES = [
-  { key: "wood", icon: "🔥" },
   { key: "fresh", icon: "🌿" },
   { key: "easy", icon: "⚡" },
 ] as const;
@@ -82,6 +84,8 @@ export default async function HomePage({
                   is ~283px wide and still fits a 360px viewport with the
                   container padding. */}
               <Logo className="h-40 sm:h-56 lg:h-44" linked={false} priority />
+              {/* The restaurant's phone, directly under the logo. */}
+              <LogoPhone className="mt-2 px-2 py-1 text-lg sm:text-xl" />
 
               {/* Slogan — font-slogan (Yeseva One) echoes the carved-serif "PIZZA
                   PAZZO" lettering in the logo above; tracking is deliberately
@@ -112,7 +116,8 @@ export default async function HomePage({
                 {t("hero.subtitle")}
               </p>
 
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row lg:mt-6">
+              <div className="mt-9 flex w-full max-w-xs flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center lg:mt-6">
+                <CallNowButton />
                 <Link
                   href="/menu"
                   className="rounded-full bg-brand px-8 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 focus:ring-offset-2"
@@ -207,7 +212,7 @@ export default async function HomePage({
 
         {/* ── Values ───────────────────────────────────────────── */}
         <section className="container py-16 sm:py-20">
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="mx-auto grid max-w-4xl gap-6 sm:grid-cols-2">
             {VALUES.map((v) => (
               <div
                 key={v.key}
@@ -234,12 +239,15 @@ export default async function HomePage({
               {t("cta.title")}
             </h2>
             <p className="max-w-xl text-white/85">{t("cta.subtitle")}</p>
-            <Link
-              href="/menu"
-              className="rounded-full bg-white px-8 py-3.5 font-semibold text-pizza-green shadow-soft transition hover:bg-pizza-cream"
-            >
-              {t("cta.button")}
-            </Link>
+            <div className="flex w-full max-w-xs flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row">
+              <CallNowButton tone="light" />
+              <Link
+                href="/menu"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-8 py-3.5 font-semibold text-pizza-green shadow-soft transition hover:bg-pizza-cream"
+              >
+                {t("cta.button")}
+              </Link>
+            </div>
           </div>
         </section>
       </main>

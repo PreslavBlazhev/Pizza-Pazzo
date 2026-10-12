@@ -28,6 +28,7 @@ import {
 } from "@/lib/validators/checkout";
 import { LEGAL_VERSIONS } from "@/content/legal/versions";
 import { resolveOrderItemExtras, type ExtraSourceProduct } from "@/lib/extras-resolve";
+import { minimumOrderShortfallEur } from "@/lib/delivery-area";
 import { EXTRAS_LIMITS, type OrderItemExtra } from "@/lib/extras-rules";
 import { resolveCheckoutPayment } from "@/lib/payments/providers";
 import { newAccessToken, releaseToKitchenAndNotify } from "@/lib/payments/service";
@@ -303,6 +304,14 @@ export async function placeOrder(
       totalPriceEur: lineEur,
       extrasJson: JSON.stringify(extras),
     });
+  }
+
+  // ── 3b. Minimum order for delivery — on the SERVER-priced subtotal, so a
+  //    tampered cart cannot slip under it. Delivery is free and there are no
+  //    discounts, so the products are both the base of the minimum and the
+  //    whole bill. Every site order is a delivery.
+  if (minimumOrderShortfallEur(subtotalEur) > 0) {
+    return { ok: false, error: "BELOW_MINIMUM" };
   }
 
   // Delivery is free: the items are the whole bill.

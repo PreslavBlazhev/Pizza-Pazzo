@@ -6,6 +6,8 @@ import { getProductById } from "@/lib/menu-data";
 import { getStoreStatus } from "@/lib/store-status";
 import { placeOrder } from "@/lib/checkout/place-order";
 import { isLocale } from "@/i18n/routing";
+import { DELIVERY_AREA } from "@/lib/delivery-area";
+import { formatEurPrice } from "@/lib/format-price";
 
 /**
  * Checkout — the server action behind the checkout form.
@@ -75,7 +77,9 @@ export async function createOrder(
     const fieldErrors = result.fieldErrors
       ? Object.fromEntries(Object.entries(result.fieldErrors).map(([field, code]) => [field, t(code)]))
       : undefined;
-    return { ok: false, error: result.error ? t(result.error) : undefined, fieldErrors };
+    // Only BELOW_MINIMUM uses {amount}; the other messages ignore it.
+    const amount = formatEurPrice(DELIVERY_AREA.minimumOrderEur ?? 0);
+    return { ok: false, error: result.error ? t(result.error, { amount }) : undefined, fieldErrors };
   }
   return {
     ok: true,

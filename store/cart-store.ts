@@ -16,6 +16,18 @@ interface CartState {
     quantity?: number,
     extras?: CartExtraSelection[]
   ) => void;
+  /**
+   * Replaces a line after it was edited on the product page — same position
+   * in the basket; if the edited line now equals another existing line, the
+   * two merge instead of duplicating.
+   */
+  replaceItem: (
+    oldLineId: string,
+    product: Product,
+    variant: ProductVariant | undefined,
+    quantity: number,
+    extras: CartExtraSelection[]
+  ) => void;
   removeItem: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
   clear: () => void;
@@ -29,6 +41,10 @@ interface PersistedCart {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/** The server accepts 1–99 per line (lib/checkout/place-order.ts). */
+export const MAX_LINE_QUANTITY = 99;
+const clampQty = (n: number) => Math.min(MAX_LINE_QUANTITY, Math.max(1, Math.floor(n)));
+
 /**
  * PREVIEW extras total per one main unit, from the display snapshots captured
  * at add time. UI-only — the checkout server re-derives real prices from the
@@ -38,6 +54,11 @@ export function extrasPreviewUnitEur(item: CartItem): number {
   return round2(
     (item.extras ?? []).reduce((s, e) => s + (e.display?.unitPriceEur ?? 0) * e.quantity, 0)
   );
+}
+
+/** PREVIEW price of ONE unit of the line: base + its extras. */
+export function lineUnitPreviewEur(item: CartItem): number {
+  return round2(item.unitPrice + extrasPreviewUnitEur(item));
 }
 
 /** PREVIEW line total including extras: (base unit + extras unit) × quantity. */
@@ -157,7 +178,7 @@ export const useCartStore = create<CartState>()(
             return {
               items: state.items.map((i) =>
                 i.lineId === lineId
-                  ? { ...i, quantity: i.quantity + quantity }
+                  ? { ...i, quantity: clampQty(i.quantity + quantity) }
                   : i
               ),
             };
@@ -167,10 +188,38 @@ export const useCartStore = create<CartState>()(
             product,
             selectedVariant: variant,
             extras,
-            quantity,
+            quantity: clampQty(quantity),
             unitPrice: variant?.priceEur ?? product.priceEur,
           };
           return { items: [...state.items, item] };
+        }),
+
+      replaceItem: (oldLineId, product, variant, quantity, extras) =>
+        set((state) => {
+          const lineId = lineIdFor(product.id, variant?.id, extras);
+          const item: CartItem = {
+            lineId,
+            product,
+            selectedVariant: variant,
+            extras,
+            quantity: clampQty(quantity),
+            unitPrice: variant?.priceEur ?? product.priceEur,
+          };
+          const twin = state.items.find((i) => i.lineId === lineId && i.lineId !== oldLineId);
+          if (twin) {
+            // The edit made this line identical to another one: merge.
+            return {
+              items: state.items
+                .filter((i) => i.lineId !== oldLineId)
+                .map((i) =>
+                  i.lineId === lineId ? { ...i, quantity: clampQty(i.quantity + item.quantity) } : i
+                ),
+            };
+          }
+          if (!state.items.some((i) => i.lineId === oldLineId)) {
+            return { items: [...state.items, item] };
+          }
+          return { items: state.items.map((i) => (i.lineId === oldLineId ? item : i)) };
         }),
 
       removeItem: (lineId) =>
@@ -179,7 +228,7 @@ export const useCartStore = create<CartState>()(
       updateQuantity: (lineId, quantity) =>
         set((state) => ({
           items: state.items.map((i) =>
-            i.lineId === lineId ? { ...i, quantity: Math.max(1, quantity) } : i
+            i.lineId === lineId ? { ...i, quantity: clampQty(quantity) } : i
           ),
         })),
 

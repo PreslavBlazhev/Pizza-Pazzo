@@ -7,6 +7,8 @@ import type { LocalizedText } from "./i18n";
 export interface ProductVariant {
   id: string;
   name: string;
+  /** The name in both languages — lets a basket line follow a BG ⇄ EN switch. */
+  names?: LocalizedText;
   priceEur: number;
 }
 
@@ -20,6 +22,11 @@ export interface ProductVariant {
 export interface Product {
   id: string;
   name: string;
+  /**
+   * The name in both languages. Set by lib/menu-data.ts; it travels into the
+   * basket so a line can be shown in whichever language is active later.
+   */
+  names?: LocalizedText;
   /** URL-friendly identifier used in /product/[id]. Never localized: the slug
    *  is the same in both languages, so /en/product/margarita resolves. */
   slug: string;
@@ -53,12 +60,12 @@ export interface Product {
 }
 
 /** The stored shape in `data/pizza-pazzo-menu.json`, before locale resolution. */
-export interface RawProductVariant extends Omit<ProductVariant, "name"> {
+export interface RawProductVariant extends Omit<ProductVariant, "name" | "names"> {
   name: LocalizedText;
 }
 
 export interface RawProduct
-  extends Omit<Product, "name" | "description" | "size" | "variants" | "ingredients"> {
+  extends Omit<Product, "name" | "names" | "description" | "size" | "variants" | "ingredients"> {
   name: LocalizedText;
   description: LocalizedText;
   size?: LocalizedText;

@@ -20,8 +20,8 @@ import type { LegalDoc } from "./types";
  */
 export const appPrivacyDoc: LegalDoc = {
   slug: "app-privacy",
-  version: "2026-08-24",
-  updated: "24.08.2026",
+  version: "2026-10-12",
+  updated: "12.10.2026",
   showCompanyBox: true,
   intro: [
     {
@@ -90,7 +90,7 @@ export const appPrivacyDoc: LegalDoc = {
             },
             {
               bg: "Resend (имейли) — през него минават имейлът за потвърждение на поръчка и известието до заведението. Вижда името, имейла и съдържанието на съответното съобщение.",
-              en: "Resend (e-mail) — the order confirmation to you and the notification to the restaurant are sent through it. It sees the name, the e-mail address and the contents of that message.",
+              en: "Resend (email) — the order confirmation to you and the notification to the restaurant are sent through it. It sees the name, the email address and the contents of that message.",
             },
             {
               bg: "Google Карти — на страница „Контакти“ е вградена карта на адреса на заведението. Тя се зарежда от сървър на Google, който при това вижда IP адреса на устройството ви, както при всяка вградена карта в интернет. Ако не отворите тази страница, карта не се зарежда.",
@@ -126,7 +126,7 @@ export const appPrivacyDoc: LegalDoc = {
             },
             {
               bg: "Съдържанието на количката ви, докато не я изпразните или не завършите поръчката.",
-              en: "The contents of your cart, until you empty it or complete the order.",
+              en: "The contents of your basket, until you empty it or complete the order.",
             },
             {
               bg: "Само за служебни устройства: настройките на Bluetooth принтера — име и адрес на избрания сдвоен принтер, ширина на хартията, кодировка и подобни технически предпочитания, плюс текста на последната грешка при печат.",
@@ -229,7 +229,7 @@ export const appPrivacyDoc: LegalDoc = {
         {
           p: {
             bg: "От направените поръчки премахваме и вашето име, имейл, телефон, адрес за доставка и бележката към поръчката. Остава само счетоводната част — номер и дата на поръчката, поръчаните артикули и сумите — която сме задължени да пазим по данъчното и счетоводното законодателство (чл. 17, § 3, б. „б“ ОРЗД). Тези записи вече не съдържат данни, по които може да бъдете идентифицирани.",
-            en: "From the orders you have already placed we also remove your name, e-mail, phone number, delivery address and order note. Only the accounting part remains — the order number and date, the items ordered and the amounts — which we are required to keep under tax and accounting law (GDPR Art. 17(3)(b)). Those records no longer contain anything that identifies you.",
+            en: "From the orders you have already placed we also remove your name, email, phone number, delivery address and order note. Only the accounting part remains — the order number and date, the items ordered and the amounts — which we are required to keep under tax and accounting law (GDPR Art. 17(3)(b)). Those records no longer contain anything that identifies you.",
           },
         },
         {
@@ -247,7 +247,7 @@ export const appPrivacyDoc: LegalDoc = {
         {
           p: {
             bg: "Данните, които приложението пази на устройството (сесия, количка, а на служебни устройства — настройките на принтера), се изтриват с деинсталирането му или през „Настройки → Приложения → Pizza Pazzo → Изчисти данните“.",
-            en: "The data the app keeps on the device (session, cart and, on staff devices, the printer settings) is removed by uninstalling it, or via “Settings → Apps → Pizza Pazzo → Clear data”.",
+            en: "The data the app keeps on the device (session, basket and, on staff devices, the printer settings) is removed by uninstalling it, or via “Settings → Apps → Pizza Pazzo → Clear data”.",
           },
         },
       ],

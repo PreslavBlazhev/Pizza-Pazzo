@@ -1106,7 +1106,11 @@ if (mods) {
     check("all-closed week yields an empty JSON-LD array", H.toOpeningHoursSpecification(allClosed).length === 0);
 
     check("tel href strips spaces and keeps +", H.telHref("+359 88 248 4777") === "tel:+359882484777");
-    check("tel href handles a local number", H.telHref("0801 999") === "tel:0801999");
+    // A national Bulgarian number dials in international form (owner's
+    // number, 2026-10-12): the trunk 0 becomes +359.
+    check("tel href: owner's number 064 801 999 → tel:+35964801999", H.telHref("064 801 999") === "tel:+35964801999");
+    check("tel href: 00-prefixed number → +", H.telHref("00359 64 801 999") === "tel:+35964801999");
+    check("tel href: separators are dropped", H.telHref(" (064) 801-999 ") === "tel:+35964801999");
   }
 
   // ── 14. Accepted email uses the DB-backed contact phone ──
@@ -1135,7 +1139,7 @@ if (mods) {
       }],
     };
 
-    const OLD_PHONE = "+359 88 248 4777";  // what lib/constants.ts still carries
+    const OLD_PHONE = "064 801 999";  // what lib/constants.ts carries
     const NEW_PHONE = "+359 87 111 2222";  // as if an admin had just changed it
     const mail = customerOrderAcceptedEmail(orderFixture, { phone: NEW_PHONE });
 

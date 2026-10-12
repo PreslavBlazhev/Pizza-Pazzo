@@ -15,6 +15,9 @@
 import {
   BURGER_ADDONS_CATEGORY_ID,
   EXTRAS_LIMITS,
+  FREE_TOPPING_SELECTIONS,
+  freeToppingsLimitFor,
+  isFreeToppingKey,
   PIZZA_ADDONS_CATEGORY_ID,
   PIZZA_SELECTIONS,
   SAUCES_CATEGORY_ID,
@@ -65,6 +68,7 @@ export type ResolveExtrasErrorCode =
   | "unknown-key"
   | "duplicate-selection"
   | "multiple-crusts"
+  | "too-many-free-toppings"
   | "key-product-mismatch"
   | "unknown-product"
   | "unavailable"
@@ -103,12 +107,23 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
   const seenKeys = new Set<string>();
   let crustCount = 0;
   const pizzaPicks: { key: string; selection: ExtraSelection }[] = [];
+  const freePicks: (keyof typeof FREE_TOPPING_SELECTIONS)[] = [];
   const burgerPicks: { key: string; productId: string }[] = [];
   // Sauce quantities merged by product id, first-seen order preserved.
   const sauceQty = new Map<string, number>();
 
   for (const sel of selections) {
     if (!Number.isInteger(sel.quantity) || sel.quantity < 1) return fail("bad-quantity");
+
+    if (isFreeToppingKey(sel.key)) {
+      const def = FREE_TOPPING_SELECTIONS[sel.key];
+      if (sel.sourceProductId !== def.sourceProductId) return fail("key-product-mismatch");
+      if (sel.quantity !== 1) return fail("bad-quantity");
+      if (seenKeys.has(sel.key)) return fail("duplicate-selection");
+      seenKeys.add(sel.key);
+      freePicks.push(sel.key);
+      continue;
+    }
 
     if (isPizzaSelectionKey(sel.key)) {
       const def = PIZZA_SELECTIONS[sel.key];
@@ -140,6 +155,14 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
   if (crustCount > 1) return fail("multiple-crusts");
 
   // ── What is the main product allowed to carry? ──
+  // Free toppings only on the products whose price includes them, and never
+  // more than that product's limit. A 4th free pick is REFUSED, not quietly
+  // turned into a paid one: no rule says it should be.
+  if (freePicks.length > 0) {
+    const limit = freeToppingsLimitFor(mainProduct.id);
+    if (limit === 0) return fail("not-allowed-for-product");
+    if (freePicks.length > limit) return fail("too-many-free-toppings");
+  }
   if (pizzaPicks.length > 0 && !isPizzaCategory(mainProduct.categoryId)) {
     return fail("not-allowed-for-product");
   }
@@ -162,6 +185,25 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
     if (src.categoryId !== expectedCategoryId) return fail("wrong-category");
     return src;
   };
+
+  // ── Free toppings: included in the pizza's price — always 0.00 € ──
+  for (const key of freePicks) {
+    const def = FREE_TOPPING_SELECTIONS[key];
+    // Only to check the kind is on sale; its price is NOT used.
+    const src = getSource(def.sourceProductId, PIZZA_ADDONS_CATEGORY_ID);
+    if ("ok" in src) return src;
+
+    extras.push({
+      key,
+      sourceProductId: src.id,
+      type: "pizza_free_topping",
+      nameBg: def.nameBg,
+      nameEn: def.nameEn,
+      quantity: 1,
+      unitPriceEur: 0,
+      totalPriceEur: 0,
+    });
+  }
 
   // ── Pizza crust + generic addons: price follows the main pizza's size ──
   if (pizzaPicks.length > 0) {

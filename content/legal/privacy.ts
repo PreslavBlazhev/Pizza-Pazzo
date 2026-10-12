@@ -35,7 +35,7 @@ export const privacyDoc: LegalDoc = {
         {
           p: {
             bg: "Администратор на личните данни е търговецът, посочен в началото на тази страница. За всякакви въпроси за данните ви пишете на имейла ни или на адреса за кореспонденция. Не сме определили длъжностно лице по защита на данните, тъй като законът не го изисква за нашата дейност.",
-            en: "The controller of your personal data is the merchant named at the top of this page. For any question about your data, e-mail us or write to the correspondence address. We have not appointed a data protection officer, as the law does not require one for our activity.",
+            en: "The controller of your personal data is the merchant named at the top of this page. For any question about your data, email us or write to the correspondence address. We have not appointed a data protection officer, as the law does not require one for our activity.",
           },
         },
       ],
@@ -48,7 +48,7 @@ export const privacyDoc: LegalDoc = {
           list: [
             {
               bg: "Поръчка: име, телефон, имейл, адрес за доставка, бележка, продуктите, сумите, начинът на плащане и статусът на поръчката — за да приготвим, доставим и потвърдим поръчката и да ви се обадим при нужда. Основание: изпълнение на договора (чл. 6, пар. 1, б. „б“ ОРЗД).",
-              en: "Order: name, phone, e-mail, delivery address, note, the products, the amounts, the payment method and the order status — to prepare, deliver and confirm the order and to call you when needed. Basis: performance of the contract (Art. 6(1)(b) GDPR).",
+              en: "Order: name, phone, email, delivery address, note, the products, the amounts, the payment method and the order status — to prepare, deliver and confirm the order and to call you when needed. Basis: performance of the contract (Art. 6(1)(b) GDPR).",
             },
             {
               bg: "Потвърждения при поръчката: кои версии на Общите условия, Условията за отказ и тази политика сте потвърдили и в колко часа — като доказателство за сключения договор. Основание: законово задължение и легитимен интерес да докажем условията на договора (чл. 6, пар. 1, б. „в“ и „е“).",
@@ -60,7 +60,7 @@ export const privacyDoc: LegalDoc = {
             },
             {
               bg: "Профил (по желание): име, имейл, телефон, парола (само като необратим хеш), запазени адреси и история на поръчките. Основание: договор (чл. 6, пар. 1, б. „б“).",
-              en: "Account (optional): name, e-mail, phone, password (only as an irreversible hash), saved addresses and order history. Basis: contract (Art. 6(1)(b)).",
+              en: "Account (optional): name, email, phone, password (only as an irreversible hash), saved addresses and order history. Basis: contract (Art. 6(1)(b)).",
             },
             {
               bg: "Рекламации и кореспонденция: съдържанието на съобщението и данните за контакт — за да отговорим и разрешим въпроса. Основание: договор и законово задължение.",
@@ -96,7 +96,7 @@ export const privacyDoc: LegalDoc = {
             },
             {
               bg: "Resend (Plus Five Five, Inc., САЩ) — изпращане на имейлите за поръчки (обработващ).",
-              en: "Resend (Plus Five Five, Inc., USA) — sending the order e-mails (processor).",
+              en: "Resend (Plus Five Five, Inc., USA) — sending the order emails (processor).",
             },
             {
               bg: "Обслужващата банка по виртуалния ПОС терминал — само когато плащате с карта; тя обработва данните на картата като самостоятелен администратор съгласно собствената си политика.",
@@ -132,7 +132,7 @@ export const privacyDoc: LegalDoc = {
             },
             {
               bg: "Профил: докато не го изтриете. При изтриване премахваме профила, паролата и адресите, а от поръчките — името, имейла, телефона, адреса и бележката; остават само номер, дата, продукти и суми.",
-              en: "Account: until you delete it. Deleting removes the account, the password and the addresses, and takes the name, e-mail, phone, address and note out of the orders; only the number, date, products and amounts remain.",
+              en: "Account: until you delete it. Deleting removes the account, the password and the addresses, and takes the name, email, phone, address and note out of the orders; only the number, date, products and amounts remain.",
             },
             {
               bg: "Кореспонденция и рекламации: докато въпросът бъде разрешен и за срока на евентуален спор.",
@@ -153,7 +153,7 @@ export const privacyDoc: LegalDoc = {
         {
           p: {
             bg: "Имате право на достъп, коригиране, изтриване, ограничаване на обработването, преносимост и възражение срещу обработване на основание легитимен интерес. Пишете ни на имейла или на адреса за кореспонденция — отговаряме до един месец. Профила си можете да изтриете и сами от страницата на профила.",
-            en: "You have the right of access, rectification, erasure, restriction, portability and to object to processing based on legitimate interest. E-mail us or write to the correspondence address — we reply within one month. You can also delete your account yourself from your profile page.",
+            en: "You have the right of access, rectification, erasure, restriction, portability and to object to processing based on legitimate interest. Email us or write to the correspondence address — we reply within one month. You can also delete your account yourself from your profile page.",
           },
         },
         {

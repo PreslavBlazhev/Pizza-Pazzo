@@ -8,6 +8,7 @@ import {
 } from "@/lib/restaurant-settings";
 import { groupWorkingHours, telHref, workingHoursRowLabel } from "@/lib/working-hours";
 import { DELIVERY_AREA, deliveryTownsLabel } from "@/lib/delivery-area";
+import { formatEurPrice } from "@/lib/format-price";
 import { getEffectivePaymentConfig } from "@/lib/payments/providers";
 import {
   pickL,
@@ -259,7 +260,9 @@ async function DynamicBlock({
       const lines = [
         t("areaTowns", { towns: deliveryTownsLabel(locale) }),
         DELIVERY_AREA.feeEur === 0 ? t("areaFree") : null,
-        DELIVERY_AREA.minimumOrderEur === null ? t("areaNoMinimum") : null,
+        DELIVERY_AREA.minimumOrderEur === null
+          ? t("areaNoMinimum")
+          : t("areaMinimum", { amount: formatEurPrice(DELIVERY_AREA.minimumOrderEur) }),
         DELIVERY_AREA.pickupAvailable ? null : t("areaNoPickup"),
       ].filter((line): line is string => Boolean(line));
       return (

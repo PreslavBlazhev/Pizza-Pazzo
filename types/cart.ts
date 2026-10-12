@@ -63,6 +63,11 @@ export interface ProductExtrasData {
   addons: ProductExtraOption[];
   /** Sauces with a 0–10 quantity stepper. */
   sauces: ProductExtraOption[];
+  /**
+   * Toppings included in the price — only on products that come with them
+   * ("Моята Пацо": up to 3), null everywhere else. Each option is priced 0.
+   */
+  freeToppings: { max: number; options: ProductExtraOption[] } | null;
 }
 
 /** One line in the cart: a product (with an optional chosen variant) and quantity. */

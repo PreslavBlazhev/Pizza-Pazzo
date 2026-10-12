@@ -36,7 +36,7 @@ function entry(path: string, priority: number): MetadataRoute.Sitemap[number] {
     priority,
     alternates: {
       languages: Object.fromEntries(
-        routing.locales.map((locale) => [locale, url(path, locale)])
+        routing.locales.map((locale) => [locale === "en" ? "en-GB" : locale, url(path, locale)])
       ),
     },
   };

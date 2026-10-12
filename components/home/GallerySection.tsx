@@ -1,8 +1,8 @@
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GalleryGrid } from "@/components/gallery/GalleryGrid";
-import { galleryItems } from "@/components/gallery/gallery-data";
+import { getGalleryItems } from "@/components/gallery/gallery-data";
 
 /**
  * Homepage teaser for the gallery. The full set lives on /gallery — drop the
@@ -10,6 +10,7 @@ import { galleryItems } from "@/components/gallery/gallery-data";
  */
 export function GallerySection() {
   const t = useTranslations("gallery");
+  const galleryItems = getGalleryItems(useLocale());
 
   if (galleryItems.length === 0) return null;
 

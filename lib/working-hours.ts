@@ -124,9 +124,18 @@ export function toOpeningHoursSpecification(
     });
 }
 
-/** `tel:` href — strips spaces and separators, keeps a leading "+". */
+/**
+ * `tel:` href in international form — strips spaces and separators.
+ *
+ * A Bulgarian number written nationally ("064 801 999") gets the +359 country
+ * code in place of its trunk 0, so the link also dials from a foreign phone:
+ * tel:+35964801999. "00…" becomes "+…"; a number starting with "+" is kept.
+ */
 export function telHref(phone: string): string {
   const trimmed = phone.trim();
-  const plus = trimmed.startsWith("+") ? "+" : "";
-  return `tel:${plus}${trimmed.replace(/[^\d]/g, "")}`;
+  const digits = trimmed.replace(/[^\d]/g, "");
+  if (trimmed.startsWith("+")) return `tel:+${digits}`;
+  if (digits.startsWith("00")) return `tel:+${digits.slice(2)}`;
+  if (digits.startsWith("0")) return `tel:+359${digits.slice(1)}`;
+  return `tel:${digits}`;
 }

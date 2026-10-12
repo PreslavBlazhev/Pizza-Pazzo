@@ -124,7 +124,12 @@ async function main() {
       check(main.includes("Димитър Константинов") && main.includes("Георги Кочев"), "contacts: seat and restaurant addresses kept apart");
       const tel = await page.locator('a[href^="tel:"]').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
       const mail = await page.locator('a[href^="mailto:"]').count();
-      check(tel.includes("tel:+359882484777") && tel.includes("tel:+35964801999"), "contacts: both phones dialable (tel:)", JSON.stringify(tel));
+      // One public phone since 2026-10-12 (owner): 064 801 999.
+      check(
+        tel.length > 0 && tel.every((h) => h === "tel:+35964801999"),
+        "contacts: the one public phone is dialable (tel:+35964801999), no other number",
+        JSON.stringify(tel)
+      );
       check(mail > 0, "contacts: e-mail is a mailto: link");
       const footer = await page.locator("footer").innerText();
       check(footer.includes("203300275") && footer.includes("„ПИЦА ПАЦО“ ЕООД"), "footer: registered name + ЕИК");

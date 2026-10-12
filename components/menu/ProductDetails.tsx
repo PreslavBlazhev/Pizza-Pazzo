@@ -12,10 +12,17 @@ interface ProductDetailsProps {
   category?: Category;
   /** Extras offer for the picker; null → no picker (drinks/desserts). */
   extras?: ProductExtrasData | null;
+  /** Basket line being edited (?edit=…), if any. */
+  editLineId?: string;
 }
 
 /** Full product view with purchase controls. */
-export function ProductDetails({ product, category, extras = null }: ProductDetailsProps) {
+export function ProductDetails({
+  product,
+  category,
+  extras = null,
+  editLineId,
+}: ProductDetailsProps) {
   const t = useTranslations("product");
   const tAllergens = useTranslations("allergens");
   // Unconfirmed lists are provisional developer estimates — never shown as
@@ -131,7 +138,7 @@ export function ProductDetails({ product, category, extras = null }: ProductDeta
         </div>
 
         {/* Add to cart (+ extras picker + back-to-menu link) */}
-        <AddToCart product={product} extras={extras} />
+        <AddToCart product={product} extras={extras} editLineId={editLineId} />
       </div>
     </div>
   );

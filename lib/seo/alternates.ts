@@ -14,6 +14,7 @@ export function pageAlternates(path: `/${string}`, locale: string): Metadata["al
   const en = `/en${path}`;
   return {
     canonical: locale === routing.defaultLocale ? bg : en,
-    languages: { bg, en, "x-default": bg },
+    // English is British English (en-GB) — declared as such to search engines.
+    languages: { bg, "en-GB": en, "x-default": bg },
   };
 }

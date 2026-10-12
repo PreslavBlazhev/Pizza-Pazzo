@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHero } from "@/components/ui/PageHero";
 import { GalleryGrid } from "@/components/gallery/GalleryGrid";
-import { galleryItems } from "@/components/gallery/gallery-data";
+import { getGalleryItems } from "@/components/gallery/gallery-data";
 import { routing, type Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -30,6 +30,7 @@ export default function GalleryPage({ params }: PageProps) {
 
   const t = useTranslations("gallery");
   const tCommon = useTranslations("common");
+  const galleryItems = getGalleryItems(locale);
 
   return (
     <>

@@ -1,7 +1,7 @@
 {
   "meta": {
-    "tagline": "Authentic Italian pizzas",
-    "description": "Authentic Italian pizzas delivered — order online from Pizza Pazzo.",
+    "tagline": "Pizza delivery in Pleven",
+    "description": "Pizzas, burgers, salads and desserts delivered in Pleven — order online from Pizza Pazzo.",
     "menu": {
       "title": "Digital menu",
       "description": "Choose from our pizzas, burgers, starters, salads and desserts. Prices are shown in euro."
@@ -55,7 +55,7 @@
     "gallery": "Gallery",
     "reviews": "Reviews",
     "contacts": "Contact",
-    "cart": "Cart",
+    "cart": "Basket",
     "profile": "Profile",
     "login": "Sign in",
     "register": "Sign up",
@@ -65,7 +65,9 @@
     "mobileNav": "Mobile navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "languageSwitcher": "Change language"
+    "languageSwitcher": "Change language",
+    "switchToEnglish": "Switch to English (UK)",
+    "switchToBulgarian": "Switch to Bulgarian (Български)"
   },
   "common": {
     "viewAll": "View all",
@@ -125,7 +127,7 @@
       }
     },
     "hero": {
-      "badge": "Authentic Italian pizzas",
+      "badge": "Pizza delivery in Pleven",
       "titleLead": "Deliciously",
       "titleAccent": "Different",
       "subtitle": "Fresh dough and quality ingredients. Browse our menu and order your favourite dish.",
@@ -147,10 +149,6 @@
       "viewAll": "View all favourites"
     },
     "values": {
-      "wood": {
-        "title": "Wood-fired",
-        "text": "High heat and a crisp base for authentic Italian flavour."
-      },
       "fresh": {
         "title": "Fresh ingredients",
         "text": "Hand-picked produce every day — no compromise on quality."
@@ -161,13 +159,13 @@
       }
     },
     "cta": {
-      "title": "Ready for real Italian pizza?",
+      "title": "Ready for pizza?",
       "subtitle": "Browse the menu and find your favourite dish in just a few clicks.",
       "button": "Go to the menu"
     }
   },
   "footer": {
-    "about": "Authentic Italian pizzas delivered to your door. Made with care since {year}.",
+    "about": "Pizza delivered to your door in Pleven. Made with care since {year}.",
     "navigation": "Navigation",
     "contacts": "Contact",
     "legal": "Legal",
@@ -219,7 +217,8 @@
     "formDate": "Date: …",
     "formStrike": "(*) Delete as appropriate.",
     "contacts": "Contact",
-    "foodRegistrationValue": "catering establishment — reg. No. {number}, certificate No. {certificate}, {authority}"
+    "foodRegistrationValue": "catering establishment — reg. No. {number}, certificate No. {certificate}, {authority}",
+    "areaMinimum": "Minimum order for delivery: {amount} (not a charge)."
   },
   "menu": {
     "hero": {
@@ -239,7 +238,7 @@
     "ingredients": "Ingredients",
     "size": "Serving size",
     "sizes": "Sizes",
-    "sizesNote": "Choosing a size and adding to the cart arrive in a later stage.",
+    "sizesNote": "Choosing a size and adding to the basket arrive in a later stage.",
     "chooseSize": "Choose a size",
     "inStock": "In stock",
     "outOfStock": "Out of stock",
@@ -252,10 +251,15 @@
     "orderNow": "Order now",
     "fallbackTitle": "Product",
     "orderNowFor": "Order now: {name}",
-    "addToCart": "Add to cart",
+    "addToCart": "Add to basket",
     "added": "Added ✓",
-    "addToCartSoon": "Add to cart — coming soon",
-    "illustrativeImage": "Illustrative image"
+    "addToCartSoon": "Add to basket — coming soon",
+    "illustrativeImage": "Illustrative image",
+    "decreaseQuantity": "Reduce quantity",
+    "increaseQuantity": "Increase quantity",
+    "saveChanges": "Save changes",
+    "editingNotice": "You are editing an item in your basket. Save to update it.",
+    "backToCart": "Back to basket"
   },
   "extras": {
     "title": "Choose add-ons",
@@ -270,7 +274,13 @@
     "decreaseQuantity": "Decrease quantity of {name}",
     "increaseQuantity": "Increase quantity of {name}",
     "maxQuantityReached": "Maximum quantity reached",
-    "invalidSelection": "One of the chosen add-ons is unavailable for this size. Remove it to continue."
+    "invalidSelection": "One of the chosen add-ons is unavailable for this size. Remove it to continue.",
+    "freeTitle": "Up to {max} free toppings",
+    "paidTitle": "Extra toppings",
+    "free": "Free",
+    "freeCount": "{count} of {max} chosen",
+    "freeHint": "Choose 0 to {max}. They are included in the price of the pizza.",
+    "freeLimitReached": "You have chosen {max} free toppings — the maximum. For more, choose from Extra toppings."
   },
   "gallery": {
     "eyebrow": "Appetising",
@@ -307,13 +317,13 @@
     "title": "Contact",
     "subtitle": "Call us, write to us, or drop by.",
     "phones": "Phone",
-    "addressAndEmail": "Restaurant and e-mail",
+    "addressAndEmail": "Restaurant and email",
     "openInMaps": "Open in Google Maps →",
     "mapTitle": "Map — {name}",
     "restaurantAddress": "Restaurant address",
     "merchantTitle": "Merchant",
     "complaintsTitle": "Cancellations, complaints and refunds",
-    "complaintsText": "To cancel an order, complain or ask for a refund, call or e-mail us with the order number. How and when — in <link>Cancellation, Returns and Complaints</link>.",
+    "complaintsText": "To cancel an order, complain or ask for a refund, call or email us with the order number. How and when — in <link>Cancellation, Returns and Complaints</link>.",
     "showMap": "Show the map",
     "mapNotice": "The map loads from Google only after you press the button — Google then receives your IP address and may set its own cookies. <link>Cookie Policy</link>"
   },
@@ -377,16 +387,25 @@
     }
   },
   "cart": {
-    "title": "Cart",
+    "title": "Basket",
     "comingSoon": "Online ordering is on its way. Very soon you'll be able to add dishes here and order straight from the site. Until then, give us a call — we take orders by phone.",
-    "empty": "Your cart is empty.",
+    "empty": "Your basket is empty.",
     "total": "Total",
     "quantity": "Quantity",
     "quantityShort": "Qty: {count}",
     "remove": "Remove",
     "checkout": "Go to checkout",
     "continueShopping": "Continue browsing",
-    "clear": "Clear cart"
+    "clear": "Clear basket",
+    "free": "Free",
+    "edit": "Edit",
+    "editItem": "Edit {name}",
+    "removeItem": "Remove {name}",
+    "decreaseQuantity": "Reduce the quantity of {name}",
+    "increaseQuantity": "Increase the quantity of {name}",
+    "minimumOrder": "Minimum order for delivery: {amount}.",
+    "minimumOrderShortfall": "The minimum order for delivery is {amount}. Add {remaining} more to continue. This is not a charge — delivery is free.",
+    "extrasPerItem": "Extras apply to each item."
   },
   "store": {
     "closedTitle": "The restaurant is closed",
@@ -426,7 +445,7 @@
     "orderSummary": "Order summary",
     "fullName": "Full name",
     "address": "Delivery address",
-    "addressPlaceholder": "street, number, entrance, floor, apartment",
+    "addressPlaceholder": "street, number, entrance, floor, flat",
     "payment": "Payment",
     "placing": "Placing…",
     "required": "REQUIRED",
@@ -459,7 +478,7 @@
     "deliveryTermsTitle": "Delivery",
     "deliveryOnlyTowns": "We deliver only within {towns}. Collecting the order yourself is not offered through the site.",
     "deliveryFreeNoMinimum": "Delivery is free; there is no minimum order.",
-    "deliveryEta": "You will receive the estimated delivery time by e-mail when the restaurant accepts the order.",
+    "deliveryEta": "You will receive the estimated delivery time by email when the restaurant accepts the order.",
     "deliveryMore": "Details: <delivery>Delivery Terms</delivery> · <payment>Payment methods</payment>",
     "finalTotal": "Total to pay",
     "finalTotalNote": "in euro, VAT included; delivery is free",
@@ -467,20 +486,22 @@
       "STORE_CLOSED": "The restaurant is closed right now and is not taking orders. Please try again when we are open.",
       "PAYMENT_METHOD": "Please choose a payment method.",
       "CARD_UNAVAILABLE": "Card payment is not available right now. Please choose cash on delivery.",
-      "CART_INVALID": "The cart is empty or invalid.",
-      "PRODUCT_UNAVAILABLE": "One of the products is no longer available. Please refresh your cart.",
-      "VARIANT_INVALID": "Invalid product size. Please refresh your cart.",
-      "EXTRAS_INVALID": "Invalid extras in the cart. Please refresh your cart and try again.",
+      "CART_INVALID": "The basket is empty or invalid.",
+      "PRODUCT_UNAVAILABLE": "One of the products is no longer available. Please refresh your basket.",
+      "VARIANT_INVALID": "Invalid product size. Please refresh your basket.",
+      "EXTRAS_INVALID": "Invalid extras in the basket. Please refresh your basket and try again.",
       "SAVE_FAILED": "The order could not be saved. Please try again.",
       "NAME_SHORT": "The name must be at least 2 characters.",
-      "EMAIL_INVALID": "Please enter a valid e-mail address — your confirmation will be sent there.",
+      "EMAIL_INVALID": "Please enter a valid email address — your confirmation will be sent there.",
       "PHONE_SHORT": "The phone number must be at least 8 characters.",
       "CITY_OUTSIDE_AREA": "We deliver only within Pleven.",
       "ADDRESS_SHORT": "The address must be at least 5 characters.",
       "NOTE_TOO_LONG": "The note is too long (max. 300 characters).",
       "CONSENT_REQUIRED": "Please confirm this to send the order.",
-      "FIELD_INVALID": "Invalid value."
-    }
+      "FIELD_INVALID": "Invalid value.",
+      "BELOW_MINIMUM": "The minimum order for delivery is {amount}. Please add more items to your basket."
+    },
+    "deliveryFreeMinimum": "Delivery is free; the minimum order is {amount}."
   },
   "orderSuccess": {
     "metaTitle": "Order placed",
@@ -782,7 +803,7 @@
       "next1Held": "The restaurant will contact you to confirm you still want the order. If not, the amount is refunded to the card you paid with.",
       "paid": "Paid by card: {amount}",
       "nextTitle": "What happens next",
-      "next1": "The restaurant will accept your order and e-mail you the estimated delivery time.",
+      "next1": "The restaurant will accept your order and email you the estimated delivery time.",
       "next2": "The courier will not ask you for money — the order is paid.",
       "next3": "Questions? Call {phone} and give your order number."
     },
@@ -798,7 +819,7 @@
     "failed": {
       "metaTitle": "Payment not completed",
       "title": "The payment was not confirmed",
-      "subtitle": "Your order has NOT been sent to the restaurant. Your cart is saved.",
+      "subtitle": "Your order has NOT been sent to the restaurant. Your basket is saved.",
       "reasonFAILED": "The bank declined the payment.",
       "reasonCANCELLED": "The payment was cancelled.",
       "reasonEXPIRED": "The payment session expired.",
@@ -820,5 +841,9 @@
     "cardSchemes": "Card brands",
     "boricaLogoAlt": "BORICA – Banking Services logo",
     "cardNotActiveYet": "Online card payment is not active yet — orders are currently paid in cash on delivery."
+  },
+  "callNow": {
+    "button": "Call now",
+    "ariaLabel": "Call us now on {phone}"
   }
 }

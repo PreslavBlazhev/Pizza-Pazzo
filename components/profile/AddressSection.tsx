@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { createAddress, deleteAddress, updateAddress } from "@/app/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -30,6 +30,7 @@ function AddressForm({
 }) {
   const t = useTranslations("profile.address");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const isEdit = Boolean(address);
   const [state, formAction, isPending] = useActionState<ActionResult | null, FormData>(
     isEdit ? updateAddress : createAddress,
@@ -80,7 +81,7 @@ function AddressForm({
         <Input
           label={t("city")}
           name="city"
-          defaultValue={address?.city ?? "Плевен"}
+          defaultValue={address?.city ?? (locale === "en" ? "Pleven" : "Плевен")}
           error={fieldErrors.city}
         />
         <Input

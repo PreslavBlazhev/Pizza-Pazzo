@@ -19,11 +19,18 @@ import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
 import { useStoreClosed } from "@/components/store/StoreStatusProvider";
 import {
   linePreviewTotalEur,
+  lineUnitPreviewEur,
   useCartHydrated,
   useCartStore,
 } from "@/store/cart-store";
 import { formatEurPrice } from "@/lib/format-price";
-import { deliveryTownsLabel, DELIVERY_AREA } from "@/lib/delivery-area";
+import {
+  deliveryTownsLabel,
+  DELIVERY_AREA,
+  minimumOrderShortfallEur,
+} from "@/lib/delivery-area";
+import { MinimumOrderNotice } from "@/components/cart/MinimumOrderNotice";
+import { cartExtraName, cartProductName, cartVariantName } from "@/lib/cart-display";
 import { CONSENT_FIELDS, type ConsentField } from "@/lib/validators/checkout";
 import { CardBrandMarks } from "@/components/payment/CardBrandMarks";
 import type { CardBrandMark } from "@/lib/payments/card-marks";
@@ -77,8 +84,41 @@ type TextField = (typeof TEXT_FIELDS)[number];
 type RequiredField = (typeof REQUIRED_FIELDS)[number];
 type FormValues = Record<TextField | "deliveryNote", string>;
 
-/** The one town we deliver to — shown, not typed (lib/delivery-area.ts). */
-const DELIVERY_TOWN = DELIVERY_AREA.towns[0].bg;
+/** The one town we deliver to — shown, not typed (lib/delivery-area.ts), in
+ *  the reader's language; the server stores it in its canonical BG spelling. */
+const deliveryTownFor = (locale: string) =>
+  locale === "en" ? DELIVERY_AREA.towns[0].en : DELIVERY_AREA.towns[0].bg;
+
+/**
+ * What the customer has typed and ticked, kept in sessionStorage for this tab
+ * only — so switching BG ⇄ EN (which reloads the page in the other language)
+ * does not wipe the form. Cleared once an order is placed.
+ */
+const DRAFT_KEY = "pp-checkout-draft";
+
+interface CheckoutDraft {
+  values?: Partial<Record<string, string>>;
+  paymentMethod?: string;
+  consents?: Partial<Record<ConsentField, boolean>>;
+}
+
+function readDraft(): CheckoutDraft | null {
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as CheckoutDraft) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(draft: CheckoutDraft | null): void {
+  try {
+    if (draft) window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    else window.sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Storage blocked (private mode, quota) — the form still works.
+  }
+}
 
 export function CheckoutForm({
   defaults,
@@ -146,6 +186,42 @@ export function CheckoutForm({
     if (checked) setMissing((prev) => prev.filter((f) => f !== field));
   }, []);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Restore a draft from before a language switch (or a reload), then keep it
+  // up to date. The restore runs once, before the first save, so an empty
+  // initial state never overwrites the stored draft.
+  const draftRestored = useRef(false);
+  useEffect(() => {
+    const draft = readDraft();
+    if (draft) {
+      if (draft.values) {
+        setValues((prev) => {
+          const next = { ...prev };
+          for (const key of Object.keys(prev) as (keyof FormValues)[]) {
+            const v = draft.values?.[key];
+            if (typeof v === "string" && v !== "") next[key] = v;
+          }
+          return next;
+        });
+      }
+      if (draft.paymentMethod === "card_online" && cardAvailable) setPaymentMethod("card_online");
+      if (draft.consents) {
+        setConsents((prev) => {
+          const next = { ...prev };
+          for (const field of CONSENT_FIELDS) {
+            if (typeof draft.consents?.[field] === "boolean") next[field] = draft.consents[field] as boolean;
+          }
+          return next;
+        });
+      }
+    }
+    draftRestored.current = true;
+  }, [cardAvailable]);
+
+  useEffect(() => {
+    if (!draftRestored.current) return;
+    writeDraft({ values, paymentMethod, consents });
+  }, [values, paymentMethod, consents]);
 
   const setValue = useCallback((field: keyof FormValues, value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -238,11 +314,13 @@ export function CheckoutForm({
     if (!state?.ok || !state.orderNumber) return;
     setCheckoutKey(newCheckoutKey());
     if (state.paymentMethod === "CARD_ONLINE" && state.accessToken) {
+      writeDraft(null);
       rememberPendingPayment({ token: state.accessToken, orderNumber: state.orderNumber });
       router.push(`/checkout/pay/${state.accessToken}`);
       return;
     }
     clear();
+    writeDraft(null);
     // A cash order replaces any card payment the customer walked away from.
     clearPendingPayment();
     router.push({ pathname: "/order-success", query: { n: String(state.orderNumber) } });
@@ -268,6 +346,9 @@ export function CheckoutForm({
 
   const serverErrors = state?.fieldErrors ?? {};
   const totals = totalsFn();
+  // The delivery minimum, on the same preview total the customer sees; the
+  // server checks it again on its own prices.
+  const belowMinimum = minimumOrderShortfallEur(totals.total) > 0;
 
   /** A field's message: this browser's complaint first, then the server's. */
   const errorFor = (field: keyof FormValues | ConsentField) =>
@@ -362,7 +443,7 @@ export function CheckoutForm({
           <Input
             label={t("city")}
             name="deliveryCity"
-            value={DELIVERY_TOWN}
+            value={deliveryTownFor(locale)}
             readOnly
             aria-readonly
             className="bg-pizza-cream/50"
@@ -429,7 +510,11 @@ export function CheckoutForm({
           <h2 className="text-lg font-semibold text-pizza-ink">{t("deliveryTermsTitle")}</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>{t("deliveryOnlyTowns", { towns: deliveryTownsLabel(locale) })}</li>
-            <li>{t("deliveryFreeNoMinimum")}</li>
+            <li>
+              {DELIVERY_AREA.minimumOrderEur === null
+                ? t("deliveryFreeNoMinimum")
+                : t("deliveryFreeMinimum", { amount: formatEurPrice(DELIVERY_AREA.minimumOrderEur) })}
+            </li>
             <li>{t("deliveryEta")}</li>
             <li>
               {t.rich("deliveryMore", {
@@ -475,6 +560,8 @@ export function CheckoutForm({
             the customer filling the whole form to be told no at the end. */}
         <StoreClosedBanner />
 
+        <MinimumOrderNotice subtotalEur={totals.total} />
+
         {/* The final amount, immediately before the binding action. */}
         <div
           className="flex items-baseline justify-between gap-3 rounded-2xl bg-pizza-cream/60 px-5 py-4 text-pizza-ink"
@@ -489,7 +576,7 @@ export function CheckoutForm({
 
         <button
           type="submit"
-          disabled={isPending || storeClosed}
+          disabled={isPending || storeClosed || belowMinimum}
           className="w-full rounded-full bg-brand px-6 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark disabled:opacity-60"
         >
           {isPending
@@ -514,12 +601,17 @@ export function CheckoutForm({
             <li key={i.lineId} className="text-pizza-muted">
               <div className="flex justify-between gap-2">
                 <span className="min-w-0">
-                  {i.quantity}× {i.product.name}
-                  {i.selectedVariant ? ` (${i.selectedVariant.name})` : ""}
+                  {i.quantity}× {cartProductName(i, locale)}
+                  {cartVariantName(i, locale) ? ` (${cartVariantName(i, locale)})` : ""}
                 </span>
                 {/* Preview line total incl. extras — server recomputes it. */}
-                <span className="shrink-0 font-medium text-pizza-ink">
+                <span className="shrink-0 text-right font-medium text-pizza-ink">
                   {formatEurPrice(linePreviewTotalEur(i))}
+                  {i.quantity > 1 && (
+                    <span className="block whitespace-nowrap text-xs font-normal text-pizza-muted">
+                      {i.quantity} × {formatEurPrice(lineUnitPreviewEur(i))}
+                    </span>
+                  )}
                 </span>
               </div>
               {(i.extras ?? []).length > 0 && (
@@ -527,13 +619,18 @@ export function CheckoutForm({
                   {(i.extras ?? []).map((e) => (
                     <li key={e.key} className="break-words">
                       + {e.quantity > 1 ? `${e.quantity}× ` : ""}
-                      {e.display
-                        ? locale === "en"
-                          ? e.display.nameEn
-                          : e.display.nameBg
-                        : e.key}
+                      {cartExtraName(e, locale)}
+                      {e.display && (
+                        <span className="whitespace-nowrap">
+                          {" — "}
+                          {e.display.unitPriceEur === 0
+                            ? tCart("free")
+                            : formatEurPrice(Math.round(e.display.unitPriceEur * e.quantity * 100) / 100)}
+                        </span>
+                      )}
                     </li>
                   ))}
+                  {i.quantity > 1 && <li className="italic">{tCart("extrasPerItem")}</li>}
                 </ul>
               )}
             </li>

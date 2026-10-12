@@ -31,10 +31,12 @@ import type {
 import {
   BURGER_ADDONS_CATEGORY_ID,
   EXTRAS_LIMITS,
+  FREE_TOPPING_SELECTIONS,
   PIZZA_ADDONS_CATEGORY_ID,
   PIZZA_SELECTIONS,
   SAUCES_CATEGORY_ID,
   burgerAddonKeyFor,
+  freeToppingsLimitFor,
   isBurgerCategory,
   isPizzaCategory,
   parseVariantSize,
@@ -164,13 +166,14 @@ function resolveCategory(raw: RawCategory, locale: Locale): Category {
 }
 
 function resolveVariant(raw: RawProductVariant, locale: Locale): ProductVariant {
-  return { ...raw, name: pick(raw.name, locale) };
+  return { ...raw, name: pick(raw.name, locale), names: raw.name };
 }
 
 function resolveProduct(raw: RawProduct, locale: Locale): Product {
   return {
     ...raw,
     name: pick(raw.name, locale),
+    names: raw.name,
     description: pick(raw.description, locale),
     size: raw.size ? pick(raw.size, locale) : undefined,
     ingredients: raw.ingredients?.map((i) => pick(i, locale)),
@@ -289,9 +292,11 @@ function sizePricesOf(raw: RawProduct): ProductExtraOptionSizePrice[] {
  * This is a superset of what the server will accept at checkout — the resolver
  * in lib/extras-resolve.ts stays the only pricing authority.
  */
-export async function getExtrasForProduct(
-  categoryId: string
-): Promise<ProductExtrasData | null> {
+export async function getExtrasForProduct(product: {
+  id: string;
+  categoryId: string;
+}): Promise<ProductExtrasData | null> {
+  const { categoryId } = product;
   if (!saucesAllowedForCategory(categoryId)) return null;
 
   const { products } = await loadMenu();
@@ -357,6 +362,37 @@ export async function getExtrasForProduct(
     });
   }
 
-  if (crusts.length === 0 && addons.length === 0 && sauces.length === 0) return null;
-  return { crusts, addons, sauces };
+  // Toppings included in the price — only for the products listed in
+  // FREE_TOPPINGS_BY_PRODUCT ("Моята Пацо"), never for pizzas in general.
+  let freeToppings: ProductExtrasData["freeToppings"] = null;
+  const freeMax = freeToppingsLimitFor(product.id);
+  if (freeMax > 0) {
+    const onSale = new Set(
+      products
+        .filter((p) => p.categoryId === PIZZA_ADDONS_CATEGORY_ID && p.isAvailable)
+        .map((p) => p.id)
+    );
+    const options: ProductExtraOption[] = Object.entries(FREE_TOPPING_SELECTIONS)
+      .filter(([, def]) => onSale.has(def.sourceProductId))
+      .map(([key, def]) => ({
+        key,
+        sourceProductId: def.sourceProductId,
+        type: "pizza_free_topping",
+        nameBg: def.nameBg,
+        nameEn: def.nameEn,
+        priceEur: 0,
+        maxQuantity: 1,
+      }));
+    if (options.length > 0) freeToppings = { max: freeMax, options };
+  }
+
+  if (
+    crusts.length === 0 &&
+    addons.length === 0 &&
+    sauces.length === 0 &&
+    freeToppings === null
+  ) {
+    return null;
+  }
+  return { crusts, addons, sauces, freeToppings };
 }

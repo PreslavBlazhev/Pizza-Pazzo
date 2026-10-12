@@ -11,12 +11,14 @@
  * commit where the version was set), listed in docs/UBB-COMPLIANCE.md.
  */
 export const LEGAL_VERSIONS = {
-  terms: "2026-09-30",
-  refunds: "2026-09-30",
-  privacy: "2026-09-29",
-  delivery: "2026-09-29",
-  payment: "2026-09-30",
-  cookies: "2026-09-29",
+  // 2026-10-12: British English wording in the EN texts (basket, email, flat);
+  // delivery also gained the 10 € minimum order for delivery.
+  terms: "2026-10-12",
+  refunds: "2026-10-12",
+  privacy: "2026-10-12",
+  delivery: "2026-10-12",
+  payment: "2026-10-12",
+  cookies: "2026-10-12",
 } as const;
 
 export type LegalVersionedDoc = keyof typeof LEGAL_VERSIONS;

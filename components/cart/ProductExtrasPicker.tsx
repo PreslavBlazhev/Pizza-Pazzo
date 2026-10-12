@@ -50,6 +50,15 @@ interface ProductExtrasPickerProps {
   onSauceChange: (option: ProductExtraOption, delta: 1 | -1) => void;
 }
 
+/** How many of the free toppings are currently chosen. */
+export function freeToppingsChosen(
+  extras: ProductExtrasData | null,
+  selected: ExtrasSelectionState
+): number {
+  if (!extras?.freeToppings) return 0;
+  return extras.freeToppings.options.filter((o) => (selected[o.key] ?? 0) > 0).length;
+}
+
 /**
  * One collapsible section. Closing on Escape and on an outside click is done
  * with a ref plus two listeners — no dropdown library, and the panel stays in
@@ -215,6 +224,51 @@ export function ProductExtrasPicker({
     );
   };
 
+  // ── Free toppings ("Моята Пацо"): 0 … max, never more ──
+  const free = extras.freeToppings;
+  const freeCount = freeToppingsChosen(extras, selected);
+  const freeAtLimit = free !== null && freeCount >= free.max;
+
+  const freeRow = (option: ProductExtraOption) => {
+    const isSelected = (selected[option.key] ?? 0) > 0;
+    // A fourth free topping cannot be ticked — it is not silently made a
+    // paid one either; the paid add-ons are a separate, explicit choice.
+    const disabled = !isSelected && (freeAtLimit || atEntryLimit);
+
+    return (
+      <button
+        key={option.key}
+        type="button"
+        aria-pressed={isSelected}
+        disabled={disabled}
+        onClick={() => onToggle(option)}
+        className={cn(
+          "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-1",
+          isSelected
+            ? "border-pizza-green bg-pizza-green-light"
+            : "border-pizza-cream-dark bg-white hover:border-pizza-green/50",
+          disabled && "cursor-not-allowed opacity-60 hover:border-pizza-cream-dark"
+        )}
+      >
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span
+            aria-hidden
+            className={cn(
+              "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold",
+              isSelected
+                ? "border-pizza-green bg-pizza-green text-white"
+                : "border-pizza-cream-dark bg-white text-transparent"
+            )}
+          >
+            ✓
+          </span>
+          <span className="min-w-0 text-sm font-medium text-pizza-ink">{nameOf(option)}</span>
+        </span>
+        <span className="shrink-0 text-sm font-semibold text-pizza-green-dark">{t("free")}</span>
+      </button>
+    );
+  };
+
   const sauceRow = (option: ProductExtraOption) => {
     const qty = selected[option.key] ?? 0;
     const price = optionPriceFor(option, mainSize);
@@ -286,6 +340,7 @@ export function ProductExtrasPicker({
 
   const addonSummary =
     addonCount === 0 ? t("noneSelected") : t("selectedCount", { count: addonCount });
+  const freeSummary = free ? t("freeCount", { count: freeCount, max: free.max }) : "";
   const sauceSummary =
     sauceUnits === 0 ? t("noneSelected") : t("saucesCount", { count: sauceUnits });
 
@@ -293,11 +348,26 @@ export function ProductExtrasPicker({
     <div
       className={cn(
         "grid gap-4 text-left",
-        hasAddons && hasSauces ? "md:grid-cols-2" : "md:grid-cols-1"
+        (hasAddons ? 1 : 0) + (hasSauces ? 1 : 0) + (free ? 1 : 0) > 1
+          ? "md:grid-cols-2"
+          : "md:grid-cols-1"
       )}
     >
+      {free && (
+        <ExtrasDisclosure title={t("freeTitle", { max: free.max })} summary={freeSummary}>
+          <p className="px-1 text-xs text-pizza-muted">{t("freeHint", { max: free.max })}</p>
+          {free.options.map(freeRow)}
+          {freeAtLimit && (
+            <p role="status" className="px-1 pt-1 text-xs font-medium text-brand-dark">
+              {t("freeLimitReached", { max: free.max })}
+            </p>
+          )}
+        </ExtrasDisclosure>
+      )}
+
       {hasAddons && (
-        <ExtrasDisclosure title={t("title")} summary={addonSummary}>
+        // Where free toppings exist, this list is explicitly the PAID one.
+        <ExtrasDisclosure title={free ? t("paidTitle") : t("title")} summary={addonSummary}>
           {extras.crusts.length > 0 && (
             <>
               <p className="px-1 text-xs font-semibold uppercase tracking-wide text-pizza-muted">

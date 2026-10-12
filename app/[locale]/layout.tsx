@@ -73,7 +73,7 @@ export async function generateMetadata({
       canonical: locale === routing.defaultLocale ? "/" : `/${locale}`,
       languages: {
         bg: "/",
-        en: "/en",
+        "en-GB": "/en",
         "x-default": "/",
       },
     },
@@ -116,7 +116,9 @@ export default async function LocaleLayout({
   const restaurantJsonLd = await getRestaurantJsonLd(locale);
 
   return (
-    <html lang={locale} className={`${display.variable} ${sans.variable} ${slogan.variable}`}>
+    // English is British English throughout, so the document says en-GB —
+    // screen readers pick the voice and browsers the spell-checker from it.
+    <html lang={locale === "en" ? "en-GB" : "bg"} className={`${display.variable} ${sans.variable} ${slogan.variable}`}>
       <body className="min-h-screen bg-pizza-cream font-sans text-pizza-ink antialiased">
         {/* schema.org Restaurant data for rich results. The `<` escape keeps a
             hypothetical "</script>" inside the data from closing the tag. */}

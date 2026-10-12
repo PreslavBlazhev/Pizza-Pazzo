@@ -8,7 +8,12 @@
  *   - delivery is free (owner's decision 2026-09-27);
  *   - the site takes delivery orders only — there is no pickup option in the
  *     order flow (Order.deliveryMethod is always DELIVERY);
- *   - the site applies no minimum order amount.
+ *   - the minimum order for DELIVERY is 10 € (owner, 2026-10-12). It is a
+ *     minimum VALUE of the order, not a fee: delivery stays free. It is
+ *     measured on the products (base prices + chosen extras, × quantity),
+ *     which is also the whole bill — there are no discounts and no fee to
+ *     include or leave out. Every site order is a delivery, so it applies to
+ *     every order; a pickup option would NOT inherit it without a rule.
  *
  * NOT confirmed and therefore NOT modelled: a list of districts/villages or a
  * radius. Any address in the town is accepted by the server; the terms say
@@ -26,8 +31,8 @@ export const DELIVERY_AREA = {
   towns: [{ bg: "Плевен", en: "Pleven" }] as readonly DeliveryTown[],
   /** Delivery fee in EUR — free. */
   feeEur: 0,
-  /** Minimum order in EUR — none. */
-  minimumOrderEur: null as number | null,
+  /** Minimum order value for delivery, in EUR (null = no minimum). */
+  minimumOrderEur: 10 as number | null,
   /** Customers may collect the order themselves through the site. */
   pickupAvailable: false,
 } as const;
@@ -56,6 +61,21 @@ export function resolveDeliveryTown(raw: string | null | undefined): string | nu
     (t) => normalizeTown(t.bg) === wanted || normalizeTown(t.en) === wanted
   );
   return hit ? hit.bg : null;
+}
+
+/**
+ * How much is missing to reach the delivery minimum, in EUR — 0 when the
+ * minimum is met or there is none. Compared in whole cents, so 9.99 € is
+ * short by 0.01 €, while 10.00 € and 10.01 € pass: no floating-point
+ * surprise like 9.999999999 counting as "under".
+ *
+ * The ONE rule: the cart, the checkout page and the server all call this.
+ */
+export function minimumOrderShortfallEur(subtotalEur: number): number {
+  const minimum = DELIVERY_AREA.minimumOrderEur;
+  if (minimum === null) return 0;
+  const missingCents = Math.round(minimum * 100) - Math.round(subtotalEur * 100);
+  return missingCents > 0 ? missingCents / 100 : 0;
 }
 
 /** "Плевен" / "Pleven" — for the texts that list where we deliver. */

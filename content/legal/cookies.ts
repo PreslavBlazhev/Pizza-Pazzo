@@ -41,7 +41,7 @@ export const cookiesDoc: LegalDoc = {
             },
             {
               bg: "pp-cart (локално хранилище на браузъра) — съдържанието на количката, за да не се губи при презареждане. Не се изпраща автоматично към сървъра.",
-              en: "pp-cart (browser local storage) — the contents of your cart, so it survives a reload. Not sent to the server automatically.",
+              en: "pp-cart (browser local storage) — the contents of your basket, so it survives a reload. Not sent to the server automatically.",
             },
             {
               bg: "pp-pending-payment (локално хранилище) — само при започнато плащане с карта, за да можете да се върнете към него.",
@@ -88,7 +88,7 @@ export const cookiesDoc: LegalDoc = {
         {
           p: {
             bg: "Можете да изтриете или блокирате бисквитките и локалното хранилище от настройките на браузъра. Изтриването на pp_session ви отписва; изтриването на локалното хранилище изпразва количката.",
-            en: "You can delete or block cookies and local storage in your browser settings. Deleting pp_session signs you out; clearing local storage empties your cart.",
+            en: "You can delete or block cookies and local storage in your browser settings. Deleting pp_session signs you out; clearing local storage empties your basket.",
           },
         },
       ],

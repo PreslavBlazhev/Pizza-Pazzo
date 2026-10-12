@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { logoutUser } from "@/app/actions/auth";
 import { canAccessAdmin, isUserRole, type UserRole } from "@/types/auth";
-import { NAV_LINKS } from "./Header";
+import { NAV_LINKS } from "./nav-links";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
 /**

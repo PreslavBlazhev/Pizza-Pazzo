@@ -34,7 +34,7 @@ export const paymentDoc: LegalDoc = {
         {
           p: {
             bg: "Плащате общата сума от поръчката на куриера при получаване. Сумата е същата, която виждате преди да потвърдите поръчката и в имейла за приемане.",
-            en: "You pay the order total to the courier on delivery. It is the same amount you see before confirming the order and in the acceptance e-mail.",
+            en: "You pay the order total to the courier on delivery. It is the same amount you see before confirming the order and in the acceptance email.",
           },
         },
       ],
