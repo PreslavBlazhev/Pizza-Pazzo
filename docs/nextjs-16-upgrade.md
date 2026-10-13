@@ -28,6 +28,11 @@ reproducible.
 - Test provisioning explicitly creates its disposable SQLite file before
   Prisma 5 applies migrations, avoiding a missing-file connection-probe error
   in the Windows CLI.
+- The shared Prisma client's SQLite connection pool is limited to one
+  connection. Linux CI exposed an existing Prisma-engine deadlock with five
+  concurrent checkouts on a small runner; SQLite's single writer is now queued
+  in the pool. The duplicate-order and distinct-order concurrency tests remain
+  unchanged and exercise the real application configuration.
 
 There is no new database migration or change to prices, discounts, products,
 delivery rules, working hours or payment-provider settings for this upgrade.
