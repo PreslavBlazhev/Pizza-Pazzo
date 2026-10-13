@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import {
   PRINT_TEMPLATES_CACHE_TAG,
@@ -62,10 +62,10 @@ export async function updatePrintTemplateAction(
     return { ok: false, error: "Настройките не можаха да бъдат запазени. Опитайте отново." };
   }
 
-  // Same reasoning as the restaurant settings action: only revalidateTag.
+  // Same reasoning as the restaurant settings action: only updateTag.
   // revalidatePath("/", "layout") inside an action makes Next answer with
   // x-action-redirect and throws the admin back to the homepage.
-  revalidateTag(PRINT_TEMPLATES_CACHE_TAG);
+  updateTag(PRINT_TEMPLATES_CACHE_TAG);
 
   return { ok: true, message: "Настройките на печата са запазени." };
 }
@@ -89,7 +89,7 @@ export async function resetPrintTemplateAction(
     return { ok: false, error: "Настройките не можаха да бъдат върнати. Опитайте отново." };
   }
 
-  revalidateTag(PRINT_TEMPLATES_CACHE_TAG);
+  updateTag(PRINT_TEMPLATES_CACHE_TAG);
 
   return { ok: true, message: "Настройките са върнати към фабричните." };
 }

@@ -7,12 +7,15 @@
  * database (prisma/dev.db) and anything on Render are never touched.
  */
 import { execSync } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const dir = mkdtempSync(join(tmpdir(), "pp-payments-test-"));
 const dbFile = join(dir, "test.db").replace(/\\/g, "/");
+// Explicitly create the fresh file: Prisma 5's Windows CLI can fail its
+// connection probe for a missing SQLite file before it applies migrations.
+writeFileSync(dbFile, "");
 
 process.env.DATABASE_URL = `file:${dbFile}`;
 process.env.NODE_ENV = "test";

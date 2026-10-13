@@ -3,15 +3,16 @@
 Онлайн система за поръчки на ресторант **Pizza Pazzo** — публичен сайт, дигитално
 меню, количка, поръчки с доставка, клиентски профили и административен панел.
 
-> **Статус:** Етап 0 — структура/скеле. Всички страници се отварят с placeholder
-> съдържание. Разработката продължава feature по feature — виж
-> [`docs/system-roadmap.md`](docs/system-roadmap.md).
+> Публичен сайт на български и британски английски, поръчки с доставка,
+> клиентски профили и административен панел. За актуализацията на платформата
+> виж [`docs/nextjs-16-upgrade.md`](docs/nextjs-16-upgrade.md).
 
 ## Технологии
-- [Next.js](https://nextjs.org) (App Router) + TypeScript
+- [Next.js](https://nextjs.org) 16.4.0 (App Router, Turbopack) + React 19.3.0 + TypeScript
+- Node.js 22 LTS; next-intl 4.14.9
 - Tailwind CSS
 - Zustand (клиентско състояние)
-- Данни: статичен JSON сега → Supabase по-късно
+- Данни: SQLite + Prisma; начално меню от JSON
 
 ## Стартиране локално
 

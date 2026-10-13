@@ -7,7 +7,6 @@
     "node": ">=22 <23"
   },
   "scripts": {
-    "postinstall": "patch-package",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -31,7 +30,7 @@
     "db:seed-staging": "node scripts/seed-staging.mjs",
     "e2e:browser": "node --env-file=.env --import tsx scripts/e2e-browser-payments.ts",
     "test:ubb": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/ubb-compliance.test.ts",
-    "test:owner": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/owner-corrections.test.ts tests/checkout-resilience.test.ts tests/pizza-math.test.ts tests/checkout-trace.test.ts tests/react-hydration-patch.test.ts",
+    "test:owner": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/owner-corrections.test.ts tests/checkout-resilience.test.ts tests/pizza-math.test.ts tests/checkout-trace.test.ts",
     "test": "npm run test:payments && npm run test:ubb && npm run test:owner",
     "db:verify-migration": "node scripts/verify-consent-migration.mjs",
     "e2e:ubb": "node --env-file=.env --import tsx scripts/e2e-ubb-browser.ts",
@@ -39,7 +38,8 @@
     "e2e:checkout-links": "node --env-file=.env --import tsx scripts/e2e-checkout-links.ts",
     "e2e:footer-marks": "node --import tsx scripts/e2e-footer-marks.ts",
     "e2e:checkout-language": "node --env-file=.env --import tsx scripts/e2e-checkout-language.ts",
-    "e2e:hydration": "node --import tsx scripts/e2e-hydration.ts"
+    "e2e:hydration": "node --import tsx scripts/e2e-hydration.ts",
+    "e2e:upgrade": "node --import tsx scripts/e2e-framework-upgrade.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
@@ -48,26 +48,24 @@
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
-    "next": "15.5.20",
-    "next-intl": "^4.13.2",
-    "patch-package": "8.0.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "next": "16.4.0",
+    "next-intl": "4.14.9",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "resend": "^6.17.2",
     "zod": "^4.4.3",
     "zustand": "5.0.3"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.6",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "22.10.7",
-    "@types/react": "19.0.7",
-    "@types/react-dom": "19.0.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "autoprefixer": "10.4.20",
-    "eslint": "9.18.0",
-    "eslint-config-next": "^15.5.20",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.0",
     "playwright-core": "^1.63.0",
-    "postcss": "8.5.1",
+    "postcss": "8.5.30",
     "prisma": "^5.22.0",
     "tailwindcss": "3.4.17",
     "tsx": "^4.23.15",

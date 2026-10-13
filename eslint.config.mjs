@@ -1,11 +1,5 @@
-import { FlatCompat } from "@eslint/eslintrc";
-
-/**
- * Flat ESLint config (ESLint 9). `next lint` is deprecated in Next 15, so the
- * `lint` script runs the ESLint CLI directly; FlatCompat translates the
- * Next.js shareable configs (core-web-vitals + TS rules) to flat format.
- */
-const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
 
 const config = [
   {
@@ -18,7 +12,26 @@ const config = [
       "next-env.d.ts",
     ],
   },
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextVitals,
+  ...nextTypescript,
+  {
+    // Existing effects restore browser-only state after SSR or subscribe to
+    // external services. Keep their tested hydration behaviour while exposing
+    // the new React performance advice; all other rules remain errors.
+    files: [
+      "components/admin/AndroidPrinterSettingsButton.tsx",
+      "components/admin/PrintOrderButton.tsx",
+      "components/admin/ShiftProvider.tsx",
+      "components/cart/AddToCart.tsx",
+      "components/cart/useUnavailableProducts.ts",
+      "components/checkout/CheckoutForm.tsx",
+      "components/payment/PendingPaymentNotice.tsx",
+      "components/profile/ProfileEditForm.tsx",
+      "components/store/StoreStatusProvider.tsx",
+      "store/cart-store.ts",
+    ],
+    rules: { "react-hooks/set-state-in-effect": "warn" },
+  },
 ];
 
 export default config;

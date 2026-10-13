@@ -11,7 +11,8 @@
  * SLOW NETWORK (the case that found React #418): at ~20 KB/s the client code
  * of some components arrives while hydration is under way; a host element
  * whose child is still loading suspends and is replayed. Before the patch in
- * patches/next+15.5.20.patch this threw #418 on 8 of 8 loads of /menu.
+ * Next 15.5 this threw #418 on 8 of 8 loads of /menu. Next 16.4 contains
+ * the upstream React fix, so the project no longer needs a vendor patch.
  *
  * Fails on ANY page error and on any console message that looks like a
  * hydration problem. Against `next dev` the console carries React's full
