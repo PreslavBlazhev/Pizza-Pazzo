@@ -21,7 +21,7 @@ const order = {
 };
 const mail = customerOrderAcceptedEmail(order, {
   phone: "+359 88 248 4777",
-  email: "info@bulgaria-digital-services.com",
+  email: "pizzapazzopln@gmail.com",
   siteUrl: "https://pizzapazzo.bg",
   merchant: {
     legalName: c.legalName,

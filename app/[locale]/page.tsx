@@ -41,10 +41,8 @@ export default async function HomePage({
   const t = await getTranslations({ locale, namespace: "home" });
   const tCommon = await getTranslations({ locale, namespace: "common" });
 
-  // Exclude add-on categories from the homepage showcase (kept in the full menu).
-  const categories = (await getCategories(locale)).filter(
-    (c) => !c.id.includes("addons")
-  );
+  // Add-on categories are never listed (lib/menu-data.ts leaves them out).
+  const categories = await getCategories(locale);
   const popular = await getPopularProducts(locale);
 
   return (
@@ -84,14 +82,16 @@ export default async function HomePage({
                   is ~283px wide and still fits a 360px viewport with the
                   container padding. */}
               <Logo className="h-40 sm:h-56 lg:h-44" linked={false} priority />
-              {/* The restaurant's phone, directly under the logo. */}
-              <LogoPhone className="mt-2 px-2 py-1 text-lg sm:text-xl" />
+              {/* The restaurant's phone, directly under the logo — big and bold
+                  (owner's request, 2026-10-13), the logo still the larger mark. */}
+              <LogoPhone size="hero" className="mt-3" />
 
-              {/* Slogan — font-slogan (Yeseva One) echoes the carved-serif "PIZZA
-                  PAZZO" lettering in the logo above; tracking is deliberately
-                  lighter than a sans-serif badge would use, since the display
-                  face is already wide and dense at small sizes. */}
-              <span className="mt-8 inline-block rounded-full border border-pizza-green/30 bg-white/70 px-5 py-2 font-slogan text-sm uppercase leading-none tracking-wide text-pizza-green sm:text-base lg:mt-6">
+              {/* "Безплатна доставка" / "Free delivery" — font-slogan (Yeseva
+                  One) echoes the carved-serif "PIZZA PAZZO" lettering in the
+                  logo above; tracking is deliberately lighter than a
+                  sans-serif badge would use, since the display face is already
+                  wide and dense at small sizes. */}
+              <span className="mt-6 inline-block rounded-full border border-pizza-green/30 bg-white/70 px-6 py-2.5 font-slogan text-base uppercase leading-none tracking-wide text-pizza-green sm:text-lg lg:mt-5">
                 {t("hero.badge")}
               </span>
 

@@ -29,8 +29,9 @@ export const SAUCE_DENY_CATEGORY_IDS = ["cat_drinks", "cat_desserts"] as const;
 // ── Limits ──────────────────────────────────────────────────────────────────
 
 export const EXTRAS_LIMITS = {
-  /** Max entries in one cart/order item's extras array. */
-  maxExtrasPerItem: 15,
+  /** Max entries in one cart/order item's extras array — room for every
+   *  topping (39), a crust, the free picks and the sauces. */
+  maxExtrasPerItem: 60,
   /** Max quantity for a single sauce (crust/addons are always quantity 1). */
   maxSauceQuantity: 10,
   /** Max items in one checkout payload. */
@@ -90,23 +91,33 @@ export interface OrderItemExtra {
 // ── Pizza selection definitions ─────────────────────────────────────────────
 
 /**
- * Pricing source products (stable prod_* ids from the seed/DB). The four crust
- * flavours share one priced product; meat/dairy/fish share another. The
- * customer-facing labels below intentionally differ from the combined DB
- * names — the snapshot stores THESE labels, the DB rows only supply prices.
+ * Pricing source product of the four crusts (stable prod_* id from the
+ * seed/DB). The four flavours share one priced product; the customer-facing
+ * labels below intentionally differ from the combined DB name — the snapshot
+ * stores THESE labels, the DB row only supplies the 30/40 см prices.
  */
 export const PIZZA_CRUST_SOURCE_PRODUCT_ID =
   "prod_kashkavalen_filadelfiya_krenvirsh_peperoni_bord";
-export const PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID = "prod_mesni_mlechni_ribni";
-export const PIZZA_VEGETABLE_ADDON_SOURCE_PRODUCT_ID = "prod_zelenchukovi";
+
+/**
+ * The two GENERIC topping products ("Месни / млечни / рибни", "Зеленчукови")
+ * that were offered as four vague options until 2026-10-13. They stay in the
+ * database for the order history, switched off, and are never offered or
+ * accepted again — PIZZA_TOPPINGS replaced them.
+ */
+export const RETIRED_PIZZA_ADDON_PRODUCT_IDS = [
+  "prod_mesni_mlechni_ribni",
+  "prod_zelenchukovi",
+] as const;
 
 export interface PizzaSelectionDefinition {
-  type: "pizza_crust" | "pizza_addon";
+  type: "pizza_crust";
   sourceProductId: string;
   nameBg: string;
   nameEn: string;
 }
 
+/** The crusts (борд) — single-select, priced by the pizza's size. */
 export const PIZZA_SELECTIONS = {
   cheese_crust: {
     type: "pizza_crust",
@@ -132,36 +143,168 @@ export const PIZZA_SELECTIONS = {
     nameBg: "Пеперони борд",
     nameEn: "Pepperoni crust",
   },
-  meat_addon: {
-    type: "pizza_addon",
-    sourceProductId: PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID,
-    nameBg: "Месна добавка",
-    nameEn: "Meat add-on",
-  },
-  dairy_addon: {
-    type: "pizza_addon",
-    sourceProductId: PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID,
-    nameBg: "Млечна добавка",
-    nameEn: "Dairy add-on",
-  },
-  fish_addon: {
-    type: "pizza_addon",
-    sourceProductId: PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID,
-    nameBg: "Рибна добавка",
-    nameEn: "Fish add-on",
-  },
-  vegetable_addon: {
-    type: "pizza_addon",
-    sourceProductId: PIZZA_VEGETABLE_ADDON_SOURCE_PRODUCT_ID,
-    nameBg: "Зеленчукова добавка",
-    nameEn: "Vegetable add-on",
-  },
 } as const satisfies Record<string, PizzaSelectionDefinition>;
 
 export type PizzaSelectionKey = keyof typeof PIZZA_SELECTIONS;
 
 export function isPizzaSelectionKey(key: string): key is PizzaSelectionKey {
   return Object.prototype.hasOwnProperty.call(PIZZA_SELECTIONS, key);
+}
+
+// ── Concrete pizza toppings (owner's list, 2026-10-13) ──────────────────────
+
+/**
+ * The owner's two price groups. A group is only a HEADING and the price a
+ * topping row is CREATED with: every topping is its own MenuProduct with its
+ * own 30/40 см variants, so the admin can reprice, rename or switch off one
+ * ingredient without touching the rest. Prices are per ONE topping on ONE
+ * pizza of that size.
+ */
+export const PIZZA_TOPPING_GROUPS = {
+  vegetable: {
+    nameBg: "Зеленчукови добавки",
+    nameEn: "Vegetable toppings",
+    price30Eur: 2.05,
+    price40Eur: 2.56,
+  },
+  meat_dairy_fish: {
+    nameBg: "Месни / млечни / рибни добавки",
+    nameEn: "Meat / dairy / fish toppings",
+    price30Eur: 2.56,
+    price40Eur: 3.07,
+  },
+} as const;
+
+export type PizzaToppingGroup = keyof typeof PIZZA_TOPPING_GROUPS;
+
+export const PIZZA_TOPPING_GROUP_ORDER: readonly PizzaToppingGroup[] = [
+  "vegetable",
+  "meat_dairy_fish",
+];
+
+export interface PizzaToppingDefinition {
+  /** Stable MenuProduct id — the one identifier for BG and EN alike. */
+  productId: string;
+  /** Slug of the product row (never public: the category is not listed). */
+  slug: string;
+  group: PizzaToppingGroup;
+  /** Names the row is CREATED with; the database copy is what is shown. */
+  nameBg: string;
+  nameEn: string;
+}
+
+const topping = (
+  id: string,
+  group: PizzaToppingGroup,
+  nameBg: string,
+  nameEn: string
+): PizzaToppingDefinition => ({
+  productId: `prod_topping_${id}`,
+  slug: `topping-${id.replace(/_/g, "-")}`,
+  group,
+  nameBg,
+  nameEn,
+});
+
+/**
+ * The 39 concrete toppings, in the owner's order: 15 vegetable (pineapple
+ * stays in this group, as the owner sent it) and 24 meat / dairy / fish. The
+ * ONLY toppings a customer can pick on a pizza, paid or free.
+ */
+export const PIZZA_TOPPINGS: readonly PizzaToppingDefinition[] = [
+  topping("chervena_chushka", "vegetable", "Червена чушка", "Red pepper"),
+  topping("zelena_chushka", "vegetable", "Зелена чушка", "Green pepper"),
+  topping("pechena_chushka", "vegetable", "Печена чушка", "Roasted pepper"),
+  topping("gabi", "vegetable", "Гъби", "Mushrooms"),
+  topping("tsarevitsa", "vegetable", "Царевица", "Sweetcorn"),
+  topping("halapenyos", "vegetable", "Халапеньос", "Jalapeños"),
+  topping("cherven_luk", "vegetable", "Червен лук", "Red onion"),
+  topping("cheri_domati", "vegetable", "Чери домати", "Cherry tomatoes"),
+  topping("domati", "vegetable", "Домати", "Tomatoes"),
+  topping("rukola", "vegetable", "Рукола", "Rocket"),
+  topping("maslini", "vegetable", "Маслини", "Olives"),
+  topping("bosilek", "vegetable", "Босилек", "Basil"),
+  topping("ananas", "vegetable", "Ананас", "Pineapple"),
+  topping("kiseli_krastavichki", "vegetable", "Кисели краставички", "Gherkins"),
+  topping("susheni_domati", "vegetable", "Сушени домати", "Sun-dried tomatoes"),
+  topping("pileshka_shunka", "meat_dairy_fish", "Пилешка шунка", "Chicken ham"),
+  topping("svinska_shunka", "meat_dairy_fish", "Свинска шунка", "Pork ham"),
+  topping("pikantno_teleshko", "meat_dairy_fish", "Пикантно телешко", "Spicy beef"),
+  topping("peperoni", "meat_dairy_fish", "Пеперони", "Pepperoni"),
+  topping("shpek", "meat_dairy_fish", "Шпек", "Speck"),
+  topping("lukanka", "meat_dairy_fish", "Луканка", "Lukanka (cured sausage)"),
+  topping("krenvirsh", "meat_dairy_fish", "Кренвирш", "Frankfurter"),
+  topping("bekon", "meat_dairy_fish", "Бекон", "Bacon"),
+  topping("teleshki_burger", "meat_dairy_fish", "Телешки бургер", "Beef burger"),
+  topping("yaytse", "meat_dairy_fish", "Яйце", "Egg"),
+  topping("racheshki_rultsa", "meat_dairy_fish", "Рачешки рулца", "Crab sticks"),
+  topping("riba_ton", "meat_dairy_fish", "Риба тон", "Tuna"),
+  topping("anshoa", "meat_dairy_fish", "Аншоа", "Anchovies"),
+  topping("kashkaval", "meat_dairy_fish", "Кашкавал", "Kashkaval (yellow cheese)"),
+  topping("krave_sirene", "meat_dairy_fish", "Краве сирене", "White cheese (cow’s milk)"),
+  topping("motsarela", "meat_dairy_fish", "Моцарела", "Mozzarella"),
+  topping("sinyo_sirene", "meat_dairy_fish", "Синьо сирене", "Blue cheese"),
+  topping("grana_padano", "meat_dairy_fish", "Грана падано", "Grana Padano"),
+  topping("topeno_sirene", "meat_dairy_fish", "Топено сирене", "Processed cheese"),
+  topping("filadelfiya", "meat_dairy_fish", "Филаделфия", "Philadelphia"),
+  topping("chedar", "meat_dairy_fish", "Чедър", "Cheddar"),
+  topping("pushena_syomga", "meat_dairy_fish", "Пушена сьомга", "Smoked salmon"),
+  topping("gauda", "meat_dairy_fish", "Гауда", "Gouda"),
+  topping("emental", "meat_dairy_fish", "Ементал", "Emmental"),
+];
+
+const TOPPINGS_BY_PRODUCT_ID: ReadonlyMap<string, PizzaToppingDefinition> = new Map(
+  PIZZA_TOPPINGS.map((t) => [t.productId, t])
+);
+
+/** The registry entry for a topping product id; undefined for anything else. */
+export function pizzaToppingFor(productId: string): PizzaToppingDefinition | undefined {
+  return TOPPINGS_BY_PRODUCT_ID.get(productId);
+}
+
+const PIZZA_TOPPING_PREFIX = "pizza_topping:";
+const FREE_TOPPING_PREFIX = "free_topping:";
+
+/** Selection key of a PAID topping, e.g. "pizza_topping:prod_topping_gabi". */
+export function pizzaToppingKeyFor(productId: string): string {
+  return `${PIZZA_TOPPING_PREFIX}${productId}`;
+}
+
+/** Selection key of a topping picked as one of the FREE ones ("Моята Пацо"). */
+export function freeToppingKeyFor(productId: string): string {
+  return `${FREE_TOPPING_PREFIX}${productId}`;
+}
+
+/** Splits a topping key; null unless it names a topping in PIZZA_TOPPINGS. */
+export function parseToppingKey(
+  key: string
+): { free: boolean; productId: string; definition: PizzaToppingDefinition } | null {
+  const free = key.startsWith(FREE_TOPPING_PREFIX);
+  if (!free && !key.startsWith(PIZZA_TOPPING_PREFIX)) return null;
+  const productId = key.slice((free ? FREE_TOPPING_PREFIX : PIZZA_TOPPING_PREFIX).length);
+  const definition = pizzaToppingFor(productId);
+  return definition ? { free, productId, definition } : null;
+}
+
+/**
+ * Keys of the retired generic options ("Месна добавка", "Безплатна добавка:
+ * месна", …). A basket saved before 2026-10-13 can still carry them. They are
+ * never priced and never turned into a concrete ingredient on the customer's
+ * behalf — the customer is asked to choose again.
+ */
+export const RETIRED_EXTRA_KEYS = [
+  "meat_addon",
+  "dairy_addon",
+  "fish_addon",
+  "vegetable_addon",
+  "free_meat_topping",
+  "free_dairy_topping",
+  "free_fish_topping",
+  "free_vegetable_topping",
+] as const;
+
+export function isRetiredExtraKey(key: string): boolean {
+  return (RETIRED_EXTRA_KEYS as readonly string[]).includes(key);
 }
 
 // ── Free toppings (only on products whose price includes them) ──────────────
@@ -175,6 +318,8 @@ export function isPizzaSelectionKey(key: string): key is PizzaSelectionKey {
  * "Моята Пацо" / "My Pazzo": "маргарита с три добавки по ваш избор" — the
  * restaurant's own menu (Pizza_Pazzo_Digital_Menu_Products_Allergens_Prices
  * .docx), confirmed again by the owner on 2026-10-12 ("до 3 безплатни").
+ * The free ones come from the same concrete list as the paid ones
+ * (PIZZA_TOPPINGS), each ingredient at most once among the free picks.
  */
 export const FREE_TOPPINGS_BY_PRODUCT: Readonly<Record<string, number>> = {
   prod_moyata_patso: 3,
@@ -187,52 +332,30 @@ export function freeToppingsLimitFor(productId: string): number {
     : 0;
 }
 
-export interface FreeToppingDefinition {
-  /** The paid add-on this is a free one of. It must be on sale for the free
-   *  choice to be offered or accepted; its price is never used. */
-  sourceProductId: string;
-  /** Name stored on the order (and read by the kitchen). */
+/** Name stored on the order for a free topping — the kitchen reads it. */
+export function freeToppingNames(topping: { nameBg: string; nameEn: string }): {
   nameBg: string;
   nameEn: string;
-}
-
-/**
- * What a free slot can be filled with: the same four kinds of add-on the menu
- * sells (месна / млечна / рибна / зеленчукова), with no more detail than the
- * paid add-ons carry. Each kind at most ONCE per pizza — the same no-repeat
- * rule the paid add-ons follow; nothing in the menu says a free topping may
- * be doubled.
- */
-export const FREE_TOPPING_SELECTIONS = {
-  free_meat_topping: {
-    sourceProductId: PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID,
-    nameBg: "Безплатна добавка: месна",
-    nameEn: "Free topping: meat",
-  },
-  free_dairy_topping: {
-    sourceProductId: PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID,
-    nameBg: "Безплатна добавка: млечна",
-    nameEn: "Free topping: dairy",
-  },
-  free_fish_topping: {
-    sourceProductId: PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID,
-    nameBg: "Безплатна добавка: рибна",
-    nameEn: "Free topping: fish",
-  },
-  free_vegetable_topping: {
-    sourceProductId: PIZZA_VEGETABLE_ADDON_SOURCE_PRODUCT_ID,
-    nameBg: "Безплатна добавка: зеленчукова",
-    nameEn: "Free topping: vegetable",
-  },
-} as const satisfies Record<string, FreeToppingDefinition>;
-
-export type FreeToppingKey = keyof typeof FREE_TOPPING_SELECTIONS;
-
-export function isFreeToppingKey(key: string): key is FreeToppingKey {
-  return Object.prototype.hasOwnProperty.call(FREE_TOPPING_SELECTIONS, key);
+} {
+  return {
+    nameBg: `Безплатна добавка: ${topping.nameBg}`,
+    nameEn: `Free topping: ${topping.nameEn}`,
+  };
 }
 
 // ── Category helpers ────────────────────────────────────────────────────────
+
+/**
+ * Categories whose products exist ONLY as add-ons to a pizza or a burger:
+ * never listed in the public menu, never a basket or order line of their own.
+ * Their rows (names, prices, availability) stay editable in the admin — they
+ * are the price source of the extras.
+ */
+export const ADDON_ONLY_CATEGORY_IDS = [PIZZA_ADDONS_CATEGORY_ID, BURGER_ADDONS_CATEGORY_ID] as const;
+
+export function isAddonOnlyCategory(categoryId: string): boolean {
+  return (ADDON_ONLY_CATEGORY_IDS as readonly string[]).includes(categoryId);
+}
 
 export function isPizzaCategory(categoryId: string): boolean {
   return (PIZZA_CATEGORY_IDS as readonly string[]).includes(categoryId);

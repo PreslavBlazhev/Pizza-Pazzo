@@ -56,6 +56,7 @@ function PromoBanner({
     <Link
       href="/menu"
       aria-label={ariaLabel}
+      data-testid="promo-board"
       className={cn(
         "group block overflow-hidden rounded-2xl shadow-card outline-none transition",
         "focus-visible:ring-2 focus-visible:ring-pizza-ink/30 focus-visible:ring-offset-2",
@@ -151,10 +152,19 @@ export function PizzaMathPromo({ className }: { className?: string }) {
  *
  * The max width is what keeps a tablet sane: at 640–1024px the row would
  * otherwise stretch each board past 300px wide (and 600px tall).
+ *
+ * `placement="menu"`: the top of the menu page, where the pair is shown at
+ * EVERY width (there is no hero beside it on desktop) and the category bar
+ * follows straight after, so it carries no top margin of its own.
  */
-export function PromoBannersRow() {
+export function PromoBannersRow({ placement = "home" }: { placement?: "home" | "menu" }) {
   return (
-    <div className="mx-auto mt-10 grid w-full max-w-[34rem] grid-cols-2 gap-3 sm:gap-4 lg:hidden">
+    <div
+      className={cn(
+        "mx-auto grid w-full grid-cols-2 gap-3 sm:gap-4",
+        placement === "home" ? "mt-10 max-w-[34rem] lg:hidden" : "mb-4 max-w-[34rem] lg:max-w-[30rem]"
+      )}
+    >
       <TwoToppingsPromo />
       <PizzaMathPromo />
     </div>

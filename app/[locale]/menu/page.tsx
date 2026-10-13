@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CategoryTabs } from "@/components/menu/CategoryTabs";
 import { ProductGrid } from "@/components/menu/ProductGrid";
+import { PromoBannersRow } from "@/components/home/PromoBanners";
 import { getCategories, getProducts } from "@/lib/menu-data";
 import { type Locale } from "@/i18n/routing";
 
@@ -26,7 +27,9 @@ export default async function MenuPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = await getTranslations({ locale, namespace: "menu.hero" });
+  const t = await getTranslations({ locale, namespace: "meta.menu" });
+  // Add-on categories are already left out here (lib/menu-data.ts): toppings
+  // are chosen on the pizza or burger they belong to, never on their own.
   const categories = await getCategories(locale);
   const products = await getProducts(locale);
 
@@ -39,23 +42,15 @@ export default async function MenuPage({ params }: PageProps) {
     <>
       <Header />
       <main>
-        {/* Hero — deliberately no background of its own: the body's cream +
-            food-doodle pattern shows through (client request, 2026-07). */}
-        <section className="relative overflow-hidden">
-          <div className="pointer-events-none absolute -right-20 -top-16 h-64 w-64 rounded-full bg-pizza-red-light blur-3xl" />
-          <div className="container relative py-14 text-center sm:py-16">
-            <span className="inline-block rounded-full border border-pizza-green/30 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-pizza-green">
-              🍕 Pizza Pazzo
-            </span>
-            <h1 className="mt-4 text-4xl font-bold text-pizza-ink sm:text-5xl">
-              {t("title")}
-            </h1>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-pizza-muted">
-              {t("subtitle")}
-            </p>
-            <p className="mt-2 text-sm text-pizza-muted/80">{t("priceNote")}</p>
-          </div>
-        </section>
+        {/* The page opens on the two promo boards — the SAME components as on
+            the homepage, so the offers can never drift apart — with the
+            category bar directly underneath. The old intro block (badge,
+            title, description, price note) was removed on the owner's
+            request, 2026-10-13; the h1 stays for screen readers and SEO. */}
+        <h1 className="sr-only">{t("title")}</h1>
+        <div className="container pt-6 sm:pt-8">
+          <PromoBannersRow placement="menu" />
+        </div>
 
         {/* Category navigation + products */}
         <div className="container pb-24">

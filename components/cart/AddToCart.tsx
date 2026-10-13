@@ -12,7 +12,7 @@ import type {
 import { MAX_LINE_QUANTITY, useCartStore } from "@/store/cart-store";
 import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
 import { useStoreClosed } from "@/components/store/StoreStatusProvider";
-import { EXTRAS_LIMITS, parseVariantSize } from "@/lib/extras-rules";
+import { EXTRAS_LIMITS, isRetiredExtraKey, parseVariantSize } from "@/lib/extras-rules";
 import { formatEurPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
 import {
@@ -21,8 +21,6 @@ import {
   optionPriceFor,
   type ExtrasSelectionState,
 } from "./ProductExtrasPicker";
-
-const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
  * Unsaved choices on a product page (size, extras, quantity), per product, in
@@ -96,6 +94,9 @@ export function AddToCart({
   const [justAdded, setJustAdded] = useState(false);
   /** The basket line being edited — null once it is saved or if it is gone. */
   const [editing, setEditing] = useState<string | null>(null);
+  /** The edited line carried a retired generic option ("Месна добавка"),
+   *  which is NOT carried over: the customer picks the ingredient again. */
+  const [hadOutdatedExtras, setHadOutdatedExtras] = useState(false);
 
   const priceEur = variant?.priceEur ?? product.priceEur;
 
@@ -163,6 +164,9 @@ export function AddToCart({
       setQuantity(line.quantity);
       setSelectedExtras(keep(Object.fromEntries((line.extras ?? []).map((e) => [e.key, e.quantity]))));
     }
+    if (line && (line.extras ?? []).some((e) => isRetiredExtraKey(e.key))) {
+      setHadOutdatedExtras(true);
+    }
     setEditing(line ? editLineId ?? null : null);
     initialised.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
@@ -191,13 +195,14 @@ export function AddToCart({
 
   // Preview extras total per ONE main unit (mirrors the server's semantics;
   // free toppings are priced 0, so they never move the total).
-  const extrasUnitEur = selectedEntries.reduce((acc, [key, qty]) => {
+  // Added up in whole cents, so a long list of toppings never drifts.
+  const extrasUnitCents = selectedEntries.reduce((acc, [key, qty]) => {
     const option = optionsByKey.get(key);
     const price = option ? optionPriceFor(option, mainSize) : null;
-    return price === null ? acc : round2(acc + price * qty);
+    return price === null ? acc : acc + Math.round(price * 100) * qty;
   }, 0);
 
-  const totalEur = round2(round2(priceEur + extrasUnitEur) * quantity);
+  const totalEur = ((Math.round(priceEur * 100) + extrasUnitCents) * quantity) / 100;
 
   /**
    * Crusts are single-select (re-click deselects); addons toggle freely;
@@ -299,6 +304,15 @@ export function AddToCart({
       {editing && (
         <p className="rounded-2xl border border-pizza-green/30 bg-pizza-green-light px-4 py-2.5 text-sm font-medium text-pizza-green-dark">
           {t("editingNotice")}
+        </p>
+      )}
+      {editing && hadOutdatedExtras && (
+        <p
+          role="status"
+          data-testid="extras-outdated-notice"
+          className="rounded-2xl border border-brand/30 bg-pizza-red-light px-4 py-2.5 text-sm font-medium text-brand-dark"
+        >
+          {tExtras("outdatedNotice")}
         </p>
       )}
 

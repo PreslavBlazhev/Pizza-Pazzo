@@ -321,8 +321,9 @@ if (rules && resolveOrderItemExtras) {
   const drink = firstOf("cat_drinks");
   const dessert = firstOf("cat_desserts");
   const crustProduct = byId.get(rules.PIZZA_CRUST_SOURCE_PRODUCT_ID);
-  const genericAddon = byId.get(rules.PIZZA_GENERIC_ADDON_SOURCE_PRODUCT_ID);
-  const vegetableAddon = byId.get(rules.PIZZA_VEGETABLE_ADDON_SOURCE_PRODUCT_ID);
+  // Two of the concrete toppings (2026-10-13): bacon (meat) and mushrooms (vegetable).
+  const genericAddon = byId.get("prod_topping_bekon");
+  const vegetableAddon = byId.get("prod_topping_gabi");
   const sauce = firstOf(rules.SAUCES_CATEGORY_ID);
   const burgerAddon = firstOf(rules.BURGER_ADDONS_CATEGORY_ID);
 
@@ -388,13 +389,15 @@ if (rules && resolveOrderItemExtras) {
       });
 
       // 3) Pizza 30 см + meat + vegetable addons.
-      expectOk("pizza 30 см + meat_addon + vegetable_addon", resolveFor(pizza, pizza30.name.bg, [sel("meat_addon", genericAddon.id), sel("vegetable_addon", vegetableAddon.id)]), (r) => {
+      const meatKey = rules.pizzaToppingKeyFor(genericAddon.id);
+      const vegKey = rules.pizzaToppingKeyFor(vegetableAddon.id);
+      expectOk("pizza 30 см + bacon + mushrooms (concrete toppings)", resolveFor(pizza, pizza30.name.bg, [sel(meatKey, genericAddon.id), sel(vegKey, vegetableAddon.id)]), (r) => {
         if (r.extras.length !== 2) return `expected 2 extras, got ${r.extras.length}`;
-        const meat = r.extras.find((e) => e.key === "meat_addon");
-        const veg = r.extras.find((e) => e.key === "vegetable_addon");
+        const meat = r.extras.find((e) => e.key === meatKey);
+        const veg = r.extras.find((e) => e.key === vegKey);
         if (!meat || meat.unitPriceEur !== generic30.priceEur) return "meat addon 30 price mismatch";
         if (!veg || veg.unitPriceEur !== veg30.priceEur) return "vegetable addon 30 price mismatch";
-        if (meat.nameBg !== "Месна добавка" || veg.nameBg !== "Зеленчукова добавка") return "labels wrong";
+        if (meat.nameBg !== genericAddon.name.bg || veg.nameBg !== vegetableAddon.name.bg) return "labels wrong";
         if (r.extrasUnitTotalEur !== round2(round2(generic30.priceEur) + veg30.priceEur)) return "unit total wrong";
         return null;
       });
@@ -428,8 +431,8 @@ if (rules && resolveOrderItemExtras) {
 
       // 6) Same extras, different click order → identical lineId.
       {
-        const a = [crustSel(), sel(`sauce:${sauce.id}`, sauce.id, 2), sel("meat_addon", genericAddon.id)];
-        const b = [sel("meat_addon", genericAddon.id), crustSel(), sel(`sauce:${sauce.id}`, sauce.id, 2)];
+        const a = [crustSel(), sel(`sauce:${sauce.id}`, sauce.id, 2), sel(rules.pizzaToppingKeyFor(genericAddon.id), genericAddon.id)];
+        const b = [sel(rules.pizzaToppingKeyFor(genericAddon.id), genericAddon.id), crustSel(), sel(`sauce:${sauce.id}`, sauce.id, 2)];
         const idA = rules.lineIdFor(pizza.id, pizza30.id, a);
         const idB = rules.lineIdFor(pizza.id, pizza30.id, b);
         if (idA !== idB) fail("lineId differs for the same extras in different order");
@@ -457,7 +460,8 @@ if (rules && resolveOrderItemExtras) {
       expectFail("burger addon on a pizza", resolveFor(pizza, pizza30.name.bg, [sel(`burger_addon:${burgerAddon.id}`, burgerAddon.id, 1)]), "not-allowed-for-product");
 
       // 12) Pizza addon on a burger → rejected.
-      expectFail("pizza addon on a burger", resolveFor(burger, undefined, [sel("meat_addon", genericAddon.id)]), "not-allowed-for-product");
+      expectFail("retired generic «meat_addon»", resolveFor(pizza, pizza30.name.bg, [sel("meat_addon", "prod_mesni_mlechni_ribni")]), "retired-key");
+      expectFail("pizza addon on a burger", resolveFor(burger, undefined, [sel(rules.pizzaToppingKeyFor(genericAddon.id), genericAddon.id)]), "not-allowed-for-product");
       expectFail("crust on a burger", resolveFor(burger, undefined, [crustSel()]), "not-allowed-for-product");
 
       // 13) Sauce on a drink / dessert → rejected (deny list).
@@ -483,8 +487,11 @@ if (rules && resolveOrderItemExtras) {
         return null;
       });
 
-      // 17) More than 15 extras entries → rejected.
-      expectFail("16 extras entries", resolveFor(pizza, pizza30.name.bg, Array.from({ length: 16 }, () => sel(`sauce:${sauce.id}`, sauce.id, 1))), "too-many-extras");
+      // 17) More entries than the per-line cap → rejected.
+      {
+        const over = rules.EXTRAS_LIMITS.maxExtrasPerItem + 1;
+        expectFail(`${over} extras entries`, resolveFor(pizza, pizza30.name.bg, Array.from({ length: over }, () => sel(`sauce:${sauce.id}`, sauce.id, 1))), "too-many-extras");
+      }
 
       // Unknown key + burger addon happy path.
       expectFail("unknown selection key", resolveFor(pizza, pizza30.name.bg, [sel("golden_truffle", crustProduct.id)]), "unknown-key");
@@ -1009,7 +1016,7 @@ if (mods) {
     addressEn: "13 Georgi Kochev St., Pleven (opposite Technopolis)",
     primaryPhone: "+359 88 248 4777",
     secondaryPhone: "+359 801 999",
-    contactEmail: "info@bulgaria-digital-services.com",
+    contactEmail: "pizzapazzopln@gmail.com",
     hours: openWeek(),
     ...over,
   });

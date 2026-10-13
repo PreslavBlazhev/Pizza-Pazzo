@@ -37,6 +37,10 @@ export const CHECKOUT_FORM_ERRORS = [
   "PRODUCT_UNAVAILABLE",
   "VARIANT_INVALID",
   "EXTRAS_INVALID",
+  /** An add-on (pizza topping / burger add-on) sent as a line of its own. */
+  "ADDON_STANDALONE",
+  /** A retired generic add-on ("Месна добавка") from an old basket. */
+  "EXTRAS_OUTDATED",
   /** The products add up to less than the delivery minimum (lib/delivery-area.ts). */
   "BELOW_MINIMUM",
   "SAVE_FAILED",

@@ -1477,7 +1477,7 @@
     "allergens": [
       "milk"
     ],
-    "isAvailable": true,
+    "isAvailable": false,
     "sortOrder": 2,
     "variants": [
       {
@@ -1513,7 +1513,7 @@
     "priceEur": 2.05,
     "imageUrl": "/images/products/placeholder-pizza.svg",
     "allergens": [],
-    "isAvailable": true,
+    "isAvailable": false,
     "sortOrder": 3,
     "variants": [
       {
@@ -1534,6 +1534,1410 @@
       }
     ],
     "allergensUnverified": true
+  },
+  {
+    "id": "prod_topping_chervena_chushka",
+    "name": {
+      "bg": "Червена чушка",
+      "en": "Red pepper"
+    },
+    "slug": "topping-chervena-chushka",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 10,
+    "variants": [
+      {
+        "id": "var_topping_chervena_chushka_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_chervena_chushka_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_zelena_chushka",
+    "name": {
+      "bg": "Зелена чушка",
+      "en": "Green pepper"
+    },
+    "slug": "topping-zelena-chushka",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 11,
+    "variants": [
+      {
+        "id": "var_topping_zelena_chushka_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_zelena_chushka_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_pechena_chushka",
+    "name": {
+      "bg": "Печена чушка",
+      "en": "Roasted pepper"
+    },
+    "slug": "topping-pechena-chushka",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 12,
+    "variants": [
+      {
+        "id": "var_topping_pechena_chushka_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_pechena_chushka_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_gabi",
+    "name": {
+      "bg": "Гъби",
+      "en": "Mushrooms"
+    },
+    "slug": "topping-gabi",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 13,
+    "variants": [
+      {
+        "id": "var_topping_gabi_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_gabi_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_tsarevitsa",
+    "name": {
+      "bg": "Царевица",
+      "en": "Sweetcorn"
+    },
+    "slug": "topping-tsarevitsa",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 14,
+    "variants": [
+      {
+        "id": "var_topping_tsarevitsa_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_tsarevitsa_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_halapenyos",
+    "name": {
+      "bg": "Халапеньос",
+      "en": "Jalapeños"
+    },
+    "slug": "topping-halapenyos",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 15,
+    "variants": [
+      {
+        "id": "var_topping_halapenyos_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_halapenyos_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_cherven_luk",
+    "name": {
+      "bg": "Червен лук",
+      "en": "Red onion"
+    },
+    "slug": "topping-cherven-luk",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 16,
+    "variants": [
+      {
+        "id": "var_topping_cherven_luk_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_cherven_luk_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_cheri_domati",
+    "name": {
+      "bg": "Чери домати",
+      "en": "Cherry tomatoes"
+    },
+    "slug": "topping-cheri-domati",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 17,
+    "variants": [
+      {
+        "id": "var_topping_cheri_domati_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_cheri_domati_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_domati",
+    "name": {
+      "bg": "Домати",
+      "en": "Tomatoes"
+    },
+    "slug": "topping-domati",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 18,
+    "variants": [
+      {
+        "id": "var_topping_domati_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_domati_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_rukola",
+    "name": {
+      "bg": "Рукола",
+      "en": "Rocket"
+    },
+    "slug": "topping-rukola",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 19,
+    "variants": [
+      {
+        "id": "var_topping_rukola_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_rukola_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_maslini",
+    "name": {
+      "bg": "Маслини",
+      "en": "Olives"
+    },
+    "slug": "topping-maslini",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 20,
+    "variants": [
+      {
+        "id": "var_topping_maslini_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_maslini_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_bosilek",
+    "name": {
+      "bg": "Босилек",
+      "en": "Basil"
+    },
+    "slug": "topping-bosilek",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 21,
+    "variants": [
+      {
+        "id": "var_topping_bosilek_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_bosilek_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_ananas",
+    "name": {
+      "bg": "Ананас",
+      "en": "Pineapple"
+    },
+    "slug": "topping-ananas",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 22,
+    "variants": [
+      {
+        "id": "var_topping_ananas_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_ananas_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_kiseli_krastavichki",
+    "name": {
+      "bg": "Кисели краставички",
+      "en": "Gherkins"
+    },
+    "slug": "topping-kiseli-krastavichki",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 23,
+    "variants": [
+      {
+        "id": "var_topping_kiseli_krastavichki_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_kiseli_krastavichki_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_susheni_domati",
+    "name": {
+      "bg": "Сушени домати",
+      "en": "Sun-dried tomatoes"
+    },
+    "slug": "topping-susheni-domati",
+    "description": {
+      "bg": "зеленчукови добавки",
+      "en": "vegetable toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.05,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 24,
+    "variants": [
+      {
+        "id": "var_topping_susheni_domati_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.05
+      },
+      {
+        "id": "var_topping_susheni_domati_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 2.56
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_pileshka_shunka",
+    "name": {
+      "bg": "Пилешка шунка",
+      "en": "Chicken ham"
+    },
+    "slug": "topping-pileshka-shunka",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 25,
+    "variants": [
+      {
+        "id": "var_topping_pileshka_shunka_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_pileshka_shunka_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_svinska_shunka",
+    "name": {
+      "bg": "Свинска шунка",
+      "en": "Pork ham"
+    },
+    "slug": "topping-svinska-shunka",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 26,
+    "variants": [
+      {
+        "id": "var_topping_svinska_shunka_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_svinska_shunka_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_pikantno_teleshko",
+    "name": {
+      "bg": "Пикантно телешко",
+      "en": "Spicy beef"
+    },
+    "slug": "topping-pikantno-teleshko",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 27,
+    "variants": [
+      {
+        "id": "var_topping_pikantno_teleshko_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_pikantno_teleshko_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_peperoni",
+    "name": {
+      "bg": "Пеперони",
+      "en": "Pepperoni"
+    },
+    "slug": "topping-peperoni",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 28,
+    "variants": [
+      {
+        "id": "var_topping_peperoni_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_peperoni_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_shpek",
+    "name": {
+      "bg": "Шпек",
+      "en": "Speck"
+    },
+    "slug": "topping-shpek",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 29,
+    "variants": [
+      {
+        "id": "var_topping_shpek_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_shpek_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_lukanka",
+    "name": {
+      "bg": "Луканка",
+      "en": "Lukanka (cured sausage)"
+    },
+    "slug": "topping-lukanka",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 30,
+    "variants": [
+      {
+        "id": "var_topping_lukanka_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_lukanka_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_krenvirsh",
+    "name": {
+      "bg": "Кренвирш",
+      "en": "Frankfurter"
+    },
+    "slug": "topping-krenvirsh",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 31,
+    "variants": [
+      {
+        "id": "var_topping_krenvirsh_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_krenvirsh_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_bekon",
+    "name": {
+      "bg": "Бекон",
+      "en": "Bacon"
+    },
+    "slug": "topping-bekon",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 32,
+    "variants": [
+      {
+        "id": "var_topping_bekon_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_bekon_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_teleshki_burger",
+    "name": {
+      "bg": "Телешки бургер",
+      "en": "Beef burger"
+    },
+    "slug": "topping-teleshki-burger",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 33,
+    "variants": [
+      {
+        "id": "var_topping_teleshki_burger_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_teleshki_burger_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_yaytse",
+    "name": {
+      "bg": "Яйце",
+      "en": "Egg"
+    },
+    "slug": "topping-yaytse",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 34,
+    "variants": [
+      {
+        "id": "var_topping_yaytse_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_yaytse_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_racheshki_rultsa",
+    "name": {
+      "bg": "Рачешки рулца",
+      "en": "Crab sticks"
+    },
+    "slug": "topping-racheshki-rultsa",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 35,
+    "variants": [
+      {
+        "id": "var_topping_racheshki_rultsa_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_racheshki_rultsa_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_riba_ton",
+    "name": {
+      "bg": "Риба тон",
+      "en": "Tuna"
+    },
+    "slug": "topping-riba-ton",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 36,
+    "variants": [
+      {
+        "id": "var_topping_riba_ton_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_riba_ton_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_anshoa",
+    "name": {
+      "bg": "Аншоа",
+      "en": "Anchovies"
+    },
+    "slug": "topping-anshoa",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 37,
+    "variants": [
+      {
+        "id": "var_topping_anshoa_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_anshoa_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_kashkaval",
+    "name": {
+      "bg": "Кашкавал",
+      "en": "Kashkaval (yellow cheese)"
+    },
+    "slug": "topping-kashkaval",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 38,
+    "variants": [
+      {
+        "id": "var_topping_kashkaval_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_kashkaval_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_krave_sirene",
+    "name": {
+      "bg": "Краве сирене",
+      "en": "White cheese (cow’s milk)"
+    },
+    "slug": "topping-krave-sirene",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 39,
+    "variants": [
+      {
+        "id": "var_topping_krave_sirene_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_krave_sirene_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_motsarela",
+    "name": {
+      "bg": "Моцарела",
+      "en": "Mozzarella"
+    },
+    "slug": "topping-motsarela",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 40,
+    "variants": [
+      {
+        "id": "var_topping_motsarela_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_motsarela_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_sinyo_sirene",
+    "name": {
+      "bg": "Синьо сирене",
+      "en": "Blue cheese"
+    },
+    "slug": "topping-sinyo-sirene",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 41,
+    "variants": [
+      {
+        "id": "var_topping_sinyo_sirene_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_sinyo_sirene_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_grana_padano",
+    "name": {
+      "bg": "Грана падано",
+      "en": "Grana Padano"
+    },
+    "slug": "topping-grana-padano",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 42,
+    "variants": [
+      {
+        "id": "var_topping_grana_padano_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_grana_padano_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_topeno_sirene",
+    "name": {
+      "bg": "Топено сирене",
+      "en": "Processed cheese"
+    },
+    "slug": "topping-topeno-sirene",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 43,
+    "variants": [
+      {
+        "id": "var_topping_topeno_sirene_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_topeno_sirene_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_filadelfiya",
+    "name": {
+      "bg": "Филаделфия",
+      "en": "Philadelphia"
+    },
+    "slug": "topping-filadelfiya",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 44,
+    "variants": [
+      {
+        "id": "var_topping_filadelfiya_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_filadelfiya_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_chedar",
+    "name": {
+      "bg": "Чедър",
+      "en": "Cheddar"
+    },
+    "slug": "topping-chedar",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 45,
+    "variants": [
+      {
+        "id": "var_topping_chedar_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_chedar_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_pushena_syomga",
+    "name": {
+      "bg": "Пушена сьомга",
+      "en": "Smoked salmon"
+    },
+    "slug": "topping-pushena-syomga",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 46,
+    "variants": [
+      {
+        "id": "var_topping_pushena_syomga_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_pushena_syomga_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_gauda",
+    "name": {
+      "bg": "Гауда",
+      "en": "Gouda"
+    },
+    "slug": "topping-gauda",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 47,
+    "variants": [
+      {
+        "id": "var_topping_gauda_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_gauda_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
+  },
+  {
+    "id": "prod_topping_emental",
+    "name": {
+      "bg": "Ементал",
+      "en": "Emmental"
+    },
+    "slug": "topping-emental",
+    "description": {
+      "bg": "месни / млечни / рибни добавки",
+      "en": "meat / dairy / fish toppings"
+    },
+    "categoryId": "cat_pizza_addons",
+    "priceEur": 2.56,
+    "allergens": [],
+    "allergensUnverified": true,
+    "isAvailable": true,
+    "sortOrder": 48,
+    "variants": [
+      {
+        "id": "var_topping_emental_30",
+        "name": {
+          "bg": "30 см",
+          "en": "30 cm"
+        },
+        "priceEur": 2.56
+      },
+      {
+        "id": "var_topping_emental_40",
+        "name": {
+          "bg": "40 см",
+          "en": "40 cm"
+        },
+        "priceEur": 3.07
+      }
+    ]
   },
   {
     "id": "prod_presni_hlebni_topcheta",

@@ -5,7 +5,13 @@ import { Link } from "@/i18n/navigation";
 import type { CartItem as CartItemType } from "@/types/cart";
 import { linePreviewTotalEur, lineUnitPreviewEur, useCartStore } from "@/store/cart-store";
 import { formatEurPrice } from "@/lib/format-price";
-import { cartExtraName, cartProductName, cartVariantName } from "@/lib/cart-display";
+import {
+  cartExtraName,
+  cartProductName,
+  cartVariantName,
+  type CartLineIssue,
+} from "@/lib/cart-display";
+import { isRetiredExtraKey } from "@/lib/extras-rules";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -13,7 +19,8 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  * A single basket line with its extras, quantity controls, an edit link back
  * to the product page and a remove button. Names follow the active language.
  */
-export function CartItem({ item, unavailable = false }: { item: CartItemType; unavailable?: boolean }) {
+export function CartItem({ item, issue = null }: { item: CartItemType; issue?: CartLineIssue | null }) {
+  const unavailable = issue === "unavailable" || issue === "addon-only";
   const t = useTranslations("cart");
   const locale = useLocale();
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -28,9 +35,19 @@ export function CartItem({ item, unavailable = false }: { item: CartItemType; un
       <div className="min-w-0">
         <p className="font-medium text-pizza-ink">{name}</p>
         {variantName && <p className="text-xs text-pizza-muted">{variantName}</p>}
-        {unavailable && (
+        {issue === "unavailable" && (
           <p role="status" data-testid="cart-line-unavailable" className="mt-1 text-xs font-medium text-brand-dark">
             {t("unavailable")}
+          </p>
+        )}
+        {issue === "addon-only" && (
+          <p role="status" data-testid="cart-line-addon-only" className="mt-1 text-xs font-medium text-brand-dark">
+            {t("addonOnly")}
+          </p>
+        )}
+        {issue === "extras-outdated" && (
+          <p role="status" data-testid="cart-line-extras-outdated" className="mt-1 text-xs font-medium text-brand-dark">
+            {t("extrasOutdated")}
           </p>
         )}
 
@@ -39,7 +56,9 @@ export function CartItem({ item, unavailable = false }: { item: CartItemType; un
         {extras.length > 0 && (
           <ul className="mt-1.5 space-y-0.5 text-xs text-pizza-muted">
             {extras.map((e) => (
-              <li key={e.key} className="break-words">
+              // A retired generic option is shown crossed out: it will not be
+              // charged or cooked, the customer chooses again.
+              <li key={e.key} className={isRetiredExtraKey(e.key) ? "break-words line-through" : "break-words"}>
                 + {e.quantity > 1 ? `${e.quantity}× ` : ""}
                 {cartExtraName(e, locale)}
                 {e.display && (
@@ -87,7 +106,7 @@ export function CartItem({ item, unavailable = false }: { item: CartItemType; un
             aria-label={t("editItem", { name })}
             className="text-xs font-medium text-pizza-green underline-offset-2 transition hover:underline"
           >
-            {t("edit")}
+            {issue === "extras-outdated" ? t("reselectExtras") : t("edit")}
           </Link>}
 
           <button

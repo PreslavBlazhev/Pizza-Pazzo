@@ -61,7 +61,7 @@ class UrlPartsTest {
         assertEquals("tel", tel.scheme)
         assertEquals("", tel.host)
 
-        val mail = UrlParts.parse("mailto:info@bulgaria-digital-services.com")!!
+        val mail = UrlParts.parse("mailto:pizzapazzopln@gmail.com")!!
         assertEquals("mailto", mail.scheme)
         assertEquals("", mail.host)
     }

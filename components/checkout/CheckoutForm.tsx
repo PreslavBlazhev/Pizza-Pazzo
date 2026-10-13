@@ -30,7 +30,7 @@ import {
   minimumOrderShortfallEur,
 } from "@/lib/delivery-area";
 import { MinimumOrderNotice } from "@/components/cart/MinimumOrderNotice";
-import { cartExtraName, cartProductName, cartVariantName } from "@/lib/cart-display";
+import { cartExtraName, cartLineIssue, cartProductName, cartVariantName } from "@/lib/cart-display";
 import { CONSENT_FIELDS, type ConsentField } from "@/lib/validators/checkout";
 import { CardBrandMarks } from "@/components/payment/CardBrandMarks";
 import type { CardBrandMark } from "@/lib/payments/card-marks";
@@ -460,7 +460,13 @@ export function CheckoutForm({
   // server checks it again on its own prices.
   const belowMinimum = minimumOrderShortfallEur(totals.total) > 0;
   // A basket line whose product is no longer on sale (an old basket).
-  const unavailableLines = items.filter((i) => unavailable.has(i.product.id));
+  const unavailableLines = items.filter((i) => cartLineIssue(i, unavailable) === "unavailable");
+  // A topping on its own or a retired "Месна добавка" choice (an old basket):
+  // fixed in the basket, where the line says what to do.
+  const outdatedLines = items.filter((i) => {
+    const issue = cartLineIssue(i, unavailable);
+    return issue === "addon-only" || issue === "extras-outdated";
+  });
 
   /** A field's message: this browser's complaint first, then the server's. */
   const errorFor = (field: keyof FormValues | ConsentField) =>
@@ -686,6 +692,21 @@ export function CheckoutForm({
           </p>
         )}
 
+        {outdatedLines.length > 0 && (
+          <p
+            role="status"
+            data-testid="checkout-outdated-lines"
+            className="rounded-2xl border border-brand/30 bg-pizza-red-light px-4 py-3 text-sm font-medium text-brand-dark"
+          >
+            {tCart("blockedAtCheckout", {
+              names: outdatedLines.map((i) => cartProductName(i, locale)).join(", "),
+            })}{" "}
+            <Link href="/cart" className="underline underline-offset-2">
+              {tCart("title")}
+            </Link>
+          </p>
+        )}
+
         {/* The final amount, immediately before the binding action. */}
         <div
           className="flex items-baseline justify-between gap-3 rounded-2xl bg-pizza-cream/60 px-5 py-4 text-pizza-ink"
@@ -711,7 +732,8 @@ export function CheckoutForm({
             !checkoutKey ||
             storeClosed ||
             belowMinimum ||
-            unavailableLines.length > 0
+            unavailableLines.length > 0 ||
+            outdatedLines.length > 0
           }
           className="w-full rounded-full bg-brand px-6 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark disabled:opacity-60"
         >

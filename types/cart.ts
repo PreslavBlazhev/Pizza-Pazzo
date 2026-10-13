@@ -1,5 +1,5 @@
 import type { Product, ProductVariant } from "@/types/product";
-import type { ExtraSelection, ExtraType } from "@/lib/extras-rules";
+import type { ExtraSelection, ExtraType, PizzaToppingGroup } from "@/lib/extras-rules";
 
 /**
  * Display-only preview of a chosen extra, captured from the menu data at the
@@ -53,13 +53,15 @@ export interface ProductExtraOption {
   sizeLabelEn?: string;
   /** 1 for crust/addons, EXTRAS_LIMITS.maxSauceQuantity for sauces. */
   maxQuantity: number;
+  /** Pizza toppings only: the owner's price group, shown as a heading. */
+  group?: PizzaToppingGroup;
 }
 
 /** The extras offer for one product page, grouped the way the picker renders. */
 export interface ProductExtrasData {
   /** Single-select crust options (pizzas only). */
   crusts: ProductExtraOption[];
-  /** Independent checkbox add-ons (pizza generic groups / burger products). */
+  /** Independent checkbox add-ons (the concrete pizza toppings / burger products). */
   addons: ProductExtraOption[];
   /** Sauces with a 0–10 quantity stepper. */
   sauces: ProductExtraOption[];

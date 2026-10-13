@@ -68,17 +68,30 @@ const MENU: Record<string, Product> = {
     priceEur: 9.71,
     variants: sized("var_margarita", 9.71, 12.78),
   }),
-  prod_mesni_mlechni_ribni: product({
-    id: "prod_mesni_mlechni_ribni",
+  // Four of the owner's concrete toppings (2026-10-13), with his prices.
+  prod_topping_bekon: product({
+    id: "prod_topping_bekon",
     categoryId: "cat_pizza_addons",
     priceEur: 2.56,
-    variants: sized("var_mmr", 2.56, 3.07),
+    variants: sized("var_topping_bekon", 2.56, 3.07),
   }),
-  prod_zelenchukovi: product({
-    id: "prod_zelenchukovi",
+  prod_topping_kashkaval: product({
+    id: "prod_topping_kashkaval",
+    categoryId: "cat_pizza_addons",
+    priceEur: 2.56,
+    variants: sized("var_topping_kashkaval", 2.56, 3.07),
+  }),
+  prod_topping_riba_ton: product({
+    id: "prod_topping_riba_ton",
+    categoryId: "cat_pizza_addons",
+    priceEur: 2.56,
+    variants: sized("var_topping_riba_ton", 2.56, 3.07),
+  }),
+  prod_topping_gabi: product({
+    id: "prod_topping_gabi",
     categoryId: "cat_pizza_addons",
     priceEur: 2.05,
-    variants: sized("var_zel", 2.05, 2.56),
+    variants: sized("var_topping_gabi", 2.05, 2.56),
   }),
   prod_sauce: product({ id: "prod_sauce", categoryId: "cat_sauces", priceEur: 1.02 }),
   prod_999: product({ id: "prod_999", categoryId: "cat_drinks", priceEur: 9.99 }),
@@ -100,11 +113,12 @@ function input(items: unknown[]): PlaceOrderInput {
   };
 }
 
-const MEAT = { key: "free_meat_topping", sourceProductId: "prod_mesni_mlechni_ribni", quantity: 1 };
-const DAIRY = { key: "free_dairy_topping", sourceProductId: "prod_mesni_mlechni_ribni", quantity: 1 };
-const FISH = { key: "free_fish_topping", sourceProductId: "prod_mesni_mlechni_ribni", quantity: 1 };
-const VEG = { key: "free_vegetable_topping", sourceProductId: "prod_zelenchukovi", quantity: 1 };
-const PAID_MEAT = { key: "meat_addon", sourceProductId: "prod_mesni_mlechni_ribni", quantity: 1 };
+// Free picks are concrete ingredients too (bacon, kashkaval, tuna, mushrooms).
+const MEAT = { key: "free_topping:prod_topping_bekon", sourceProductId: "prod_topping_bekon", quantity: 1 };
+const DAIRY = { key: "free_topping:prod_topping_kashkaval", sourceProductId: "prod_topping_kashkaval", quantity: 1 };
+const FISH = { key: "free_topping:prod_topping_riba_ton", sourceProductId: "prod_topping_riba_ton", quantity: 1 };
+const VEG = { key: "free_topping:prod_topping_gabi", sourceProductId: "prod_topping_gabi", quantity: 1 };
+const PAID_MEAT = { key: "pizza_topping:prod_topping_bekon", sourceProductId: "prod_topping_bekon", quantity: 1 };
 
 /** The resolver's view of the menu (what place-order builds from the DB). */
 const sources = new Map<string, ExtraSourceProduct>(
@@ -213,7 +227,7 @@ test("free toppings: refused on every other pizza", () => {
 });
 
 test("free toppings: a key pointing at the wrong source product is refused", () => {
-  const r = resolve("prod_moyata_patso", [{ ...VEG, sourceProductId: "prod_mesni_mlechni_ribni" }]);
+  const r = resolve("prod_moyata_patso", [{ ...VEG, sourceProductId: "prod_topping_bekon" }]);
   assert.deepEqual(r, { ok: false, code: "key-product-mismatch" });
 });
 
@@ -339,7 +353,7 @@ test("basket: editing a line replaces it in place and keeps the others", () => {
   assert.equal(items[1].product.id, "prod_moyata_patso");
   assert.equal(items[1].selectedVariant?.id, v40.id);
   assert.equal(items[1].quantity, 2);
-  assert.deepEqual(items[1].extras.map((e) => e.key), ["free_meat_topping", "free_vegetable_topping"]);
+  assert.deepEqual(items[1].extras.map((e) => e.key), [MEAT.key, VEG.key]);
 });
 
 test("basket: an edit that makes two lines identical merges them", () => {

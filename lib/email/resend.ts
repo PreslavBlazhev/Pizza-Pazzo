@@ -57,7 +57,9 @@ function describe(error: unknown): string {
 async function sendToCustomer(
   order: Order,
   message: { subject: string; html: string; text: string },
-  kind: string
+  kind: string,
+  /** Where the customer's "Reply" goes — the pizzeria's own mailbox. */
+  replyTo?: string
 ): Promise<EmailOutcome> {
   const blocked = emailDeliveryBlockedReason();
   if (blocked) {
@@ -94,6 +96,9 @@ async function sendToCustomer(
         subject: message.subject,
         html: message.html,
         text: message.text,
+        // The sender stays the verified FROM_EMAIL domain (a gmail.com
+        // address cannot be a Resend sender); a reply reaches the pizzeria.
+        ...(replyTo && EMAIL_RE.test(replyTo) ? { replyTo } : {}),
       },
       // The same e-mail for the same order is sent at most once by Resend,
       // even if we ever call this twice (24-hour idempotency window).
@@ -134,7 +139,8 @@ export async function sendCustomerOrderAcceptedEmail(order: OrderWithItems): Pro
         registeredAddress: correspondenceAddress,
       }))(companyFor("bg")),
     }),
-    "accepted"
+    "accepted",
+    settings.contactEmail
   );
 }
 

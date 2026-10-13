@@ -66,7 +66,7 @@ async function seedBasket(page: Page, locale: "bg" | "en", withRetired: boolean)
       state: {
         items: [
           {
-            lineId: "prod_moyata_patso::var_moyata_patso_1::free_meat_topping@prod_mesni_mlechni_ribnix1",
+            lineId: "prod_moyata_patso::var_moyata_patso_1::free_topping:prod_topping_bekon@prod_topping_bekonx1",
             product: {
               id: "prod_moyata_patso",
               name: "Моята Пацо",
@@ -84,10 +84,10 @@ async function seedBasket(page: Page, locale: "bg" | "en", withRetired: boolean)
             selectedVariant: v30,
             extras: [
               {
-                key: "free_meat_topping",
-                sourceProductId: "prod_mesni_mlechni_ribni",
+                key: "free_topping:prod_topping_bekon",
+                sourceProductId: "prod_topping_bekon",
                 quantity: 1,
-                display: { nameBg: "Безплатна добавка: месна", nameEn: "Free topping: meat", unitPriceEur: 0 },
+                display: { nameBg: "Безплатна добавка: Бекон", nameEn: "Free topping: Bacon", unitPriceEur: 0 },
               },
             ],
             quantity: 2,

@@ -309,7 +309,7 @@ a staff account.
 | Free or paid | Free |
 | **Category** | **Food & Drink** |
 | Tags | Food delivery, Restaurants |
-| Contact email | info@bulgaria-digital-services.com |
+| Contact email | pizzapazzopln@gmail.com |
 | Contact phone | +359 88 248 4777 |
 | Website | https://pizzapazzo.bg |
 | Държави | България |

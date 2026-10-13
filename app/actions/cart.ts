@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { isAddonOnlyCategory } from "@/lib/extras-rules";
 
 const idsSchema = z.array(z.string().min(1).max(120)).max(50);
 
@@ -19,8 +20,12 @@ export async function unavailableCartProducts(rawIds: unknown): Promise<string[]
   if (ids.length === 0) return [];
   const rows = await db.menuProduct.findMany({
     where: { id: { in: ids } },
-    select: { id: true, isAvailable: true },
+    select: { id: true, isAvailable: true, categoryId: true },
   });
-  const onSale = new Set(rows.filter((r) => r.isAvailable).map((r) => r.id));
+  // A topping / burger add-on is never on sale on its own (it is ordered
+  // only on a pizza or a burger), whatever its availability switch says.
+  const onSale = new Set(
+    rows.filter((r) => r.isAvailable && !isAddonOnlyCategory(r.categoryId)).map((r) => r.id)
+  );
   return ids.filter((id) => !onSale.has(id));
 }

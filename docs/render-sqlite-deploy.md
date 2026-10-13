@@ -23,7 +23,7 @@ Add these under **Environment** → **Environment Variables**:
 ```
 DATABASE_URL=file:/var/data/pizza-pazzo.db
 RESEND_API_KEY=
-ORDER_NOTIFICATION_EMAIL=info@bulgaria-digital-services.com
+ORDER_NOTIFICATION_EMAIL=pizzapazzopln@gmail.com
 FROM_EMAIL=Pizza Pazzo <orders@pizzapazzo.bg>
 NEXT_PUBLIC_SITE_URL=https://your-render-url.onrender.com
 ```

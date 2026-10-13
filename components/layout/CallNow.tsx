@@ -16,8 +16,20 @@ async function publicPhone(): Promise<string> {
   return (await getRestaurantSettings()).primaryPhone;
 }
 
-/** The number itself, small, directly under a logo. */
-export async function LogoPhone({ className }: { className?: string }) {
+/**
+ * The number itself, next to or under a logo.
+ *
+ * `size="hero"`: under the big homepage logo — large and bold, the first thing
+ * to tap, but still lighter than the logo above it. `size="bar"`: beside the
+ * small logo in the header, on the same line.
+ */
+export async function LogoPhone({
+  size = "bar",
+  className,
+}: {
+  size?: "hero" | "bar";
+  className?: string;
+}) {
   const t = await getTranslations("callNow");
   const phone = await publicPhone();
 
@@ -26,11 +38,17 @@ export async function LogoPhone({ className }: { className?: string }) {
       href={telHref(phone)}
       aria-label={t("ariaLabel", { phone })}
       className={cn(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full font-semibold tabular-nums text-pizza-green-dark transition hover:text-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-2",
+        "inline-flex items-center whitespace-nowrap rounded-full tabular-nums text-pizza-green-dark transition hover:text-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/50 focus-visible:ring-offset-2",
+        size === "hero"
+          ? "gap-2 px-3 py-1 text-3xl font-bold tracking-wide sm:text-4xl lg:text-[2rem]"
+          : "gap-1 text-[0.95rem] font-bold leading-none sm:text-base",
         className
       )}
     >
-      <span aria-hidden>📞</span>
+      {/* In the narrow header the icon is the first thing to go. */}
+      <span aria-hidden className={size === "bar" ? "hidden min-[400px]:inline" : undefined}>
+        📞
+      </span>
       {phone}
     </a>
   );

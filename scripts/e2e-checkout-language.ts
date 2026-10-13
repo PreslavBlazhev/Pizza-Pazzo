@@ -184,7 +184,8 @@ async function main() {
       );
       await page.getByRole("button", { name: /^40 cm/ }).first().click();
       await page.getByRole("button", { name: /Up to 3 free/ }).click();
-      await page.getByRole("button", { name: /Free topping: meat/ }).click();
+      // The free picks are the concrete ingredients (2026-10-13): bacon.
+      await page.getByRole("button", { name: /^Bacon/ }).first().click();
       // A REAL mouse click, with the free-topping list still open: closing that
       // list on mousedown used to move this button before the mouseup, and the
       // click was lost (components/cart/ProductExtrasPicker.tsx).
@@ -210,7 +211,7 @@ async function main() {
         "saved: items 25.56, discount 2.55",
         `${order?.subtotalEur} / ${order?.discountEur}`
       );
-      check(order?.items[0]?.extrasJson.includes("free_meat_topping") ?? false, "the free topping is on the saved line");
+      check(order?.items[0]?.extrasJson.includes("free_topping:prod_topping_bekon") ?? false, "the free topping is on the saved line");
       await ctx.close();
     }
 
@@ -316,10 +317,10 @@ async function main() {
       await page.goto(`${BASE}/product/moyata-patso`);
       await page.waitForLoadState("networkidle");
       await page.getByRole("button", { name: /Платени добавки/ }).click();
-      await page.getByRole("button", { name: /Месна добавка/ }).click();
+      await page.getByRole("button", { name: /^Бекон/ }).first().click();
       await page.getByRole("button", { name: /Добави в количката/ }).click();
       const added = await page
-        .waitForFunction(() => (localStorage.getItem("pp-cart") ?? "").includes("meat_addon"), undefined, { timeout: 5_000 })
+        .waitForFunction(() => (localStorage.getItem("pp-cart") ?? "").includes("pizza_topping:prod_topping_bekon"), undefined, { timeout: 5_000 })
         .then(() => true, () => false);
       check(added, "the first click adds the pizza with its paid topping");
       await ctx.close();

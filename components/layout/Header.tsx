@@ -13,7 +13,7 @@ export { NAV_LINKS };
 
 /**
  * Site header. Stays a server component: the auth-dependent part is isolated in
- * <HeaderAuth />, and the phone under the logo is a cached settings read, so
+ * <HeaderAuth />, and the phone beside the logo is a cached settings read, so
  * pages using this header can still be statically rendered.
  *
  * Note the desktop breakpoint is `lg`, not `md` — the auth controls added
@@ -35,15 +35,19 @@ export async function Header({ variant = "default" }: HeaderProps) {
 
   return (
     <HeaderShell transparentAtTop={isHome}>
-      <div className="container flex h-20 items-center justify-between gap-4">
+      <div className="container flex h-20 items-center justify-between gap-2 sm:gap-4">
         {/* On the homepage the logo is hidden; the empty span keeps
             justify-between so the nav stays pinned to the right. */}
         {isHome ? (
           <span aria-hidden />
         ) : (
-          <div className="flex flex-col items-start gap-0.5">
-            <Logo className="h-10 sm:h-11" priority />
-            <LogoPhone className="text-xs sm:text-sm" />
+          // Logo and phone on ONE line, vertically centred (owner's request,
+          // 2026-10-13). min-w-0 lets this side give way first on a narrow
+          // phone; the logo shrinks a little below 400px so the number keeps
+          // a readable size next to the flag, basket and menu button.
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <Logo className="h-9 shrink-0 min-[400px]:h-10 sm:h-11" priority />
+            <LogoPhone />
           </div>
         )}
 

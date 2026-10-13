@@ -9,26 +9,33 @@
  * Pure and dependency-free (relative imports only), so the tests can call it.
  */
 import type { CartItem, CartTotals } from "../types/cart";
-import { PIZZA_CATEGORY_IDS } from "./extras-rules";
+import { PIZZA_CATEGORY_IDS, isRetiredExtraKey } from "./extras-rules";
 import { pizzaMathDiscount } from "./pizza-math";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** PREVIEW extras total per one main unit (display snapshots; missing → 0). */
+/** Euro amount → whole cents. Money is added up in cents, never in floats. */
+const cents = (eur: number) => Math.round(eur * 100);
+
+/** PREVIEW extras total per one main unit (display snapshots; missing → 0).
+ *  A retired generic option ("Месна добавка") is shown crossed out and is
+ *  never charged, so it is not counted either. */
 export function extrasPreviewUnitEur(item: CartItem): number {
-  return round2(
-    (item.extras ?? []).reduce((s, e) => s + (e.display?.unitPriceEur ?? 0) * e.quantity, 0)
+  const total = (item.extras ?? []).filter((e) => !isRetiredExtraKey(e.key)).reduce(
+    (sum, e) => sum + cents(e.display?.unitPriceEur ?? 0) * e.quantity,
+    0
   );
+  return total / 100;
 }
 
 /** PREVIEW price of ONE unit of the line: base + its extras. */
 export function lineUnitPreviewEur(item: CartItem): number {
-  return round2(item.unitPrice + extrasPreviewUnitEur(item));
+  return (cents(item.unitPrice) + cents(extrasPreviewUnitEur(item))) / 100;
 }
 
 /** PREVIEW line total including extras: (base unit + extras unit) × quantity. */
 export function linePreviewTotalEur(item: CartItem): number {
-  return round2(round2(item.unitPrice + extrasPreviewUnitEur(item)) * item.quantity);
+  return (cents(lineUnitPreviewEur(item)) * item.quantity) / 100;
 }
 
 /**
@@ -37,7 +44,7 @@ export function linePreviewTotalEur(item: CartItem): number {
  */
 export function cartTotals(items: readonly CartItem[]): CartTotals {
   const itemsCount = items.reduce((n, i) => n + i.quantity, 0);
-  const subtotal = items.reduce((s, i) => round2(s + linePreviewTotalEur(i)), 0);
+  const subtotal = items.reduce((s, i) => s + cents(linePreviewTotalEur(i)), 0) / 100;
   const discount = pizzaMathDiscount(
     items.map((i) => ({
       categoryId: i.product.categoryId,

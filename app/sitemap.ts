@@ -3,6 +3,7 @@ import { SITE_URL } from "@/lib/constants";
 import categoriesJson from "@/data/categories.json";
 import menuJson from "@/data/pizza-pazzo-menu.json";
 import { routing } from "@/i18n/routing";
+import { isAddonOnlyCategory } from "@/lib/extras-rules";
 
 /**
  * Sitemap for both languages.
@@ -63,10 +64,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // build time, when the Render disk (and with it the DB) is not mounted.
   // That is safe because slugs are deliberately immutable in the admin MVP —
   // for URLs the seed and the DB are the same set.
-  const categorySlugs = (categoriesJson as { slug: string; isActive: boolean }[])
-    .filter((c) => c.isActive)
+  // Add-ons (pizza toppings, burger add-ons) have no page of their own.
+  const categorySlugs = (categoriesJson as { id: string; slug: string; isActive: boolean }[])
+    .filter((c) => c.isActive && !isAddonOnlyCategory(c.id))
     .map((c) => c.slug);
-  const productSlugs = (menuJson as { slug: string }[]).map((p) => p.slug);
+  const productSlugs = (menuJson as { slug: string; categoryId: string }[])
+    .filter((p) => !isAddonOnlyCategory(p.categoryId))
+    .map((p) => p.slug);
 
   return [
     ...staticPaths.map(([path, priority]) => entry(path, priority)),

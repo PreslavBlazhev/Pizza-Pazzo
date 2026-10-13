@@ -10,6 +10,7 @@ import { CartSummary } from "./CartSummary";
 import { MinimumOrderNotice } from "./MinimumOrderNotice";
 import { minimumOrderShortfallEur } from "@/lib/delivery-area";
 import { useUnavailableProducts } from "./useUnavailableProducts";
+import { cartLineIssue } from "@/lib/cart-display";
 
 /** The interactive cart. Rendered inside the server cart page shell. */
 export function CartView() {
@@ -49,15 +50,16 @@ export function CartView() {
   const belowMinimum = minimumOrderShortfallEur(totals.total) > 0;
   // A product taken off sale since it was added: named on its line, and the
   // way forward stays closed until it is removed.
-  const hasUnavailable = items.some((i) => unavailable.has(i.product.id));
-  const blocked = storeClosed || belowMinimum || hasUnavailable;
+  // The same for a topping on its own or a retired "Месна добавка" choice.
+  const hasLineIssue = items.some((i) => cartLineIssue(i, unavailable) !== null);
+  const blocked = storeClosed || belowMinimum || hasLineIssue;
 
   return (
     <div className="mx-auto grid max-w-4xl gap-8 lg:grid-cols-[1fr_20rem]">
       {/* Lines */}
       <div className="rounded-3xl border border-pizza-cream-dark bg-white p-6 shadow-card">
         {items.map((item) => (
-          <CartItem key={item.lineId} item={item} unavailable={unavailable.has(item.product.id)} />
+          <CartItem key={item.lineId} item={item} issue={cartLineIssue(item, unavailable)} />
         ))}
         <button
           type="button"

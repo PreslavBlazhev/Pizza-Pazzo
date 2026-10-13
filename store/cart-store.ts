@@ -5,7 +5,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { CartExtraSelection, CartItem, CartTotals } from "@/types/cart";
 import type { Product, ProductVariant } from "@/types/product";
-import { lineIdFor } from "@/lib/extras-rules";
+import { isAddonOnlyCategory, lineIdFor } from "@/lib/extras-rules";
 import { cartTotals } from "@/lib/cart-totals";
 
 interface CartState {
@@ -155,6 +155,8 @@ export const useCartStore = create<CartState>()(
 
       addProduct: (product, variant, quantity = 1, extras = []) =>
         set((state) => {
+          // Add-ons are ordered only ON a pizza or a burger, never as a line.
+          if (isAddonOnlyCategory(product.categoryId)) return state;
           const lineId = lineIdFor(product.id, variant?.id, extras);
           const existing = state.items.find((i) => i.lineId === lineId);
           if (existing) {
@@ -179,6 +181,7 @@ export const useCartStore = create<CartState>()(
 
       replaceItem: (oldLineId, product, variant, quantity, extras) =>
         set((state) => {
+          if (isAddonOnlyCategory(product.categoryId)) return state;
           const lineId = lineIdFor(product.id, variant?.id, extras);
           const item: CartItem = {
             lineId,

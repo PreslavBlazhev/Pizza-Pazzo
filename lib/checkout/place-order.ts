@@ -30,7 +30,12 @@ import { LEGAL_VERSIONS } from "@/content/legal/versions";
 import { resolveOrderItemExtras, type ExtraSourceProduct } from "@/lib/extras-resolve";
 import { minimumOrderShortfallEur } from "@/lib/delivery-area";
 import { pizzaMathDiscount, type PizzaMathLine } from "@/lib/pizza-math";
-import { EXTRAS_LIMITS, type OrderItemExtra } from "@/lib/extras-rules";
+import {
+  EXTRAS_LIMITS,
+  isAddonOnlyCategory,
+  isRetiredExtraKey,
+  type OrderItemExtra,
+} from "@/lib/extras-rules";
 import { resolveCheckoutPayment } from "@/lib/payments/providers";
 import { newAccessToken, releaseToKitchenAndNotify } from "@/lib/payments/service";
 import type { Product } from "@/types/product";
@@ -243,6 +248,11 @@ export async function placeOrder(
     if (!pBg || !pBg.isAvailable) {
       return { ok: false, error: "PRODUCT_UNAVAILABLE" };
     }
+    // Toppings and burger add-ons exist only ON a pizza or a burger: a line
+    // of their own (an old basket, a crafted request) is refused.
+    if (isAddonOnlyCategory(pBg.categoryId)) {
+      return { ok: false, error: "ADDON_STANDALONE" };
+    }
 
     let unitEur = pBg.priceEur;
     let variantId: string | null = null;
@@ -267,6 +277,11 @@ export async function placeOrder(
     let extrasUnitEur = 0;
 
     if (it.extras && it.extras.length > 0) {
+      // "Месна добавка" and the other generic options of an old basket: the
+      // customer must choose the ingredient again — never guessed here.
+      if (it.extras.some((e) => isRetiredExtraKey(e.key))) {
+        return { ok: false, error: "EXTRAS_OUTDATED" };
+      }
       const sourceProducts = new Map<string, ExtraSourceProduct>();
       for (const sourceId of new Set(it.extras.map((e) => e.sourceProductId))) {
         const sBg = await deps.getProduct(sourceId, "bg");
@@ -305,9 +320,10 @@ export async function placeOrder(
     // Line total semantics: the extras set applies to EVERY unit of the line —
     // (base unit + extras per unit) × quantity. unitPriceEur stays the BASE
     // price; the extras' own prices live in the snapshot.
-    const perUnitEur = round2(unitEur + extrasUnitEur);
-    const lineEur = round2(perUnitEur * it.quantity);
-    subtotalEur = round2(subtotalEur + lineEur);
+    // Whole cents throughout — no floating-point drift on long topping lists.
+    const perUnitCents = Math.round(unitEur * 100) + Math.round(extrasUnitEur * 100);
+    const lineEur = (perUnitCents * it.quantity) / 100;
+    subtotalEur = (Math.round(subtotalEur * 100) + perUnitCents * it.quantity) / 100;
 
     pizzaMathLines.push({
       categoryId: pBg.categoryId,

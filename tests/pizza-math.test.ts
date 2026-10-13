@@ -59,8 +59,10 @@ const MENU: Record<string, Product> = {
   prod_kashkavalina: product({ id: "prod_kashkavalina", categoryId: STD, priceEur: 6.65, variants: sized("var_kash", 6.65, 10.23) }),
   prod_syomga: product({ id: "prod_syomga", categoryId: "cat_pizzas_special", priceEur: 11.76, variants: sized("var_syomga", 11.76, 15.34) }),
   prod_proshuto: product({ id: "prod_proshuto", categoryId: "cat_pizzas_special", priceEur: 11.76, variants: sized("var_prosh", 11.76, 15.34) }),
-  prod_mesni_mlechni_ribni: product({ id: "prod_mesni_mlechni_ribni", categoryId: "cat_pizza_addons", priceEur: 2.56, variants: sized("var_mmr", 2.56, 3.07) }),
-  prod_zelenchukovi: product({ id: "prod_zelenchukovi", categoryId: "cat_pizza_addons", priceEur: 2.05, variants: sized("var_zel", 2.05, 2.56) }),
+  prod_topping_bekon: product({ id: "prod_topping_bekon", categoryId: "cat_pizza_addons", priceEur: 2.56, variants: sized("var_bekon", 2.56, 3.07) }),
+  prod_topping_kashkaval: product({ id: "prod_topping_kashkaval", categoryId: "cat_pizza_addons", priceEur: 2.56, variants: sized("var_kashk", 2.56, 3.07) }),
+  prod_topping_riba_ton: product({ id: "prod_topping_riba_ton", categoryId: "cat_pizza_addons", priceEur: 2.56, variants: sized("var_ton", 2.56, 3.07) }),
+  prod_topping_gabi: product({ id: "prod_topping_gabi", categoryId: "cat_pizza_addons", priceEur: 2.05, variants: sized("var_gabi", 2.05, 2.56) }),
   prod_drink_334: product({ id: "prod_drink_334", categoryId: "cat_drinks", priceEur: 3.34 }),
   prod_drink_335: product({ id: "prod_drink_335", categoryId: "cat_drinks", priceEur: 3.35 }),
   prod_drink_336: product({ id: "prod_drink_336", categoryId: "cat_drinks", priceEur: 3.36 }),
@@ -78,11 +80,11 @@ const deps = {
   },
 };
 
-const MEAT = { key: "meat_addon", sourceProductId: "prod_mesni_mlechni_ribni", quantity: 1 };
-const VEG = { key: "vegetable_addon", sourceProductId: "prod_zelenchukovi", quantity: 1 };
-const FREE_MEAT = { key: "free_meat_topping", sourceProductId: "prod_mesni_mlechni_ribni", quantity: 1 };
-const FREE_DAIRY = { key: "free_dairy_topping", sourceProductId: "prod_mesni_mlechni_ribni", quantity: 1 };
-const FREE_FISH = { key: "free_fish_topping", sourceProductId: "prod_mesni_mlechni_ribni", quantity: 1 };
+const MEAT = { key: "pizza_topping:prod_topping_bekon", sourceProductId: "prod_topping_bekon", quantity: 1 };
+const VEG = { key: "pizza_topping:prod_topping_gabi", sourceProductId: "prod_topping_gabi", quantity: 1 };
+const FREE_MEAT = { key: "free_topping:prod_topping_bekon", sourceProductId: "prod_topping_bekon", quantity: 1 };
+const FREE_DAIRY = { key: "free_topping:prod_topping_kashkaval", sourceProductId: "prod_topping_kashkaval", quantity: 1 };
+const FREE_FISH = { key: "free_topping:prod_topping_riba_ton", sourceProductId: "prod_topping_riba_ton", quantity: 1 };
 const SAUCE = { key: "sauce:prod_sauce", sourceProductId: "prod_sauce", quantity: 1 };
 
 type Size = 30 | 40;

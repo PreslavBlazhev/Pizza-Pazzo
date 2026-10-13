@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ProductExtraOption, ProductExtrasData } from "@/types/cart";
 import { formatEurPrice } from "@/lib/format-price";
+import { PIZZA_TOPPING_GROUP_ORDER } from "@/lib/extras-rules";
 import { cn } from "@/lib/utils";
 
 /**
@@ -142,7 +143,7 @@ function ExtrasDisclosure({
           <div
             id={panelId}
             hidden={!open}
-            className="max-h-80 space-y-2 overflow-y-auto rounded-2xl border border-pizza-cream-dark bg-pizza-cream/40 p-3 shadow-sm"
+            className="max-h-[26rem] space-y-2 overflow-y-auto rounded-2xl border border-pizza-cream-dark bg-pizza-cream/40 p-3 shadow-sm"
           >
             {children}
           </div>
@@ -332,6 +333,34 @@ export function ProductExtrasPicker({
     );
   };
 
+  /**
+   * Rows under the owner's group headings ("Зеленчукови добавки", "Месни /
+   * млечни / рибни добавки"). The groups are headings only — every row is
+   * its own choice with its own price. Options without a group (burger
+   * add-ons) are listed as they are.
+   */
+  const grouped = (
+    options: ProductExtraOption[],
+    row: (o: ProductExtraOption) => React.ReactNode,
+    withHeadings: boolean
+  ) => {
+    if (!options.some((o) => o.group)) return options.map(row);
+    return PIZZA_TOPPING_GROUP_ORDER.map((group) => {
+      const inGroup = options.filter((o) => o.group === group);
+      if (inGroup.length === 0) return null;
+      return (
+        <div key={group} role="group" aria-label={t(`groups.${group}`)} data-testid="topping-group" className="space-y-2">
+          {withHeadings && (
+            <p className="px-1 pt-1 text-xs font-semibold uppercase tracking-wide text-pizza-muted">
+              {t(`groups.${group}`)}
+            </p>
+          )}
+          {inGroup.map(row)}
+        </div>
+      );
+    });
+  };
+
   const hasAddons = extras.crusts.length > 0 || extras.addons.length > 0;
   const hasSauces = extras.sauces.length > 0;
 
@@ -360,7 +389,7 @@ export function ProductExtrasPicker({
       {free && (
         <ExtrasDisclosure title={t("freeTitle", { max: free.max })} summary={freeSummary}>
           <p className="px-1 text-xs text-pizza-muted">{t("freeHint", { max: free.max })}</p>
-          {free.options.map(freeRow)}
+          {grouped(free.options, freeRow, true)}
           {freeAtLimit && (
             <p role="status" className="px-1 pt-1 text-xs font-medium text-brand-dark">
               {t("freeLimitReached", { max: free.max })}
@@ -372,6 +401,11 @@ export function ProductExtrasPicker({
       {hasAddons && (
         // Where free toppings exist, this list is explicitly the PAID one.
         <ExtrasDisclosure title={free ? t("paidTitle") : t("title")} summary={addonSummary}>
+          {/* Every price below is per topping, for ONE pizza of the size
+              picked above — it follows a 30 ⇄ 40 cm change at once. */}
+          {mainSize !== null && extras.addons.some((o) => o.sizePrices) && (
+            <p className="px-1 text-xs text-pizza-muted">{t("priceFor", { size: mainSize })}</p>
+          )}
           {extras.crusts.length > 0 && (
             <>
               <p className="px-1 text-xs font-semibold uppercase tracking-wide text-pizza-muted">
@@ -382,12 +416,14 @@ export function ProductExtrasPicker({
           )}
           {extras.addons.length > 0 && (
             <>
-              {extras.crusts.length > 0 && (
+              {/* Pizza toppings carry their own group headings; burger
+                  add-ons (no groups, no crusts) need none. */}
+              {extras.crusts.length > 0 && !extras.addons.some((o) => o.group) && (
                 <p className="px-1 pt-1 text-xs font-semibold uppercase tracking-wide text-pizza-muted">
                   {t("otherAddons")}
                 </p>
               )}
-              {extras.addons.map(toggleRow)}
+              {grouped(extras.addons, toggleRow, true)}
             </>
           )}
         </ExtrasDisclosure>

@@ -15,9 +15,10 @@
 import {
   BURGER_ADDONS_CATEGORY_ID,
   EXTRAS_LIMITS,
-  FREE_TOPPING_SELECTIONS,
+  freeToppingNames,
   freeToppingsLimitFor,
-  isFreeToppingKey,
+  isRetiredExtraKey,
+  parseToppingKey,
   PIZZA_ADDONS_CATEGORY_ID,
   PIZZA_SELECTIONS,
   SAUCES_CATEGORY_ID,
@@ -66,6 +67,7 @@ export type ResolveExtrasErrorCode =
   | "too-many-extras"
   | "bad-quantity"
   | "unknown-key"
+  | "retired-key"
   | "duplicate-selection"
   | "multiple-crusts"
   | "too-many-free-toppings"
@@ -87,8 +89,6 @@ export type ResolveExtrasResult =
     }
   | { ok: false; code: ResolveExtrasErrorCode };
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
-
 const fail = (code: ResolveExtrasErrorCode): ResolveExtrasResult => ({ ok: false, code });
 
 /**
@@ -106,8 +106,10 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
   // ── Classify + normalize (merge duplicate sauces, reject other duplicates) ──
   const seenKeys = new Set<string>();
   let crustCount = 0;
-  const pizzaPicks: { key: string; selection: ExtraSelection }[] = [];
-  const freePicks: (keyof typeof FREE_TOPPING_SELECTIONS)[] = [];
+  // Crusts (single priced product, one label per flavour) and paid toppings
+  // (one product per ingredient) — both priced by the pizza's size.
+  const pizzaPicks: { key: string; sourceProductId: string; crust: boolean }[] = [];
+  const freePicks: { key: string; productId: string }[] = [];
   const burgerPicks: { key: string; productId: string }[] = [];
   // Sauce quantities merged by product id, first-seen order preserved.
   const sauceQty = new Map<string, number>();
@@ -115,13 +117,18 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
   for (const sel of selections) {
     if (!Number.isInteger(sel.quantity) || sel.quantity < 1) return fail("bad-quantity");
 
-    if (isFreeToppingKey(sel.key)) {
-      const def = FREE_TOPPING_SELECTIONS[sel.key];
-      if (sel.sourceProductId !== def.sourceProductId) return fail("key-product-mismatch");
+    // The generic "Месна добавка"-style options of old baskets: refused, never
+    // mapped to an ingredient the customer did not pick.
+    if (isRetiredExtraKey(sel.key)) return fail("retired-key");
+
+    const toppingKey = parseToppingKey(sel.key);
+    if (toppingKey) {
+      if (sel.sourceProductId !== toppingKey.productId) return fail("key-product-mismatch");
       if (sel.quantity !== 1) return fail("bad-quantity");
       if (seenKeys.has(sel.key)) return fail("duplicate-selection");
       seenKeys.add(sel.key);
-      freePicks.push(sel.key);
+      if (toppingKey.free) freePicks.push({ key: sel.key, productId: toppingKey.productId });
+      else pizzaPicks.push({ key: sel.key, sourceProductId: toppingKey.productId, crust: false });
       continue;
     }
 
@@ -131,8 +138,8 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
       if (sel.quantity !== 1) return fail("bad-quantity");
       if (seenKeys.has(sel.key)) return fail("duplicate-selection");
       seenKeys.add(sel.key);
-      if (def.type === "pizza_crust") crustCount++;
-      pizzaPicks.push({ key: sel.key, selection: sel });
+      crustCount++;
+      pizzaPicks.push({ key: sel.key, sourceProductId: def.sourceProductId, crust: true });
       continue;
     }
 
@@ -162,6 +169,7 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
     const limit = freeToppingsLimitFor(mainProduct.id);
     if (limit === 0) return fail("not-allowed-for-product");
     if (freePicks.length > limit) return fail("too-many-free-toppings");
+    if (!isPizzaCategory(mainProduct.categoryId)) return fail("not-allowed-for-product");
   }
   if (pizzaPicks.length > 0 && !isPizzaCategory(mainProduct.categoryId)) {
     return fail("not-allowed-for-product");
@@ -187,44 +195,48 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
   };
 
   // ── Free toppings: included in the pizza's price — always 0.00 € ──
-  for (const key of freePicks) {
-    const def = FREE_TOPPING_SELECTIONS[key];
-    // Only to check the kind is on sale; its price is NOT used.
-    const src = getSource(def.sourceProductId, PIZZA_ADDONS_CATEGORY_ID);
+  for (const pick of freePicks) {
+    // Only to check the ingredient is on sale; its price is NOT used. The
+    // name is the database one, so an admin rename reaches the kitchen.
+    const src = getSource(pick.productId, PIZZA_ADDONS_CATEGORY_ID);
     if ("ok" in src) return src;
 
     extras.push({
-      key,
+      key: pick.key,
       sourceProductId: src.id,
       type: "pizza_free_topping",
-      nameBg: def.nameBg,
-      nameEn: def.nameEn,
+      ...freeToppingNames(src),
       quantity: 1,
       unitPriceEur: 0,
       totalPriceEur: 0,
     });
   }
 
-  // ── Pizza crust + generic addons: price follows the main pizza's size ──
+  // ── Crust + paid toppings: the price follows the main pizza's size ──
   if (pizzaPicks.length > 0) {
     const mainSize = parseVariantSize(mainVariantName);
     if (mainSize === null) return fail("no-main-size");
 
     for (const pick of pizzaPicks) {
-      const def = PIZZA_SELECTIONS[pick.key as keyof typeof PIZZA_SELECTIONS];
-      const src = getSource(def.sourceProductId, PIZZA_ADDONS_CATEGORY_ID);
+      const src = getSource(pick.sourceProductId, PIZZA_ADDONS_CATEGORY_ID);
       if ("ok" in src) return src;
 
       const variant = findVariantForSize(src.variants, mainSize);
       if (!variant) return fail("no-size-variant");
 
+      // Crust labels are per flavour (one shared price row); a topping is
+      // named after its own database row.
+      const names = pick.crust
+        ? PIZZA_SELECTIONS[pick.key as keyof typeof PIZZA_SELECTIONS]
+        : { nameBg: src.nameBg, nameEn: src.nameEn };
+
       extras.push({
         key: pick.key,
         sourceProductId: src.id,
         sourceVariantId: variant.id,
-        type: def.type,
-        nameBg: def.nameBg,
-        nameEn: def.nameEn,
+        type: pick.crust ? "pizza_crust" : "pizza_addon",
+        nameBg: names.nameBg,
+        nameEn: names.nameEn,
         quantity: 1,
         sizeContext: variant.nameBg,
         unitPriceEur: variant.priceEur,
@@ -264,7 +276,7 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
       nameEn: src.nameEn,
       quantity,
       unitPriceEur: src.priceEur,
-      totalPriceEur: round2(src.priceEur * quantity),
+      totalPriceEur: (Math.round(src.priceEur * 100) * quantity) / 100,
     });
   }
 
@@ -272,10 +284,12 @@ export function resolveOrderItemExtras(input: ResolveExtrasInput): ResolveExtras
   // the invariant holds no matter how the code above evolves.
   if (extras.length > EXTRAS_LIMITS.maxExtrasPerItem) return fail("too-many-extras");
 
-  let extrasUnitTotalEur = 0;
+  // Summed in whole cents: 39 toppings × 2.56 must come out exact.
+  let extrasUnitTotalCents = 0;
   for (const e of extras) {
-    extrasUnitTotalEur = round2(extrasUnitTotalEur + e.totalPriceEur);
+    extrasUnitTotalCents += Math.round(e.totalPriceEur * 100);
   }
+  const extrasUnitTotalEur = extrasUnitTotalCents / 100;
 
   return { ok: true, extras, extrasUnitTotalEur };
 }

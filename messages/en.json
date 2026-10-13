@@ -127,7 +127,7 @@
       }
     },
     "hero": {
-      "badge": "Pizza delivery in Pleven",
+      "badge": "Free delivery",
       "titleLead": "Deliciously",
       "titleAccent": "Different",
       "subtitle": "Fresh dough and quality ingredients. Browse our menu and order your favourite dish.",
@@ -221,11 +221,6 @@
     "areaMinimum": "Minimum order for delivery: {amount} (not a charge)."
   },
   "menu": {
-    "hero": {
-      "title": "Digital menu",
-      "subtitle": "Choose from our pizzas, burgers, starters, salads and desserts.",
-      "priceNote": "Prices are shown in euro."
-    },
     "categoryNav": "Categories",
     "allCategories": "← All categories",
     "categoryFallback": "Category",
@@ -280,7 +275,13 @@
     "free": "Free",
     "freeCount": "{count} of {max} chosen",
     "freeHint": "Choose 0 to {max}. They are included in the price of the pizza.",
-    "freeLimitReached": "You have chosen {max} free toppings — the maximum. For more, choose from Extra toppings."
+    "freeLimitReached": "You have chosen {max} free toppings — the maximum. For more, choose from Extra toppings.",
+    "groups": {
+      "vegetable": "Vegetable toppings",
+      "meat_dairy_fish": "Meat / dairy / fish toppings"
+    },
+    "priceFor": "Prices are for one topping on one {size} cm pizza.",
+    "outdatedNotice": "General options such as “Meat add-on” are no longer offered. Please choose the exact ingredients again and save your changes."
   },
   "gallery": {
     "eyebrow": "Appetising",
@@ -409,7 +410,11 @@
     "minimumOrderShortfall": "The minimum order for delivery is {amount} after discounts. Add {remaining} more to continue. This is not a charge — delivery is free.",
     "extrasPerItem": "Extras apply to each item.",
     "unavailable": "This item is no longer available. Remove it to continue.",
-    "unavailableAtCheckout": "No longer available: {names}. Remove it from your basket to order."
+    "unavailableAtCheckout": "No longer available: {names}. Remove it from your basket to order.",
+    "addonOnly": "Toppings and add-ons can only be ordered with a pizza or a burger. Remove this line and choose them when customising the pizza or burger.",
+    "extrasOutdated": "General add-ons such as “Meat add-on” are no longer offered. Please choose the exact ingredients again.",
+    "reselectExtras": "Choose toppings",
+    "blockedAtCheckout": "Some lines in your basket need updating: {names}. Go back to the basket to fix them."
   },
   "store": {
     "closedTitle": "The restaurant is closed",
@@ -504,7 +509,9 @@
       "CONSENT_REQUIRED": "Please confirm this to send the order.",
       "FIELD_INVALID": "Invalid value.",
       "BELOW_MINIMUM": "The minimum order for delivery is {amount} after discounts. Please add {remaining} more to your basket.",
-      "NETWORK": "We did not get a reply from the server, so your order is not confirmed. Your details and basket are kept. Please try again — if the order has already been accepted, a second one will not be created."
+      "NETWORK": "We did not get a reply from the server, so your order is not confirmed. Your details and basket are kept. Please try again — if the order has already been accepted, a second one will not be created.",
+      "ADDON_STANDALONE": "Toppings and add-ons can only be ordered with a pizza or a burger. Please update your basket.",
+      "EXTRAS_OUTDATED": "Your basket has add-ons that are no longer offered (e.g. “Meat add-on”). Please choose the exact ingredients again."
     },
     "deliveryFreeMinimum": "Delivery is free; the minimum order is {amount}.",
     "checkingPrevious": "Checking your previous order attempt…"

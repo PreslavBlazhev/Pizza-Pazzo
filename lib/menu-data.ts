@@ -31,12 +31,15 @@ import type {
 import {
   BURGER_ADDONS_CATEGORY_ID,
   EXTRAS_LIMITS,
-  FREE_TOPPING_SELECTIONS,
   PIZZA_ADDONS_CATEGORY_ID,
   PIZZA_SELECTIONS,
+  PIZZA_TOPPINGS,
   SAUCES_CATEGORY_ID,
   burgerAddonKeyFor,
+  freeToppingKeyFor,
   freeToppingsLimitFor,
+  isAddonOnlyCategory,
+  pizzaToppingKeyFor,
   isBurgerCategory,
   isPizzaCategory,
   parseVariantSize,
@@ -182,12 +185,18 @@ function resolveProduct(raw: RawProduct, locale: Locale): Product {
 }
 
 // ── Public API (same names as before, now async) ────────────────────────────
+//
+// Add-on categories ("Пица добавки", "Бургер добавки" — isAddonOnlyCategory)
+// are left out of every PUBLIC read below: no menu section, no category page,
+// no product page, nothing to put in the basket on its own. Their rows are
+// still read by getProductById (the checkout prices extras from them) and by
+// getExtrasForProduct, and they stay editable in the admin.
 
-/** Active categories, sorted by sortOrder. */
+/** Active categories a customer can browse, sorted by sortOrder. */
 export async function getCategories(locale: Locale): Promise<Category[]> {
   const { categories } = await loadMenu();
   return categories
-    .filter((c) => c.isActive)
+    .filter((c) => c.isActive && !isAddonOnlyCategory(c.id))
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((c) => resolveCategory(c, locale));
 }
@@ -197,7 +206,7 @@ export async function getCategoryBySlug(
   locale: Locale
 ): Promise<Category | undefined> {
   const { categories } = await loadMenu();
-  const found = categories.find((c) => c.slug === slug);
+  const found = categories.find((c) => c.slug === slug && !isAddonOnlyCategory(c.id));
   return found ? resolveCategory(found, locale) : undefined;
 }
 
@@ -210,11 +219,12 @@ export async function getCategoryById(
   return found ? resolveCategory(found, locale) : undefined;
 }
 
-/** All products, sorted by category order then in-category sortOrder. */
+/** All orderable products, sorted by category order then in-category sortOrder. */
 export async function getProducts(locale: Locale): Promise<Product[]> {
   const { categories, products } = await loadMenu();
   const order = new Map(categories.map((c) => [c.id, c.sortOrder]));
-  return [...products]
+  return products
+    .filter((p) => !isAddonOnlyCategory(p.categoryId))
     .sort((a, b) => {
       const ca = order.get(a.categoryId) ?? 0;
       const cb = order.get(b.categoryId) ?? 0;
@@ -227,6 +237,7 @@ export async function getProductsByCategory(
   categoryId: string,
   locale: Locale
 ): Promise<Product[]> {
+  if (isAddonOnlyCategory(categoryId)) return [];
   const { products } = await loadMenu();
   return products
     .filter((p) => p.categoryId === categoryId)
@@ -234,6 +245,10 @@ export async function getProductsByCategory(
     .map((p) => resolveProduct(p, locale));
 }
 
+/**
+ * Any product by id, add-ons INCLUDED — the checkout needs the add-on rows to
+ * price extras. Pages that show a product to a customer use findProduct.
+ */
 export async function getProductById(
   id: string,
   locale: Locale
@@ -248,25 +263,27 @@ export async function getProductBySlug(
   locale: Locale
 ): Promise<Product | undefined> {
   const { products } = await loadMenu();
-  const found = products.find((p) => p.slug === slug);
+  const found = products.find((p) => p.slug === slug && !isAddonOnlyCategory(p.categoryId));
   return found ? resolveProduct(found, locale) : undefined;
 }
 
-/** Resolve a product by slug first, then by id (used by /product/[id]). */
+/**
+ * Resolve a product by slug first, then by id (used by /product/[id]). An
+ * add-on is not found: it has no page of its own and cannot be ordered alone.
+ */
 export async function findProduct(
   idOrSlug: string,
   locale: Locale
 ): Promise<Product | undefined> {
-  return (
-    (await getProductBySlug(idOrSlug, locale)) ??
-    (await getProductById(idOrSlug, locale))
-  );
+  const found =
+    (await getProductBySlug(idOrSlug, locale)) ?? (await getProductById(idOrSlug, locale));
+  return found && !isAddonOnlyCategory(found.categoryId) ? found : undefined;
 }
 
 export async function getPopularProducts(locale: Locale): Promise<Product[]> {
   const { products } = await loadMenu();
   return products
-    .filter((p) => p.isPopular)
+    .filter((p) => p.isPopular && !isAddonOnlyCategory(p.categoryId))
     .map((p) => resolveProduct(p, locale));
 }
 
@@ -304,16 +321,18 @@ export async function getExtrasForProduct(product: {
   const addons: ProductExtraOption[] = [];
   const sauces: ProductExtraOption[] = [];
 
+  // Pizza add-on rows on sale (switched off in the admin → not offered).
+  const pizzaAddonSources = new Map(
+    products
+      .filter((p) => p.categoryId === PIZZA_ADDONS_CATEGORY_ID && p.isAvailable)
+      .map((p) => [p.id, p])
+  );
+
   if (isPizzaCategory(categoryId)) {
-    const sources = new Map(
-      products
-        .filter((p) => p.categoryId === PIZZA_ADDONS_CATEGORY_ID && p.isAvailable)
-        .map((p) => [p.id, p])
-    );
     for (const [key, def] of Object.entries(PIZZA_SELECTIONS)) {
-      const src = sources.get(def.sourceProductId);
-      if (!src) continue; // hidden/unavailable in the admin → not offered
-      const option: ProductExtraOption = {
+      const src = pizzaAddonSources.get(def.sourceProductId);
+      if (!src) continue;
+      crusts.push({
         key,
         sourceProductId: src.id,
         type: def.type,
@@ -321,8 +340,23 @@ export async function getExtrasForProduct(product: {
         nameEn: def.nameEn,
         sizePrices: sizePricesOf(src),
         maxQuantity: 1,
-      };
-      (def.type === "pizza_crust" ? crusts : addons).push(option);
+      });
+    }
+    // The concrete toppings, in the owner's order, each priced per size from
+    // its own row and named after it (an admin rename shows up here).
+    for (const def of PIZZA_TOPPINGS) {
+      const src = pizzaAddonSources.get(def.productId);
+      if (!src) continue;
+      addons.push({
+        key: pizzaToppingKeyFor(src.id),
+        sourceProductId: src.id,
+        type: "pizza_addon",
+        nameBg: src.name.bg,
+        nameEn: src.name.en || src.name.bg,
+        sizePrices: sizePricesOf(src),
+        group: def.group,
+        maxQuantity: 1,
+      });
     }
   }
 
@@ -366,23 +400,23 @@ export async function getExtrasForProduct(product: {
   // FREE_TOPPINGS_BY_PRODUCT ("Моята Пацо"), never for pizzas in general.
   let freeToppings: ProductExtrasData["freeToppings"] = null;
   const freeMax = freeToppingsLimitFor(product.id);
-  if (freeMax > 0) {
-    const onSale = new Set(
-      products
-        .filter((p) => p.categoryId === PIZZA_ADDONS_CATEGORY_ID && p.isAvailable)
-        .map((p) => p.id)
-    );
-    const options: ProductExtraOption[] = Object.entries(FREE_TOPPING_SELECTIONS)
-      .filter(([, def]) => onSale.has(def.sourceProductId))
-      .map(([key, def]) => ({
-        key,
-        sourceProductId: def.sourceProductId,
+  if (freeMax > 0 && isPizzaCategory(categoryId)) {
+    // The same concrete list as the paid toppings, at 0.00 €.
+    const options: ProductExtraOption[] = PIZZA_TOPPINGS.flatMap((def) => {
+      const src = pizzaAddonSources.get(def.productId);
+      if (!src) return [];
+      const option: ProductExtraOption = {
+        key: freeToppingKeyFor(src.id),
+        sourceProductId: src.id,
         type: "pizza_free_topping",
-        nameBg: def.nameBg,
-        nameEn: def.nameEn,
+        nameBg: src.name.bg,
+        nameEn: src.name.en || src.name.bg,
         priceEur: 0,
+        group: def.group,
         maxQuantity: 1,
-      }));
+      };
+      return [option];
+    });
     if (options.length > 0) freeToppings = { max: freeMax, options };
   }
 
