@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import {
   SETTINGS_CACHE_TAG,
@@ -41,7 +41,7 @@ export async function closeStoreAction(
       console.error("[closure] indefinite close failed:", error);
       return { ok: false, error: "Заведението не можа да бъде затворено. Опитайте отново." };
     }
-    revalidateTag(SETTINGS_CACHE_TAG);
+    updateTag(SETTINGS_CACHE_TAG);
     return { ok: true, message: "Заведението е затворено до ръчно отваряне." };
   }
 
@@ -78,7 +78,7 @@ export async function closeStoreAction(
   // answer with `x-action-redirect: /` and throws the admin out to the
   // homepage (learned the hard way in the settings form). Every consumer reads
   // through the tagged cache entry anyway.
-  revalidateTag(SETTINGS_CACHE_TAG);
+  updateTag(SETTINGS_CACHE_TAG);
 
   return { ok: true, message: "Заведението е затворено." };
 }
@@ -94,7 +94,7 @@ export async function openStoreAction(): Promise<ActionResult> {
     return { ok: false, error: "Заведението не можа да бъде отворено. Опитайте отново." };
   }
 
-  revalidateTag(SETTINGS_CACHE_TAG);
+  updateTag(SETTINGS_CACHE_TAG);
 
   // Note: this clears the MANUAL closure only. If the shop is outside its
   // opening hours it stays closed, and the status will say so — that is what
@@ -125,7 +125,7 @@ export async function forceOpenStoreAction(
       console.error("[closure] indefinite force-open failed:", error);
       return { ok: false, error: "Заведението не можа да бъде отворено. Опитайте отново." };
     }
-    revalidateTag(SETTINGS_CACHE_TAG);
+    updateTag(SETTINGS_CACHE_TAG);
     return { ok: true, message: "Заведението приема поръчки до ръчно затваряне." };
   }
 
@@ -158,7 +158,7 @@ export async function forceOpenStoreAction(
     return { ok: false, error: "Заведението не можа да бъде отворено. Опитайте отново." };
   }
 
-  revalidateTag(SETTINGS_CACHE_TAG);
+  updateTag(SETTINGS_CACHE_TAG);
 
   return { ok: true, message: "Заведението приема поръчки." };
 }
@@ -174,7 +174,7 @@ export async function endForcedOpeningAction(): Promise<ActionResult> {
     return { ok: false, error: "Принудителното отваряне не можа да бъде спряно. Опитайте отново." };
   }
 
-  revalidateTag(SETTINGS_CACHE_TAG);
+  updateTag(SETTINGS_CACHE_TAG);
 
   return { ok: true, message: "Заведението работи по обявеното работно време." };
 }

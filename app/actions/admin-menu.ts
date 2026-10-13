@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { getLocale } from "next-intl/server";
 import { z } from "zod";
 import { redirect } from "@/i18n/navigation";
@@ -38,7 +38,7 @@ function firstFieldErrors(error: z.ZodError): Record<string, string> {
 }
 
 function revalidateMenu(): void {
-  revalidateTag(MENU_CACHE_TAG);
+  updateTag(MENU_CACHE_TAG);
   revalidatePath("/admin/products");
   revalidatePath("/admin/categories");
 }

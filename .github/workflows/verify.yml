@@ -1,0 +1,94 @@
+name: Site verification
+
+on:
+  push:
+    branches: [master, codex/next-16-4-upgrade]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      APP_ENV: development
+      APP_BASE_URL: http://localhost:3316
+      E2E_BASE_URL: http://localhost:3316
+      DATABASE_URL: file:/tmp/pizza-pazzo-next16-e2e.db
+      AUTH_SECRET: next16-ci-local-auth-secret-only-2026
+      RESEND_API_KEY: ""
+      FROM_EMAIL: test@example.test
+      ORDER_NOTIFICATION_EMAIL: kitchen@example.test
+      CARD_PAYMENTS_ENABLED: "true"
+      PAYMENT_PROVIDER: simulator
+      PAYMENT_ENV: sandbox
+      PAYMENT_SIMULATOR_SECRET: next16-ci-simulator-secret-only-2026
+      E2E_SERVER_LOG: /tmp/next16-server.log
+      E2E_SHOTS: /tmp/next16-browser-shots
+      E2E_QUICK: "1"
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate Prisma client and validate schema
+        run: |
+          npx prisma generate
+          npx prisma validate
+      - name: Provision disposable local database
+        run: |
+          node -e "require('node:fs').writeFileSync('/tmp/pizza-pazzo-next16-e2e.db', '')"
+          npx prisma migrate deploy
+          node scripts/seed-staging.mjs
+          node --input-type=module <<'NODE'
+          import { PrismaClient } from '@prisma/client';
+          const db = new PrismaClient();
+          await db.restaurantSettings.update({where: {id: 'restaurant'}, data: {manuallyClosed: false, manuallyOpen: true, openUntil: new Date(Date.now() + 24 * 3600_000), openedAt: new Date(), openedByEmail: 'ci@example.test'}});
+          await db.$disconnect();
+          NODE
+      - name: Production build with Turbopack
+        run: npm run build
+      - name: Types, lint, translations and smoke checks
+        run: |
+          npm run type-check
+          npm run lint
+          npm run check:i18n
+          npm run smoke
+      - name: Payment and business-rule tests
+        run: npm test
+      - name: Start isolated local server
+        run: |
+          npm start -- --port 3316 > /tmp/next16-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3316/menu > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/next16-server.log
+          exit 1
+      - name: Proxy access and immediate admin cache updates
+        run: npm run e2e:upgrade
+      - name: Checkout and language-switch regression
+        run: npm run e2e:checkout-language
+      - name: Bank UI and mobile checks
+        run: npm run e2e:ubb
+      - name: Hydration and slow-network regression
+        run: npm run e2e:hydration
+      - name: Collect browser evidence and local server log
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: verification-evidence
+          path: |
+            /tmp/next16-server.log
+            /tmp/next16-browser-shots
+          retention-days: 3

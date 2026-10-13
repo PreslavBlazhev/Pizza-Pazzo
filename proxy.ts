@@ -9,13 +9,13 @@ import { getPathname } from "@/i18n/navigation";
 /**
  * Locale routing + route protection.
  *
- * Two concerns share one middleware, in this order:
+ * Two concerns share one Node.js proxy, in this order:
  *
  *   1. next-intl resolves the locale. It must see every page request, because
  *      it is what rewrites `/menu` to `/bg/menu` internally.
  *   2. Auth runs only for protected routes. It verifies the signed session JWT
  *      from the cookie — a pure crypto check, no database, so it is safe on the
- *      Edge and adds nothing to the hot path of the public menu.
+ *      proxy and adds nothing to the hot path of the public menu.
  *
  * This is the security boundary for *page access* only. Server actions re-check
  * the session AND the live role/active-flag against the database (see
@@ -24,7 +24,7 @@ import { getPathname } from "@/i18n/navigation";
  *
  * Access rules (locale prefix is stripped before matching):
  *   /profile/*      → any signed-in user
- *   /checkout       → any signed-in user
+ *   /checkout       → public, with optional customer-session prefill
  *   /admin          → STAFF, ADMIN, SUPER_ADMIN
  *   /admin/users    → ADMIN, SUPER_ADMIN
  *   /admin/settings → ADMIN, SUPER_ADMIN
@@ -125,7 +125,7 @@ function localeRedirect(
   return NextResponse.redirect(new URL(`${path}${search ?? ""}`, request.url));
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // ── 0. Staging password (no-op everywhere else) ──
   const challenge = stagingAuthChallenge(request);
   if (challenge) return challenge;

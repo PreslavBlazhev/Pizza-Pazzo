@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import {
   SETTINGS_CACHE_TAG,
@@ -82,7 +82,7 @@ export async function updateRestaurantSettingsAction(
   // that makes Next answer with `x-action-redirect: /`, which threw the admin
   // out to the homepage instead of showing the success message (observed while
   // building this). The tag already covers those pages.
-  revalidateTag(SETTINGS_CACHE_TAG);
+  updateTag(SETTINGS_CACHE_TAG);
 
   return { ok: true, message: "Настройките са запазени." };
 }
