@@ -67,6 +67,7 @@ jobs:
       - name: Payment and business-rule tests
         run: npm test
       - name: Start isolated local server
+        id: server
         run: |
           npm start -- --port 3316 > /tmp/next16-server.log 2>&1 &
           for i in $(seq 1 60); do
@@ -76,12 +77,16 @@ jobs:
           cat /tmp/next16-server.log
           exit 1
       - name: Proxy access and immediate admin cache updates
+        if: ${{ !cancelled() && steps.server.outcome == 'success' }}
         run: npm run e2e:upgrade
       - name: Checkout and language-switch regression
+        if: ${{ !cancelled() && steps.server.outcome == 'success' }}
         run: npm run e2e:checkout-language
       - name: Bank UI and mobile checks
+        if: ${{ !cancelled() && steps.server.outcome == 'success' }}
         run: npm run e2e:ubb
       - name: Hydration and slow-network regression
+        if: ${{ !cancelled() && steps.server.outcome == 'success' }}
         run: npm run e2e:hydration
       - name: Collect browser evidence and local server log
         if: always()

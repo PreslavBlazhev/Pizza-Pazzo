@@ -92,7 +92,7 @@ async function main() {
     await form.getByRole("button", { name: "Покажи", exact: true }).click();
     await form.getByRole("button", { name: "Скрий", exact: true }).waitFor();
     await visitor.reload();
-    await visitor.getByText("В наличност", { exact: true }).waitFor();
+    await visitor.getByText(/^●\s*В наличност$/).waitFor();
     checks++;
     console.log("OK restored availability immediately reaches the public menu");
   } finally {
