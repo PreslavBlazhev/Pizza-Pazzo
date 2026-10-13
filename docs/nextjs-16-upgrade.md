@@ -25,6 +25,9 @@ reproducible.
 - ESLint 9.39.5 and PostCSS 8.5.30 provide compatible tooling updates. ESLint
   stays on the latest 9.x patch because Next's current React/import/a11y
   plugins declare support for ESLint 9, not 10.
+- The compatible transitive `baseline-browser-mapping` dependency is updated
+  to 2.11.28, fixing GHSA-w5vr-8v7q-w6rv. `npm audit --omit=dev` reports no
+  vulnerabilities for the final lock file (13 October 2026).
 - Test provisioning explicitly creates its disposable SQLite file before
   Prisma 5 applies migrations, avoiding a missing-file connection-probe error
   in the Windows CLI.
