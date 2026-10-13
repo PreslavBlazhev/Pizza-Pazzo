@@ -47,6 +47,9 @@ jobs:
           npx prisma validate
       - name: Provision disposable local database
         run: |
+          # Existing browser scripts require an env file. Keep it empty: all
+          # isolated test settings are supplied by the workflow environment.
+          node -e "require('node:fs').writeFileSync('.env', '')"
           node -e "require('node:fs').writeFileSync('/tmp/pizza-pazzo-next16-e2e.db', '')"
           npx prisma migrate deploy
           node scripts/seed-staging.mjs
