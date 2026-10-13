@@ -50,6 +50,9 @@ class PrinterPreferences(context: Context) {
             "https://pizza-pazzo.onrender.com/admin/orders/live",
         )
 
+        /** The Render address the app used before the move to pizzapazzo.bg. */
+        private const val LEGACY_ORIGIN = "https://pizza-pazzo.onrender.com"
+
         private const val KEY_PRINTER_NAME = "printer_name"
         private const val KEY_PRINTER_MAC = "printer_mac"
         private const val KEY_PAPER_MM = "paper_mm"
@@ -72,7 +75,7 @@ class PrinterPreferences(context: Context) {
 
         /** Bumped whenever a stored value has to be fixed up on upgrade. */
         private const val KEY_PREFS_VERSION = "prefs_version"
-        private const val CURRENT_PREFS_VERSION = 1
+        private const val CURRENT_PREFS_VERSION = 2
     }
 
     /**
@@ -87,6 +90,9 @@ class PrinterPreferences(context: Context) {
         prefs.edit {
             if (stored != null && stored in LEGACY_DEFAULT_START_URLS) {
                 remove(KEY_START_URL)
+            } else if (stored != null && stored.startsWith("$LEGACY_ORIGIN/")) {
+                // v2: keep the page the staff chose, but on pizzapazzo.bg.
+                putString(KEY_START_URL, DEFAULT_START_URL.trimEnd('/') + stored.removePrefix(LEGACY_ORIGIN))
             }
             putInt(KEY_PREFS_VERSION, CURRENT_PREFS_VERSION)
         }

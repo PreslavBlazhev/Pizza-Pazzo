@@ -31,7 +31,7 @@ export const SITE = {
   phones: ["064 801 999"] as readonly string[],
   /** The same number (kept for convenience). */
   phone: "064 801 999",
-  email: "pr2.blazhev@gmail.com",
+  email: "info@bulgaria-digital-services.com",
   /** Full display address (BG) as shown to visitors. Updated 2026-07. */
   // "бул.", as the BFSA register and the owner's own site write it (2026-09-30).
   address: "Плевен, бул. „Георги Кочев“ 13 (срещу Технополис)",

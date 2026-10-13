@@ -90,8 +90,8 @@ $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
 Задава се при build в `gradle.properties`:
 
 ```
-pizzapazzo.startUrl=https://pizza-pazzo.onrender.com/
-pizzapazzo.siteHosts=pizza-pazzo.onrender.com,pizzapazzo.bg,www.pizzapazzo.bg
+pizzapazzo.startUrl=https://pizzapazzo.bg/
+pizzapazzo.siteHosts=pizzapazzo.bg,www.pizzapazzo.bg,pizza-pazzo.onrender.com
 ```
 
 `siteHosts` е allowlist-ът за навигация И за принтерния bridge. При смяна на
@@ -190,8 +190,8 @@ pizzapazzo.siteHosts=pizza-pazzo.onrender.com,pizzapazzo.bg,www.pizzapazzo.bg
 
 Приложението инжектира `window.AndroidPrinter` само в собственото си WebView.
 Всеки чувствителен метод проверява текущия origin срещу allowlist
-(`webview/AllowedOrigins.kt`): `pizza-pazzo.onrender.com`, `pizzapazzo.bg`,
-`www.pizzapazzo.bg`; в debug build — и localhost/LAN dev сървър.
+(`webview/AllowedOrigins.kt`): `pizzapazzo.bg`, `www.pizzapazzo.bg`,
+`pizza-pazzo.onrender.com`; в debug build — и localhost/LAN dev сървър.
 
 ```js
 AndroidPrinter.isAvailable()          // true само в приложението, на разрешен origin

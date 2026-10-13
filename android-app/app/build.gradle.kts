@@ -21,9 +21,9 @@ val hasReleaseKeystore = keystoreProperties.getProperty("storeFile") != null
 // The site this app is a window onto. Both come from gradle.properties so the
 // move to the new .com domain is configuration, not code (docs/domain-and-deploy.md).
 val siteStartUrl: String = (project.findProperty("pizzapazzo.startUrl") as String?)
-    ?: "https://pizza-pazzo.onrender.com/"
+    ?: "https://pizzapazzo.bg/"
 val siteHosts: String = (project.findProperty("pizzapazzo.siteHosts") as String?)
-    ?: "pizza-pazzo.onrender.com,pizzapazzo.bg,www.pizzapazzo.bg"
+    ?: "pizzapazzo.bg,www.pizzapazzo.bg,pizza-pazzo.onrender.com"
 require(siteStartUrl.startsWith("https://")) { "pizzapazzo.startUrl must be HTTPS" }
 
 // The STAGING demo shop (payment simulator). Only the "staging" build type
@@ -48,8 +48,8 @@ android {
         // 1.1.1: staging build type + password prompt for the staging site.
         // 1.1.0: online card payments (bank page + 3-D Secure inside the app,
         // resume after the app was killed), configurable site hosts.
-        versionCode = 5
-        versionName = "1.1.1"
+        versionCode = 6
+        versionName = "1.2.0"
 
         buildConfigField("String", "START_URL", "\"$siteStartUrl\"")
         buildConfigField("String", "SITE_HOSTS", "\"$siteHosts\"")

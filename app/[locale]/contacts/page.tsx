@@ -7,7 +7,6 @@ import { Footer } from "@/components/layout/Footer";
 import { PageHero } from "@/components/ui/PageHero";
 import { Card } from "@/components/ui/Card";
 import { SITE } from "@/lib/constants";
-import { companyFor } from "@/content/legal/company";
 import { ClickToLoadMap } from "@/components/contacts/ClickToLoadMap";
 import {
   getRestaurantSettings,
@@ -49,8 +48,6 @@ export default async function ContactsPage({ params }: PageProps) {
   const t = await getTranslations("contacts");
   const tHours = await getTranslations("hours");
   const tCommon = await getTranslations("common");
-  const tLegal = await getTranslations("legal");
-  const company = companyFor(locale);
 
   const settings = await getRestaurantSettings();
   const address = settingsAddress(settings, locale);
@@ -152,37 +149,9 @@ export default async function ContactsPage({ params }: PageProps) {
             </Card>
           </div>
 
-          {/* Merchant + complaints — the seller's identity and the channel
-              for cancellations, complaints and refunds (UBB-02, UBB-04). */}
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <Card className="rounded-3xl" id="merchant">
-              <h2 className="font-display text-xl font-semibold text-pizza-ink">
-                {t("merchantTitle")}
-              </h2>
-              <p className="mt-3 font-semibold text-pizza-ink">{company.legalName}</p>
-              <dl className="mt-2 grid gap-x-4 gap-y-1 text-sm text-pizza-muted sm:grid-cols-[auto_1fr]">
-                <dt className="font-medium text-pizza-ink">{tLegal("uic")}</dt>
-                <dd>{company.uic}</dd>
-                <dt className="font-medium text-pizza-ink">{tLegal("vatNumber")}</dt>
-                <dd>{company.vatNumber}</dd>
-                <dt className="font-medium text-pizza-ink">{tLegal("registeredAddress")}</dt>
-                <dd>{company.registeredAddress}</dd>
-                <dt className="font-medium text-pizza-ink">{tLegal("correspondenceAddress")}</dt>
-                <dd>{company.correspondenceAddress}</dd>
-                {company.foodRegistration && (
-                  <>
-                    <dt className="font-medium text-pizza-ink">{tLegal("foodRegistration")}</dt>
-                    <dd>
-                      {tLegal("foodRegistrationValue", {
-                        number: company.foodRegistration.number,
-                        certificate: company.foodRegistration.certificate,
-                        authority: company.foodRegistration.authority,
-                      })}
-                    </dd>
-                  </>
-                )}
-              </dl>
-            </Card>
+          {/* Complaints — the channel for cancellations, complaints and refunds
+              (UBB-04). The seller's identity lives in the footer and the terms. */}
+          <div className="mt-6">
             <Card className="rounded-3xl" id="complaints">
               <h2 className="font-display text-xl font-semibold text-pizza-ink">
                 {t("complaintsTitle")}

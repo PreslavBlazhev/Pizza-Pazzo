@@ -1009,7 +1009,7 @@ if (mods) {
     addressEn: "13 Georgi Kochev St., Pleven (opposite Technopolis)",
     primaryPhone: "+359 88 248 4777",
     secondaryPhone: "+359 801 999",
-    contactEmail: "pr2.blazhev@gmail.com",
+    contactEmail: "info@bulgaria-digital-services.com",
     hours: openWeek(),
     ...over,
   });

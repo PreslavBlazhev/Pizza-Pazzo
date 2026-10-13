@@ -102,12 +102,8 @@ gradlew.bat assembleRelease   # -> app/build/outputs/apk/release/app-release.apk
 ## 5. Политика за поверителност (задължителна)
 
 ```
-https://pizza-pazzo.onrender.com/app-privacy
+https://pizzapazzo.bg/app-privacy
 ```
-
-⚠️ **Не слагай адрес на pizzapazzo.bg.** Проверено: домейнът все още сочи стария
-сайт (nginx) и връща 200 за всеки път, включително несъществуващ. Google
-проверява съдържанието — това би провалило прегледа.
 
 Текстът е в `content/legal/appPrivacy.ts`.
 
@@ -181,7 +177,7 @@ SDK-та. Но през него се прави поръчка и се създ
 
 - „Is all of the user data collected by your app encrypted in transit?“ → **Yes**
 - „Do you provide a way for users to request that their data is deleted?“ → **Yes**
-- **Data deletion URL:** `https://pizza-pazzo.onrender.com/account-deletion`
+- **Data deletion URL:** `https://pizzapazzo.bg/account-deletion`
 - „Data deletion“ за всеки отметнат ред → **Yes** (виж по-долу — вече е вярно)
 
 ### Изтриване на профил
@@ -313,9 +309,9 @@ a staff account.
 | Free or paid | Free |
 | **Category** | **Food & Drink** |
 | Tags | Food delivery, Restaurants |
-| Contact email | pr2.blazhev@gmail.com |
+| Contact email | info@bulgaria-digital-services.com |
 | Contact phone | +359 88 248 4777 |
-| Website | https://pizza-pazzo.onrender.com (**не** pizzapazzo.bg) |
+| Website | https://pizzapazzo.bg |
 | Държави | България |
 | Default language | Български (bg-BG) |
 
