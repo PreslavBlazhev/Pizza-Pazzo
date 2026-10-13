@@ -249,7 +249,7 @@ test("the texts never promise what the code does not do", () => {
 // ── UBB-14: card-scheme logos in the footer (ОББ feedback, 07.10.2026) ────
 
 test("UBB-14: footer shows the card brands from their files, independent of the POS", async () => {
-  const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
+  const { mkdtempSync, writeFileSync, rmSync, readdirSync } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { getFooterSchemeMarks, getCardBrandMarks, getBoricaCompanyLogo, isCardPaymentLive, FOOTER_SCHEME_IDS } =
     await import("@/lib/payments/card-marks");
@@ -257,12 +257,15 @@ test("UBB-14: footer shows the card brands from their files, independent of the 
 
   const dir = mkdtempSync(join(tmpdir(), "pp-marks-"));
   try {
-    assert.deepEqual(getFooterSchemeMarks(dir), [], "no file → no mark, nothing drawn");
-    assert.equal(getBoricaCompanyLogo(dir), null);
+    // The real file names of a fixture folder, listed the way production
+    // lists public/payment-marks/.
+    const files = () => new Set(readdirSync(dir));
+    assert.deepEqual(getFooterSchemeMarks(files()), [], "no file → no mark, nothing drawn");
+    assert.equal(getBoricaCompanyLogo(files()), null);
     for (const f of ["visa.svg", "mastercard.svg", "maestro.svg", "amex.svg", "borica-company.png"]) writeFileSync(join(dir, f), "<svg/>");
-    assert.equal(getBoricaCompanyLogo(dir), "/payment-marks/borica-company.png", "BORICA's company logo is separate");
+    assert.equal(getBoricaCompanyLogo(files()), "/payment-marks/borica-company.png", "BORICA's company logo is separate");
     assert.deepEqual(
-      getFooterSchemeMarks(dir).map((m) => [m.id, m.label, m.src]),
+      getFooterSchemeMarks(files()).map((m) => [m.id, m.label, m.src]),
       [
         ["visa", "Visa", "/payment-marks/visa.svg"],
         ["mastercard", "Mastercard", "/payment-marks/mastercard.svg"],

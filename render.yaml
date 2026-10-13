@@ -18,7 +18,12 @@ services:
     # When a migration is pending, a checked VACUUM INTO backup is written to
     # /var/data/backups/ first; if it fails, the start stops before migrating
     # and Render keeps the previous deploy (scripts/backup-before-migrate.mjs).
-    buildCommand: npm install && npx prisma generate && npm run build
+    # npm ci installs exactly package-lock.json. Everything the build needs
+    # (Tailwind, PostCSS, Autoprefixer, TypeScript and its types, the Prisma
+    # CLI) is in "dependencies", so it is installed even when NODE_ENV is
+    # production, where npm leaves devDependencies out. The Prisma CLI is
+    # also needed at start for migrate deploy.
+    buildCommand: npm ci && npx prisma generate && npm run build
     startCommand: node scripts/backup-before-migrate.mjs && npx prisma migrate deploy && npm start
 
     # SQLite file lives on this disk so it survives redeploys/restarts.

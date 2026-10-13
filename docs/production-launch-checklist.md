@@ -24,8 +24,11 @@
 - [ ] Branch: `master`
 - [ ] Runtime: Node · Plan: Starter (или по-висок)
 - [ ] Build command:
-      `npm install && npx prisma generate && npm run build`
-- [ ] Start command: `npx prisma migrate deploy && npm start`
+      `npm ci && npx prisma generate && npm run build`
+      (пакетите за сборката са в `dependencies`, за да се инсталират и при
+      `NODE_ENV=production` — docs/render-sqlite-deploy.md §4)
+- [ ] Start command:
+      `node scripts/backup-before-migrate.mjs && npx prisma migrate deploy && npm start`
       (миграциите вървят при СТАРТ, не при build — дискът с базата не е
       монтиран по време на build)
 

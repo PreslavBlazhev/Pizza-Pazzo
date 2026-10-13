@@ -49,29 +49,50 @@ file into this mounted disk, so it survives redeploys and restarts.
 
 ## 4. Build Command
 
+Render Dashboard → your service → **Settings** → **Build Command** must be
+exactly:
+
 ```
-npm install && npx prisma generate && npx prisma migrate deploy && npm run build
+npm ci && npx prisma generate && npm run build
 ```
 
 What each step does:
 
-- `npm install` — install dependencies.
+- `npm ci` — a clean install of exactly `package-lock.json`.
 - `npx prisma generate` — generate the Prisma Client for the runtime.
-- `npx prisma migrate deploy` — apply committed migrations to the disk DB
-  (non-interactive; safe for production — never use `migrate dev` here).
-- `npm run build` — build the Next.js app.
+- `npm run build` — the Next.js production build (Turbopack).
+
+Everything the build needs — Tailwind, PostCSS, Autoprefixer, TypeScript and
+its `@types`, and the Prisma CLI — is in `dependencies`, not
+`devDependencies`. Render (or a `NODE_ENV=production` environment variable)
+makes npm leave devDependencies out; the build then failed with
+`Cannot find module 'tailwindcss'` (13 October 2026). Do not move these back.
+`devDependencies` holds only what the build and the site never use (ESLint,
+`tsx`, Playwright, `@types/bcryptjs`). The CI job "Render production
+install" repeats exactly this install with `NODE_ENV=production` and builds.
+
+Migrations do **not** run here: the Persistent Disk is not mounted during the
+build.
 
 ## 5. Start Command
 
 ```
-npm start
+node scripts/backup-before-migrate.mjs && npx prisma migrate deploy && npm start
 ```
+
+- `backup-before-migrate.mjs` — when a migration is pending, a checked backup
+  of the database is written to `/var/data/backups/` first.
+- `npx prisma migrate deploy` — apply committed migrations to the disk DB
+  (non-interactive; never use `migrate dev` here). It uses the installed
+  Prisma CLI, so nothing is downloaded at start.
+- `npm start` — start the site.
 
 ## 6. First deploy checklist
 
 - [ ] Persistent Disk attached at `/var/data` **before** the first deploy.
 - [ ] `DATABASE_URL=file:/var/data/pizza-pazzo.db` set in Render env vars.
-- [ ] Build command includes `prisma migrate deploy`.
+- [ ] Build command is `npm ci && npx prisma generate && npm run build`.
+- [ ] Start command includes `prisma migrate deploy` (not the build command).
 - [ ] `prisma/migrations/` is committed to git (it is — only `*.db` is ignored).
 - [ ] After deploy, orders persist across a manual restart (smoke test).
 

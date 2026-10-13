@@ -14,6 +14,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Repeats Render's install and build: npm leaves devDependencies out when
+  # NODE_ENV is production, so anything the build needs must be a dependency
+  # (docs/render-sqlite-deploy.md §4). No database exists here, as on Render.
+  render-install:
+    name: Render production install
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NODE_ENV: production
+      APP_ENV: production
+      APP_BASE_URL: https://ci-render-build.example.test
+      DATABASE_URL: file:/tmp/pizza-pazzo-render-build.db
+      AUTH_SECRET: render-build-ci-auth-secret-only-2026
+      CARD_PAYMENTS_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "22"
+      - name: Install exactly as Render does
+        run: npm ci --no-audit --no-fund
+      - name: Build packages are installed, dev tools are not
+        run: |
+          node -e "for (const m of ['tailwindcss', 'autoprefixer', 'postcss', 'typescript', 'prisma', '@types/react', '@types/node']) console.log(m, require(m + '/package.json').version)"
+          if node -e "require.resolve('eslint')" 2>/dev/null; then
+            echo "devDependencies were installed: this is not a production install" >&2
+            exit 1
+          fi
+      - name: Production build with Turbopack, as on Render
+        run: |
+          set -o pipefail
+          npx prisma generate
+          npm run build 2>&1 | tee /tmp/render-build.log
+          if grep -q "Dynamic filesystem access" /tmp/render-build.log; then
+            echo "Turbopack traces the whole project from a dynamic file path" >&2
+            exit 1
+          fi
+          git diff --exit-code
+
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 35

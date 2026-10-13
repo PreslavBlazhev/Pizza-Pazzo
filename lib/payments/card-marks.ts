@@ -24,7 +24,7 @@
  *
  * Nothing is drawn by us; a missing file simply means no mark.
  */
-import { existsSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { getEffectivePaymentConfig } from "@/lib/payments/providers";
 
@@ -44,7 +44,19 @@ export interface CardBrandMark {
   src: string;
 }
 
-const MARKS_DIR = join(process.cwd(), "public", "payment-marks");
+/**
+ * The file names present in public/payment-marks/. The path is a constant on
+ * purpose: Turbopack can then see that production code reads only this one
+ * folder (a path built from a variable makes it trace the whole project). A
+ * missing folder means no marks, as a missing file does.
+ */
+function publishedMarkFiles(): ReadonlySet<string> {
+  try {
+    return new Set(readdirSync(join(process.cwd(), "public", "payment-marks")));
+  } catch {
+    return new Set();
+  }
+}
 
 /**
  * The international card brands shown in the footer (ОББ's remark names
@@ -61,8 +73,8 @@ export const FOOTER_SCHEME_IDS = ["visa", "mastercard"] as const satisfies reado
  */
 const BORICA_COMPANY_FILE = "borica-company.png";
 
-function markFor(id: CardBrandId, dir: string): CardBrandMark | null {
-  const file = ["svg", "png"].find((ext) => existsSync(join(dir, `${id}.${ext}`)));
+function markFor(id: CardBrandId, files: ReadonlySet<string>): CardBrandMark | null {
+  const file = ["svg", "png"].find((ext) => files.has(`${id}.${ext}`));
   return file ? { id, label: BRANDS[id], src: `/payment-marks/${id}.${file}` } : null;
 }
 
@@ -80,20 +92,24 @@ export function getCardBrandMarks(env: NodeJS.ProcessEnv = process.env): CardBra
     .map((s) => s.trim().toLowerCase())
     .filter((s): s is CardBrandId => s in BRANDS);
 
+  const files = publishedMarkFiles();
   const marks: CardBrandMark[] = [];
   for (const id of [...new Set(wanted)]) {
-    const mark = markFor(id, MARKS_DIR);
+    const mark = markFor(id, files);
     if (mark) marks.push(mark);
   }
   return marks;
 }
 
-/** Footer marks: every footer card brand whose file is present. */
-export function getFooterSchemeMarks(dir: string = MARKS_DIR): CardBrandMark[] {
-  return FOOTER_SCHEME_IDS.map((id) => markFor(id, dir)).filter((m): m is CardBrandMark => m !== null);
+/**
+ * Footer marks: every footer card brand whose file is present. `files` (the
+ * names in the marks folder) is for tests; production reads the folder.
+ */
+export function getFooterSchemeMarks(files: ReadonlySet<string> = publishedMarkFiles()): CardBrandMark[] {
+  return FOOTER_SCHEME_IDS.map((id) => markFor(id, files)).filter((m): m is CardBrandMark => m !== null);
 }
 
 /** Public URL of BORICA's company logo, or null without the file. */
-export function getBoricaCompanyLogo(dir: string = MARKS_DIR): string | null {
-  return existsSync(join(dir, BORICA_COMPANY_FILE)) ? `/payment-marks/${BORICA_COMPANY_FILE}` : null;
+export function getBoricaCompanyLogo(files: ReadonlySet<string> = publishedMarkFiles()): string | null {
+  return files.has(BORICA_COMPANY_FILE) ? `/payment-marks/${BORICA_COMPANY_FILE}` : null;
 }

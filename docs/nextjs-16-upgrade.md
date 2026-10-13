@@ -28,6 +28,14 @@ reproducible.
 - The compatible transitive `baseline-browser-mapping` dependency is updated
   to 2.11.28, fixing GHSA-w5vr-8v7q-w6rv. `npm audit --omit=dev` reports no
   vulnerabilities for the final lock file (13 October 2026).
+- Build-time packages (Tailwind, PostCSS, Autoprefixer, TypeScript, the
+  React/Node `@types` and the Prisma CLI) are `dependencies`. Render's
+  production install leaves devDependencies out, and Turbopack's PostCSS step
+  then failed with `Cannot find module 'tailwindcss'`. Render builds with
+  `npm ci`; CI repeats that install with `NODE_ENV=production`.
+- `lib/payments/card-marks.ts` lists `public/payment-marks/` through a
+  constant path, so Turbopack no longer warns that a dynamic file path makes
+  it trace the whole project.
 - Test provisioning explicitly creates its disposable SQLite file before
   Prisma 5 applies migrations, avoiding a missing-file connection-probe error
   in the Windows CLI.
