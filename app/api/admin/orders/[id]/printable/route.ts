@@ -11,7 +11,8 @@ import { printTemplateIdFromParam } from "@/types/print";
  * is NOW. Staff+.
  *
  * Every print and reprint from the app goes through here, so the server
- * decides: an order that expired at 22:30 (lib/db.ts) answers 410 and nothing
+ * decides (the daily retention is switched off, so old orders print too; an
+ * unknown order answers 404). Dormant design: an order that expired at 22:30 (lib/db.ts) answered 410 and nothing
  * is printed, even if a tablet still shows it from before the cutoff.
  * no-store: the job carries a customer's name, phone and address.
  */
@@ -31,8 +32,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     getOrderById(id),
     getPrintTemplate(printTemplateIdFromParam(url.searchParams.get("t") ?? undefined)),
   ]);
+  // History kept: every existing order prints, old ones included. Only an
+  // order that does not exist answers 404.
   if (!order || !order.items) {
-    return NextResponse.json({ error: "expired" }, { status: 410, headers: NO_STORE });
+    return NextResponse.json({ error: "not_found" }, { status: 404, headers: NO_STORE });
   }
   const json = buildPrintableOrderJson(
     { ...order, items: order.items },

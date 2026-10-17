@@ -1,7 +1,15 @@
 /**
- * The 22:30 purge — SERVER ONLY. Physically deletes every expired order and
- * everything that belongs to it, from the live database and from the backup
- * copies on the same disk.
+ * The 22:30 purge — SERVER ONLY. SWITCHED OFF: the order history is kept
+ * (owner, 2026-10-17; lib/order-retention.ts ORDER_RETENTION_ENABLED = false).
+ * While it is off, EVERY entry point below — purgeExpiredOrders,
+ * scrubBackups, maybePurgeExpiredOrders (start, traffic), scheduleCutoffPurge
+ * (the 22:30 timer) and so the maintenance endpoint — returns before touching
+ * any row or file: no order, line, payment record, e-mail job or backup is
+ * deleted or changed. The code is kept for a possible later decision.
+ *
+ * When ON, it physically deletes every expired order and everything that
+ * belongs to it, from the live database and from the backup copies on the
+ * same disk.
  *
  * TWO DIFFERENT GUARANTEES — kept apart on purpose:
  *   1. UNAVAILABILITY is exact: from 22:30:00 Europe/Sofia no expired order
@@ -36,7 +44,7 @@ import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { dbUnscoped } from "@/lib/db";
-import { lastCutoffAtOrBefore, nextCutoffAfter, retentionNow } from "@/lib/order-retention";
+import { lastCutoffAtOrBefore, nextCutoffAfter, orderRetentionEnabled, retentionNow } from "@/lib/order-retention";
 
 export const MAINTENANCE_ROW_ID = "orders";
 
@@ -59,6 +67,8 @@ export interface BackupScrubResult {
 
 export interface PurgeSummary {
   ok: boolean;
+  /** True when the retention is switched off: nothing was looked at or deleted. */
+  disabled?: boolean;
   trigger: PurgeTrigger;
   cutoffAt: string;
   /** When the run began — before anything was deleted. */
@@ -108,11 +118,36 @@ export interface PurgeOptions {
 
 const secondsBetween = (from: Date, to: Date) => Math.max(0, Math.round((to.getTime() - from.getTime()) / 1000));
 
+/** What a run reports while the retention is off: nothing done, nothing failed. */
+function disabledSummary(trigger: PurgeTrigger, at: Date): PurgeSummary {
+  const t = at.toISOString();
+  return {
+    ok: true,
+    disabled: true,
+    trigger,
+    cutoffAt: lastCutoffAtOrBefore(at).toISOString(),
+    startedAt: t,
+    finishedAt: t,
+    durationMs: 0,
+    startLagSeconds: 0,
+    completedAt: null,
+    completionLagSeconds: null,
+    deletedOrders: 0,
+    deletedSimulatorSessions: 0,
+    scrubbedBackups: 0,
+    cleanBackups: 0,
+    backupFailures: [],
+    error: null,
+  };
+}
+
 export async function purgeExpiredOrders(
   now: Date = retentionNow(),
   options: PurgeOptions = {}
 ): Promise<PurgeSummary> {
   const trigger = options.trigger ?? "manual";
+  // History kept: the purge is switched off — return before any query.
+  if (!orderRetentionEnabled()) return disabledSummary(trigger, now);
   const startedAt = now;
   const cutoff = lastCutoffAtOrBefore(startedAt);
   const expired = { createdAt: { lte: cutoff } };
@@ -339,6 +374,8 @@ async function countExpired(client: RawClient, tables: Set<string>, ms: number, 
 
 export async function scrubBackups(cutoff: Date, options: PurgeOptions = {}): Promise<BackupScrubResult> {
   const result: BackupScrubResult = { scrubbed: 0, clean: 0, failed: [] };
+  // History kept: no backup file is opened, let alone changed.
+  if (!orderRetentionEnabled()) return result;
   const dir = backupsDir();
   if (!dir || !existsSync(dir)) return result;
   const ms = cutoff.getTime();
@@ -416,6 +453,7 @@ export async function maybePurgeExpiredOrders(
   now: Date = retentionNow(),
   trigger: PurgeTrigger = "traffic"
 ): Promise<void> {
+  if (!orderRetentionEnabled()) return;
   const cutoff = lastCutoffAtOrBefore(now).getTime();
   const s = (state.__ppPurge ??= { cutoff: 0, at: 0, running: false, ok: false });
   if (s.running) return;
@@ -441,6 +479,8 @@ export async function maybePurgeExpiredOrders(
  * the start-up run cover that.
  */
 export function scheduleCutoffPurge(): void {
+  // History kept: no 22:30 timer is armed.
+  if (!orderRetentionEnabled()) return;
   if (state.__ppPurgeTimer) return;
   const arm = () => {
     const now = new Date();

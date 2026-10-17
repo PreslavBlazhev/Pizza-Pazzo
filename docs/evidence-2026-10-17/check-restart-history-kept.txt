@@ -1,0 +1,15 @@
+node v22.23.3 — restart check on a copy of the dev database (synthetic E2E orders included)
+BEFORE (server running, after the E2E run):
+{"orders":4,"ordersHash":"cf001b17d1407d54","items":7,"itemsHash":"8a19304d05a11a7f","paymentAttempts":0,"paymentAuditEvents":0,"emailJobs":2,"oldestOrder":"2026-10-16T10:20:58.441Z","backups":["e2e-history-1792239694492.db=cf94506d9fa1e2ed@1792239694516.4841"]}
+server stopped
+restarted with the Render start chain (backup-before-migrate → migrate deploy → next start): home=200
+  log: backup-before-migrate: no pending migration — skipped.
+  log: 30 migrations found in prisma/migrations
+  log: No pending migrations to apply.
+  log: ✓ Ready in 377ms
+  admin poll (traffic): 401
+  /api/track (traffic): 200
+  maintenance ?trigger=cutoff: {"ok":true,"retention":"disabled","outbox":{"claimed":0,"accepted":0,"retrying":0,"failed":0,"skipped":0},"restaurantRetried":0}
+  maintenance ?trigger=fallback: {"ok":true,"retention":"disabled","outbox":{"claimed":0,"accepted":0,"retrying":0,"failed":0,"skipped":0},"restaurantRetried":0}
+AFTER restart + traffic + maintenance:
+{"orders":4,"ordersHash":"cf001b17d1407d54","items":7,"itemsHash":"8a19304d05a11a7f","paymentAttempts":0,"paymentAuditEvents":0,"emailJobs":2,"oldestOrder":"2026-10-16T10:20:58.441Z","backups":["e2e-history-1792239694492.db=cf94506d9fa1e2ed@1792239694516.4841"]}

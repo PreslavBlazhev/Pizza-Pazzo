@@ -10,7 +10,7 @@
 import { test, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { db, dbUnscoped } from "@/lib/db";
-import { setRetentionClockForTests } from "@/lib/order-retention";
+import { setRetentionClockForTests, setRetentionEnabledForTests } from "@/lib/order-retention";
 import { sofiaWallClockToUtc } from "@/lib/report-period";
 import { purgeExpiredOrders } from "@/lib/order-purge";
 import { placeOrder } from "@/lib/checkout/place-order";
@@ -181,14 +181,38 @@ test("temporary failures stop after MAX_ATTEMPTS", async () => {
   assert.equal((await job(id)).status, "FAILED");
 });
 
-test("the e-mail job expires with the order at 22:30 — not sent, then deleted", async () => {
+test("history kept: a retry after 22:30 (and the next day) still sends, and deletes nothing", async () => {
   const id = await acceptedOrder();
-  setRetentionClockForTests(sofia(2030, 4, 4, 22, 30));
-  const r = recorder([{ status: "sent" }]);
-  await drainEmailOutbox({ send: r.send });
-  assert.equal(r.calls.length, 0);
-  await purgeExpiredOrders();
-  assert.equal(await dbUnscoped.emailOutbox.count({ where: { orderId: id } }), 0);
+  // The first attempt fails temporarily; the retry comes after 22:30.
+  const first = recorder([{ status: "failed", kind: "TEMPORARY", error: "timeout" }]);
+  await drainEmailOutbox({ send: first.send });
+  assert.equal(first.calls.length, 1);
+  setRetentionClockForTests(sofia(2030, 4, 5, 9, 0));
+  const later = recorder([{ status: "sent", id: "re_late" }]);
+  await drainEmailOutbox({ send: later.send, now: sofia(2030, 4, 5, 9, 0) });
+  assert.equal(later.calls.length, 1, "the retry is sent — the order is kept");
+  const job = await dbUnscoped.emailOutbox.findFirst({ where: { orderId: id } });
+  assert.equal(job?.status, "PROVIDER_ACCEPTED");
+  assert.equal(await dbUnscoped.order.count({ where: { id } }), 1, "the order is still there");
+  const purge = await purgeExpiredOrders();
+  assert.equal(purge.disabled, true);
+  assert.equal(await dbUnscoped.order.count({ where: { id } }), 1);
+  assert.equal(await dbUnscoped.emailOutbox.count({ where: { orderId: id } }), 1);
+});
+
+test("dormant design (retention ON): the e-mail job expires with the order at 22:30 — not sent, then deleted", async () => {
+  setRetentionEnabledForTests(true);
+  try {
+    const id = await acceptedOrder();
+    setRetentionClockForTests(sofia(2030, 4, 4, 22, 30));
+    const r = recorder([{ status: "sent" }]);
+    await drainEmailOutbox({ send: r.send });
+    assert.equal(r.calls.length, 0);
+    await purgeExpiredOrders();
+    assert.equal(await dbUnscoped.emailOutbox.count({ where: { orderId: id } }), 0);
+  } finally {
+    setRetentionEnabledForTests(false);
+  }
 });
 
 // ── The real Resend SDK, with fetch stubbed ─────────────────────────────────

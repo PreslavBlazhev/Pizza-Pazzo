@@ -7,7 +7,6 @@ import {
   listTrackedOrders,
   parseTrackCookie,
 } from "@/lib/order-tracking";
-import { maybePurgeExpiredOrders } from "@/lib/order-purge";
 import { nextCutoffAfter, retentionNow } from "@/lib/order-retention";
 import { clientIp, rateLimit, TRACKING_RATE_LIMITS } from "@/lib/rate-limit";
 
@@ -50,7 +49,7 @@ function setCookie(res: NextResponse, value: string) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    // The cookie dies with the orders it points to.
+    // The cookie ends with the tracking access window (22:30); the orders are kept.
     expires: nextCutoffAfter(now),
   });
 }
@@ -59,7 +58,6 @@ export async function GET(request: NextRequest) {
   if (!rateLimit(`track:ip:${clientIp(request.headers)}`, TRACKING_RATE_LIMITS.perIp)) {
     return json({ error: "rate_limited" }, 429);
   }
-  await maybePurgeExpiredOrders();
   const user = await getSessionUser();
   const tokens = parseTrackCookie(request.cookies.get(TRACK_COOKIE)?.value);
   const orders = await listTrackedOrders(tokens, user?.id ?? null);
@@ -71,7 +69,7 @@ export async function GET(request: NextRequest) {
     serverTime: now.toISOString(),
     cutoffAt: nextCutoffAfter(now).toISOString(),
   });
-  // Forget tokens whose orders are gone, so the cookie never outlives them.
+  // Forget tokens whose access window has closed (the orders themselves stay).
   const live = new Set(orders.map((o) => o.token));
   const kept = tokens.filter((t) => live.has(t));
   if (kept.length !== tokens.length) {

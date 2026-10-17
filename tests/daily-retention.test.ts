@@ -1,5 +1,9 @@
 /**
- * A. Daily retention — orders exist only until 22:30 Europe/Sofia.
+ * A. Daily retention — the DORMANT design (switched off in the site: the
+ * order history is kept, lib/order-retention.ts ORDER_RETENTION_ENABLED =
+ * false; tests/history-kept.test.ts proves that). This file switches it ON
+ * for itself only (setRetentionEnabledForTests) and checks what it would do:
+ * orders existing only until 22:30 Europe/Sofia.
  *
  * Time maths (summer/winter/DST days), the cutoff on the server for placing
  * an order, the retention filter on every read and write, the physical purge
@@ -17,6 +21,7 @@ import {
   nextCutoffAfter,
   orderExpiresAt,
   setRetentionClockForTests,
+  setRetentionEnabledForTests,
 } from "@/lib/order-retention";
 import { sofiaWallClockToUtc } from "@/lib/report-period";
 import { maybePurgeExpiredOrders, purgeExpiredOrders } from "@/lib/order-purge";
@@ -31,6 +36,9 @@ import { recordSimulatorOutcome, signSimulatorBody } from "@/lib/payments/provid
 import { SIMULATOR_SIGNATURE_HEADER } from "@/lib/payments/providers/simulator";
 import { ALL_CONSENTS, CONTACT, STANDARD_ITEMS, deps, key } from "./helpers";
 import type { RestaurantHours } from "@/types/settings";
+
+// The dormant design, for this file only (each test file is its own process).
+setRetentionEnabledForTests(true);
 
 after(async () => {
   setRetentionClockForTests(null);

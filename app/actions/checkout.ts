@@ -11,7 +11,6 @@ import {
 import { nextCutoffAfter, retentionNow } from "@/lib/order-retention";
 import { getSessionUser } from "@/lib/auth";
 import { getCategoryById, getProductById } from "@/lib/menu-data";
-import { maybePurgeExpiredOrders } from "@/lib/order-purge";
 import { getStoreStatus } from "@/lib/store-status";
 import { findOrderForCheckoutKey, placeOrder } from "@/lib/checkout/place-order";
 import { orderReceipt } from "@/lib/checkout/receipt";
@@ -67,11 +66,6 @@ export async function createOrder(
     return { ok: false, error: t(code) };
   }
 
-  // Yesterday's orders must be gone before today's are written (a missed
-  // purge would otherwise collide with a re-used checkout key). Cheap: a no-op
-  // once this process has purged since the last cutoff.
-  await maybePurgeExpiredOrders();
-
   const sessionUser = await getSessionUser();
 
   const result = await placeOrder(
@@ -119,7 +113,8 @@ export async function createOrder(
   }
   console.info(`[checkout] trace=${trace} ok #${result.orderNumber}${result.duplicate ? " (repeat)" : ""}`);
   // This browser may now follow the order: the tracking token goes into an
-  // HttpOnly cookie that expires at 22:30 with the order (never localStorage).
+  // HttpOnly cookie (never localStorage). Its access window ends at 22:30 of
+  // the order's day; the ORDER itself is kept (lib/order-tracking.ts).
   const token = trackingTokenFor(result.orderId);
   if (token) {
     const jar = await cookies();

@@ -7,8 +7,7 @@ import { retryFailedNotifications } from "@/lib/payments/service";
 import { reconcileOpenPayments } from "@/lib/payments/reconcile";
 import { getPaymentAttention } from "@/lib/payments/admin";
 import { drainEmailOutbox, emailJobsFor } from "@/lib/email/outbox";
-import { maybePurgeExpiredOrders } from "@/lib/order-purge";
-import { nextCutoffAfter, retentionNow } from "@/lib/order-retention";
+import { nextCutoffAfter, orderRetentionEnabled, retentionNow } from "@/lib/order-retention";
 
 /**
  * Pending orders for the live board (`/admin/orders/live`), which polls this
@@ -33,10 +32,9 @@ export async function GET() {
   // next poll simply comes back with `isOpen: true`.
   //
   // Background work rides on the poll too, each step bounded and never
-  // allowed to break it: the 22:30 purge when this process has not done it
-  // yet (lib/order-purge.ts), the customer e-mail outbox, the restaurant
-  // e-mail retries and the card payments nobody is watching any more.
-  await maybePurgeExpiredOrders();
+  // allowed to break it: the customer e-mail outbox, the restaurant e-mail
+  // retries and the card payments nobody is watching any more. No purge —
+  // the order history is kept (lib/order-retention.ts).
   await drainEmailOutbox({ limit: 3 });
   await retryFailedNotifications().catch((err) =>
     console.error("[email] notification retry failed:", (err as Error).message)
@@ -63,8 +61,10 @@ export async function GET() {
       storeStatus,
       paymentAttention,
       serverTime: now.toISOString(),
-      // The board clears itself at this instant even if a poll is late.
-      cutoffAt: nextCutoffAfter(now).toISOString(),
+      // Dormant design only: with the retention ON the board would clear
+      // itself at this instant. Off (history kept): no cutoff is sent, so
+      // the board never empties at 22:30 (components/admin/ShiftProvider).
+      ...(orderRetentionEnabled() ? { cutoffAt: nextCutoffAfter(now).toISOString() } : {}),
     },
     { headers: { "Cache-Control": "no-store" } }
   );

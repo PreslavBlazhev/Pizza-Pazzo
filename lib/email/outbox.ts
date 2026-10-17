@@ -35,11 +35,12 @@
  *
  * EXPIRY: the row belongs to its order (onDelete: Cascade) and to the
  * retention filter in lib/db.ts — at 22:30 a pending retry simply finds
- * nothing to send, and the purge deletes it with the order.
+ * nothing to send, and the purge deletes it with the order. (Dormant: the
+ * retention is switched off and the history is kept — lib/order-retention.ts.)
  */
 import { db, type DbTransaction } from "@/lib/db";
 import { getOrderById } from "@/lib/orders";
-import { isOrderLive, retentionNow } from "@/lib/order-retention";
+import { isOrderLive, orderRetentionEnabled, retentionNow } from "@/lib/order-retention";
 import { trackingUrlFor } from "@/lib/order-tracking";
 import { sendCustomerOrderAcceptedEmail, type EmailOutcome } from "@/lib/email/resend";
 import type { OrderWithItems } from "@/types/order";
@@ -131,8 +132,17 @@ export async function drainEmailOutbox(
       const attempt = job.attempts + 1;
 
       const order = await getOrderById(job.orderId);
-      // Expired (22:30) or gone: nothing to send, and nothing to keep.
-      if (!order || !order.items || !isOrderLive(new Date(order.createdAt), retentionNow())) {
+      // The history is kept (lib/order-retention.ts): a retry never deletes
+      // anything. An order that cannot be read is recorded as SKIPPED.
+      if (!order || !order.items) {
+        await db.emailOutbox
+          .updateMany({ where: { id: job.id }, data: { status: "SKIPPED", lastError: "order not found", lastErrorKind: null } })
+          .catch(() => undefined);
+        summary.skipped++;
+        continue;
+      }
+      // Dormant design only (retention ON): an expired order is not e-mailed.
+      if (orderRetentionEnabled() && !isOrderLive(new Date(order.createdAt), retentionNow())) {
         await db.emailOutbox.deleteMany({ where: { id: job.id } }).catch(() => undefined);
         summary.skipped++;
         continue;

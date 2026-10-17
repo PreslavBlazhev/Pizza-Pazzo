@@ -1,5 +1,7 @@
 /**
- * A (backups). The backup copies on the disk are cleaned by CONTENT — never
+ * A (backups) — the DORMANT design, switched ON for this file only (the site
+ * keeps the history and never touches a backup: tests/history-kept.test.ts).
+ * When on, the backup copies on the disk are cleaned by CONTENT — never
  * by the file's date — keeping current orders and unrelated tables, on the
  * current and on older schemas; failures are reported, not swallowed, and an
  * interrupted clean-up is completed by the next run.
@@ -10,7 +12,7 @@ import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, utimesSync, wri
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { db, dbUnscoped } from "@/lib/db";
-import { setRetentionClockForTests } from "@/lib/order-retention";
+import { setRetentionClockForTests, setRetentionEnabledForTests } from "@/lib/order-retention";
 import { sofiaWallClockToUtc } from "@/lib/report-period";
 import { backupsDir, getPurgeState, purgeExpiredOrders } from "@/lib/order-purge";
 import { placeOrder } from "@/lib/checkout/place-order";
@@ -18,6 +20,9 @@ import { ALL_CONSENTS, CONTACT, STANDARD_ITEMS, deps, key } from "./helpers";
 
 const sofia = (y: number, m: number, d: number, h: number, min: number) => sofiaWallClockToUtc(y, m, d, h, min);
 const DIR = backupsDir()!;
+
+// The dormant design, for this file only (each test file is its own process).
+setRetentionEnabledForTests(true);
 
 after(async () => {
   setRetentionClockForTests(null);

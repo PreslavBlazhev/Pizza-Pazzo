@@ -77,8 +77,8 @@ function statusLine(status: StoreStatus): string {
         : "Затворено.";
     case "daily_cutoff":
       return status.reopensAt
-        ? `След 22:30 — денят приключи, поръчките са изтрити. Приемаме отново ${whenPhrase(status.reopensAt, status.serverTime)}.`
-        : "След 22:30 — денят приключи, поръчките са изтрити.";
+        ? `След 22:30 не се приемат нови поръчки. Приемаме отново ${whenPhrase(status.reopensAt, status.serverTime)}.`
+        : "След 22:30 не се приемат нови поръчки.";
     case "hours":
       return status.reopensAt
         ? `Извън работно време — отваря ${whenPhrase(status.reopensAt, status.serverTime)}.`

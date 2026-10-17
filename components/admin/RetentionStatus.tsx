@@ -1,4 +1,5 @@
 import { getPurgeState } from "@/lib/order-purge";
+import { orderRetentionEnabled } from "@/lib/order-retention";
 import { formatSofiaTime } from "@/lib/store-hours";
 import { formatSofiaDate } from "@/lib/report-period";
 
@@ -13,6 +14,17 @@ const secs = (n: number | null | undefined) => (n === null || n === undefined ? 
  * depend on this; physical deletion does.
  */
 export async function RetentionStatus() {
+  // History kept: say so plainly instead of showing a deletion schedule.
+  if (!orderRetentionEnabled()) {
+    return (
+      <section className="mt-8 rounded-2xl border border-neutral-200 bg-white p-4 text-sm" data-testid="retention-status">
+        <h2 className="mb-2 font-semibold text-neutral-700">История на поръчките</h2>
+        <p className="text-neutral-700" data-testid="retention-disabled">
+          Автоматичното изтриване на поръчки е изключено. Всички поръчки се пазят в историята и в отчетите.
+        </p>
+      </section>
+    );
+  }
   const s = await getPurgeState().catch(() => null);
   const failed = !!s?.lastError;
   let backupErrors: { file: string; error: string }[] = [];

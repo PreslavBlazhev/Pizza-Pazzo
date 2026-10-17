@@ -1,12 +1,26 @@
 /**
- * Daily order retention — WHEN an order stops existing.
+ * Daily order retention — SWITCHED OFF.
  *
- * The owner's rule (2026-10-17): orders exist only for the day they were
- * placed. Every evening at 22:30 Europe/Sofia every list is empty — new,
- * accepted, cancelled, delivered and unfinished orders alike.
+ * Owner, 2026-10-17 (after the first brief): the daily deletion is dropped
+ * for now — the order HISTORY IS KEPT. ORDER_RETENTION_ENABLED below is
+ * `false` and nothing outside a test can turn it on: no environment
+ * variable, no request, no scheduler. While it is off:
+ *   - lib/db.ts hides nothing — every order stays readable in the history,
+ *     the admin and the reports;
+ *   - lib/order-purge.ts deletes nothing (start, timer, traffic, the
+ *     maintenance endpoint and the backup scrub are all no-ops);
+ *   - lib/store-hours.ts adds no 22:30 ban — the opening hours alone decide;
+ *   - open screens do not empty themselves at 22:30.
+ * Still in force, independently of the switch: the tracking ACCESS window
+ * (lib/order-tracking.ts — a token works until 22:30 of the order's day;
+ * the order itself stays) uses orderExpiresAt() from here.
  *
- * This module only answers time questions; it never touches the database.
- * Three layers build on it:
+ * The design below is kept for a possible later decision. Turning it on is a
+ * deliberate code change (one constant), reviewed and deployed — never a
+ * configuration slip. What it would do when ON:
+ *
+ * Orders would exist only for the day they were placed: every evening at
+ * 22:30 Europe/Sofia every list would be empty. Three layers build on it:
  *
  *   1. lib/db.ts — every read and every write of an order (and of its lines,
  *      payments, e-mail jobs) is limited to orders placed after the last
@@ -28,6 +42,30 @@
  * functions to clear an open screen at the cutoff.
  */
 import { sofiaParts, sofiaWallClockToUtc } from "./report-period";
+
+/**
+ * OFF: the order history is kept (see above). Changing this to `true` is the
+ * ONLY way to enable the daily deletion in a running site.
+ */
+export const ORDER_RETENTION_ENABLED: boolean = false;
+
+const ENABLED_FOR_TESTS_KEY = "__ppRetentionEnabledForTests";
+
+/**
+ * Whether the daily retention (hiding at 22:30, deleting, the 22:30 ordering
+ * ban, clearing screens) is active. Outside NODE_ENV=test this is exactly
+ * ORDER_RETENTION_ENABLED; the tests of the dormant design opt in with
+ * setRetentionEnabledForTests(true).
+ */
+export function orderRetentionEnabled(): boolean {
+  if (ORDER_RETENTION_ENABLED) return true;
+  return process.env.NODE_ENV === "test" && (globalThis as Record<string, unknown>)[ENABLED_FOR_TESTS_KEY] === true;
+}
+
+/** Test helper: switches the dormant retention on/off for one test file. */
+export function setRetentionEnabledForTests(on: boolean): void {
+  (globalThis as Record<string, unknown>)[ENABLED_FOR_TESTS_KEY] = on || undefined;
+}
 
 /** The daily cutoff, Sofia wall clock. */
 export const ORDER_CUTOFF = { hour: 22, minute: 30 } as const;

@@ -17,7 +17,7 @@
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { isAfterDailyCutoff, retentionNow } from "@/lib/order-retention";
+import { isAfterDailyCutoff, orderRetentionEnabled, retentionNow } from "@/lib/order-retention";
 import {
   checkoutSchema,
   CHECKOUT_FIELD_ERRORS,
@@ -427,14 +427,16 @@ export async function placeOrder(
   for (let attempt = 0; attempt < ORDER_NUMBER_RETRIES; attempt++) {
     try {
       const order = await db.$transaction(async (tx) => {
-        // The cutoff is checked HERE, on the clock of the write itself: a
-        // request that started at 22:29:59 and reaches the database at
-        // 22:30:00 is refused, never saved into a day that has ended.
+        // Dormant design only (retention ON): the cutoff is checked HERE, on
+        // the clock of the write itself. While the retention is off (the
+        // history is kept) there is no 22:30 ban — the opening hours, checked
+        // in app/actions/checkout.ts, alone decide.
         const now = retentionNow();
-        if (isAfterDailyCutoff(now)) throw new DailyCutoffError();
+        if (orderRetentionEnabled() && isAfterDailyCutoff(now)) throw new DailyCutoffError();
 
         // Numbers keep counting across days (OrderSequence, prisma/schema):
-        // yesterday's #1042 is deleted, but no other order ever gets its number.
+        // no order ever gets the number of another (kept or, if the dormant
+        // retention were ever on, deleted).
         // (Through `tx`: the pool has ONE connection — lib/db.ts — and this
         // transaction holds it.)
         const seq = await tx.orderSequence.upsert({

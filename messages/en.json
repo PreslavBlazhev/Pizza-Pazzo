@@ -540,7 +540,7 @@
     "loading": "Loading…",
     "connectionLost": "No connection — showing the last known status.",
     "retry": "Try again",
-    "expired": "Tracking has expired. Orders are kept only until 22:30 on the day they are placed.",
+    "expired": "Tracking is not available. A tracking link works until 22:30 on the day of the order. Orders are kept — if you are signed in, you will find them under “My orders”.",
     "none": "There is no current order to track on this device.",
     "toMenu": "To the menu",
     "lastUpdated": "Last updated: {time}",

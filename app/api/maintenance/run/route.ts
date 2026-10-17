@@ -1,15 +1,21 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
-import { purgeExpiredOrders } from "@/lib/order-purge";
 import { drainEmailOutbox } from "@/lib/email/outbox";
 import { retryFailedNotifications } from "@/lib/payments/service";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 /**
- * POST /api/maintenance/run?trigger=cutoff|fallback — the scheduled job: the
- * 22:30 purge of expired orders (lib/order-purge.ts), the customer e-mail
- * outbox and the restaurant e-mail retries. Two Render Cron Jobs call it
- * (render.yaml):
+ * POST /api/maintenance/run — the scheduled job: the customer e-mail outbox
+ * and the restaurant e-mail retries. NOTHING ELSE.
+ *
+ * The daily 22:30 deletion is SWITCHED OFF — the order history is kept
+ * (lib/order-retention.ts). This endpoint therefore does not even call the
+ * purge: no order, line, payment record or backup is deleted, whatever the
+ * `trigger` says. The `trigger` parameter is accepted and ignored, so the
+ * prepared (not yet created) Render Cron Jobs in render.yaml are harmless.
+ *
+ * What follows describes the dormant design (when the retention was ON, the
+ * purge ran here first). Two Render Cron Jobs would call it (render.yaml):
  *
  *   cutoff   — "30 19,20 * * *" UTC = 22:30 Sofia in summer (19:30 UTC) and
  *              in winter (20:30 UTC); the other of the two is a harmless
@@ -50,13 +56,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const raw = request.nextUrl.searchParams.get("trigger");
-  const trigger = raw === "cutoff" || raw === "fallback" ? raw : "manual";
-  const purge = await purgeExpiredOrders(undefined, { trigger });
+  // E-mail retries only. No purge: the history is kept (see above).
   const outbox = await drainEmailOutbox({ limit: 20 });
   const restaurantRetried = await retryFailedNotifications().catch(() => 0);
   return NextResponse.json(
-    { ok: purge.ok, purge, outbox, restaurantRetried },
-    { status: purge.ok ? 200 : 500, headers: { "Cache-Control": "no-store" } }
+    { ok: true, retention: "disabled", outbox, restaurantRetried },
+    { status: 200, headers: { "Cache-Control": "no-store" } }
   );
 }

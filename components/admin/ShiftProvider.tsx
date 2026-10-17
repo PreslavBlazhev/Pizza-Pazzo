@@ -73,8 +73,8 @@ interface ShiftContextValue {
   orders: Order[];
   /**
    * Orders being cooked or driven (accepted → out for delivery), straight
-   * from the server on every poll — never kept on the device, so they leave
-   * the screen the moment they expire at 22:30.
+   * from the server on every poll — never kept on the device. The history is
+   * kept, so they stay until staff finish them (no 22:30 clearing).
    */
   activeOrders: OrderWithItems[];
   /** The customer e-mail of each active order, by order id. */
@@ -208,8 +208,9 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     };
   }, [refresh]);
 
-  // 22:30: empty the lists on the dot, whatever the network does, then ask
-  // the server for the new (empty) state.
+  // Dormant design only: with the retention ON the server sends `cutoffAt`
+  // and the lists are emptied at 22:30 on the dot. While it is off (history
+  // kept) no cutoff comes, so this never fires.
   useEffect(() => {
     if (!cutoffAt) return;
     const ms = new Date(cutoffAt).getTime() - Date.now();

@@ -11,7 +11,7 @@
  * across reloads. In production a fresh instance per process is what we want.
  */
 import { PrismaClient } from "@prisma/client";
-import { lastCutoffAtOrBefore, retentionNow } from "@/lib/order-retention";
+import { lastCutoffAtOrBefore, orderRetentionEnabled, retentionNow } from "@/lib/order-retention";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -44,8 +44,14 @@ const base =
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = base;
 
-// ── Daily retention: an expired order does not exist (lib/order-retention.ts) ──
+// ── Daily retention (lib/order-retention.ts) — SWITCHED OFF ────────────────
 //
+// The order history is kept (owner, 2026-10-17): while
+// orderRetentionEnabled() is false — always, outside the tests of the
+// dormant design — the hook below passes every query through UNCHANGED, so
+// old orders stay visible in the history, the admin and the reports.
+//
+// When it is ON (a deliberate code change), this is what it does:
 // Every query of an order, or of a row that belongs to one, is limited to
 // orders placed after the last 22:30 Europe/Sofia. That is the server-side
 // guarantee that a late purge job cannot be seen: from 22:30:00 the order
@@ -101,6 +107,8 @@ function scopeToLiveOrder(viaRelation: boolean) {
     args: unknown;
     query: (args: unknown) => Promise<unknown>;
   }) => {
+    // History kept: nothing is hidden.
+    if (!orderRetentionEnabled()) return query(args);
     const a = (args ?? {}) as QueryArgs;
     if (FILTERED_OPERATIONS.has(operation)) {
       const filter = viaRelation ? { order: liveOrderFilter() } : liveOrderFilter();

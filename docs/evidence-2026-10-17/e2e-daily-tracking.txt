@@ -35,16 +35,22 @@ node v22.23.3
   ✓ and recovers when it is back
 6. The kitchen ticket of a live order
   ✓ print job for a live order: 200
-7. 22:30 — the orders expire while every screen is open
-  ✓ the open tracking page clears itself
-  ✓ the kitchen board empties itself
-  ✓ the home card is gone
-  ✓ printing an expired order: 410
-  ✓ the admin detail page: 404
-  ✓ the tracking cookie is dropped once its orders are gone
-8. The maintenance job deletes them
-  ✓ POST /api/maintenance/run purged them
-  ✓ no order, line or e-mail job left
+7. 22:30 passes while every screen is open — tracking ACCESS ends, the orders are KEPT
+  ✓ tracking: the access window has ended
+  ✓ tracking: says orders are kept, nothing about deletion
+  ✓ the kitchen board keeps the accepted order
+  ✓ the home tracking card ends with the access window
+  ✓ an older order still prints: 200
+  ✓ the admin detail page still shows it
+  ✓ the admin order list still shows both
+  ✓ the tracking cookie is dropped once its access window has ended
+8. The maintenance request deletes nothing (orders, lines, e-mail jobs, a backup file)
+  ✓ before: both orders with their lines
+  ✓ maintenance cutoff: 200, retention disabled, no purge
+  ✓ maintenance fallback: 200, retention disabled, no purge
+  ✓ maintenance manual: 200, retention disabled, no purge
+  ✓ after: orders, lines and e-mail jobs unchanged
+  ✓ after: the backup file is byte-identical (same hash and date)
   ✓ the endpoint refuses a wrong secret
 9a. A pair that would NOT save (Маргарита 30 + Кашкавалина 40): regular price, no offer anywhere
   ✓ basket total 16.88 € (regular)
@@ -58,6 +64,7 @@ node v22.23.3
   ✓ admin order page: no offer line
   ✓ admin order page: 16.88 €
   ✓ print page: regular price, no offer
+  ✓ the order is kept after 22:30 and the maintenance request
 9b. Two standard pizzas + a special (Пеперони 40 + Пеперони 30 + Сьомга 30): only the standard pair
   ✓ basket: exactly one combo
   ✓ basket: the standard pair, regular 22.49 €
@@ -70,6 +77,7 @@ node v22.23.3
   ✓ admin order page: discount −3.06 €
   ✓ print page: −3.06 €, total 31.19 €
   ✓ print page: one minus, no difference line
+  ✓ the order is kept after 22:30 and the maintenance request
   ✓ no page errors
 
 E2E OK

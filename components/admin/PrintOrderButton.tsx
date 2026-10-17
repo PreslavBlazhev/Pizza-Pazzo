@@ -97,7 +97,7 @@ export function PrintOrderButton({
     setState("CONNECTING");
     setMessage("Свързване с принтера…");
     // The job is built by the SERVER from the order as it is now: an order
-    // that expired at 22:30 is refused there and nothing is printed.
+    // that does not exist is refused there and nothing is printed.
     let json: string | null = null;
     try {
       const res = await fetch(
@@ -106,9 +106,9 @@ export function PrintOrderButton({
         }`,
         { cache: "no-store" }
       );
-      if (res.status === 410) {
+      if (res.status === 404) {
         setState("ERROR");
-        setMessage("Поръчката е изтекла (22:30) и вече не може да се печата.");
+        setMessage("Поръчката не е намерена.");
         return;
       }
       if (!res.ok) throw new Error(String(res.status));

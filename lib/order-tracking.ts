@@ -8,13 +8,20 @@
  *
  * THE TOKEN is `<order id>.<HMAC-SHA256(AUTH_SECRET, "pp-track:v1:<id>")>`
  * (256-bit MAC, base64url). Nothing is stored: the server re-derives the MAC
- * and compares in constant time, so there is no token column to leak, and the
- * token stops working the moment its order is gone — at 22:30 with the
- * purge, or a second earlier for everyone through the retention filter in
- * lib/db.ts. Without AUTH_SECRET nothing is issued and nothing verifies.
+ * and compares in constant time, so there is no token column to leak.
+ * Without AUTH_SECRET nothing is issued and nothing verifies.
+ *
+ * ACCESS WINDOW. Tracking is for the order of the day: a token (and the
+ * signed-in list) works only until 22:30 Europe/Sofia of the day the order
+ * was placed (orderExpiresAt, lib/order-retention.ts). After that the answer
+ * is the same "not found" as for a forged token. This is checked HERE,
+ * explicitly — the order itself is KEPT (the daily deletion is switched off;
+ * the history stays in the admin, the reports and the customer's profile).
+ * Expiry of access never deletes or changes the order.
  *
  * WHERE IT TRAVELS
- *   - an HttpOnly cookie (pp_track) set at checkout, expiring at 22:30, so
+ *   - an HttpOnly cookie (pp_track) set at checkout, expiring at 22:30 (the
+ *     end of the access window), so
  *     the home page can show "Проследи своята поръчка" without the token
  *     ever being readable by page scripts or stored in localStorage;
  *   - the e-mail's button, as the URL FRAGMENT (/track#t=…): a fragment is
@@ -26,7 +33,7 @@
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
-import { orderExpiresAt } from "@/lib/order-retention";
+import { lastCutoffAtOrBefore, orderExpiresAt, retentionNow } from "@/lib/order-retention";
 import { SITE_URL } from "@/lib/constants";
 import {
   isDeliveryMethod,
@@ -83,7 +90,7 @@ export interface TrackedOrder {
   estimatedTimeMinutes: number | null;
   /** When staff last changed anything on the order. */
   updatedAt: string;
-  /** 22:30 of the order's day: the page clears itself then. */
+  /** 22:30 of the order's day: the end of the tracking ACCESS window (the order is kept). */
   expiresAt: string;
   isTest: boolean;
 }
@@ -116,6 +123,11 @@ type TrackedRow = {
   releasedToKitchenAt: Date | null;
 };
 
+/** Whether tracking access to an order placed at `createdAt` is still open at `now`. */
+export function trackingAccessOpen(createdAt: Date, now: Date = retentionNow()): boolean {
+  return now.getTime() < orderExpiresAt(createdAt).getTime();
+}
+
 function toTracked(row: TrackedRow): TrackedOrder | null {
   const token = trackingTokenFor(row.id);
   if (!token) return null;
@@ -135,7 +147,8 @@ function toTracked(row: TrackedRow): TrackedOrder | null {
 
 /**
  * The order behind a token, if the viewer may see it:
- *   - the token must verify and the order must still exist (live);
+ *   - the token must verify, the order must exist and its access window
+ *     (until 22:30 of its day) must still be open;
  *   - an order that belongs to an account is shown to that account, or to a
  *     visitor who is NOT signed in (the e-mail link on another device). A
  *     DIFFERENT signed-in account is refused even with the token.
@@ -148,6 +161,8 @@ export async function findTrackedOrder(
   if (!orderId) return null;
   const row = await db.order.findUnique({ where: { id: orderId }, select: TRACKED_SELECT });
   if (!row) return null;
+  // Past 22:30 of its day: no access (the order itself stays in the history).
+  if (!trackingAccessOpen(row.createdAt)) return null;
   if (row.userId && viewerUserId && row.userId !== viewerUserId) return null;
   return toTracked(row);
 }
@@ -170,8 +185,12 @@ export async function listTrackedOrders(
     const id = verifyTrackingToken(t);
     if (id) ids.add(id);
   }
+  // Only orders whose access window is still open (placed after the last
+  // 22:30); older ones stay in the history, not on the tracking page.
+  const now = retentionNow();
   const rows = await db.order.findMany({
     where: {
+      createdAt: { gt: lastCutoffAtOrBefore(now) },
       OR: [
         ...(ids.size > 0 ? [{ id: { in: [...ids] } }] : []),
         ...(viewerUserId ? [{ userId: viewerUserId }] : []),
@@ -184,6 +203,7 @@ export async function listTrackedOrders(
   return rows
     .filter((r) => !(r.userId && viewerUserId && r.userId !== viewerUserId))
     .filter((r) => ids.has(r.id) || r.userId === viewerUserId)
+    .filter((r) => trackingAccessOpen(r.createdAt, now))
     .map(toTracked)
     .filter((o): o is TrackedOrder => o !== null);
 }

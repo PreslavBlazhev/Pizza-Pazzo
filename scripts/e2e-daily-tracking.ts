@@ -10,10 +10,13 @@
  *   - the customer sees each recorded status (poll + reload), no timer;
  *   - the e-mail link on another device (token in the fragment), a forged
  *     token, losing and regaining the connection;
- *   - 22:30: the orders' clock is moved past the cutoff in the database (what
- *     the filter sees at 22:30), and the open customer page, the home card
- *     and the kitchen board all empty themselves; printing answers 410;
- *     the maintenance endpoint then deletes everything.
+ *   - 22:30 (the daily deletion is switched off — the history is kept): the
+ *     orders' clock is moved past the cutoff in the database; tracking
+ *     ACCESS ends (the open page says the order is kept), but the kitchen
+ *     board, the admin list and detail, and printing keep the orders; the
+ *     maintenance request deletes nothing — orders, lines, e-mail jobs and a
+ *     backup file are unchanged;
+ *   - the final two-pizza rule (section 9).
  *
  *   E2E_BASE_URL=http://localhost:3020 MAINTENANCE_SECRET=… AUTH_SECRET=… \
  *   DATABASE_URL=file:./dev.db npx tsx scripts/e2e-daily-tracking.ts [outDir]
@@ -21,8 +24,8 @@
  * Screenshots go to outDir (default docs/evidence-2026-10-17). Synthetic data
  * only; nothing is e-mailed (run the server without RESEND_API_KEY).
  */
-import { createHmac } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { createHash, createHmac } from "node:crypto";
+import { mkdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
 import { PrismaClient } from "@prisma/client";
@@ -207,7 +210,7 @@ async function main() {
     const forgedPage = await forged.newPage();
     await forgedPage.goto(`${BASE}/track#t=${o2.id}.${"A".repeat(43)}`);
     await forgedPage.locator('[data-testid="track-empty"]').waitFor({ timeout: 15_000 });
-    check((await forgedPage.innerText("main")).includes("Проследяването е изтекло"), "a forged token gets the generic message");
+    check((await forgedPage.innerText("main")).includes("Проследяването не е достъпно"), "a forged token gets the generic message");
     const api = await forgedPage.evaluate(async (n) => {
       const r = await fetch("/api/track", { method: "POST", body: JSON.stringify({ token: String(n) }) });
       return { status: r.status, cc: r.headers.get("cache-control"), rp: r.headers.get("referrer-policy") };
@@ -234,43 +237,66 @@ async function main() {
     const printable = await board.evaluate(async (id) => (await fetch(`/api/admin/orders/${id}/printable?t=kitchen`)).status, o2.id);
     check(printable === 200, "print job for a live order: 200");
 
-    console.log("7. 22:30 — the orders expire while every screen is open");
-    // Accept order 2 so the kitchen has something in progress when it expires.
+    console.log("7. 22:30 passes while every screen is open — tracking ACCESS ends, the orders are KEPT");
+    // Accept order 2 so the kitchen has something in progress at 22:30.
     await board.goto(`${BASE}/admin/orders/live`);
     await board.getByRole("button", { name: /ПРИЕМИ/ }).first().click({ timeout: 20_000 }).catch(() => undefined);
     await board.locator(`[data-testid="active-order-${n2}"]`).waitFor({ timeout: 20_000 });
     const home = await phone.newPage();
     await home.goto(`${BASE}/`);
     await home.locator('[data-testid="track-card"]').waitFor({ timeout: 15_000 });
-    // What the retention filter sees after 22:30: the orders now belong to a day that has ended.
+    // The orders now belong to a day whose 22:30 has passed.
     const yesterday = new Date(Date.now() - 26 * 3600 * 1000);
     await prisma.order.updateMany({ where: { id: { in: [o1.id, o2.id] } }, data: { createdAt: yesterday } });
     await customer.waitForSelector('[data-testid="track-empty"]', { timeout: 25_000 });
-    check((await customer.innerText("main")).includes("Проследяването е изтекло"), "the open tracking page clears itself");
-    await shot(customer, "10-track-expired-mobile");
-    await board.locator(`[data-testid="active-order-${n2}"]`).waitFor({ state: "detached", timeout: 25_000 });
-    check(true, "the kitchen board empties itself");
-    await shot(board, "11-kitchen-after-cutoff");
+    const trackText = await customer.innerText("main");
+    check(trackText.includes("работи до 22:30 в деня на поръчката"), "tracking: the access window has ended", trackText.slice(0, 300));
+    check(trackText.includes("Поръчките се пазят") && !/изтри/i.test(trackText), "tracking: says orders are kept, nothing about deletion");
+    await shot(customer, "10-track-access-ended-mobile");
+    // The kitchen board does NOT empty: two polls later the order is still there.
+    await sleep(20_000);
+    check(await board.locator(`[data-testid="active-order-${n2}"]`).isVisible(), "the kitchen board keeps the accepted order");
+    await shot(board, "11-kitchen-after-2230-kept");
     await home.reload();
     await sleep(3000);
-    check(!(await home.locator('[data-testid="track-card"]').isVisible()), "the home card is gone");
-    const gone = await board.evaluate(async (id) => (await fetch(`/api/admin/orders/${id}/printable?t=kitchen`)).status, o2.id);
-    check(gone === 410, "printing an expired order: 410", String(gone));
+    check(!(await home.locator('[data-testid="track-card"]').isVisible()), "the home tracking card ends with the access window");
+    const printableAfter = await board.evaluate(async (id) => (await fetch(`/api/admin/orders/${id}/printable?t=kitchen`)).status, o2.id);
+    check(printableAfter === 200, "an older order still prints: 200", String(printableAfter));
     const detail = await staff.newPage();
     const resp = await detail.goto(`${BASE}/admin/orders/${o2.id}`);
-    check(resp?.status() === 404, "the admin detail page: 404", String(resp?.status()));
+    check(resp?.status() === 200 && (await detail.locator("body").innerText()).includes(String(n2)), "the admin detail page still shows it", String(resp?.status()));
+    const list = await staff.newPage();
+    await list.goto(`${BASE}/admin/orders`);
+    const listText = await list.locator("body").innerText();
+    check(listText.includes(String(n1)) && listText.includes(String(n2)), "the admin order list still shows both");
+    await shot(list, "11b-admin-orders-history-kept");
     const after = (await phone.cookies(BASE)).find((c) => c.name === "pp_track");
-    check(!after, "the tracking cookie is dropped once its orders are gone");
+    check(!after, "the tracking cookie is dropped once its access window has ended");
 
-    console.log("8. The maintenance job deletes them");
+    console.log("8. The maintenance request deletes nothing (orders, lines, e-mail jobs, a backup file)");
     const secret = process.env.MAINTENANCE_SECRET ?? "";
-    const run = await fetch(`${BASE}/api/maintenance/run`, { method: "POST", headers: { authorization: `Bearer ${secret}` } });
-    const body = (await run.json().catch(() => ({}))) as { purge?: { deletedOrders?: number } };
-    check(run.status === 200 && (body.purge?.deletedOrders ?? 0) >= 2, "POST /api/maintenance/run purged them", JSON.stringify(body));
-    const left = await prisma.order.count({ where: { id: { in: [o1.id, o2.id] } } });
-    const leftItems = await prisma.orderItem.count({ where: { orderId: { in: [o1.id, o2.id] } } });
-    const leftJobs = await prisma.emailOutbox.count({ where: { orderId: { in: [o1.id, o2.id] } } });
-    check(left === 0 && leftItems === 0 && leftJobs === 0, "no order, line or e-mail job left", `${left}/${leftItems}/${leftJobs}`);
+    const counts = async () => [
+      await prisma.order.count({ where: { id: { in: [o1.id, o2.id] } } }),
+      await prisma.orderItem.count({ where: { orderId: { in: [o1.id, o2.id] } } }),
+      await prisma.emailOutbox.count({ where: { orderId: { in: [o1.id, o2.id] } } }),
+    ];
+    const dbFile = (process.env.DATABASE_URL ?? "").replace(/^file:/, "").split("?")[0];
+    const backupFile = path.join(path.dirname(dbFile), "backups", `e2e-history-${Date.now()}.db`).replace(/\\/g, "/");
+    mkdirSync(path.dirname(backupFile), { recursive: true });
+    await prisma.$executeRawUnsafe(`VACUUM INTO '${backupFile}'`);
+    const fingerprint = () => `${createHash("sha256").update(readFileSync(backupFile)).digest("hex")}:${statSync(backupFile).mtimeMs}`;
+    const before = { counts: await counts(), backup: fingerprint() };
+    check(before.counts[0] === 2 && before.counts[1] > 0, "before: both orders with their lines", JSON.stringify(before.counts));
+    for (const trigger of ["cutoff", "fallback", ""]) {
+      const run = await fetch(`${BASE}/api/maintenance/run${trigger ? `?trigger=${trigger}` : ""}`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${secret}` },
+      });
+      const body = (await run.json().catch(() => ({}))) as { retention?: string; purge?: unknown };
+      check(run.status === 200 && body.retention === "disabled" && body.purge === undefined, `maintenance ${trigger || "manual"}: 200, retention disabled, no purge`, JSON.stringify(body));
+    }
+    check(JSON.stringify(await counts()) === JSON.stringify(before.counts), "after: orders, lines and e-mail jobs unchanged", JSON.stringify(await counts()));
+    check(fingerprint() === before.backup, "after: the backup file is byte-identical (same hash and date)");
     const unauth = await fetch(`${BASE}/api/maintenance/run`, { method: "POST", headers: { authorization: "Bearer wrong" } });
     check(unauth.status === 401, "the endpoint refuses a wrong secret");
 
@@ -307,9 +333,12 @@ async function main() {
       const n = Number(/#(\d+)/.exec(await cartPage.locator("main").innerText())?.[1]);
       return { checkoutText, order: await prisma.order.findFirstOrThrow({ where: { orderNumber: n } }) };
     };
+    // History kept: after the check the order is moved to "yesterday" and the
+    // maintenance request is run — it must still be there.
     const expire = async (id: string) => {
       await prisma.order.updateMany({ where: { id }, data: { createdAt: new Date(Date.now() - 26 * 3600 * 1000) } });
       await fetch(`${BASE}/api/maintenance/run`, { method: "POST", headers: { authorization: `Bearer ${secret}` } });
+      check((await prisma.order.count({ where: { id } })) === 1, "the order is kept after 22:30 and the maintenance request");
     };
 
     console.log("9a. A pair that would NOT save (Маргарита 30 + Кашкавалина 40): regular price, no offer anywhere");
