@@ -13,6 +13,8 @@
  * browsing and blocked storage simply mean no reminder, never a crash.
  */
 
+import { nextCutoffAfter } from "@/lib/order-retention";
+
 const KEY = "pp-pending-payment";
 /** A payment older than this is no longer worth a banner. */
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -41,7 +43,9 @@ export function readPendingPayment(): PendingPayment | null {
       !/^[A-Za-z0-9_-]{16,64}$/.test(p.token) ||
       typeof p.orderNumber !== "number" ||
       typeof p.startedAt !== "number" ||
-      Date.now() - p.startedAt > MAX_AGE_MS
+      Date.now() - p.startedAt > MAX_AGE_MS ||
+      // The order expires at 22:30 (lib/order-retention.ts) — so does this.
+      Date.now() >= nextCutoffAfter(new Date(p.startedAt)).getTime()
     ) {
       localStorage.removeItem(KEY);
       return null;
