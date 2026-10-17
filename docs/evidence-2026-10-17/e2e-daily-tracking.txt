@@ -1,7 +1,8 @@
+node v22.23.3
 1. Two orders from one phone; the success page and the cookie
-  ✓ order #1007 placed
+  ✓ order #1010 placed
   ✓ success page links to tracking
-  ✓ second order #1008
+  ✓ second order #1011
   ✓ tracking cookie is HttpOnly
   ✓ the cookie holds both orders
   ✓ it expires within a day (at 22:30)

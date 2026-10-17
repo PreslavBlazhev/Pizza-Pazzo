@@ -1,3 +1,8 @@
+node v22.23.3
+
+> pizza-pazzo@0.1.0 smoke
+> node scripts/smoke-checkout.mjs
+
 1) Menu data integrity (database)
   ✓ 137 products, 10 categories, ids/slugs unique, prices sane
 2) Checkout price derivation
@@ -275,4 +280,3 @@
   ✓ a new shift gets a new context
 
 SMOKE OK
-exit 0

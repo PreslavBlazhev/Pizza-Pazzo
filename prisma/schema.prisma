@@ -587,24 +587,32 @@ model OrderSequence {
 /// trigger and error texts only, never anything about an order. One row,
 /// id "orders". Read it to know when tonight's orders were REALLY deleted.
 model MaintenanceState {
-  id                   String    @id
-  /// The last run of any kind, and what started it (timer, cutoff, fallback…).
-  lastRunAt            DateTime?
-  lastTrigger          String?
-  /// The last run that finished without any failure.
-  lastSuccessAt        DateTime?
-  /// The newest cutoff whose orders a successful run has deleted, how many
-  /// seconds after that cutoff it happened, and which trigger did it.
-  lastCutoffAt         DateTime?
-  lastCutoffLagSeconds Int?
-  lastCutoffTrigger    String?
-  lastDeleted          Int       @default(0)
+  id                             String    @id
+  /// The last run of any kind: when it STARTED, what started it (timer,
+  /// cutoff, fallback…), when it FINISHED (success or failure) and how long
+  /// it took.
+  lastRunAt                      DateTime?
+  lastTrigger                    String?
+  lastFinishedAt                 DateTime?
+  lastDurationMs                 Int?
+  /// When the last run that completed WITHOUT any failure finished — after
+  /// the deletion and the verified backup clean-up, never at its start.
+  lastSuccessAt                  DateTime?
+  /// The newest cutoff whose orders a successful run has deleted; for that
+  /// first successful run: seconds from the cutoff to its start, when it
+  /// completed, seconds from the cutoff to its completion, and the trigger.
+  lastCutoffAt                   DateTime?
+  lastCutoffStartLagSeconds      Int?
+  lastCutoffCompletedAt          DateTime?
+  lastCutoffCompletionLagSeconds Int?
+  lastCutoffTrigger              String?
+  lastDeleted                    Int       @default(0)
   /// Null when the last run succeeded; otherwise why it did not.
-  lastError            String?
-  lastBackupsScrubbed  Int       @default(0)
+  lastError                      String?
+  lastBackupsScrubbed            Int       @default(0)
   /// JSON [{file, error}] of the backup files the last run could not clean.
-  lastBackupErrors     String?
-  updatedAt            DateTime  @updatedAt
+  lastBackupErrors               String?
+  updatedAt                      DateTime  @updatedAt
 }
 
 /// Transactional outbox for customer e-mails (lib/email/outbox.ts). A row is

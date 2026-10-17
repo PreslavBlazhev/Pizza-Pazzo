@@ -1,3 +1,4 @@
+node v22.23.3
 
 C:\Users\The King\Desktop\Sites\08. Pizza Pazzo-wt\components\admin\AndroidPrinterSettingsButton.tsx
   25:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
@@ -219,4 +220,3 @@ C:\Users\The King\Desktop\Sites\08. Pizza Pazzo-wt\store\cart-store.ts:247:19
 
 ✖ 16 problems (0 errors, 16 warnings)
 
-exit 0

@@ -13,9 +13,11 @@
  *        - the scheduler's 22:30 call (POST /api/maintenance/run?trigger=cutoff);
  *        - the scheduler's periodic fallback (…?trigger=fallback, every 5 min);
  *        - server start and busy paths (maybePurgeExpiredOrders).
- *      Every run records when it ran, for which cutoff, how late it was
- *      after that cutoff and what failed (MaintenanceState), so the real
- *      timing is measured, not assumed.
+ *      Every run records when it STARTED and when it FINISHED (after the
+ *      deletion and the verified backup clean-up), how long it took, for
+ *      which cutoff, how late its start and its completion were after that
+ *      cutoff, and what failed (MaintenanceState) — so the real timing is
+ *      measured, not assumed. A failed run is never recorded as completed.
  *
  * What goes (rows created at or before the last 22:30):
  *   Order (every status), OrderItem, EmailOutbox, PaymentAttempt,
@@ -58,10 +60,20 @@ export interface BackupScrubResult {
 export interface PurgeSummary {
   ok: boolean;
   trigger: PurgeTrigger;
-  ranAt: string;
   cutoffAt: string;
-  /** Seconds between the cutoff and this run (how late the deletion is). */
-  lagSeconds: number;
+  /** When the run began — before anything was deleted. */
+  startedAt: string;
+  /** When the run ended — after the live deletion AND the verified backup
+   *  clean-up (or after the failure that stopped it). */
+  finishedAt: string;
+  durationMs: number;
+  /** Seconds from the cutoff to the START of this run. */
+  startLagSeconds: number;
+  /** finishedAt, but only when the run COMPLETED without any failure; a
+   *  failed run is never reported as a completed clean-up. */
+  completedAt: string | null;
+  /** Seconds from the cutoff to the completion — null when the run failed. */
+  completionLagSeconds: number | null;
   deletedOrders: number;
   deletedSimulatorSessions: number;
   scrubbedBackups: number;
@@ -69,6 +81,12 @@ export interface PurgeSummary {
   backupFailures: BackupFailure[];
   error: string | null;
 }
+
+/** What the work did — the summary without its timing. */
+type PurgeOutcome = Pick<
+  PurgeSummary,
+  "deletedOrders" | "deletedSimulatorSessions" | "scrubbedBackups" | "cleanBackups" | "backupFailures" | "error"
+>;
 
 /** The tables that hang off Order, deleted child-first (also cascaded by FK). */
 const CHILD_DELETES = [
@@ -83,24 +101,40 @@ export interface PurgeOptions {
   trigger?: PurgeTrigger;
   /** Test hook: called inside each backup's transaction before it commits. */
   beforeBackupCommit?: (file: string) => void;
+  /** Read again when the run ends, for its finish time (default: the same
+   *  clock as `now` — the real clock outside tests). */
+  clock?: () => Date;
 }
+
+const secondsBetween = (from: Date, to: Date) => Math.max(0, Math.round((to.getTime() - from.getTime()) / 1000));
 
 export async function purgeExpiredOrders(
   now: Date = retentionNow(),
   options: PurgeOptions = {}
 ): Promise<PurgeSummary> {
   const trigger = options.trigger ?? "manual";
-  const cutoff = lastCutoffAtOrBefore(now);
-  const lagSeconds = Math.max(0, Math.round((now.getTime() - cutoff.getTime()) / 1000));
+  const startedAt = now;
+  const cutoff = lastCutoffAtOrBefore(startedAt);
   const expired = { createdAt: { lte: cutoff } };
-  const base: Omit<PurgeSummary, "ok" | "deletedOrders" | "deletedSimulatorSessions" | "error"> = {
-    trigger,
-    ranAt: now.toISOString(),
-    cutoffAt: cutoff.toISOString(),
-    lagSeconds,
-    scrubbedBackups: 0,
-    cleanBackups: 0,
-    backupFailures: [],
+
+  /** Stamps the END of the run — called only after the work has finished. */
+  const finish = (ok: boolean, rest: PurgeOutcome): PurgeSummary => {
+    const read = (options.clock ?? retentionNow)();
+    // A clock that reads earlier than the start (an explicit `now` from
+    // another clock) never yields a negative duration.
+    const finishedAt = read.getTime() < startedAt.getTime() ? startedAt : read;
+    return {
+      ok,
+      trigger,
+      cutoffAt: cutoff.toISOString(),
+      startedAt: startedAt.toISOString(),
+      finishedAt: finishedAt.toISOString(),
+      durationMs: finishedAt.getTime() - startedAt.getTime(),
+      startLagSeconds: secondsBetween(cutoff, startedAt),
+      completedAt: ok ? finishedAt.toISOString() : null,
+      completionLagSeconds: ok ? secondsBetween(cutoff, finishedAt) : null,
+      ...rest,
+    };
   };
 
   let deletedOrders = 0;
@@ -135,25 +169,31 @@ export async function purgeExpiredOrders(
     }
   } catch (err) {
     const error = `live database: ${String((err as Error).message ?? err).slice(0, 300)}`;
-    const summary: PurgeSummary = { ...base, ok: false, deletedOrders: 0, deletedSimulatorSessions: 0, error };
-    await recordRun(summary, now, cutoff);
+    const summary = finish(false, {
+      deletedOrders: 0,
+      deletedSimulatorSessions: 0,
+      scrubbedBackups: 0,
+      cleanBackups: 0,
+      backupFailures: [],
+      error,
+    });
+    await recordRun(summary, cutoff);
     console.error(`[retention] purge FAILED (${trigger}): ${error}`);
     return summary;
   }
 
   const backups = await scrubBackups(cutoff, options);
   const ok = backups.failed.length === 0;
-  const summary: PurgeSummary = {
-    ...base,
-    ok,
+  // The run ends HERE: after the live deletion and the verified backups.
+  const summary = finish(ok, {
     deletedOrders,
     deletedSimulatorSessions,
     scrubbedBackups: backups.scrubbed,
     cleanBackups: backups.clean,
     backupFailures: backups.failed,
     error: ok ? null : `backups: ${backups.failed.length} file(s) not cleaned`,
-  };
-  await recordRun(summary, now, cutoff);
+  });
+  await recordRun(summary, cutoff);
   if (!ok) {
     // File names and error texts only — no order data.
     console.error(
@@ -162,7 +202,8 @@ export async function purgeExpiredOrders(
     );
   } else if (deletedOrders > 0 || backups.scrubbed > 0) {
     console.info(
-      `[retention] purge (${trigger}, ${lagSeconds}s after the cutoff): ${deletedOrders} order(s) deleted, ` +
+      `[retention] purge (${trigger}): started ${summary.startLagSeconds}s and completed ` +
+        `${summary.completionLagSeconds}s after the cutoff (${summary.durationMs} ms): ${deletedOrders} order(s) deleted, ` +
         `${backups.scrubbed} backup file(s) cleaned`
     );
   }
@@ -170,25 +211,37 @@ export async function purgeExpiredOrders(
 }
 
 /**
- * Records the run. `lastCutoffAt` / `lastCutoffLagSeconds` move only on a
- * SUCCESSFUL run for a NEW cutoff: they then say when tonight's orders were
- * really deleted and by which trigger. A failed run leaves them alone and
- * fills `lastError` / `lastBackupErrors` instead.
+ * Records the run, AFTER it ended. Start, finish and duration are kept for
+ * every run. `lastSuccessAt` is the finish time of a run that completed
+ * without failure. The `lastCutoff*` fields move only on a SUCCESSFUL run for
+ * a NEW cutoff: they then say when tonight's orders were really deleted (the
+ * completion), how late its start and its completion were after 22:30, and
+ * by which trigger. A failed run leaves them alone and fills `lastError` /
+ * `lastBackupErrors` instead.
  */
-async function recordRun(summary: PurgeSummary, now: Date, cutoff: Date) {
+async function recordRun(summary: PurgeSummary, cutoff: Date) {
   try {
     const prev = await dbUnscoped.maintenanceState.findUnique({ where: { id: MAINTENANCE_ROW_ID } });
     const firstForCutoff = summary.ok && (!prev?.lastCutoffAt || prev.lastCutoffAt.getTime() < cutoff.getTime());
+    const finishedAt = new Date(summary.finishedAt);
     const data = {
-      lastRunAt: now,
+      lastRunAt: new Date(summary.startedAt),
       lastTrigger: summary.trigger,
+      lastFinishedAt: finishedAt,
+      lastDurationMs: summary.durationMs,
       lastDeleted: summary.deletedOrders,
       lastError: summary.error,
       lastBackupsScrubbed: summary.scrubbedBackups,
       lastBackupErrors: summary.backupFailures.length ? JSON.stringify(summary.backupFailures).slice(0, 2000) : null,
-      ...(summary.ok ? { lastSuccessAt: now } : {}),
-      ...(firstForCutoff
-        ? { lastCutoffAt: cutoff, lastCutoffLagSeconds: summary.lagSeconds, lastCutoffTrigger: summary.trigger }
+      ...(summary.ok && summary.completedAt ? { lastSuccessAt: new Date(summary.completedAt) } : {}),
+      ...(firstForCutoff && summary.completedAt
+        ? {
+            lastCutoffAt: cutoff,
+            lastCutoffStartLagSeconds: summary.startLagSeconds,
+            lastCutoffCompletedAt: new Date(summary.completedAt),
+            lastCutoffCompletionLagSeconds: summary.completionLagSeconds,
+            lastCutoffTrigger: summary.trigger,
+          }
         : {}),
     };
     await dbUnscoped.maintenanceState.upsert({

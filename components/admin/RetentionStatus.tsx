@@ -3,6 +3,7 @@ import { formatSofiaTime } from "@/lib/store-hours";
 import { formatSofiaDate } from "@/lib/report-period";
 
 const when = (d: Date | null | undefined) => (d ? `${formatSofiaDate(d)} ${formatSofiaTime(d)}` : "—");
+const secs = (n: number | null | undefined) => (n === null || n === undefined ? "?" : `${n} s`);
 
 /**
  * "Ежедневно почистване" on the admin dashboard: when tonight's orders were
@@ -30,15 +31,26 @@ export async function RetentionStatus() {
         <p className="text-neutral-500">Още не е изпълнявано на този сървър.</p>
       ) : (
         <ul className="space-y-1 text-neutral-700">
-          <li>
-            Изтрити до cutoff {when(s.lastCutoffAt)}
-            {s.lastCutoffLagSeconds !== null && s.lastCutoffLagSeconds !== undefined
-              ? ` — ${s.lastCutoffLagSeconds} s след 22:30 (${s.lastCutoffTrigger ?? "?"})`
-              : ""}
+          <li data-testid="retention-cutoff">
+            Изтрити поръчки до {when(s.lastCutoffAt)}
+            {s.lastCutoffCompletedAt ? (
+              <>
+                {" "}— почистването приключи в {when(s.lastCutoffCompletedAt)},{" "}
+                {secs(s.lastCutoffCompletionLagSeconds)} след 22:30 (започна {secs(s.lastCutoffStartLagSeconds)} след
+                22:30, {s.lastCutoffTrigger ?? "?"})
+              </>
+            ) : s.lastCutoffAt ? (
+              ` — започна ${secs(s.lastCutoffStartLagSeconds)} след 22:30 (${s.lastCutoffTrigger ?? "?"}; време на приключване не е записано)`
+            ) : (
+              ""
+            )}
           </li>
-          <li>
-            Последно изпълнение: {when(s.lastRunAt)} ({s.lastTrigger ?? "?"}); последен успех: {when(s.lastSuccessAt)}
+          <li data-testid="retention-last-run">
+            Последно изпълнение: започна {when(s.lastRunAt)}, завърши {when(s.lastFinishedAt)}
+            {s.lastDurationMs !== null && s.lastDurationMs !== undefined ? ` (${(s.lastDurationMs / 1000).toFixed(1)} s)` : ""} —{" "}
+            {s.lastTrigger ?? "?"}, {failed ? "НЕУСПЕШНО" : "успешно"}
           </li>
+          <li>Последно успешно приключване: {when(s.lastSuccessAt)}</li>
           {failed && (
             <li className="font-semibold text-red-700">
               ГРЕШКА: {s.lastError}

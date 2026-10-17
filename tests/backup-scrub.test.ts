@@ -6,7 +6,7 @@
  */
 import { test, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { db, dbUnscoped } from "@/lib/db";
@@ -43,10 +43,15 @@ async function orderAt(when: Date): Promise<string> {
   return r.orderId;
 }
 
-/** A backup copy written NOW (its file date is always after any cutoff in 2030). */
-async function backup(name: string): Promise<string> {
+/**
+ * A backup copy of the live database. Its file date is whatever the disk
+ * says (the real "now", i.e. BEFORE the 2030 test cutoffs) unless `mtime`
+ * sets it explicitly.
+ */
+async function backup(name: string, mtime?: Date): Promise<string> {
   const file = path.join(DIR, name).replace(/\\/g, "/");
   await dbUnscoped.$executeRawUnsafe(`VACUUM INTO '${file}'`);
+  if (mtime) utimesSync(file, mtime, mtime);
   return file;
 }
 
@@ -59,16 +64,31 @@ async function inBackup<T>(file: string, read: (c: PrismaClient) => Promise<T>):
   }
 }
 
-test("a NEW backup file holding yesterday's orders is cleaned (the file date is not what decides)", async () => {
+test("a NEW backup file (written AFTER the cutoff) holding yesterday's orders is cleaned — the file date is not what decides", async () => {
+  const cutoff = sofia(2030, 3, 1, 22, 30);
   const old = await orderAt(sofia(2030, 3, 1, 12, 0));
-  setRetentionClockForTests(sofia(2030, 3, 2, 9, 0)); // after 1 March 22:30, before the purge ran
-  const file = await backup("pre-migrate-new.db");
+  const current = await orderAt(sofia(2030, 3, 2, 8, 0));
+  // The copy is written at 08:30 the next morning, before the purge ran: a
+  // file date AFTER the cutoff, yet it still holds yesterday's order. A
+  // clean-up that skipped files newer than the cutoff would leave it there.
+  const written = sofia(2030, 3, 2, 8, 30);
+  const file = await backup("pre-migrate-new.db", written);
+  assert.equal(statSync(file).mtime.getTime(), written.getTime(), "the file date is set explicitly");
+  assert.ok(statSync(file).mtime.getTime() > cutoff.getTime(), "precondition: the file is NEWER than the cutoff");
+  await inBackup(file, async (c) => {
+    assert.equal(await c.order.count({ where: { id: old } }), 1, "precondition: it holds the expired order");
+  });
+
+  setRetentionClockForTests(sofia(2030, 3, 2, 9, 0));
   const r = await purgeExpiredOrders(undefined, { trigger: "test" });
   assert.equal(r.ok, true, JSON.stringify(r.backupFailures));
   assert.equal(r.scrubbedBackups, 1);
+  assert.equal(r.cleanBackups, 0);
   await inBackup(file, async (c) => {
-    assert.equal(await c.order.count({ where: { id: old } }), 0);
+    assert.equal(await c.order.count({ where: { id: old } }), 0, "yesterday's order is gone from the new file");
     assert.equal(await c.orderItem.count({ where: { orderId: old } }), 0);
+    assert.equal(await c.order.count({ where: { id: current } }), 1, "today's order is kept");
+    assert.ok((await c.orderItem.count({ where: { orderId: current } })) > 0, "with its lines");
     assert.equal(await c.restaurantSettings.count(), 1, "unrelated tables stay");
   });
 });
@@ -179,20 +199,95 @@ test("an interrupted clean-up changes nothing; the next run completes it; a thir
   assert.deepEqual(readdirSync(DIR), ["interrupted.db"], "nothing else written next to it");
 });
 
-test("the run records its trigger, the cutoff it covered and how late it was", async () => {
-  await orderAt(sofia(2030, 8, 1, 12, 0));
-  const at = sofia(2030, 8, 1, 22, 37);
-  setRetentionClockForTests(at);
-  const r = await purgeExpiredOrders(undefined, { trigger: "cutoff" });
-  assert.equal(r.lagSeconds, 7 * 60);
+const sofiaSec = (y: number, m: number, d: number, h: number, min: number, s: number) =>
+  new Date(sofia(y, m, d, h, min).getTime() + s * 1000);
+
+test("start and COMPLETION are recorded apart: started 22:30:01, finished 22:32:01 → 1 s and 121 s", async () => {
+  const cutoff = sofia(2030, 8, 1, 22, 30);
+  const old = await orderAt(sofia(2030, 8, 1, 12, 0));
+  await backup("timing.db");
+  const started = sofiaSec(2030, 8, 1, 22, 30, 1);
+  const finished = sofiaSec(2030, 8, 1, 22, 32, 1);
+  setRetentionClockForTests(started);
+  let clockMoved = false;
+  const r = await purgeExpiredOrders(undefined, {
+    trigger: "timer",
+    // Two minutes pass WHILE the backup is being cleaned — after the live
+    // deletion, before the verification. The finish must be read after it.
+    beforeBackupCommit: () => {
+      clockMoved = true;
+      setRetentionClockForTests(finished);
+    },
+  });
+  assert.ok(clockMoved, "the clock moved during the backup clean-up");
+  assert.equal(r.ok, true, JSON.stringify(r.backupFailures));
+  assert.equal(r.cutoffAt, cutoff.toISOString());
+  assert.equal(r.startedAt, started.toISOString());
+  assert.equal(r.finishedAt, finished.toISOString());
+  assert.equal(r.completedAt, finished.toISOString());
+  assert.equal(r.durationMs, 120_000);
+  assert.equal(r.startLagSeconds, 1, "start lag: 22:30:01");
+  assert.equal(r.completionLagSeconds, 121, "completion lag: 22:32:01");
+  assert.equal(await dbUnscoped.order.count({ where: { id: old } }), 0);
+
   const s = await getPurgeState();
-  assert.equal(s?.lastCutoffAt?.toISOString(), sofia(2030, 8, 1, 22, 30).toISOString());
-  assert.equal(s?.lastCutoffLagSeconds, 420);
-  assert.equal(s?.lastCutoffTrigger, "cutoff");
+  assert.equal(s?.lastRunAt?.toISOString(), started.toISOString(), "lastRunAt = the start");
+  assert.equal(s?.lastFinishedAt?.toISOString(), finished.toISOString());
+  assert.equal(s?.lastDurationMs, 120_000);
+  assert.equal(s?.lastSuccessAt?.toISOString(), finished.toISOString(), "the success is the COMPLETION, not the start");
+  assert.equal(s?.lastCutoffAt?.toISOString(), cutoff.toISOString());
+  assert.equal(s?.lastCutoffStartLagSeconds, 1);
+  assert.equal(s?.lastCutoffCompletedAt?.toISOString(), finished.toISOString());
+  assert.equal(s?.lastCutoffCompletionLagSeconds, 121);
+  assert.equal(s?.lastCutoffTrigger, "timer");
+
   // A later fallback run for the SAME cutoff does not overwrite when it was first done.
   setRetentionClockForTests(sofia(2030, 8, 1, 22, 45));
   await purgeExpiredOrders(undefined, { trigger: "fallback" });
   const s2 = await getPurgeState();
-  assert.equal(s2?.lastCutoffLagSeconds, 420);
+  assert.equal(s2?.lastCutoffCompletionLagSeconds, 121);
+  assert.equal(s2?.lastCutoffStartLagSeconds, 1);
+  assert.equal(s2?.lastCutoffTrigger, "timer");
   assert.equal(s2?.lastTrigger, "fallback");
+  assert.equal(s2?.lastSuccessAt?.toISOString(), sofia(2030, 8, 1, 22, 45).toISOString());
+});
+
+test("a FAILED run is recorded as finished, never as a completed clean-up", async () => {
+  await orderAt(sofia(2030, 9, 1, 12, 0));
+  await backup("broken-later.db");
+  writeFileSync(path.join(DIR, "corrupt.db"), "this is not an SQLite database at all ".repeat(200));
+  const started = sofiaSec(2030, 9, 1, 22, 30, 1);
+  const finished = sofiaSec(2030, 9, 1, 22, 32, 1);
+  setRetentionClockForTests(started);
+  const r = await purgeExpiredOrders(undefined, {
+    trigger: "timer",
+    beforeBackupCommit: () => setRetentionClockForTests(finished),
+  });
+  assert.equal(r.ok, false);
+  assert.equal(r.startedAt, started.toISOString());
+  assert.equal(r.finishedAt, finished.toISOString(), "the end of the failed run is still known");
+  assert.equal(r.startLagSeconds, 1);
+  assert.equal(r.completedAt, null, "not completed");
+  assert.equal(r.completionLagSeconds, null);
+
+  const s = await getPurgeState();
+  assert.equal(s?.lastRunAt?.toISOString(), started.toISOString());
+  assert.equal(s?.lastFinishedAt?.toISOString(), finished.toISOString());
+  assert.equal(s?.lastSuccessAt, null, "no success recorded");
+  assert.equal(s?.lastCutoffAt, null, "the cutoff is NOT marked as done");
+  assert.equal(s?.lastCutoffCompletedAt, null);
+  assert.equal(s?.lastCutoffCompletionLagSeconds, null);
+  assert.ok(s?.lastError?.includes("backups"));
+
+  // Once the cause is gone, the next run completes the cutoff — at ITS time.
+  rmSync(path.join(DIR, "corrupt.db"));
+  const recovered = sofia(2030, 9, 1, 22, 35);
+  setRetentionClockForTests(recovered);
+  const again = await purgeExpiredOrders(undefined, { trigger: "fallback" });
+  assert.equal(again.ok, true);
+  const s2 = await getPurgeState();
+  assert.equal(s2?.lastCutoffCompletedAt?.toISOString(), recovered.toISOString());
+  assert.equal(s2?.lastCutoffCompletionLagSeconds, 300);
+  assert.equal(s2?.lastCutoffTrigger, "fallback");
+  assert.equal(s2?.lastError, null);
 });

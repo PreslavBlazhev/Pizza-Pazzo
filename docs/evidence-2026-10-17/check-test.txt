@@ -1,3 +1,4 @@
+node v22.23.3
 
 > pizza-pazzo@0.1.0 test
 > npm run test:payments && npm run test:ubb && npm run test:owner && npm run test:daily
@@ -10,12 +11,14 @@ TAP version 13
 # Subtest: cash on delivery: priced on the server, straight to the kitchen, one e-mail
 ok 1 - cash on delivery: priced on the server, straight to the kitchen, one e-mail
   ---
-  duration_ms: 88.8081
+  duration_ms: 89.5251
+  type: 'test'
   ...
 # Subtest: the browser cannot change prices, fees, the method or the status
 ok 2 - the browser cannot change prices, fees, the method or the status
   ---
-  duration_ms: 6.2239
+  duration_ms: 6.0743
+  type: 'test'
   ...
 # prisma:error 
 # Invalid `tx.order.create()` invocation in
@@ -52,7 +55,8 @@ ok 2 - the browser cannot change prices, fees, the method or the status
 # Subtest: double click / repeated request: one checkout key, one order
 ok 3 - double click / repeated request: one checkout key, one order
   ---
-  duration_ms: 73.0593
+  duration_ms: 65.0212
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
@@ -61,234 +65,273 @@ ok 3 - double click / repeated request: one checkout key, one order
 # Subtest: concurrent checkouts with different keys get different order numbers
 ok 4 - concurrent checkouts with different keys get different order numbers
   ---
-  duration_ms: 84.6575
+  duration_ms: 70.1764
+  type: 'test'
   ...
 # Subtest: card order starts unpaid, test-flagged and hidden from the kitchen, no e-mail
 ok 5 - card order starts unpaid, test-flagged and hidden from the kitchen, no e-mail
   ---
-  duration_ms: 19.6839
+  duration_ms: 16.7643
+  type: 'test'
   ...
 # Subtest: card payment is refused when the switch is off — the order is not even created
 ok 6 - card payment is refused when the switch is off — the order is not even created
   ---
-  duration_ms: 14.9051
+  duration_ms: 11.5429
+  type: 'test'
   ...
-# [payments] PP1008-2C7CD25A → hosted page (SIMULATOR/simulator)
+# [payments] PP1008-3E7379F7 → hosted page (SIMULATOR/simulator)
 # Subtest: the amount sent to the provider is the stored order total, in cents
 ok 7 - the amount sent to the provider is the stored order total, in cents
   ---
-  duration_ms: 52.7463
+  duration_ms: 47.0847
+  type: 'test'
   ...
-# [payments] PP1009-9EB34ADC → hosted page (SIMULATOR/simulator)
+# [payments] PP1009-1FE1A98F → hosted page (SIMULATOR/simulator)
 # Subtest: double click on 'Pay': one provider session, every click to the same page
 ok 8 - double click on 'Pay': one provider session, every click to the same page
   ---
-  duration_ms: 299.5129
+  duration_ms: 298.9796
+  type: 'test'
   ...
-# [payments] PP1010-F87732C4 → hosted page (SIMULATOR/simulator)
+# [payments] PP1010-162FFDB4 → hosted page (SIMULATOR/simulator)
 # Subtest: successful card payment: PAID, to the kitchen once, one e-mail — despite repeats
 ok 9 - successful card payment: PAID, to the kitchen once, one e-mail — despite repeats
   ---
-  duration_ms: 139.5747
+  duration_ms: 134.5993
+  type: 'test'
   ...
-# [payments] PP1011-C693B635 → hosted page (SIMULATOR/simulator)
+# [payments] PP1011-9571C302 → hosted page (SIMULATOR/simulator)
 # Subtest: opening the success URL without paying proves nothing
 ok 10 - opening the success URL without paying proves nothing
   ---
-  duration_ms: 84.8257
+  duration_ms: 73.245
+  type: 'test'
   ...
-# [payments] PP1012-8DDC8526 → hosted page (SIMULATOR/simulator)
+# [payments] PP1012-633F41DF → hosted page (SIMULATOR/simulator)
 # [payments] rejected unauthenticated simulator callback
 # [payments] simulator callback for an unknown attempt — ignored
 # Subtest: a forged callback is rejected and marks nothing
 ok 11 - a forged callback is rejected and marks nothing
   ---
-  duration_ms: 74.3884
+  duration_ms: 54.6041
+  type: 'test'
   ...
-# [payments] PP1013-F49F95A8 → hosted page (SIMULATOR/simulator)
-# [payments] PP1013-8E915DAB → hosted page (SIMULATOR/simulator)
+# [payments] PP1013-91AFF40F → hosted page (SIMULATOR/simulator)
+# [payments] PP1013-C59E91A9 → hosted page (SIMULATOR/simulator)
 # Subtest: declined card: FAILED, never reaches the kitchen; retry pays the SAME order
 ok 12 - declined card: FAILED, never reaches the kitchen; retry pays the SAME order
   ---
-  duration_ms: 172.6782
+  duration_ms: 154.2954
+  type: 'test'
   ...
-# [payments] PP1014-E31AF9D4 → hosted page (SIMULATOR/simulator)
+# [payments] PP1014-D9DBA344 → hosted page (SIMULATOR/simulator)
 # Subtest: customer cancels on the bank page: CANCELLED, not in the kitchen
 ok 13 - customer cancels on the bank page: CANCELLED, not in the kitchen
   ---
-  duration_ms: 81.2735
+  duration_ms: 69.0197
+  type: 'test'
   ...
-# [payments] PP1015-FECCE081 → hosted page (SIMULATOR/simulator)
+# [payments] PP1015-D0F08FEA → hosted page (SIMULATOR/simulator)
 # Subtest: pending: stays out of the kitchen; 'Pay' reuses the open session
 ok 14 - pending: stays out of the kitchen; 'Pay' reuses the open session
   ---
-  duration_ms: 80.191
+  duration_ms: 73.3095
+  type: 'test'
   ...
-# [payments] PP1016-87ED1259 → hosted page (SIMULATOR/simulator)
+# [payments] PP1016-904A6859 → hosted page (SIMULATOR/simulator)
 # Subtest: late confirmation: pending first, PAID later — released once
 ok 15 - late confirmation: pending first, PAID later — released once
   ---
-  duration_ms: 131.858
+  duration_ms: 107.9865
+  type: 'test'
   ...
-# [payments] PP1017-4DCE6DA9 → hosted page (SIMULATOR/simulator)
-# [payments] PP1017-4DCE6DA9 PAID late → order \#1017 HELD for staff, not released
+# [payments] PP1017-BEB1E8EB → hosted page (SIMULATOR/simulator)
+# [payments] PP1017-BEB1E8EB PAID late → order \#1017 HELD for staff, not released
 # Subtest: looked declined, bank confirms later: PAID, HELD for the staff, never auto-cooked
 ok 16 - looked declined, bank confirms later: PAID, HELD for the staff, never auto-cooked
   ---
-  duration_ms: 116.3887
+  duration_ms: 104.3061
+  type: 'test'
   ...
-# [payments] PP1018-3BB9BC60 → hosted page (SIMULATOR/simulator)
+# [payments] PP1018-218D9309 → hosted page (SIMULATOR/simulator)
 # Subtest: provider timeout: nothing changes, no failure is invented; later answer wins
 ok 17 - provider timeout: nothing changes, no failure is invented; later answer wins
   ---
-  duration_ms: 106.8207
+  duration_ms: 95.9431
+  type: 'test'
   ...
-# [payments] PP1019-07CB5839 → hosted page (SIMULATOR/simulator)
+# [payments] PP1019-9D666E6F → hosted page (SIMULATOR/simulator)
 # Subtest: different amount confirmed: not released, flagged AMOUNT_MISMATCH
 ok 18 - different amount confirmed: not released, flagged AMOUNT_MISMATCH
   ---
-  duration_ms: 70.1445
+  duration_ms: 65.6717
+  type: 'test'
   ...
-# [payments] PP1020-D793C469 → hosted page (SIMULATOR/simulator)
+# [payments] PP1020-388A6D6E → hosted page (SIMULATOR/simulator)
 # Subtest: two successful attempts on one order: kept, flagged DUPLICATE_PAYMENT, kitchen once
 ok 19 - two successful attempts on one order: kept, flagged DUPLICATE_PAYMENT, kitchen once
   ---
-  duration_ms: 102.3888
+  duration_ms: 97.9257
+  type: 'test'
   ...
-# [payments] PP1021-E6A6581F → hosted page (SIMULATOR/simulator)
+# [payments] PP1021-A7CFD5FB → hosted page (SIMULATOR/simulator)
 # Subtest: payment confirmed after the staff cancelled the order: never cooked, flagged
 ok 20 - payment confirmed after the staff cancelled the order: never cooked, flagged
   ---
-  duration_ms: 81.116
+  duration_ms: 73.1051
+  type: 'test'
   ...
-# [payments] PP1022-95B7EC54 → hosted page (SIMULATOR/simulator)
+# [payments] PP1022-E457C8B2 → hosted page (SIMULATOR/simulator)
 # Subtest: app restarted between redirect and return: the callback alone completes the order
 ok 21 - app restarted between redirect and return: the callback alone completes the order
   ---
-  duration_ms: 99.3602
+  duration_ms: 90.3736
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1023
-# [payments] PP1024-6AB80E18 → hosted page (SIMULATOR/simulator)
+# [payments] PP1024-4600F072 → hosted page (SIMULATOR/simulator)
 # Subtest: reports: test and unpaid card orders are not revenue; cash and card are split
 ok 22 - reports: test and unpaid card orders are not revenue; cash and card are split
   ---
-  duration_ms: 142.1636
+  duration_ms: 121.1628
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1025
 # Subtest: a failed restaurant e-mail is recorded as FAILED, retried later, and sent once
 ok 23 - a failed restaurant e-mail is recorded as FAILED, retried later, and sent once
   ---
-  duration_ms: 147.47
+  duration_ms: 143.6677
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1026
 # Subtest: retries stop after the attempt limit; a human sees FAILED in the admin
 ok 24 - retries stop after the attempt limit; a human sees FAILED in the admin
   ---
-  duration_ms: 36.4869
+  duration_ms: 32.2815
+  type: 'test'
   ...
-# [payments] PP1027-5342F1EE → hosted page (SIMULATOR/simulator)
+# [payments] PP1027-18BF1202 → hosted page (SIMULATOR/simulator)
 # Subtest: test (simulator) orders never reach the restaurant inbox
 ok 25 - test (simulator) orders never reach the restaurant inbox
   ---
-  duration_ms: 89.3768
+  duration_ms: 82.3034
+  type: 'test'
   ...
 # Subtest: demo: production refuses the env simulator, the demo switch decides who sees the card
 ok 26 - demo: production refuses the env simulator, the demo switch decides who sees the card
   ---
-  duration_ms: 26.4049
+  duration_ms: 21.9557
+  type: 'test'
   ...
-# [payments] PP1028-4D2082E6 → hosted page (SIMULATOR/simulator)
+# [payments] PP1028-F7D1B723 → hosted page (SIMULATOR/simulator)
 # Subtest: demo: an admin pays with the test card on production — PAID, test order, never e-mailed
 ok 27 - demo: an admin pays with the test card on production — PAID, test order, never e-mailed
   ---
-  duration_ms: 136.4002
+  duration_ms: 106.4022
+  type: 'test'
   ...
 # Subtest: demo EVERYONE on production: a guest's crafted card order is refused
 ok 28 - demo EVERYONE on production: a guest's crafted card order is refused
   ---
-  duration_ms: 13.4454
+  duration_ms: 10.7159
+  type: 'test'
   ...
-# [payments] PP1030-C2E81A1D → hosted page (SIMULATOR/simulator)
+# [payments] PP1030-486411BF → hosted page (SIMULATOR/simulator)
 # Subtest: demo EVERYONE on staging: a guest with no account pays with the test card
 ok 29 - demo EVERYONE on staging: a guest with no account pays with the test card
   ---
-  duration_ms: 107.1303
+  duration_ms: 90.1241
+  type: 'test'
   ...
-# [payments] PP1001-2E57055A → hosted page (SIMULATOR/simulator)
+# [payments] PP1001-3E6D730B → hosted page (SIMULATOR/simulator)
 # Subtest: POST-form gateway: the signed fields are kept, and every click re-posts the same session
 ok 30 - POST-form gateway: the signed fields are kept, and every click re-posts the same session
   ---
-  duration_ms: 118.3931
+  duration_ms: 119.015
+  type: 'test'
   ...
 # Subtest: POST-form gateway: unusable fields are refused — the session is recorded, never opened
 ok 31 - POST-form gateway: unusable fields are refused — the session is recorded, never opened
   ---
-  duration_ms: 52.0884
+  duration_ms: 37.9022
+  type: 'test'
   ...
 # Subtest: auto-post page: fields escaped, strict own CSP with nonce, HTTPS-only form target
 ok 32 - auto-post page: fields escaped, strict own CSP with nonce, HTTPS-only form target
   ---
-  duration_ms: 1.5695
+  duration_ms: 0.9044
+  type: 'test'
   ...
 # Subtest: timeout AFTER the bank registered the session: no second session; settles by reference
 ok 33 - timeout AFTER the bank registered the session: no second session; settles by reference
   ---
-  duration_ms: 132.954
+  duration_ms: 112.0196
+  type: 'test'
   ...
 # Subtest: timeout BEFORE the bank got it: verified as not registered, then a fresh session opens
 ok 34 - timeout BEFORE the bank got it: verified as not registered, then a fresh session opens
   ---
-  duration_ms: 108.6238
+  duration_ms: 84.9873
+  type: 'test'
   ...
-# [payments] PP1005-44DB062F → hosted page (SIMULATOR/simulator)
+# [payments] PP1005-233B0773 → hosted page (SIMULATOR/simulator)
 # Subtest: a definite refusal from the provider frees the order at once
 ok 35 - a definite refusal from the provider frees the order at once
   ---
-  duration_ms: 80.9228
+  duration_ms: 68.7552
+  type: 'test'
   ...
 # Subtest: a creation that crashed half-way is treated as unknown, never as 'no money'
 ok 36 - a creation that crashed half-way is treated as unknown, never as 'no money'
   ---
-  duration_ms: 78.7249
+  duration_ms: 63.81
+  type: 'test'
   ...
-# [payments] PP1007-33F050C7 → hosted page (SIMULATOR/simulator)
+# [payments] PP1007-AB218A70 → hosted page (SIMULATOR/simulator)
 # Subtest: late confirmation: on the attention list; released by staff exactly once, audited, one e-mail
 ok 37 - late confirmation: on the attention list; released by staff exactly once, audited, one e-mail
   ---
-  duration_ms: 140.4217
+  duration_ms: 127.7632
+  type: 'test'
   ...
-# [payments] PP1008-8D93BB6C → hosted page (SIMULATOR/simulator)
-# [payments] PP1008-8D93BB6C PAID late → order \#1008 HELD for staff, not released
+# [payments] PP1008-DEED6A74 → hosted page (SIMULATOR/simulator)
+# [payments] PP1008-DEED6A74 PAID late → order \#1008 HELD for staff, not released
 # Subtest: a held order that staff cancelled can never be released; unpaid orders neither
 ok 38 - a held order that staff cancelled can never be released; unpaid orders neither
   ---
-  duration_ms: 142.436
+  duration_ms: 131.9972
+  type: 'test'
   ...
 # Subtest: acknowledging an alert removes it from the board but keeps it on the order
 ok 39 - acknowledging an alert removes it from the board but keeps it on the order
   ---
-  duration_ms: 38.4248
+  duration_ms: 33.5541
+  type: 'test'
   ...
-# [payments] PP1011-F3931C39 → hosted page (SIMULATOR/simulator)
+# [payments] PP1011-6E904773 → hosted page (SIMULATOR/simulator)
 # Subtest: reconcile: the customer left, no callback came — the payment is still found and released
 ok 40 - reconcile: the customer left, no callback came — the payment is still found and released
   ---
-  duration_ms: 102.0967
+  duration_ms: 92.6584
+  type: 'test'
   ...
-# [payments] PP1012-77153428 → hosted page (SIMULATOR/simulator)
-# [payments] PP1012-77153428 still unresolved after 121 min — flagged
-# [payments] PP1012-77153428 PAID late → order \#1012 HELD for staff, not released
+# [payments] PP1012-3CA0E82E → hosted page (SIMULATOR/simulator)
+# [payments] PP1012-3CA0E82E still unresolved after 121 min — flagged
+# [payments] PP1012-3CA0E82E PAID late → order \#1012 HELD for staff, not released
 # Subtest: reconcile: backs off per attempt, skips young attempts, flags long-unresolved ones
 ok 41 - reconcile: backs off per attempt, skips young attempts, flags long-unresolved ones
   ---
-  duration_ms: 133.9334
+  duration_ms: 107.581
+  type: 'test'
   ...
 # Subtest: reconcile endpoint: absent without a secret, 401 on a wrong one, runs with the right one
 ok 42 - reconcile endpoint: absent without a secret, 401 on a wrong one, runs with the right one
   ---
-  duration_ms: 15.32
+  duration_ms: 10.0621
+  type: 'test'
   ...
-# [payments] PP1013-5D065BA3 → hosted page (SIMULATOR/simulator)
+# [payments] PP1013-4301C821 → hosted page (SIMULATOR/simulator)
 # prisma:error 
 # Invalid `tx.paymentRefundRecord.create()` invocation in
 # C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\lib\\payments\\staff.ts:150:36
@@ -300,148 +343,177 @@ ok 42 - reconcile endpoint: absent without a secret, 401 on a wrong one, runs wi
 # Subtest: refund record: only for a PAID attempt, never above what was paid, a double submit counts once
 ok 43 - refund record: only for a PAID attempt, never above what was paid, a double submit counts once
   ---
-  duration_ms: 174.6097
+  duration_ms: 149.4434
+  type: 'test'
   ...
-# [payments] PP1015-1B3155C4 → hosted page (SIMULATOR/simulator)
+# [payments] PP1015-5DBFAD4E → hosted page (SIMULATOR/simulator)
 # Subtest: return route: whatever the gateway appends ('paid', amounts) marks nothing
 ok 44 - return route: whatever the gateway appends ('paid', amounts) marks nothing
   ---
-  duration_ms: 57.9692
+  duration_ms: 48.825
+  type: 'test'
   ...
 # Subtest: return route: never an open redirect
 ok 45 - return route: never an open redirect
   ---
-  duration_ms: 0.7903
+  duration_ms: 0.7078
+  type: 'test'
   ...
 # Subtest: status endpoint: a wrong token learns nothing; polling is rate-limited per address
 ok 46 - status endpoint: a wrong token learns nothing; polling is rate-limited per address
   ---
-  duration_ms: 299.9558
+  duration_ms: 266.2425
+  type: 'test'
   ...
 # Subtest: rate limiter: allows the limit, blocks the rest, opens again after the window
 ok 47 - rate limiter: allows the limit, blocks the rest, opens again after the window
   ---
-  duration_ms: 0.3288
+  duration_ms: 0.3222
+  type: 'test'
   ...
 # Subtest: no Google Pay / Apple Pay button, logo or claim anywhere in the site until it is confirmed
 ok 48 - no Google Pay / Apple Pay button, logo or claim anywhere in the site until it is confirmed
   ---
-  duration_ms: 54.9726
+  duration_ms: 46.0384
+  type: 'test'
   ...
 # Subtest: money: euros become exact integer cents, float noise included
 ok 49 - money: euros become exact integer cents, float noise included
   ---
-  duration_ms: 1.9162
+  duration_ms: 2.2124
+  type: 'test'
   ...
 # Subtest: money: unreadable or negative amounts are refused
 ok 50 - money: unreadable or negative amounts are refused
   ---
-  duration_ms: 7.5932
+  duration_ms: 6.5488
+  type: 'test'
   ...
 # Subtest: config: card payments are OFF by default
 ok 51 - config: card payments are OFF by default
   ---
-  duration_ms: 0.4844
+  duration_ms: 0.47
+  type: 'test'
   ...
 # Subtest: config: the kill switch turns card payments off whatever else is set
 ok 52 - config: the kill switch turns card payments off whatever else is set
   ---
-  duration_ms: 0.2172
+  duration_ms: 0.2739
+  type: 'test'
   ...
 # Subtest: config: the simulator runs on staging and development
 ok 53 - config: the simulator runs on staging and development
   ---
-  duration_ms: 0.2739
+  duration_ms: 0.3224
+  type: 'test'
   ...
 # Subtest: config: the simulator can NEVER run in production
 ok 54 - config: the simulator can NEVER run in production
   ---
-  duration_ms: 0.179
+  duration_ms: 0.2082
+  type: 'test'
   ...
 # Subtest: config: the simulator refuses to run without its signing secret
 ok 55 - config: the simulator refuses to run without its signing secret
   ---
-  duration_ms: 0.2683
+  duration_ms: 0.1711
+  type: 'test'
   ...
 # Subtest: config: a bank sandbox cannot run in production, bank production only in production
 ok 56 - config: a bank sandbox cannot run in production, bank production only in production
   ---
-  duration_ms: 0.5141
+  duration_ms: 0.4432
+  type: 'test'
   ...
 # Subtest: config: a real provider's currency is never assumed, and must be EUR
 ok 57 - config: a real provider's currency is never assumed, and must be EUR
   ---
-  duration_ms: 0.367
+  duration_ms: 0.4869
+  type: 'test'
   ...
 # Subtest: config: HTTPS is required outside development
 ok 58 - config: HTTPS is required outside development
   ---
-  duration_ms: 0.3672
+  duration_ms: 0.5495
+  type: 'test'
   ...
 # Subtest: config: the bank adapter stays off until it is really implemented
 ok 59 - config: the bank adapter stays off until it is really implemented
   ---
-  duration_ms: 0.3929
+  duration_ms: 0.3451
+  type: 'test'
   ...
 # Subtest: base URL: one variable, normalised, NEXT_PUBLIC_SITE_URL as fallback
 ok 60 - base URL: one variable, normalised, NEXT_PUBLIC_SITE_URL as fallback
   ---
-  duration_ms: 0.3279
+  duration_ms: 0.2532
+  type: 'test'
   ...
 # Subtest: status: the kitchen may not accept an unconfirmed card order, only cancel it
 ok 61 - status: the kitchen may not accept an unconfirmed card order, only cancel it
   ---
-  duration_ms: 0.2099
+  duration_ms: 0.1987
+  type: 'test'
   ...
 # Subtest: status: the ticket tells the driver whether to collect money
 ok 62 - status: the ticket tells the driver whether to collect money
   ---
-  duration_ms: 0.2738
+  duration_ms: 0.2547
+  type: 'test'
   ...
 # Subtest: status: order payment status follows the attempt outcome
 ok 63 - status: order payment status follows the attempt outcome
   ---
-  duration_ms: 0.1519
+  duration_ms: 0.1489
+  type: 'test'
   ...
 # Subtest: status: what the customer sees never says paid unless the order is PAID
 ok 64 - status: what the customer sees never says paid unless the order is PAID
   ---
-  duration_ms: 0.2184
+  duration_ms: 0.234
+  type: 'test'
   ...
 # Subtest: simulator: an untouched hosted page expires like a bank session
 ok 65 - simulator: an untouched hosted page expires like a bank session
   ---
-  duration_ms: 0.1795
+  duration_ms: 0.1784
+  type: 'test'
   ...
 # Subtest: cart payload: any price, fee or status field is rejected outright
 ok 66 - cart payload: any price, fee or status field is rejected outright
   ---
-  duration_ms: 3.9394
+  duration_ms: 3.4982
+  type: 'test'
   ...
 # Subtest: i18n: every payment screen text exists in Bulgarian AND English
 ok 67 - i18n: every payment screen text exists in Bulgarian AND English
   ---
-  duration_ms: 3.5209
+  duration_ms: 2.7547
+  type: 'test'
   ...
 # Subtest: demo cards: only the simulator's test numbers are accepted
 ok 68 - demo cards: only the simulator's test numbers are accepted
   ---
-  duration_ms: 1.3946
+  duration_ms: 1.4238
+  type: 'test'
   ...
 # Subtest: demo cards: expiry and CVC are validated like a real form
 ok 69 - demo cards: expiry and CVC are validated like a real form
   ---
-  duration_ms: 0.515
+  duration_ms: 0.4797
+  type: 'test'
   ...
 # Subtest: e-mail: staging never delivers; EMAIL_DELIVERY=disabled switches it off anywhere
 ok 70 - e-mail: staging never delivers; EMAIL_DELIVERY=disabled switches it off anywhere
   ---
-  duration_ms: 0.2746
+  duration_ms: 0.2019
+  type: 'test'
   ...
 # Subtest: base URL: staging may fall back to Render's own address, production never
 ok 71 - base URL: staging may fall back to Render's own address, production never
   ---
-  duration_ms: 0.2166
+  duration_ms: 0.2012
+  type: 'test'
   ...
 1..71
 # tests 71
@@ -451,7 +523,7 @@ ok 71 - base URL: staging may fall back to Render's own address, production neve
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 16599.4456
+# duration_ms 12153.0697
 
 > pizza-pazzo@0.1.0 test:ubb
 > node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/ubb-compliance.test.ts
@@ -460,111 +532,132 @@ TAP version 13
 # Subtest: UBB-16: a direct call without consentTerms is refused and creates nothing
 ok 1 - UBB-16: a direct call without consentTerms is refused and creates nothing
   ---
-  duration_ms: 33.3535
+  duration_ms: 57.7642
+  type: 'test'
   ...
 # Subtest: UBB-16: a direct call without consentRefunds is refused and creates nothing
 ok 2 - UBB-16: a direct call without consentRefunds is refused and creates nothing
   ---
-  duration_ms: 7.1467
+  duration_ms: 11.5468
+  type: 'test'
   ...
 # Subtest: UBB-16: a direct call without consentPrivacy is refused and creates nothing
 ok 3 - UBB-16: a direct call without consentPrivacy is refused and creates nothing
   ---
-  duration_ms: 8.2778
+  duration_ms: 8.0184
+  type: 'test'
   ...
 # Subtest: UBB-16: nothing ticked → all three refusals at once
 ok 4 - UBB-16: nothing ticked → all three refusals at once
   ---
-  duration_ms: 3.5516
+  duration_ms: 3.2915
+  type: 'test'
   ...
 # Subtest: UBB-16: only a real tick counts — 'off', '', 'false', 0 and 'yes' are refused
 ok 5 - UBB-16: only a real tick counts — 'off', '', 'false', 0 and 'yes' are refused
   ---
-  duration_ms: 16.6293
+  duration_ms: 14.4545
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # Subtest: UBB-16: a valid order records the accepted versions and the server time — nothing else
 ok 6 - UBB-16: a valid order records the accepted versions and the server time — nothing else
   ---
-  duration_ms: 48.1467
+  duration_ms: 34.5662
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # Subtest: UBB-16: a duplicate submission returns the first order, which carries the proof
 ok 7 - UBB-16: a duplicate submission returns the first order, which carries the proof
   ---
-  duration_ms: 27.5833
+  duration_ms: 27.3594
+  type: 'test'
   ...
 # Subtest: UBB-06: prices, totals, fees and currency sent by the client are rejected or ignored
 ok 8 - UBB-06: prices, totals, fees and currency sent by the client are rejected or ignored
   ---
-  duration_ms: 19.2143
+  duration_ms: 19.0017
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # Subtest: UBB-06: the stored total is the menu price of the chosen variant × quantity
 ok 9 - UBB-06: the stored total is the menu price of the chosen variant × quantity
   ---
-  duration_ms: 30.5728
+  duration_ms: 25.6227
+  type: 'test'
   ...
 # Subtest: UBB-08: an address outside Pleven is refused by the server
 ok 10 - UBB-08: an address outside Pleven is refused by the server
   ---
-  duration_ms: 13.1245
+  duration_ms: 12.4963
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
 # Subtest: UBB-08: Pleven in any common spelling is accepted and stored canonically
 ok 11 - UBB-08: Pleven in any common spelling is accepted and stored canonically
   ---
-  duration_ms: 29.1347
+  duration_ms: 24.5229
+  type: 'test'
   ...
 # Subtest: UBB-07: production reads a stored EVERYONE as STAFF; staging keeps it
 ok 12 - UBB-07: production reads a stored EVERYONE as STAFF; staging keeps it
   ---
-  duration_ms: 0.3069
+  duration_ms: 0.3309
+  type: 'test'
   ...
 # Subtest: UBB-07: in production only staff may open/decide the simulator page
 ok 13 - UBB-07: in production only staff may open/decide the simulator page
   ---
-  duration_ms: 0.1672
+  duration_ms: 0.1723
+  type: 'test'
   ...
 # Subtest: every checkout refusal code has a Bulgarian and an English message
 ok 14 - every checkout refusal code has a Bulgarian and an English message
   ---
-  duration_ms: 2.5616
+  duration_ms: 2.5361
+  type: 'test'
   ...
 # Subtest: UBB-02: the merchant identity matches the Commercial Register / VIES record
 ok 15 - UBB-02: the merchant identity matches the Commercial Register / VIES record
   ---
-  duration_ms: 0.4564
+  duration_ms: 0.461
+  type: 'test'
   ...
 # Subtest: every legal document carries the version orders store, and unique anchors
 ok 16 - every legal document carries the version orders store, and unique anchors
   ---
-  duration_ms: 0.3932
+  duration_ms: 0.4085
+  type: 'test'
   ...
 # Subtest: every linked legal route exists as a page
 ok 17 - every linked legal route exists as a page
   ---
-  duration_ms: 0.8347
+  duration_ms: 0.7646
+  type: 'test'
   ...
 # Subtest: the texts never promise what the code does not do
 ok 18 - the texts never promise what the code does not do
   ---
-  duration_ms: 2.3993
+  duration_ms: 2.7738
+  type: 'test'
   ...
 # Subtest: UBB-14: footer shows the card brands from their files, independent of the POS
 ok 19 - UBB-14: footer shows the card brands from their files, independent of the POS
   ---
-  duration_ms: 21.8739
+  duration_ms: 27.8405
+  type: 'test'
   ...
 # Subtest: UBB-14: while card payment is off the footer never claims cards are accepted
 ok 20 - UBB-14: while card payment is off the footer never claims cards are accepted
   ---
-  duration_ms: 2.2701
+  duration_ms: 2.6139
+  type: 'test'
   ...
 # Subtest: UBB-14: the three logo files the owner supplied are published, readable and well proportioned
 ok 21 - UBB-14: the three logo files the owner supplied are published, readable and well proportioned
   ---
-  duration_ms: 137.8929
+  duration_ms: 140.0173
+  type: 'test'
   ...
 1..21
 # tests 21
@@ -574,7 +667,7 @@ ok 21 - UBB-14: the three logo files the owner supplied are published, readable 
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 4476.9669
+# duration_ms 3330.2221
 
 > pizza-pazzo@0.1.0 test:owner
 > node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/owner-corrections.test.ts tests/checkout-resilience.test.ts tests/pizza-math.test.ts tests/checkout-trace.test.ts tests/pizza-toppings.test.ts
@@ -584,7 +677,8 @@ TAP version 13
 # Subtest: a lost reply, then a retry with the same key: one order, the same number
 ok 1 - a lost reply, then a retry with the same key: one order, the same number
   ---
-  duration_ms: 76.1366
+  duration_ms: 75.2212
+  type: 'test'
   ...
 # prisma:error 
 # Invalid `tx.order.create()` invocation in
@@ -606,163 +700,194 @@ ok 1 - a lost reply, then a retry with the same key: one order, the same number
 # Subtest: three simultaneous submits with one key: one order
 ok 2 - three simultaneous submits with one key: one order
   ---
-  duration_ms: 58.4801
+  duration_ms: 48.6175
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # Subtest: findOrderForCheckoutKey: nothing before, the order after, nothing for junk
 ok 3 - findOrderForCheckoutKey: nothing before, the order after, nothing for junk
   ---
-  duration_ms: 31.4316
+  duration_ms: 25.082
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
 # Subtest: a refused attempt leaves the key unused, so the corrected retry creates the order
 ok 4 - a refused attempt leaves the key unused, so the corrected retry creates the order
   ---
-  duration_ms: 30.5199
+  duration_ms: 25.4543
+  type: 'test'
   ...
 # Subtest: order receipt: valid only for its own number, refused when forged
 ok 5 - order receipt: valid only for its own number, refused when forged
   ---
-  duration_ms: 0.7869
+  duration_ms: 0.7001
+  type: 'test'
   ...
 # Subtest: order receipt: without AUTH_SECRET nothing is signed and nothing verifies
 ok 6 - order receipt: without AUTH_SECRET nothing is signed and nothing verifies
   ---
-  duration_ms: 0.2336
+  duration_ms: 0.2907
+  type: 'test'
   ...
 # Subtest: an old basket: a product taken off sale or deleted is named before checkout
 ok 7 - an old basket: a product taken off sale or deleted is named before checkout
   ---
-  duration_ms: 29.6081
+  duration_ms: 32.8311
+  type: 'test'
   ...
 # Subtest: schema: a valid trail passes
 ok 8 - schema: a valid trail passes
   ---
-  duration_ms: 5.827
+  duration_ms: 3.3763
+  type: 'test'
   ...
 # Subtest: schema: extra fields (personal data, tokens) are refused, not stripped
 ok 9 - schema: extra fields (personal data, tokens) are refused, not stripped
   ---
-  duration_ms: 2.03
+  duration_ms: 1.3866
+  type: 'test'
   ...
 # Subtest: schema: bad id, path, stage or size is refused
 ok 10 - schema: bad id, path, stage or size is refused
   ---
-  duration_ms: 2.2896
+  duration_ms: 1.4485
+  type: 'test'
   ...
 # Subtest: route: a valid trail becomes one log line with the version, and 204
 ok 11 - route: a valid trail becomes one log line with the version, and 204
   ---
-  duration_ms: 8.8982
+  duration_ms: 6.6536
+  type: 'test'
   ...
 # Subtest: route: junk is answered 204 and logs nothing
 ok 12 - route: junk is answered 204 and logs nothing
   ---
-  duration_ms: 4.3476
+  duration_ms: 3.2753
+  type: 'test'
   ...
 # Subtest: route: rate-limited per address
 ok 13 - route: rate-limited per address
   ---
-  duration_ms: 13.4158
+  duration_ms: 8.9298
+  type: 'test'
   ...
 # Subtest: minimum: the configured minimum is 10 €
 ok 14 - minimum: the configured minimum is 10 €
   ---
-  duration_ms: 1.8242
+  duration_ms: 1.9048
+  type: 'test'
   ...
 # Subtest: minimum: shortfall in whole cents — 9.99 short by 0.01, 10.00 and 10.01 pass
 ok 15 - minimum: shortfall in whole cents — 9.99 short by 0.01, 10.00 and 10.01 pass
   ---
-  duration_ms: 7.9486
+  duration_ms: 6.7985
+  type: 'test'
   ...
 # Subtest: minimum: the server refuses 9.99 € and saves nothing
 ok 16 - minimum: the server refuses 9.99 € and saves nothing
   ---
-  duration_ms: 28.5552
+  duration_ms: 33.0316
+  type: 'test'
   ...
 # Subtest: minimum: the server refuses 3 × 3.33 = 9.99 € (floating point cannot sneak under)
 ok 17 - minimum: the server refuses 3 × 3.33 = 9.99 € (floating point cannot sneak under)
   ---
-  duration_ms: 3.9862
+  duration_ms: 4.1093
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # Subtest: minimum: the server accepts 10.00 € and stores exactly that total
 ok 18 - minimum: the server accepts 10.00 € and stores exactly that total
   ---
-  duration_ms: 49.7278
+  duration_ms: 42.5985
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # Subtest: minimum: the server accepts 10.01 € and stores exactly that total
 ok 19 - minimum: the server accepts 10.01 € and stores exactly that total
   ---
-  duration_ms: 28.2592
+  duration_ms: 23.3978
+  type: 'test'
   ...
 # Subtest: minimum: a client-sent price cannot lift a 9.99 € basket over the minimum
 ok 20 - minimum: a client-sent price cannot lift a 9.99 € basket over the minimum
   ---
-  duration_ms: 4.1374
+  duration_ms: 3.67
+  type: 'test'
   ...
 # Subtest: free toppings: only «Моята Пацо» has them, and it has exactly 3
 ok 21 - free toppings: only «Моята Пацо» has them, and it has exactly 3
   ---
-  duration_ms: 0.252
+  duration_ms: 0.2531
+  type: 'test'
   ...
 # Subtest: free toppings: 0 chosen — accepted, price unchanged
 ok 22 - free toppings: 0 chosen — accepted, price unchanged
   ---
-  duration_ms: 0.6332
+  duration_ms: 0.745
+  type: 'test'
   ...
 # Subtest: free toppings: 1 chosen — accepted, price unchanged
 ok 23 - free toppings: 1 chosen — accepted, price unchanged
   ---
-  duration_ms: 0.4968
+  duration_ms: 0.5953
+  type: 'test'
   ...
 # Subtest: free toppings: 2 chosen — accepted, price unchanged
 ok 24 - free toppings: 2 chosen — accepted, price unchanged
   ---
-  duration_ms: 0.1554
+  duration_ms: 0.147
+  type: 'test'
   ...
 # Subtest: free toppings: 3 chosen — accepted, price unchanged
 ok 25 - free toppings: 3 chosen — accepted, price unchanged
   ---
-  duration_ms: 0.1174
+  duration_ms: 0.1088
+  type: 'test'
   ...
 # Subtest: free toppings: a 4th is refused — not quietly charged
 ok 26 - free toppings: a 4th is refused — not quietly charged
   ---
-  duration_ms: 0.2563
+  duration_ms: 0.1694
+  type: 'test'
   ...
 # Subtest: free toppings: the same kind twice is refused
 ok 27 - free toppings: the same kind twice is refused
   ---
-  duration_ms: 0.118
+  duration_ms: 0.1034
+  type: 'test'
   ...
 # Subtest: free toppings: refused on every other pizza
 ok 28 - free toppings: refused on every other pizza
   ---
-  duration_ms: 0.1102
+  duration_ms: 0.1725
+  type: 'test'
   ...
 # Subtest: free toppings: a key pointing at the wrong source product is refused
 ok 29 - free toppings: a key pointing at the wrong source product is refused
   ---
-  duration_ms: 0.1172
+  duration_ms: 0.112
+  type: 'test'
   ...
 # Subtest: free + paid: 3 free and a paid meat topping — only the paid one costs, once
 ok 30 - free + paid: 3 free and a paid meat topping — only the paid one costs, once
   ---
-  duration_ms: 0.7731
+  duration_ms: 0.6825
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # Subtest: maths: 2 × «Моята Пацо» 30 cm with 3 free + 1 paid = 24.54 € − 2.55 € offer = 21.99 €
 ok 31 - maths: 2 × «Моята Пацо» 30 cm with 3 free + 1 paid = 24.54 € − 2.55 € offer = 21.99 €
   ---
-  duration_ms: 30.5759
+  duration_ms: 26.3048
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
 # Subtest: maths: a mixed basket — preview total equals the server total to the cent
 ok 32 - maths: a mixed basket — preview total equals the server total to the cent
   ---
-  duration_ms: 30.9372
+  duration_ms: 24.52
+  type: 'test'
   ...
 # [zustand persist middleware] Unable to update item 'pp-cart', the given storage is currently unavailable.
 # [zustand persist middleware] Unable to update item 'pp-cart', the given storage is currently unavailable.
@@ -781,158 +906,185 @@ ok 32 - maths: a mixed basket — preview total equals the server total to the c
 # Subtest: maths: a 4th free topping in a crafted request refuses the whole order
 ok 33 - maths: a 4th free topping in a crafted request refuses the whole order
   ---
-  duration_ms: 6.2357
+  duration_ms: 5.5305
+  type: 'test'
   ...
 # Subtest: basket: editing a line replaces it in place and keeps the others
 ok 34 - basket: editing a line replaces it in place and keeps the others
   ---
-  duration_ms: 1.2913
+  duration_ms: 1.0953
+  type: 'test'
   ...
 # Subtest: basket: an edit that makes two lines identical merges them
 ok 35 - basket: an edit that makes two lines identical merges them
   ---
-  duration_ms: 0.34
+  duration_ms: 0.2805
+  type: 'test'
   ...
 # Subtest: basket: quantities stay within 1–99 (the server's limit)
 ok 36 - basket: quantities stay within 1–99 (the server's limit)
   ---
-  duration_ms: 0.3286
+  duration_ms: 0.3414
+  type: 'test'
   ...
 # Subtest: phone: 064 801 999 dials as tel:+35964801999
 ok 37 - phone: 064 801 999 dials as tel:+35964801999
   ---
-  duration_ms: 0.2302
+  duration_ms: 0.1951
+  type: 'test'
   ...
 # Subtest: hours: the shipped fallback is 11:00 – 22:30 on every working day
 ok 38 - hours: the shipped fallback is 11:00 – 22:30 on every working day
   ---
-  duration_ms: 6.7309
+  duration_ms: 6.3815
+  type: 'test'
   ...
 # Subtest: hours: open from 11:00 to 22:29 Sofia time, closed at 22:30 — in summer and in winter
 ok 39 - hours: open from 11:00 to 22:29 Sofia time, closed at 22:30 — in summer and in winter
   ---
-  duration_ms: 12.5868
+  duration_ms: 17.4465
+  type: 'test'
   ...
 # Subtest: the three combo prices are the owner's
 ok 40 - the three combo prices are the owner's
   ---
-  duration_ms: 2.3415
+  duration_ms: 2.8115
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # Subtest: 30 + 30: 9.71 + 9.71 = 19.42 → 16.87 (−2.55)
 ok 41 - 30 + 30: 9.71 + 9.71 = 19.42 → 16.87 (−2.55)
   ---
-  duration_ms: 82.9275
+  duration_ms: 91.9921
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # Subtest: 40 + 30: 12.78 + 9.71 = 22.49 → 19.43 (−3.06), in either order
 ok 42 - 40 + 30: 12.78 + 9.71 = 22.49 → 19.43 (−3.06), in either order
   ---
-  duration_ms: 32.3925
+  duration_ms: 25.0123
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # Subtest: 40 + 40: 12.78 + 12.78 = 25.56 → 23.01 (−2.55)
 ok 43 - 40 + 40: 12.78 + 12.78 = 25.56 → 23.01 (−2.55)
   ---
-  duration_ms: 26.1561
+  duration_ms: 20.9932
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1005
 # Subtest: fixed package price: a pair cheaper than the package costs the package (13.30 → 16.87)
 ok 44 - fixed package price: a pair cheaper than the package costs the package (13.30 → 16.87)
   ---
-  duration_ms: 66.0152
+  duration_ms: 47.3408
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1006
 # Subtest: a pair with one cheap and one regular pizza: only the excess comes off
 ok 45 - a pair with one cheap and one regular pizza: only the excess comes off
   ---
-  duration_ms: 30.1123
+  duration_ms: 27.0764
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1007
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1008
 # Subtest: speciality pizzas take part like any other pizza
 ok 46 - speciality pizzas take part like any other pizza
   ---
-  duration_ms: 57.8163
+  duration_ms: 47.1432
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1009
 # Subtest: 2 standard + 1 speciality: the dearest two pair, the third pays its price
 ok 47 - 2 standard + 1 speciality: the dearest two pair, the third pays its price
   ---
-  duration_ms: 32.5686
+  duration_ms: 24.9369
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1010
 # Subtest: one line with quantity 2 is two pizzas — the same as two lines
 ok 48 - one line with quantity 2 is two pizzas — the same as two lines
   ---
-  duration_ms: 29.4291
+  duration_ms: 23.8241
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1011
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1012
 # Subtest: 3 pizzas: one pair, the cheapest choice for the customer
 ok 49 - 3 pizzas: one pair, the cheapest choice for the customer
   ---
-  duration_ms: 56.5451
+  duration_ms: 45.2337
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1013
 # Subtest: 4 pizzas: two pairs, mixed when that is cheaper (2 × 40+30 beats 30+30 & 40+40)
 ok 50 - 4 pizzas: two pairs, mixed when that is cheaper (2 × 40+30 beats 30+30 & 40+40)
   ---
-  duration_ms: 30.3575
+  duration_ms: 23.4856
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1014
 # Subtest: drinks and sauces do not count as pizzas and are never discounted
 ok 51 - drinks and sauces do not count as pizzas and are never discounted
   ---
-  duration_ms: 27.1349
+  duration_ms: 23.9034
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1015
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1016
 # Subtest: paid extras on the pair are charged on top, per pizza
 ok 52 - paid extras on the pair are charged on top, per pizza
   ---
-  duration_ms: 60.1302
+  duration_ms: 47.0412
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1017
 # Subtest: «Моята Пацо» with 0 free topping(s) + a paid one, in a pair
 ok 53 - «Моята Пацо» with 0 free topping(s) + a paid one, in a pair
   ---
-  duration_ms: 28.1094
+  duration_ms: 23.2675
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1018
 # Subtest: «Моята Пацо» with 1 free topping(s) + a paid one, in a pair
 ok 54 - «Моята Пацо» with 1 free topping(s) + a paid one, in a pair
   ---
-  duration_ms: 26.3401
+  duration_ms: 26.1599
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1019
 # Subtest: «Моята Пацо» with 2 free topping(s) + a paid one, in a pair
 ok 55 - «Моята Пацо» with 2 free topping(s) + a paid one, in a pair
   ---
-  duration_ms: 30.2427
+  duration_ms: 23.8962
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1020
 # Subtest: «Моята Пацо» with 3 free topping(s) + a paid one, in a pair
 ok 56 - «Моята Пацо» with 3 free topping(s) + a paid one, in a pair
   ---
-  duration_ms: 29.8596
+  duration_ms: 24.8089
+  type: 'test'
   ...
 # Subtest: a size the offer does not define, or no size at all → normal prices
 ok 57 - a size the offer does not define, or no size at all → normal prices
   ---
-  duration_ms: 0.2582
+  duration_ms: 0.347
+  type: 'test'
   ...
 # Subtest: minimum: a final total of 9.99 € is refused
 ok 58 - minimum: a final total of 9.99 € is refused
   ---
-  duration_ms: 2.874
+  duration_ms: 2.2816
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1021
 # Subtest: minimum: a final total of 10.00 € is accepted
 ok 59 - minimum: a final total of 10.00 € is accepted
   ---
-  duration_ms: 26.1213
+  duration_ms: 22.7683
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1022
 # [zustand persist middleware] Unable to update item 'pp-cart', the given storage is currently unavailable.
@@ -947,112 +1099,133 @@ ok 59 - minimum: a final total of 10.00 € is accepted
 # Subtest: minimum: a final total of 10.01 € is accepted
 ok 60 - minimum: a final total of 10.01 € is accepted
   ---
-  duration_ms: 25.4359
+  duration_ms: 19.5642
+  type: 'test'
   ...
 # Subtest: minimum: measured on the total after the discount, not before it
 ok 61 - minimum: measured on the total after the discount, not before it
   ---
-  duration_ms: 0.3009
+  duration_ms: 0.4093
+  type: 'test'
   ...
 # Subtest: basket edits switch the offer on and off and recompute the total
 ok 62 - basket edits switch the offer on and off and recompute the total
   ---
-  duration_ms: 1.9324
+  duration_ms: 1.5746
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1023
 # Subtest: a basket filled on the EN site (‘40 cm’) gets the same offer as in BG
 ok 63 - a basket filled on the EN site (‘40 cm’) gets the same offer as in BG
   ---
-  duration_ms: 24.8971
+  duration_ms: 24.2859
+  type: 'test'
   ...
 # Subtest: an old basket line without bilingual names still reads its size
 ok 64 - an old basket line without bilingual names still reads its size
   ---
-  duration_ms: 0.2905
+  duration_ms: 0.3821
+  type: 'test'
   ...
 # Subtest: BG and EN have every new text, with the same placeholders
 ok 65 - BG and EN have every new text, with the same placeholders
   ---
-  duration_ms: 0.6085
+  duration_ms: 0.5232
+  type: 'test'
   ...
 # [zustand persist middleware] Unable to update item 'pp-cart', the given storage is currently unavailable.
 # [zustand persist middleware] Unable to update item 'pp-cart', the given storage is currently unavailable.
 # Subtest: registry: 15 vegetable + 24 meat/dairy/fish = 39, exactly the owner's list and order
 ok 66 - registry: 15 vegetable + 24 meat/dairy/fish = 39, exactly the owner's list and order
   ---
-  duration_ms: 2.6071
+  duration_ms: 3.3004
+  type: 'test'
   ...
 # Subtest: registry: no duplicate ids, slugs, or names in either language
 ok 67 - registry: no duplicate ids, slugs, or names in either language
   ---
-  duration_ms: 8.2898
+  duration_ms: 7.4834
+  type: 'test'
   ...
 # Subtest: registry: group prices are the owner's, per ONE topping on ONE pizza
 ok 68 - registry: group prices are the owner's, per ONE topping on ONE pizza
   ---
-  duration_ms: 0.3695
+  duration_ms: 0.2508
+  type: 'test'
   ...
 # Subtest: seed JSON: all 39 toppings with exact 30/40 cm prices; the generic two switched off
 ok 69 - seed JSON: all 39 toppings with exact 30/40 cm prices; the generic two switched off
   ---
-  duration_ms: 2.6637
+  duration_ms: 2.2742
+  type: 'test'
   ...
 # Subtest: prices: every one of the 39 toppings is charged exactly the owner's price at 30 and 40 cm
 ok 70 - prices: every one of the 39 toppings is charged exactly the owner's price at 30 and 40 cm
   ---
-  duration_ms: 2.9703
+  duration_ms: 2.6132
+  type: 'test'
   ...
 # Subtest: size change: the same toppings re-priced from 30 to 40 cm, nothing dropped
 ok 71 - size change: the same toppings re-priced from 30 to 40 cm, nothing dropped
   ---
-  duration_ms: 0.2879
+  duration_ms: 0.2949
+  type: 'test'
   ...
 # Subtest: size change in the basket: editing a line 30 → 40 cm keeps its toppings on the new line
 ok 72 - size change in the basket: editing a line 30 → 40 cm keeps its toppings on the new line
   ---
-  duration_ms: 2.0698
+  duration_ms: 1.3101
+  type: 'test'
   ...
 # Subtest: money: all 39 toppings on one 40 cm pizza add up to exactly 112.08 € (no float drift)
 ok 73 - money: all 39 toppings on one 40 cm pizza add up to exactly 112.08 € (no float drift)
   ---
-  duration_ms: 0.3819
+  duration_ms: 0.4002
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # Subtest: order: 3 × Маргарита 40 cm with mushrooms + bacon + kashkaval = (12.78 + 8.70) × 3 = 64.44 €, saved with names and prices
 ok 74 - order: 3 × Маргарита 40 cm with mushrooms + bacon + kashkaval = (12.78 + 8.70) × 3 = 64.44 €, saved with names and prices
   ---
-  duration_ms: 64.4845
+  duration_ms: 77.6901
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # Subtest: order: the basket preview equals what the server charges for the same line
 ok 75 - order: the basket preview equals what the server charges for the same line
   ---
-  duration_ms: 29.8484
+  duration_ms: 27.1718
+  type: 'test'
   ...
 # Subtest: free toppings on «Моята Пацо» are concrete ingredients at 0 €, named for the kitchen
 ok 76 - free toppings on «Моята Пацо» are concrete ingredients at 0 €, named for the kitchen
   ---
-  duration_ms: 0.7075
+  duration_ms: 0.5764
+  type: 'test'
   ...
 # Subtest: server: a price sent by the browser is refused outright (strict payload)
 ok 77 - server: a price sent by the browser is refused outright (strict payload)
   ---
-  duration_ms: 3.5874
+  duration_ms: 2.8875
+  type: 'test'
   ...
 # Subtest: server: only toppings from the list, only on pizzas, only once each
 ok 78 - server: only toppings from the list, only on pizzas, only once each
   ---
-  duration_ms: 0.37
+  duration_ms: 0.3417
+  type: 'test'
   ...
 # Subtest: server: the retired generic options are refused — never mapped to an ingredient
 ok 79 - server: the retired generic options are refused — never mapped to an ingredient
   ---
-  duration_ms: 3.1321
+  duration_ms: 2.4262
+  type: 'test'
   ...
 # Subtest: server: a switched-off topping is not sold
 ok 80 - server: a switched-off topping is not sold
   ---
-  duration_ms: 0.3358
+  duration_ms: 0.2327
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # [zustand persist middleware] Unable to update item 'pp-cart', the given storage is currently unavailable.
@@ -1060,32 +1233,38 @@ ok 80 - server: a switched-off topping is not sold
 # Subtest: server: a topping or a burger add-on as a line of its own is refused; a sauce on its own is not
 ok 81 - server: a topping or a burger add-on as a line of its own is refused; a sauce on its own is not
   ---
-  duration_ms: 30.7306
+  duration_ms: 24.5073
+  type: 'test'
   ...
 # Subtest: basket: the store refuses an add-on as a line of its own
 ok 82 - basket: the store refuses an add-on as a line of its own
   ---
-  duration_ms: 0.3858
+  duration_ms: 0.3014
+  type: 'test'
   ...
 # Subtest: basket: different size / toppings / crust / sauces stay separate lines; the same set merges
 ok 83 - basket: different size / toppings / crust / sauces stay separate lines; the same set merges
   ---
-  duration_ms: 0.2051
+  duration_ms: 0.175
+  type: 'test'
   ...
 # Subtest: basket: an old basket's standalone add-on and generic «Месна добавка» are flagged, not guessed
 ok 84 - basket: an old basket's standalone add-on and generic «Месна добавка» are flagged, not guessed
   ---
-  duration_ms: 0.2542
+  duration_ms: 0.2232
+  type: 'test'
   ...
 # Subtest: history: an order saved with the old generic topping still reads back with its original name and price
 ok 85 - history: an order saved with the old generic topping still reads back with its original name and price
   ---
-  duration_ms: 0.2291
+  duration_ms: 0.1749
+  type: 'test'
   ...
 # Subtest: migration: creates the 39 toppings once, never duplicates, never overwrites an admin edit
 ok 86 - migration: creates the 39 toppings once, never duplicates, never overwrites an admin edit
   ---
-  duration_ms: 477.5119
+  duration_ms: 403.297
+  type: 'test'
   ...
 1..86
 # tests 86
@@ -1095,121 +1274,145 @@ ok 86 - migration: creates the 39 toppings once, never duplicates, never overwri
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 22277.0976
+# duration_ms 15331.3166
 
 > pizza-pazzo@0.1.0 test:daily
 > node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/daily-retention.test.ts tests/pizza-combos.test.ts tests/ticket-model.test.ts tests/email-outbox.test.ts tests/order-tracking.test.ts tests/backup-scrub.test.ts tests/offer-display.test.ts
 
 TAP version 13
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
-# [retention] purge (test, 37800s after the cutoff): 1 order(s) deleted, 1 backup file(s) cleaned
-# Subtest: a NEW backup file holding yesterday's orders is cleaned (the file date is not what decides)
-ok 1 - a NEW backup file holding yesterday's orders is cleaned (the file date is not what decides)
-  ---
-  duration_ms: 202.8287
-  ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
+# [retention] purge (test): started 37800s and completed 37800s after the cutoff (0 ms): 1 order(s) deleted, 1 backup file(s) cleaned
+# Subtest: a NEW backup file (written AFTER the cutoff) holding yesterday's orders is cleaned — the file date is not what decides
+ok 1 - a NEW backup file (written AFTER the cutoff) holding yesterday's orders is cleaned — the file date is not what decides
+  ---
+  duration_ms: 249.8252
+  type: 'test'
+  ...
+# [retention] purge (test): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
-# [retention] purge (test, 41700s after the cutoff): 1 order(s) deleted, 1 backup file(s) cleaned
+# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
+# [retention] purge (test): started 41700s and completed 41700s after the cutoff (0 ms): 1 order(s) deleted, 1 backup file(s) cleaned
 # Subtest: a backup with old AND current orders keeps the current ones and their lines
 ok 2 - a backup with old AND current orders keeps the current ones and their lines
   ---
-  duration_ms: 184.719
+  duration_ms: 174.0846
+  type: 'test'
   ...
-# [retention] purge (test, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
-# [retention] purge (test, 48600s after the cutoff): 0 order(s) deleted, 1 backup file(s) cleaned
+# [retention] purge (test): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (test): started 48600s and completed 48600s after the cutoff (0 ms): 0 order(s) deleted, 1 backup file(s) cleaned
 # Subtest: an OLD-schema backup (first migration only, text dates, missing tables) is cleaned too
 ok 3 - an OLD-schema backup (first migration only, text dates, missing tables) is cleaned too
   ---
-  duration_ms: 154.65
+  duration_ms: 137.9735
+  type: 'test'
   ...
-# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
+# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1005
 # [retention] backup scrub FAILED for 1 file(s): corrupt.db:  Invalid `prisma.$queryRawUnsafe()` invocation: Raw query failed. Code: `26`. Message: `file is not a database`
 # Subtest: a backup that cannot be cleaned is a FAILURE: not counted, reported, recorded, HTTP-worthy
 ok 4 - a backup that cannot be cleaned is a FAILURE: not counted, reported, recorded, HTTP-worthy
   ---
-  duration_ms: 98.191
+  duration_ms: 78.7931
+  type: 'test'
   ...
-# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1005
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1006
+# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1007
 # [retention] backup scrub FAILED for 1 file(s): interrupted.db: simulated crash before commit
-# [retention] purge (test, 41700s after the cutoff): 0 order(s) deleted, 1 backup file(s) cleaned
+# [retention] purge (test): started 41700s and completed 41700s after the cutoff (0 ms): 0 order(s) deleted, 1 backup file(s) cleaned
 # Subtest: an interrupted clean-up changes nothing; the next run completes it; a third run finds it clean
 ok 5 - an interrupted clean-up changes nothing; the next run completes it; a third run finds it clean
   ---
-  duration_ms: 288.6745
+  duration_ms: 284.8589
+  type: 'test'
   ...
-# [retention] purge (test, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
-# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1007
-# [retention] purge (cutoff, 420s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
-# Subtest: the run records its trigger, the cutoff it covered and how late it was
-ok 6 - the run records its trigger, the cutoff it covered and how late it was
+# [retention] purge (test): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
+# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1008
+# [retention] purge (timer): started 1s and completed 121s after the cutoff (120000 ms): 1 order(s) deleted, 1 backup file(s) cleaned
+# Subtest: start and COMPLETION are recorded apart: started 22:30:01, finished 22:32:01 → 1 s and 121 s
+ok 6 - start and COMPLETION are recorded apart: started 22:30:01, finished 22:32:01 → 1 s and 121 s
   ---
-  duration_ms: 76.5435
+  duration_ms: 142.8041
+  type: 'test'
+  ...
+# [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1009
+# [retention] backup scrub FAILED for 1 file(s): corrupt.db:  Invalid `prisma.$queryRawUnsafe()` invocation: Raw query failed. Code: `26`. Message: `file is not a database`
+# Subtest: a FAILED run is recorded as finished, never as a completed clean-up
+ok 7 - a FAILED run is recorded as finished, never as a completed clean-up
+  ---
+  duration_ms: 157.9095
+  type: 'test'
   ...
 # Subtest: 22:30 Sofia in summer is 19:30 UTC, in winter 20:30 UTC — no fixed offset
-ok 7 - 22:30 Sofia in summer is 19:30 UTC, in winter 20:30 UTC — no fixed offset
+ok 8 - 22:30 Sofia in summer is 19:30 UTC, in winter 20:30 UTC — no fixed offset
   ---
-  duration_ms: 52.2764
+  duration_ms: 54.3263
+  type: 'test'
   ...
 # Subtest: before, exactly at and after 22:30; after midnight the cutoff is yesterday's
-ok 8 - before, exactly at and after 22:30; after midnight the cutoff is yesterday's
+ok 9 - before, exactly at and after 22:30; after midnight the cutoff is yesterday's
   ---
-  duration_ms: 12.347
+  duration_ms: 12.5454
+  type: 'test'
   ...
 # Subtest: the store refuses orders 22:30–24:00 whatever the hours or a forced opening say
-ok 9 - the store refuses orders 22:30–24:00 whatever the hours or a forced opening say
+ok 10 - the store refuses orders 22:30–24:00 whatever the hours or a forced opening say
   ---
-  duration_ms: 13.081
+  duration_ms: 9.8912
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # Subtest: placing an order: accepted at 22:29:59, refused at 22:30:00 and at 23:59, fine after midnight
-ok 10 - placing an order: accepted at 22:29:59, refused at 22:30:00 and at 23:59, fine after midnight
+ok 11 - placing an order: accepted at 22:29:59, refused at 22:30:00 and at 23:59, fine after midnight
   ---
-  duration_ms: 87.3857
+  duration_ms: 72.7595
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 2 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 2 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1005
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1006
-# [payments] PP1007-4F091B2D → hosted page (SIMULATOR/simulator)
-# [retention] purge (manual, 0s after the cutoff): 5 order(s) deleted, 0 backup file(s) cleaned
+# [payments] PP1007-8C508515 → hosted page (SIMULATOR/simulator)
+# [retention] purge (manual): started 0s and completed 0s after the cutoff (0 ms): 5 order(s) deleted, 0 backup file(s) cleaned
 # Subtest: at 22:30 every order (all statuses) is unreadable everywhere, then the purge deletes it and all its rows
-ok 11 - at 22:30 every order (all statuses) is unreadable everywhere, then the purge deletes it and all its rows
+ok 12 - at 22:30 every order (all statuses) is unreadable everywhere, then the purge deletes it and all its rows
   ---
-  duration_ms: 328.3892
+  duration_ms: 273.927
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1008
-# [retention] purge (manual, 1800s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 1800s and completed 1800s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1009
 # Subtest: the purge keeps the menu, settings, users, print layouts and the number counter
-ok 12 - the purge keeps the menu, settings, users, print layouts and the number counter
+ok 13 - the purge keeps the menu, settings, users, print layouts and the number counter
   ---
-  duration_ms: 84.0227
+  duration_ms: 79.7384
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1010
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1011
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1012
-# [retention] purge (manual, 37800s after the cutoff): 3 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 37800s and completed 37800s after the cutoff (0 ms): 3 order(s) deleted, 0 backup file(s) cleaned
 # Subtest: a missed evening (or three) is caught up by the next run; repeating it is a no-op
-ok 13 - a missed evening (or three) is caught up by the next run; repeating it is a no-op
+ok 14 - a missed evening (or three) is caught up by the next run; repeating it is a no-op
   ---
-  duration_ms: 141.867
+  duration_ms: 134.7542
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1013
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1014
-# [retention] purge (manual, 60s after the cutoff): 2 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 60s and completed 60s after the cutoff (0 ms): 2 order(s) deleted, 0 backup file(s) cleaned
 # Subtest: two processes purging at the same time end in the same state
-ok 14 - two processes purging at the same time end in the same state
+ok 15 - two processes purging at the same time end in the same state
   ---
-  duration_ms: 102.1734
+  duration_ms: 91.8813
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1015
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1016
-# [retention] purge (manual, 0s after the cutoff): 2 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 0s and completed 0s after the cutoff (0 ms): 2 order(s) deleted, 0 backup file(s) cleaned
 # prisma:error 
 # Invalid `dbUnscoped.emailOutbox.create()` invocation in
 # C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\daily-retention.test.ts:293:28
@@ -1219,69 +1422,78 @@ ok 14 - two processes purging at the same time end in the same state
 # → 293   dbUnscoped.emailOutbox.create(
 # Foreign key constraint violated: `foreign key`
 # Subtest: create, accept and send racing the purge: nothing survives, nothing is re-created
-ok 15 - create, accept and send racing the purge: nothing survives, nothing is re-created
+ok 16 - create, accept and send racing the purge: nothing survives, nothing is re-created
   ---
-  duration_ms: 125.3823
+  duration_ms: 103.7874
+  type: 'test'
   ...
-# [payments] PP1017-00105A6A → hosted page (SIMULATOR/simulator)
-# [retention] purge (manual, 600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [payments] PP1017-89314DBD → hosted page (SIMULATOR/simulator)
+# [retention] purge (manual): started 600s and completed 600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [payments] simulator callback for an unknown attempt — ignored
 # Subtest: a late, authentic payment callback after 22:30 restores nothing
-ok 16 - a late, authentic payment callback after 22:30 restores nothing
+ok 17 - a late, authentic payment callback after 22:30 restores nothing
   ---
-  duration_ms: 96.9126
+  duration_ms: 84.6924
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # Subtest: one accept → one queued e-mail → handed to the provider once, with a stable idempotency key
-ok 17 - one accept → one queued e-mail → handed to the provider once, with a stable idempotency key
+ok 18 - one accept → one queued e-mail → handed to the provider once, with a stable idempotency key
   ---
-  duration_ms: 119.6383
+  duration_ms: 112.9826
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # Subtest: double tap and five concurrent 'Приеми': one status change, one e-mail row
-ok 18 - double tap and five concurrent 'Приеми': one status change, one e-mail row
+ok 19 - double tap and five concurrent 'Приеми': one status change, one e-mail row
   ---
-  duration_ms: 112.003
+  duration_ms: 103.8364
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 2 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 2 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
 # Subtest: concurrent workers: the e-mail is handed over exactly once
-ok 19 - concurrent workers: the e-mail is handed over exactly once
+ok 20 - concurrent workers: the e-mail is handed over exactly once
   ---
-  duration_ms: 73.9754
+  duration_ms: 57.3096
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1005
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1006
 # Subtest: a temporary failure is retried later with the SAME key; a permanent one is not
-ok 20 - a temporary failure is retried later with the SAME key; a permanent one is not
+ok 21 - a temporary failure is retried later with the SAME key; a permanent one is not
   ---
-  duration_ms: 134.5015
+  duration_ms: 117.0447
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 2 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 2 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1007
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1008
 # Subtest: a timeout (the message may have gone) and a dead worker are retried with the same key
-ok 21 - a timeout (the message may have gone) and a dead worker are retried with the same key
+ok 22 - a timeout (the message may have gone) and a dead worker are retried with the same key
   ---
-  duration_ms: 133.1509
+  duration_ms: 116.8384
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 2 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 2 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1009
 # Subtest: temporary failures stop after MAX_ATTEMPTS
-ok 22 - temporary failures stop after MAX_ATTEMPTS
+ok 23 - temporary failures stop after MAX_ATTEMPTS
   ---
-  duration_ms: 145.6966
+  duration_ms: 122.2236
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1010
-# [retention] purge (manual, 0s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 0s and completed 0s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # Subtest: the e-mail job expires with the order at 22:30 — not sent, then deleted
-ok 23 - the e-mail job expires with the order at 22:30 — not sent, then deleted
+ok 24 - the e-mail job expires with the order at 22:30 — not sent, then deleted
   ---
-  duration_ms: 79.6411
+  duration_ms: 62.9682
+  type: 'test'
   ...
 # [settings] read failed, using constants fallback: Error: Invariant: incrementalCache missing in unstable_cache async()=>{const row=await import_db.db.restaurantSettings.findUnique({where:{id:SETTINGS_ROW_ID}});return row?{settings:mapSettings(row),closure:mapClosure(row),forcedOpening:mapForcedOpening(row)}:{settings:fallbackSettings(),closure:openClosure(),forcedOpening:noForcedOpening()}}
 #     at cachedCb (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\node_modules\\next\\src\\server\\web\\spec-extension\\unstable-cache.ts:115:13)
@@ -1291,13 +1503,14 @@ ok 23 - the e-mail job expires with the order at 22:30 — not sent, then delete
 #     at <anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:229:5)
 #     at withProvider (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:212:28)
 #     at TestContext.<anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:228:38)
-#     at Test.runInAsyncScope (node:async_hooks:206:9)
-#     at Test.run (node:internal/test_runner/test:631:25)
-#     at async Test.processPendingSubtests (node:internal/test_runner/test:374:7)
+#     at Test.runInAsyncScope (node:async_hooks:214:14)
+#     at Test.run (node:internal/test_runner/test:1047:25)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
 # Subtest: provider: success returns the message id; the idempotency key is sent
-ok 24 - provider: success returns the message id; the idempotency key is sent
+ok 25 - provider: success returns the message id; the idempotency key is sent
   ---
-  duration_ms: 32.1384
+  duration_ms: 22.7738
+  type: 'test'
   ...
 # [settings] read failed, using constants fallback: Error: Invariant: incrementalCache missing in unstable_cache async()=>{const row=await import_db.db.restaurantSettings.findUnique({where:{id:SETTINGS_ROW_ID}});return row?{settings:mapSettings(row),closure:mapClosure(row),forcedOpening:mapForcedOpening(row)}:{settings:fallbackSettings(),closure:openClosure(),forcedOpening:noForcedOpening()}}
 #     at cachedCb (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\node_modules\\next\\src\\server\\web\\spec-extension\\unstable-cache.ts:115:13)
@@ -1307,14 +1520,15 @@ ok 24 - provider: success returns the message id; the idempotency key is sent
 #     at <anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:245:11)
 #     at withProvider (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:212:28)
 #     at TestContext.<anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:237:28)
-#     at Test.runInAsyncScope (node:async_hooks:206:9)
-#     at Test.run (node:internal/test_runner/test:631:25)
-#     at async Test.processPendingSubtests (node:internal/test_runner/test:374:7)
+#     at Test.runInAsyncScope (node:async_hooks:214:14)
+#     at Test.run (node:internal/test_runner/test:1047:25)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
 # [email] Resend rejected "accepted" email for order \#1042: validation_error 403 You can only send testing emails to your own email address. To send to other recipients, please verify a domain.
 # Subtest: provider: the resend.dev 403 is returned as an error (not success) and classified CONFIG
-ok 25 - provider: the resend.dev 403 is returned as an error (not success) and classified CONFIG
+ok 26 - provider: the resend.dev 403 is returned as an error (not success) and classified CONFIG
   ---
-  duration_ms: 12.6116
+  duration_ms: 12.5757
+  type: 'test'
   ...
 # [settings] read failed, using constants fallback: Error: Invariant: incrementalCache missing in unstable_cache async()=>{const row=await import_db.db.restaurantSettings.findUnique({where:{id:SETTINGS_ROW_ID}});return row?{settings:mapSettings(row),closure:mapClosure(row),forcedOpening:mapForcedOpening(row)}:{settings:fallbackSettings(),closure:openClosure(),forcedOpening:noForcedOpening()}}
 #     at cachedCb (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\node_modules\\next\\src\\server\\web\\spec-extension\\unstable-cache.ts:115:13)
@@ -1324,9 +1538,9 @@ ok 25 - provider: the resend.dev 403 is returned as an error (not success) and c
 #     at <anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:258:7)
 #     at withProvider (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:212:28)
 #     at TestContext.<anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:257:30)
-#     at Test.runInAsyncScope (node:async_hooks:206:9)
-#     at Test.run (node:internal/test_runner/test:631:25)
-#     at async Test.processPendingSubtests (node:internal/test_runner/test:374:7)
+#     at Test.runInAsyncScope (node:async_hooks:214:14)
+#     at Test.run (node:internal/test_runner/test:1047:25)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
 # [email] Resend rejected "accepted" email for order \#1042: rate_limit_exceeded 429 rate_limit_exceeded
 # [settings] read failed, using constants fallback: Error: Invariant: incrementalCache missing in unstable_cache async()=>{const row=await import_db.db.restaurantSettings.findUnique({where:{id:SETTINGS_ROW_ID}});return row?{settings:mapSettings(row),closure:mapClosure(row),forcedOpening:mapForcedOpening(row)}:{settings:fallbackSettings(),closure:openClosure(),forcedOpening:noForcedOpening()}}
 #     at cachedCb (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\node_modules\\next\\src\\server\\web\\spec-extension\\unstable-cache.ts:115:13)
@@ -1336,8 +1550,8 @@ ok 25 - provider: the resend.dev 403 is returned as an error (not success) and c
 #     at <anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:258:7)
 #     at withProvider (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:212:28)
 #     at TestContext.<anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:257:30)
-#     at async Test.run (node:internal/test_runner/test:632:9)
-#     at async Test.processPendingSubtests (node:internal/test_runner/test:374:7)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
 # [email] Resend rejected "accepted" email for order \#1042: application_error 500 application_error
 # [settings] read failed, using constants fallback: Error: Invariant: incrementalCache missing in unstable_cache async()=>{const row=await import_db.db.restaurantSettings.findUnique({where:{id:SETTINGS_ROW_ID}});return row?{settings:mapSettings(row),closure:mapClosure(row),forcedOpening:mapForcedOpening(row)}:{settings:fallbackSettings(),closure:openClosure(),forcedOpening:noForcedOpening()}}
 #     at cachedCb (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\node_modules\\next\\src\\server\\web\\spec-extension\\unstable-cache.ts:115:13)
@@ -1347,8 +1561,8 @@ ok 25 - provider: the resend.dev 403 is returned as an error (not success) and c
 #     at <anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:258:7)
 #     at withProvider (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:212:28)
 #     at TestContext.<anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:257:30)
-#     at async Test.run (node:internal/test_runner/test:632:9)
-#     at async Test.processPendingSubtests (node:internal/test_runner/test:374:7)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
 # [email] Resend rejected "accepted" email for order \#1042: validation_error 422 validation_error
 # [settings] read failed, using constants fallback: Error: Invariant: incrementalCache missing in unstable_cache async()=>{const row=await import_db.db.restaurantSettings.findUnique({where:{id:SETTINGS_ROW_ID}});return row?{settings:mapSettings(row),closure:mapClosure(row),forcedOpening:mapForcedOpening(row)}:{settings:fallbackSettings(),closure:openClosure(),forcedOpening:noForcedOpening()}}
 #     at cachedCb (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\node_modules\\next\\src\\server\\web\\spec-extension\\unstable-cache.ts:115:13)
@@ -1358,13 +1572,14 @@ ok 25 - provider: the resend.dev 403 is returned as an error (not success) and c
 #     at <anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:263:5)
 #     at withProvider (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:212:28)
 #     at TestContext.<anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:262:28)
-#     at async Test.run (node:internal/test_runner/test:632:9)
-#     at async Test.processPendingSubtests (node:internal/test_runner/test:374:7)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
 # [email] Resend rejected "accepted" email for order \#1042: application_error Unable to fetch data. The request could not be resolved.
 # Subtest: provider: 429 and 500 are TEMPORARY, 422 is PERMANENT, a network error is TEMPORARY
-ok 26 - provider: 429 and 500 are TEMPORARY, 422 is PERMANENT, a network error is TEMPORARY
+ok 27 - provider: 429 and 500 are TEMPORARY, 422 is PERMANENT, a network error is TEMPORARY
   ---
-  duration_ms: 28.0212
+  duration_ms: 18.674
+  type: 'test'
   ...
 # [settings] read failed, using constants fallback: Error: Invariant: incrementalCache missing in unstable_cache async()=>{const row=await import_db.db.restaurantSettings.findUnique({where:{id:SETTINGS_ROW_ID}});return row?{settings:mapSettings(row),closure:mapClosure(row),forcedOpening:mapForcedOpening(row)}:{settings:fallbackSettings(),closure:openClosure(),forcedOpening:noForcedOpening()}}
 #     at cachedCb (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\node_modules\\next\\src\\server\\web\\spec-extension\\unstable-cache.ts:115:13)
@@ -1374,235 +1589,273 @@ ok 26 - provider: 429 and 500 are TEMPORARY, 422 is PERMANENT, a network error i
 #     at <anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:277:11)
 #     at withProvider (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:212:28)
 #     at TestContext.<anonymous> (C:\\Users\\The King\\Desktop\\Sites\\08. Pizza Pazzo-wt\\tests\\email-outbox.test.ts:274:38)
-#     at Test.runInAsyncScope (node:async_hooks:206:9)
-#     at Test.run (node:internal/test_runner/test:631:25)
-#     at async Test.processPendingSubtests (node:internal/test_runner/test:374:7)
+#     at Test.runInAsyncScope (node:async_hooks:214:14)
+#     at Test.run (node:internal/test_runner/test:1047:25)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
 # Subtest: production never sends customer e-mail from the resend.dev test sender (no request is made)
-ok 27 - production never sends customer e-mail from the resend.dev test sender (no request is made)
+ok 28 - production never sends customer e-mail from the resend.dev test sender (no request is made)
   ---
-  duration_ms: 10.9247
+  duration_ms: 10.4156
+  type: 'test'
   ...
 # Subtest: template: the merchant/terms/withdrawal block is gone; the useful parts are there
-ok 28 - template: the merchant/terms/withdrawal block is gone; the useful parts are there
+ok 29 - template: the merchant/terms/withdrawal block is gone; the useful parts are there
   ---
-  duration_ms: 9.38
+  duration_ms: 10.7072
+  type: 'test'
   ...
 # Subtest: template: a pickup order has no address; everything the customer typed is escaped
-ok 29 - template: a pickup order has no address; everything the customer typed is escaped
+ok 30 - template: a pickup order has no address; everything the customer typed is escaped
   ---
-  duration_ms: 9.481
+  duration_ms: 9.0825
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1011
 # Subtest: the outbox renders from the saved order (number, items, total) at send time
-ok 30 - the outbox renders from the saved order (number, items, total) at send time
+ok 31 - the outbox renders from the saved order (number, items, total) at send time
   ---
-  duration_ms: 63.576
+  duration_ms: 63.1996
+  type: 'test'
   ...
 # Subtest: the active mode is FIXED package prices (current brief)
-ok 31 - the active mode is FIXED package prices (current brief)
+ok 32 - the active mode is FIXED package prices (current brief)
   ---
-  duration_ms: 1.5349
+  duration_ms: 1.6984
+  type: 'test'
   ...
 # Subtest: the presenter turns the signed difference into a discount or a difference, never a negative discount
-ok 32 - the presenter turns the signed difference into a discount or a difference, never a negative discount
+ok 33 - the presenter turns the signed difference into a discount or a difference, never a negative discount
   ---
-  duration_ms: 9.395
+  duration_ms: 7.578
+  type: 'test'
   ...
 # Subtest: basket/checkout (CartSummary): a DEARER package shows the package, the regular price and '+2.55 €'
-ok 33 - basket/checkout (CartSummary): a DEARER package shows the package, the regular price and '+2.55 €'
+ok 34 - basket/checkout (CartSummary): a DEARER package shows the package, the regular price and '+2.55 €'
   ---
-  duration_ms: 29.9274
+  duration_ms: 24.1579
+  type: 'test'
   ...
 # Subtest: basket: a CHEAPER package shows a real discount with one minus; an equal one shows no money line
-ok 34 - basket: a CHEAPER package shows a real discount with one minus; an equal one shows no money line
+ok 35 - basket: a CHEAPER package shows a real discount with one minus; an equal one shows no money line
   ---
-  duration_ms: 5.7685
+  duration_ms: 5.2065
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # Subtest: server → saved order → customer e-mail, restaurant e-mail, ticket and Android job all agree
-ok 35 - server → saved order → customer e-mail, restaurant e-mail, ticket and Android job all agree
+ok 36 - server → saved order → customer e-mail, restaurant e-mail, ticket and Android job all agree
   ---
-  duration_ms: 99.5176
+  duration_ms: 144.3024
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # Subtest: a CHEAPER package on the ticket and in the Android job: one discount line with one minus
-ok 36 - a CHEAPER package on the ticket and in the Android job: one discount line with one minus
+ok 37 - a CHEAPER package on the ticket and in the Android job: one discount line with one minus
   ---
-  duration_ms: 38.7441
+  duration_ms: 28.7983
+  type: 'test'
   ...
 # Subtest: delivery: Изпратена → Приета/Приготвя се → Готова → В доставка → Доставена; cancel only before 'Готова'
-ok 37 - delivery: Изпратена → Приета/Приготвя се → Готова → В доставка → Доставена; cancel only before 'Готова'
+ok 38 - delivery: Изпратена → Приета/Приготвя се → Готова → В доставка → Доставена; cancel only before 'Готова'
   ---
-  duration_ms: 38.1738
+  duration_ms: 47.8303
+  type: 'test'
   ...
 # Subtest: pickup: no delivery step — Готова за получаване → Получена
-ok 38 - pickup: no delivery step — Готова за получаване → Получена
+ok 39 - pickup: no delivery step — Готова за получаване → Получена
   ---
-  duration_ms: 13.742
+  duration_ms: 15.0211
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # Subtest: staff walk a delivery through every step; skipping or going back is refused
-ok 39 - staff walk a delivery through every step; skipping or going back is refused
+ok 40 - staff walk a delivery through every step; skipping or going back is refused
   ---
-  duration_ms: 110.771
+  duration_ms: 92.2267
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # Subtest: a pickup order: READY → 'Получена' directly; 'В доставка' is refused
-ok 40 - a pickup order: READY → 'Получена' directly; 'В доставка' is refused
+ok 41 - a pickup order: READY → 'Получена' directly; 'В доставка' is refused
   ---
-  duration_ms: 92.8719
+  duration_ms: 80.2884
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1003
 # Subtest: two screens press different steps at once: one wins, the other gets a conflict
-ok 41 - two screens press different steps at once: one wins, the other gets a conflict
+ok 42 - two screens press different steps at once: one wins, the other gets a conflict
   ---
-  duration_ms: 73.814
+  duration_ms: 52.8454
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1004
 # Subtest: a guest with the token sees the order; nothing personal is in the answer
-ok 42 - a guest with the token sees the order; nothing personal is in the answer
+ok 43 - a guest with the token sees the order; nothing personal is in the answer
   ---
-  duration_ms: 51.9137
+  duration_ms: 38.957
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1005
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1006
 # Subtest: forged, truncated, swapped, malformed and wrong tokens all get the same nothing
-ok 43 - forged, truncated, swapped, malformed and wrong tokens all get the same nothing
+ok 44 - forged, truncated, swapped, malformed and wrong tokens all get the same nothing
   ---
-  duration_ms: 76.1758
+  duration_ms: 57.6671
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 2 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 2 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1007
 # Subtest: signed-in: own orders without a token; another account is refused even WITH the token
-ok 44 - signed-in: own orders without a token; another account is refused even WITH the token
+ok 45 - signed-in: own orders without a token; another account is refused even WITH the token
   ---
-  duration_ms: 61.7542
+  duration_ms: 51.2871
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1008
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1009
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1010
 # Subtest: more than one current order: all are listed, newest first, cookie capped at 5
-ok 45 - more than one current order: all are listed, newest first, cookie capped at 5
+ok 46 - more than one current order: all are listed, newest first, cookie capped at 5
   ---
-  duration_ms: 99.7999
+  duration_ms: 84.3124
+  type: 'test'
   ...
-# [retention] purge (manual, 48600s after the cutoff): 3 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 48600s and completed 48600s after the cutoff (0 ms): 3 order(s) deleted, 0 backup file(s) cleaned
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1011
-# [retention] purge (manual, 0s after the cutoff): 1 order(s) deleted, 0 backup file(s) cleaned
+# [retention] purge (manual): started 0s and completed 0s after the cutoff (0 ms): 1 order(s) deleted, 0 backup file(s) cleaned
 # Subtest: at 22:30 tracking ends with the order: the token, the list and the link all stop
-ok 46 - at 22:30 tracking ends with the order: the token, the list and the link all stop
+ok 47 - at 22:30 tracking ends with the order: the token, the list and the link all stop
   ---
-  duration_ms: 71.5004
+  duration_ms: 59.3069
+  type: 'test'
   ...
 # Subtest: without AUTH_SECRET no token is issued and none verifies
-ok 47 - without AUTH_SECRET no token is issued and none verifies
+ok 48 - without AUTH_SECRET no token is issued and none verifies
   ---
-  duration_ms: 10.8522
+  duration_ms: 7.6552
+  type: 'test'
   ...
 # Subtest: exhaustive check: 1–8 pizzas, 600 random baskets, both modes — the algorithm is optimal
-ok 48 - exhaustive check: 1–8 pizzas, 600 random baskets, both modes — the algorithm is optimal
+ok 49 - exhaustive check: 1–8 pizzas, 600 random baskets, both modes — the algorithm is optimal
   ---
-  duration_ms: 102.0998
+  duration_ms: 90.1263
+  type: 'test'
   ...
 # Subtest: the basket's order never changes the result (every permutation of 5 pizzas)
-ok 49 - the basket's order never changes the result (every permutation of 5 pizzas)
+ok 50 - the basket's order never changes the result (every permutation of 5 pizzas)
   ---
-  duration_ms: 13.5328
+  duration_ms: 13.1133
+  type: 'test'
   ...
 # Subtest: the three pairs cost exactly 16.87 / 19.43 / 23.01 €, in integer cents
-ok 50 - the three pairs cost exactly 16.87 / 19.43 / 23.01 €, in integer cents
+ok 51 - the three pairs cost exactly 16.87 / 19.43 / 23.01 €, in integer cents
   ---
-  duration_ms: 1.2758
+  duration_ms: 1.2803
+  type: 'test'
   ...
 # Subtest: speciality and standard pizzas pair alike; 5 pizzas = 2 pairs + the cheapest one alone
-ok 51 - speciality and standard pizzas pair alike; 5 pizzas = 2 pairs + the cheapest one alone
+ok 52 - speciality and standard pizzas pair alike; 5 pizzas = 2 pairs + the cheapest one alone
   ---
-  duration_ms: 0.2462
+  duration_ms: 0.2348
+  type: 'test'
   ...
 # Subtest: BUSINESS CONFLICT: Маргарита 30 + Кашкавалина 40 — 19.43 € only in 'fixed' mode
-ok 52 - BUSINESS CONFLICT: Маргарита 30 + Кашкавалина 40 — 19.43 € only in 'fixed' mode
+ok 53 - BUSINESS CONFLICT: Маргарита 30 + Кашкавалина 40 — 19.43 € only in 'fixed' mode
   ---
-  duration_ms: 0.2011
+  duration_ms: 0.2003
+  type: 'test'
   ...
 # Subtest: other sizes, missing sizes and non-pizza categories never take part
-ok 53 - other sizes, missing sizes and non-pizza categories never take part
+ok 54 - other sizes, missing sizes and non-pizza categories never take part
   ---
-  duration_ms: 0.2253
+  duration_ms: 0.2263
+  type: 'test'
   ...
 # Subtest: the discount split over the lines adds up exactly — no cent lost or invented
-ok 54 - the discount split over the lines adds up exactly — no cent lost or invented
+ok 55 - the discount split over the lines adds up exactly — no cent lost or invented
   ---
-  duration_ms: 12.4066
+  duration_ms: 11.7192
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1001
 # Subtest: server: combos + sauces with quantities + a drink; saved order, ticket and e-mail all agree
-ok 55 - server: combos + sauces with quantities + a drink; saved order, ticket and e-mail all agree
+ok 56 - server: combos + sauces with quantities + a drink; saved order, ticket and e-mail all agree
   ---
-  duration_ms: 79.599
+  duration_ms: 75.0962
+  type: 'test'
   ...
 # Subtest: server: a price, category, discount or total sent by the browser is refused, never used
-ok 56 - server: a price, category, discount or total sent by the browser is refused, never used
+ok 57 - server: a price, category, discount or total sent by the browser is refused, never used
   ---
-  duration_ms: 16.7782
+  duration_ms: 15.058
+  type: 'test'
   ...
 # [email] Resend not configured (RESEND_API_KEY/ORDER_NOTIFICATION_EMAIL/FROM_EMAIL) — skipping notification for order \#1002
 # Subtest: server: rounding stays exact on long baskets (no float drift)
-ok 57 - server: rounding stays exact on long baskets (no float drift)
+ok 58 - server: rounding stays exact on long baskets (no float drift)
   ---
-  duration_ms: 31.3355
+  duration_ms: 26.1518
+  type: 'test'
   ...
 # Subtest: a mixed-up order prints pizzas first, then the menu's order, sauces last — never pizza/burger/pizza
-ok 58 - a mixed-up order prints pizzas first, then the menu's order, sauces last — never pizza/burger/pizza
+ok 59 - a mixed-up order prints pizzas first, then the menu's order, sauces last — never pizza/burger/pizza
   ---
-  duration_ms: 8.0985
+  duration_ms: 6.152
+  type: 'test'
   ...
 # Subtest: the same pizza with different modifications or notes stays two lines
-ok 59 - the same pizza with different modifications or notes stays two lines
+ok 60 - the same pizza with different modifications or notes stays two lines
   ---
-  duration_ms: 0.6329
+  duration_ms: 0.5458
+  type: 'test'
   ...
 # Subtest: sauces: 2 pizzas × 2 garlic + 1 garlic on its own = 5, printed once, priced once
-ok 60 - sauces: 2 pizzas × 2 garlic + 1 garlic on its own = 5, printed once, priced once
+ok 61 - sauces: 2 pizzas × 2 garlic + 1 garlic on its own = 5, printed once, priced once
   ---
-  duration_ms: 2.1326
+  duration_ms: 2.0761
+  type: 'test'
   ...
 # Subtest: a sauce ordered on its own WITH a note keeps its own row and the note
-ok 61 - a sauce ordered on its own WITH a note keeps its own row and the note
+ok 62 - a sauce ordered on its own WITH a note keeps its own row and the note
   ---
-  duration_ms: 0.3462
+  duration_ms: 0.3603
+  type: 'test'
   ...
 # Subtest: old or incomplete lines (no category, broken extras) print by name and never crash
-ok 62 - old or incomplete lines (no category, broken extras) print by name and never crash
+ok 63 - old or incomplete lines (no category, broken extras) print by name and never crash
   ---
-  duration_ms: 1.1359
+  duration_ms: 1.0251
+  type: 'test'
   ...
 # Subtest: Cyrillic and long names wrap inside the paper at 32, 42 and 48 characters; nothing is cut
-ok 63 - Cyrillic and long names wrap inside the paper at 32, 42 and 48 characters; nothing is cut
+ok 64 - Cyrillic and long names wrap inside the paper at 32, 42 and 48 characters; nothing is cut
   ---
-  duration_ms: 6.1213
+  duration_ms: 3.8535
+  type: 'test'
   ...
 # Subtest: preview, real print and reprint come from the same model; the Android job matches it
-ok 64 - preview, real print and reprint come from the same model; the Android job matches it
+ok 65 - preview, real print and reprint come from the same model; the Android job matches it
   ---
-  duration_ms: 3.734
+  duration_ms: 3.0919
+  type: 'test'
   ...
 # Subtest: a pickup order prints 'ВЗЕМАНЕ ОТ МЯСТО' and no address
-ok 65 - a pickup order prints 'ВЗЕМАНЕ ОТ МЯСТО' and no address
+ok 66 - a pickup order prints 'ВЗЕМАНЕ ОТ МЯСТО' and no address
   ---
-  duration_ms: 0.8293
+  duration_ms: 0.7513
+  type: 'test'
   ...
-1..65
-# tests 65
+1..66
+# tests 66
 # suites 0
-# pass 65
+# pass 66
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 32578.0605
-exit 0
+# duration_ms 24005.1293
