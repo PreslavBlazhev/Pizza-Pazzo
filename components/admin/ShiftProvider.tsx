@@ -22,6 +22,7 @@ import type { Order, OrderWithItems } from "@/types/order";
 import { PRINT_TEMPLATE_IDS, defaultPrintTemplate, type PrintTemplateData } from "@/types/print";
 import type { StoreStatus } from "@/types/store-status";
 import type { PaymentAttentionItem } from "@/lib/payments/admin";
+import type { EmailJobView } from "@/lib/email/outbox";
 
 /**
  * The shift, for the WHOLE admin panel.
@@ -70,7 +71,14 @@ interface ShiftContextValue {
   /** True while the browser is refusing to make sound — the alarm is mute. */
   audioBlocked: boolean;
   orders: Order[];
-  acceptedOrders: OrderWithItems[];
+  /**
+   * Orders being cooked or driven (accepted → out for delivery), straight
+   * from the server on every poll — never kept on the device, so they leave
+   * the screen the moment they expire at 22:30.
+   */
+  activeOrders: OrderWithItems[];
+  /** The customer e-mail of each active order, by order id. */
+  emailJobs: Record<string, EmailJobView>;
   /** Card payments a person must decide about (late confirmation, alerts). */
   paymentAttention: PaymentAttentionItem[];
   printTemplates: PrintTemplateData[];
@@ -78,6 +86,8 @@ interface ShiftContextValue {
   connectionLost: boolean;
   lastCheck: Date | null;
   busyOrderId: string | null;
+  /** The last refused status change (conflict with another screen, etc.). */
+  statusError: { orderId: string; message: string } | null;
   startShift: () => void;
   endShift: () => void;
   /** Re-grabs the speaker after the browser suspended it. */
@@ -101,11 +111,14 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
   const [connectionLost, setConnectionLost] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<{ orderId: string; message: string } | null>(null);
   // Null until the first poll answers — nothing flashes "открито"/"затворено".
   const [storeStatus, setStoreStatus] = useState<StoreStatus | null>(null);
-  // Orders accepted this shift, kept so their kitchen ticket can still be
-  // printed. They now survive leaving the board, like the shift itself.
-  const [acceptedOrders, setAcceptedOrders] = useState<OrderWithItems[]>([]);
+  const [activeOrders, setActiveOrders] = useState<OrderWithItems[]>([]);
+  const [emailJobs, setEmailJobs] = useState<Record<string, EmailJobView>>({});
+  // The next 22:30 as the server sees it: at that instant the lists empty
+  // themselves, even if the network is down and no poll can answer.
+  const [cutoffAt, setCutoffAt] = useState<string | null>(null);
   const [paymentAttention, setPaymentAttention] = useState<PaymentAttentionItem[]>([]);
 
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
@@ -118,9 +131,6 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
   const endShift = useCallback(() => {
     setShiftStarted(false);
     setAudioBlocked(false);
-    // The print list belongs to the shift that accepted those orders; older
-    // tickets are still reachable from Поръчки.
-    setAcceptedOrders((prev) => (prev.length ? [] : prev));
     clearStoredShift();
     releaseAudio();
   }, []);
@@ -131,11 +141,17 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok) throw new Error(String(res.status));
       const data = (await res.json()) as {
         orders: Order[];
+        activeOrders?: Order[];
+        emailJobs?: Record<string, EmailJobView>;
         printTemplates?: PrintTemplateData[];
         storeStatus?: StoreStatus;
         paymentAttention?: PaymentAttentionItem[];
+        cutoffAt?: string;
       };
       setOrders(data.orders);
+      setActiveOrders((data.activeOrders ?? []).map((o) => ({ ...o, items: o.items ?? [] })));
+      setEmailJobs(data.emailJobs ?? {});
+      if (data.cutoffAt) setCutoffAt(data.cutoffAt);
       setPaymentAttention(data.paymentAttention ?? []);
       if (data.printTemplates?.length) setPrintTemplates(data.printTemplates);
       // A timed closure ends here: the poll after the deadline simply reports
@@ -176,6 +192,37 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     const id = setInterval(() => void refresh(), interval);
     return () => clearInterval(id);
   }, [shiftStarted, refresh]);
+
+  // Back to the tab / back online: ask at once instead of waiting for the
+  // next tick, so an expired or changed order never lingers on screen.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    const onOnline = () => void refresh();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
+    };
+  }, [refresh]);
+
+  // 22:30: empty the lists on the dot, whatever the network does, then ask
+  // the server for the new (empty) state.
+  useEffect(() => {
+    if (!cutoffAt) return;
+    const ms = new Date(cutoffAt).getTime() - Date.now();
+    const clear = () => {
+      setOrders([]);
+      setActiveOrders([]);
+      setEmailJobs({});
+      void refresh();
+    };
+    // setTimeout caps at ~24.8 days; the cutoff is always within a day.
+    const id = window.setTimeout(clear, Math.max(0, ms) + 500);
+    return () => window.clearTimeout(id);
+  }, [cutoffAt, refresh]);
 
   // Is sound actually coming out? A shift resumed after a page reload has no
   // audio permission until someone touches the screen once more, and a silent
@@ -281,30 +328,23 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         const fd = new FormData();
         fd.set("orderId", orderId);
         for (const [k, v] of Object.entries(fields)) fd.set(k, v);
-        const result = await updateOrderStatusAction(null, fd);
-        // Keep the just-accepted order around (with the ETA the staff picked)
-        // so its print button is available. Printing is NEVER automatic.
-        if (result?.ok && fields.status === "ACCEPTED") {
-          const accepted = orders.find((o) => o.id === orderId);
-          if (accepted) {
-            const withItems: OrderWithItems = {
-              ...accepted,
-              items: accepted.items ?? [],
-              status: "ACCEPTED",
-              estimatedTimeMinutes: Number(fields.estimatedTimeMinutes) || null,
-              acceptedAt: new Date().toISOString(),
-            };
-            setAcceptedOrders((prev) =>
-              [withItems, ...prev.filter((o) => o.id !== orderId)].slice(0, 8)
-            );
-          }
+        // The screen's view of the order travels along: if another tablet
+        // moved it first, the server answers with a conflict, not a change.
+        if (!fd.has("fromStatus")) {
+          const shown = [...orders, ...activeOrders].find((o) => o.id === orderId);
+          if (shown) fd.set("fromStatus", shown.status);
         }
+        const result = await updateOrderStatusAction(null, fd);
+        if (result && !result.ok) setStatusError({ orderId, message: result.error ?? "Грешка." });
+        else setStatusError(null);
+        // The accepted order appears in "В процес" with its print buttons on
+        // the next poll — printing is NEVER automatic.
         await refresh();
       } finally {
         setBusyOrderId(null);
       }
     },
-    [orders, refresh]
+    [orders, activeOrders, refresh]
   );
 
   return (
@@ -314,7 +354,9 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         shiftStarted,
         audioBlocked,
         orders,
-        acceptedOrders,
+        activeOrders,
+        emailJobs,
+        statusError,
         paymentAttention,
         printTemplates,
         storeStatus,

@@ -1,7 +1,9 @@
 import type { Order } from "@/types/order";
 import { formatEurPrice } from "@/lib/format-price";
 import { collectInstructionBg } from "@/lib/payments/status";
-import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
+import { extraKitchenLabel } from "@/lib/order-extras-display";
+import { buildTicketModel } from "@/lib/printer/ticket-model";
+import { comboSizesLabel, summariseCombos } from "@/lib/pizza-math";
 import {
   type PrintAlign,
   type PrintSectionId,
@@ -87,7 +89,7 @@ function formatTimestamp(iso: string | null | undefined): string | null {
 }
 
 function deliveryLabel(method: string): string {
-  return method === "DELIVERY" ? "ДОСТАВКА" : "ВЗЕМАНЕ ОТ МЯСТО";
+  return method === "PICKUP" ? "ВЗЕМАНЕ ОТ МЯСТО" : "ДОСТАВКА";
 }
 
 /**
@@ -216,26 +218,52 @@ export function buildTicket(
   push("customerName", order.customerName);
   push("customerPhone", `Тел: ${order.customerPhone}`);
   push("deliveryType", deliveryLabel(order.deliveryMethod));
-  push("address", `${order.deliveryAddress}, ${order.deliveryCity}`);
+  if (order.deliveryMethod !== "PICKUP") {
+    push("address", `${order.deliveryAddress}, ${order.deliveryCity}`);
+  }
   divider();
 
-  // ── Items ──
+  // ── Items: grouped by category, pizzas first, sauces last (ticket-model) ──
   const showPrice = sections.itemPrice.visible;
-  for (const item of order.items ?? []) {
-    push("items", `${item.quantity} x ${item.productNameBg}`, {
-      right: showPrice ? formatEurPrice(item.totalPriceEur) : undefined,
-    });
-    push("itemSize", item.variantName ? `Размер: ${item.variantName}` : null, { indent: "  " });
-    for (const extra of toOrderExtrasDisplay(item.extras, "bg")) {
-      push("itemExtras", `+ ${extraKitchenLabel(extra, item.quantity)}`, { indent: "  " });
+  const model = buildTicketModel(order);
+  for (const group of model.groups) {
+    for (const line of group.lines) {
+      push("items", `${line.quantity} x ${line.label}`, {
+        right: showPrice ? formatEurPrice(line.totalPriceEur) : undefined,
+      });
+      push("itemSize", line.size ? `Размер: ${line.size}` : null, { indent: "  " });
+      for (const extra of line.extras) {
+        push("itemExtras", `+ ${extraKitchenLabel(extra, line.quantity)}`, { indent: "  " });
+      }
+      push("itemNote", line.note ? `Бележка: ${line.note}` : null, { indent: "  " });
     }
-    push("itemNote", item.itemNote ? `Бележка: ${item.itemNote}` : null, { indent: "  " });
+  }
+  if (model.sauces.length > 0) {
+    push("items", "Сосове:");
+    for (const sauce of model.sauces) {
+      push("items", `${sauce.quantity} x ${sauce.label}`, {
+        right: showPrice ? formatEurPrice(sauce.totalPriceEur) : undefined,
+      });
+      push("itemSize", sauce.size ? `Разфасовка: ${sauce.size}` : null, { indent: "  " });
+      push("itemNote", sauce.note ? `Бележка: ${sauce.note}` : null, { indent: "  " });
+    }
   }
   divider();
 
   // ── Money ──
+  for (const combo of summariseCombos(order.offer ?? [])) {
+    push(
+      "payment",
+      `${combo.count > 1 ? `${combo.count} x ` : ""}Оферта 2 пици ${comboSizesLabel(combo.sizes)}`,
+      { right: formatEurPrice(combo.comboEur) }
+    );
+  }
   if (order.discountEur > 0) {
     push("payment", "Отстъпка „Грешна математика“", { right: `-${formatEurPrice(order.discountEur)}` });
+  } else if (order.discountEur < 0) {
+    // Only in the "fixed" combo mode (lib/pizza-math.ts): the package price
+    // was above the pizzas' regular prices.
+    push("payment", "Пакетна цена над редовната", { right: `+${formatEurPrice(-order.discountEur)}` });
   }
   push("payment", `Плащане: ${paymentLabel(order)}`);
   push("grandTotal", "ОБЩО", { right: formatEurPrice(order.totalEur) });

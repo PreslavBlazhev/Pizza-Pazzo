@@ -1,5 +1,6 @@
 import { ShiftAlarmBar } from "@/components/admin/ShiftAlarmBar";
 import { ShiftProvider } from "@/components/admin/ShiftProvider";
+import { ExpiryRefresh } from "@/components/orders/ExpiryRefresh";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { requireRole } from "@/lib/auth";
 import { getStoreStatus } from "@/lib/store-status";
@@ -35,6 +36,7 @@ export default async function AdminLayout({
     // wants the alarm to ring on every admin screen while a shift is running.
     // Mounted once here, it also guarantees a single poller and a single siren.
     <ShiftProvider>
+      <ExpiryRefresh />
       <div className="flex min-h-screen flex-col lg:flex-row bg-pizza-cream">
         <AdminSidebar sessionUser={sessionUser} storeStatus={storeStatus} />
         {/* Room at the bottom for the alarm bar, which is fixed over the page. */}

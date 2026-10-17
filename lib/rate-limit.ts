@@ -52,6 +52,14 @@ export function clientIp(headers: Headers): string {
   return first || headers.get("x-real-ip")?.trim() || "unknown";
 }
 
+/** The public tracking API (app/api/track): a page polls every 15 s. */
+export const TRACKING_RATE_LIMITS = {
+  /** Requests per address — several phones behind one Wi-Fi still fit. */
+  perIp: { limit: 60, windowMs: 60_000 },
+  /** Token checks per address — what makes guessing pointless on top of the 256-bit MAC. */
+  lookupsPerIp: { limit: 20, windowMs: 60_000 },
+} as const satisfies Record<string, RateLimitRule>;
+
 export const PAYMENT_RATE_LIMITS = {
   /** "Pay" clicks per address — a family on one Wi-Fi still fits. */
   startPerIp: { limit: 20, windowMs: 60_000 },

@@ -1,33 +1,25 @@
 /**
- * Prints the customer "order accepted" e-mail (plain-text part) for the
- * bundled sample order, with the merchant block exactly as the sender builds
- * it. Nothing is sent. Usage: npx tsx scripts/preview-accepted-email.ts
+ * Renders the customer "order accepted" e-mail for the bundled sample order
+ * (synthetic data) — plain text to stdout, and with an output folder also the
+ * HTML and text files. Nothing is sent.
+ *
+ *   npx tsx scripts/preview-accepted-email.ts [outDir]
  */
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { customerOrderAcceptedEmail } from "@/lib/email-templates/customer-order-accepted";
 import { SAMPLE_PRINT_ORDER } from "@/lib/printer/sample-order";
-import { companyFor } from "@/content/legal/company";
-import { LEGAL_VERSIONS } from "@/content/legal/versions";
 
-const c = companyFor("bg");
-const order = {
-  ...SAMPLE_PRINT_ORDER,
-  items: SAMPLE_PRINT_ORDER.items ?? [],
-  consent: {
-    termsVersion: LEGAL_VERSIONS.terms,
-    refundsVersion: LEGAL_VERSIONS.refunds,
-    privacyVersion: LEGAL_VERSIONS.privacy,
-    recordedAt: new Date().toISOString(),
-  },
-};
+const order = { ...SAMPLE_PRINT_ORDER, items: SAMPLE_PRINT_ORDER.items ?? [] };
 const mail = customerOrderAcceptedEmail(order, {
-  phone: "+359 88 248 4777",
-  email: "pizzapazzopln@gmail.com",
-  siteUrl: "https://pizzapazzo.bg",
-  merchant: {
-    legalName: c.legalName,
-    uic: c.uic,
-    vatNumber: c.vatNumber,
-    registeredAddress: c.correspondenceAddress,
-  },
+  phone: "064 801 999",
+  trackingUrl: "https://pizzapazzo.bg/track#t=EXAMPLE-TOKEN",
 });
 console.log(`Subject: ${mail.subject}\n\n${mail.text}`);
+
+const out = process.argv[2];
+if (out) {
+  mkdirSync(out, { recursive: true });
+  writeFileSync(path.join(out, "accepted-email.html"), `<!doctype html><meta charset="utf-8">${mail.html}`);
+  writeFileSync(path.join(out, "accepted-email.txt"), `Subject: ${mail.subject}\n\n${mail.text}\n`);
+}

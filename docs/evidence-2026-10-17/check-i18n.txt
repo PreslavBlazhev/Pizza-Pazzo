@@ -1,0 +1,2 @@
+i18n OK — 711 keys, locales in sync: bg, en
+exit 0

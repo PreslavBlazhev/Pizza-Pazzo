@@ -28,6 +28,7 @@
 import { WEEKDAYS, type RestaurantHours, type Weekday } from "../types/settings";
 import type { StoreStatus } from "../types/store-status";
 import { addSofiaDays, sofiaParts, sofiaWallClockToUtc } from "./report-period";
+import { isAfterDailyCutoff, nextSofiaMidnight } from "./order-retention";
 
 /** How far ahead to look for the next opening. */
 const SEARCH_DAYS = 8;
@@ -178,6 +179,22 @@ export function resolveStoreStatus(
 ): StoreStatus {
   const serverTime = now.toISOString();
   const base = { forcedOpen: false, forcedOpenUntil: null, serverTime };
+
+  // The day ends at 22:30 (lib/order-retention.ts): from then until midnight
+  // nothing is taken — not by the hours, not by a forced opening, not by a
+  // closure that would "end" sooner. The lists are emptied at 22:30, so an
+  // order placed now would belong to a day that no longer exists. Ordering
+  // resumes with the next day's opening hours.
+  if (isAfterDailyCutoff(now)) {
+    const reopensAt = nextOpeningAfter(hours, nextSofiaMidnight(now));
+    return {
+      ...base,
+      isOpen: false,
+      reason: "daily_cutoff",
+      reopensAt: reopensAt ? reopensAt.toISOString() : null,
+      needsManualReopen: false,
+    };
+  }
 
   if (overrideActive(closure, now)) {
     if (closure.until === null) {

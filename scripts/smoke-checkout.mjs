@@ -715,7 +715,7 @@ if (mods) {
   {
     const width = deliveryTemplate.charsPerLine;
     const t1 = buildTicketText(order([item({ extras: [crust] })]), deliveryTemplate);
-    check("ticket prints the size line", t1.includes("Размер: 30 см / 30 cm"));
+    check("ticket prints the size line (the Bulgarian part of the snapshot)", t1.includes("Размер: 30 см"));
     check("ticket prints the crust", t1.includes("+ Кашкавален борд"));
     check("ticket keeps the line total", t1.includes("10.23 €"));
 
@@ -723,7 +723,10 @@ if (mods) {
       order([item({ quantity: 2, totalPriceEur: 27.64, extras: [crust, sauceX2] })]),
       deliveryTemplate
     );
-    check("ticket marks extras as per-unit on multi-quantity lines", t2.includes("+ 2x Чеснов сос / всяка"));
+    // 2026-10-17: sauces leave the dish and are summed at the end of the ticket.
+    check("ticket marks extras as per-unit on multi-quantity lines", t2.includes("+ Кашкавален борд / всяка"));
+    check("ticket prints the dish's sauces in the sauce section, summed (2 × 2)", t2.includes("4 x Сосове: Чеснов сос"));
+    check("ticket does not print the sauce under the dish as well", !t2.includes("+ 2x Чеснов сос"));
     check("ticket shows the main quantity", t2.includes("2 x Маргарита"));
 
     const t3 = buildTicketText(order([item()]), deliveryTemplate);
@@ -736,7 +739,7 @@ if (mods) {
     check("ticket loses no characters when wrapping", t4.replace(/\s+/g, "").includes(longName.replace(/\s+/g, "")));
 
     const t5 = buildTicketText(order([item({ extras: [{ ...sauceX2, quantity: 10, totalPriceEur: 10.2 }] })]), deliveryTemplate);
-    check("ticket handles sauce quantity 10", t5.includes("+ 10x Чеснов сос"));
+    check("ticket handles sauce quantity 10", t5.includes("10 x Сосове: Чеснов сос"));
   }
 
   // ── 8b. The template actually drives what comes out ──
@@ -823,11 +826,12 @@ if (mods) {
         { template: kitchenTemplate }
       )
     );
-    const [pizza, cola] = json.items;
-    check("extras array is present on the item", Array.isArray(pizza.extras) && pizza.extras.length === 2);
+    const [pizza, cola, sauces] = json.items;
+    check("extras array is present on the item (sauces moved out)", Array.isArray(pizza.extras) && pizza.extras.length === 1);
     check("extra name carries the per-unit hint", pizza.extras[0].name === "Кашкавален борд / всяка");
-    check("extra quantity stays its own field", pizza.extras[1].quantity === 2 && !pizza.extras[1].name.startsWith("2"));
-    check("extra price is the per-unit total", pizza.extras[1].price === 2.04);
+    check("the dish's price no longer carries its sauces", pizza.totalPrice === 23.56); // 27.64 − 4 × 1.02
+    check("sauces come last as their own item, summed", sauces.name === "Сосове: Чеснов сос" && sauces.quantity === 4);
+    check("the sauce item carries the sauces' price", sauces.totalPrice === 4.08 && sauces.section === "sauces");
     check("item without extras serializes to []", Array.isArray(cola.extras) && cola.extras.length === 0);
     check(
       "no internal identifiers are sent",

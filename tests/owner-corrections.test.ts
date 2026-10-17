@@ -29,6 +29,7 @@ import {
 } from "@/lib/extras-rules";
 import { telHref } from "@/lib/working-hours";
 import { linePreviewTotalEur, lineUnitPreviewEur, useCartStore } from "@/store/cart-store";
+import { cartTotals } from "@/lib/cart-totals";
 import type { CartExtraSelection, CartItem } from "@/types/cart";
 import type { Product } from "@/types/product";
 import { ALL_CONSENTS, CONTACT, key } from "./helpers";
@@ -319,7 +320,12 @@ test("maths: a mixed basket — preview total equals the server total to the cen
   assert.equal(r.ok, true);
   if (!r.ok) return;
   const row = await db.order.findUnique({ where: { orderNumber: r.orderNumber } });
-  assert.equal(Number(row?.totalEur), preview);
+  // Since 2026-10-17 four pizzas form two combos (40+30 saves 3.06, 40+40
+  // saves 2.55): the basket's preview and the server agree on that too.
+  assert.equal(Number(row?.subtotalEur), preview);
+  assert.equal(Number(row?.discountEur), 5.61);
+  assert.equal(Number(row?.totalEur), cartTotals(lines).total);
+  assert.equal(cartTotals(lines).total, 51.65);
 });
 
 test("maths: a 4th free topping in a crafted request refuses the whole order", async () => {

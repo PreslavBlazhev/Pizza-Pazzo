@@ -78,3 +78,27 @@ services:
         sync: false
       - key: PAYMENT_CURRENCY
         sync: false
+      # The scheduler's key for POST /api/maintenance/run (the 22:30 purge,
+      # the customer e-mail outbox and retries). ≥ 32 random characters.
+      - key: MAINTENANCE_SECRET
+        sync: false
+
+  # The scheduler for the daily 22:30 retention (lib/order-purge.ts). A Cron
+  # Job cannot mount the web service's disk, so it CALLS the web service.
+  # Every 5 minutes, UTC-agnostic: the purge is idempotent and the 22:30
+  # Sofia cutoff is computed by the app (summer/winter time included), so
+  # the schedule needs no DST handling. Commented out on purpose: creating it
+  # adds a (billed) service — enable it deliberately when deploying this
+  # change (IMPLEMENTATION_REPORT.md §10).
+  #
+  # - type: cron
+  #   name: pizza-pazzo-maintenance
+  #   runtime: node
+  #   schedule: "*/5 * * * *"
+  #   buildCommand: "true"
+  #   startCommand: >-
+  #     curl -fsS -X POST -H "Authorization: Bearer $MAINTENANCE_SECRET"
+  #     https://pizzapazzo.bg/api/maintenance/run
+  #   envVars:
+  #     - key: MAINTENANCE_SECRET
+  #       sync: false

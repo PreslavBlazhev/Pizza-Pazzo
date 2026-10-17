@@ -15,6 +15,7 @@ import {
 } from "@/components/home/PromoBanners";
 import { getCategories, getPopularProducts } from "@/lib/menu-data";
 import { SITE } from "@/lib/constants";
+import { TrackOrderCard } from "@/components/tracking/TrackingView";
 import type { Locale } from "@/i18n/routing";
 
 /** Keys into the `home.values` namespace, paired with their icon.
@@ -147,6 +148,9 @@ export default async function HomePage({
             <PizzaMathPromo className="hidden lg:block" />
           </div>
         </section>
+
+        {/* ── Current order (only for a visitor who has one) ───── */}
+        <TrackOrderCard />
 
         {/* ── Categories ───────────────────────────────────────── */}
         <section className="container py-16 sm:py-20">

@@ -1,8 +1,17 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
+import {
+  TRACK_COOKIE,
+  addToTrackCookie,
+  parseTrackCookie,
+  trackingTokenFor,
+} from "@/lib/order-tracking";
+import { nextCutoffAfter, retentionNow } from "@/lib/order-retention";
 import { getSessionUser } from "@/lib/auth";
-import { getProductById } from "@/lib/menu-data";
+import { getCategoryById, getProductById } from "@/lib/menu-data";
+import { maybePurgeExpiredOrders } from "@/lib/order-purge";
 import { getStoreStatus } from "@/lib/store-status";
 import { findOrderForCheckoutKey, placeOrder } from "@/lib/checkout/place-order";
 import { orderReceipt } from "@/lib/checkout/receipt";
@@ -51,9 +60,17 @@ export async function createOrder(
   // a stale tab, a resubmitted form or a crafted request.
   const storeStatus = await getStoreStatus();
   if (!storeStatus.isOpen) {
-    console.info(`[checkout] trace=${trace} refused: STORE_CLOSED`);
-    return { ok: false, error: t("STORE_CLOSED") };
+    // After 22:30 the reason is the end of the ordering day, not a closure —
+    // the basket the customer kept open is still theirs for tomorrow.
+    const code = storeStatus.reason === "daily_cutoff" ? "DAILY_CUTOFF" : "STORE_CLOSED";
+    console.info(`[checkout] trace=${trace} refused: ${code}`);
+    return { ok: false, error: t(code) };
   }
+
+  // Yesterday's orders must be gone before today's are written (a missed
+  // purge would otherwise collide with a re-used checkout key). Cheap: a no-op
+  // once this process has purged since the last cutoff.
+  await maybePurgeExpiredOrders();
 
   const sessionUser = await getSessionUser();
 
@@ -78,7 +95,7 @@ export async function createOrder(
       userId: sessionUser?.id ?? null,
       role: sessionUser?.role ?? null,
     },
-    { getProduct: getProductById }
+    { getProduct: getProductById, getCategory: getCategoryById }
   );
 
   if (!result.ok) {
@@ -101,6 +118,19 @@ export async function createOrder(
     };
   }
   console.info(`[checkout] trace=${trace} ok #${result.orderNumber}${result.duplicate ? " (repeat)" : ""}`);
+  // This browser may now follow the order: the tracking token goes into an
+  // HttpOnly cookie that expires at 22:30 with the order (never localStorage).
+  const token = trackingTokenFor(result.orderId);
+  if (token) {
+    const jar = await cookies();
+    jar.set(TRACK_COOKIE, addToTrackCookie(parseTrackCookie(jar.get(TRACK_COOKIE)?.value), token), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: nextCutoffAfter(retentionNow()),
+    });
+  }
   return {
     ok: true,
     orderNumber: result.orderNumber,

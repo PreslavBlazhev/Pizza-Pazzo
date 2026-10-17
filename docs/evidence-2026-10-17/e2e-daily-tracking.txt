@@ -1,0 +1,50 @@
+1. Two orders from one phone; the success page and the cookie
+  ✓ order #1005 placed
+  ✓ success page links to tracking
+  ✓ second order #1006
+  ✓ tracking cookie is HttpOnly
+  ✓ the cookie holds both orders
+  ✓ it expires within a day (at 22:30)
+  ✓ no tracking token in browser storage
+  ✓ no order details in browser storage after checkout
+2. Home card and /track at phone width
+  ✓ the card lists both current orders
+  ✓ with their real status
+  ✓ no horizontal scroll on the phone
+  ✓ step 1 active
+  ✓ a delivery shows five steps
+  ✓ shows the time of the last update
+3. The kitchen: accept and walk the order through
+  ✓ accepted order is in 'В процес'
+  ✓ its e-mail status is a separate line
+  ✓ a stale screen's tap changes nothing
+  ✓ customer sees 'Приета / Приготвя се'
+  ✓ the open page picked up 'В доставка' by itself
+  ✓ a delivered order leaves 'В процес'
+  ✓ customer sees 'Доставена'
+4. The e-mail link on another device; a forged token
+  ✓ the link opens the order without an account
+  ✓ the token is removed from the address bar
+  ✓ and remembered in an HttpOnly cookie
+  ✓ a forged token gets the generic message
+  ✓ an order NUMBER is not a credential (404)
+  ✓ no-store and no-referrer on the answer
+5. Losing and regaining the connection
+  ✓ the page says the connection is lost
+  ✓ and recovers when it is back
+6. The kitchen ticket of a live order
+  ✓ print job for a live order: 200
+7. 22:30 — the orders expire while every screen is open
+  ✓ the open tracking page clears itself
+  ✓ the kitchen board empties itself
+  ✓ the home card is gone
+  ✓ printing an expired order: 410
+  ✓ the admin detail page: 404
+  ✓ the tracking cookie is dropped once its orders are gone
+8. The maintenance job deletes them
+  ✓ POST /api/maintenance/run purged them
+  ✓ no order, line or e-mail job left
+  ✓ the endpoint refuses a wrong secret
+  ✓ no page errors
+
+E2E OK

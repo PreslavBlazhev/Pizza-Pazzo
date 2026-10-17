@@ -4,10 +4,11 @@ import { useState, useTransition } from "react";
 import { Link } from "@/i18n/navigation";
 import { openStoreAction } from "@/app/actions/store-closure";
 import { formatEurPrice } from "@/lib/format-price";
+import { comboSizesLabel } from "@/lib/pizza-math";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatSofiaTime, sofiaDayOffset } from "@/lib/store-hours";
 import { AndroidPrinterSettingsButton } from "./AndroidPrinterSettingsButton";
-import { PrintOrderButtons } from "./PrintOrderButton";
+import { ActiveOrdersList } from "./ActiveOrdersList";
 import { closureEndsShift, useShift } from "./ShiftProvider";
 import type { Order } from "@/types/order";
 import type { StoreStatus } from "@/types/store-status";
@@ -33,7 +34,9 @@ export function LiveOrdersBoard() {
     shiftStarted,
     audioBlocked,
     orders,
-    acceptedOrders,
+    activeOrders,
+    emailJobs,
+    statusError,
     paymentAttention,
     printTemplates,
     storeStatus,
@@ -177,35 +180,15 @@ export function LiveOrdersBoard() {
         </div>
       )}
 
-      {shiftStarted && acceptedOrders.length > 0 && (
-        <div className="mt-8">
-          <h2 className="mb-3 text-lg font-bold text-neutral-700">
-            Приети наскоро — печат на бележка
-          </h2>
-          <div className="space-y-3">
-            {acceptedOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex flex-col gap-3 rounded-2xl border-2 border-pizza-green/40 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="text-lg font-extrabold text-pizza-ink">
-                    ✓ Поръчка #{order.orderNumber}
-                    {order.estimatedTimeMinutes && (
-                      <span className="ml-2 text-sm font-semibold text-pizza-green-dark">
-                        {order.estimatedTimeMinutes} мин
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-sm text-neutral-500">
-                    {order.customerName} · {order.deliveryAddress}
-                  </p>
-                </div>
-                <PrintOrderButtons order={order} templates={printTemplates} compact />
-              </div>
-            ))}
-          </div>
-        </div>
+      {shiftStarted && (
+        <ActiveOrdersList
+          orders={activeOrders}
+          emailJobs={emailJobs}
+          printTemplates={printTemplates}
+          busyOrderId={busyOrderId}
+          statusError={statusError}
+          onSubmit={submitStatus}
+        />
       )}
     </div>
   );
@@ -346,6 +329,13 @@ function LiveOrderCard({
               );
             })}
           </ul>
+          {order.discountEur > 0 && (
+            <p className="mt-2 text-sm font-semibold text-pizza-green-dark" data-testid="live-combo">
+              Оферта „Грешна математика“
+              {order.offer.length > 0 ? ` (${order.offer.map((c) => comboSizesLabel(c.sizes)).join(", ")})` : ""}: −
+              {formatEurPrice(order.discountEur)}
+            </p>
+          )}
           <p className="mt-2 border-t pt-2 text-xl font-bold">
             Общо: {formatEurPrice(order.totalEur)}
           </p>
@@ -493,9 +483,11 @@ function StoreClosedNotice({
         ? when
           ? `Заведението е затворено. Отваря се автоматично ${when} — не е нужно да правите нищо.`
           : "Заведението е затворено."
-        : when
-          ? `Извън работно време. Поръчките тръгват отново ${when}.`
-          : "Извън работно време.";
+        : status.reason === "daily_cutoff"
+          ? `След 22:30 денят приключи — всички поръчки са изтрити и нови не се приемат${when ? `. Приемаме отново ${when}` : ""}.`
+          : when
+            ? `Извън работно време. Поръчките тръгват отново ${when}.`
+            : "Извън работно време.";
 
   function handleReopen() {
     setError(null);

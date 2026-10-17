@@ -227,24 +227,27 @@ test("a pair with one cheap and one regular pizza: only the excess comes off", a
   });
 });
 
-test("speciality pizzas are excluded: one or both in the pair → normal prices", async () => {
-  assert.equal(pm([pizza(30, 11.76, 1, "cat_pizzas_special"), pizza(30, 9.71)]), 0);
+// 2026-10-17: the combos apply to every pizza category ("независимо от вида
+// им") and to 3+ pizzas — tests/pizza-combos.test.ts covers the algorithm.
+test("speciality pizzas take part like any other pizza", async () => {
+  assert.equal(pm([pizza(30, 11.76, 1, "cat_pizzas_special"), pizza(30, 9.71)]), 4.6);
   await assertSame([line("prod_syomga", 30, 1), line("prod_peperoni_maks", 30, 1)], {
     subtotal: 21.47,
-    discount: 0,
-    total: 21.47,
+    discount: 4.6,
+    total: 16.87,
   });
   await assertSame([line("prod_syomga", 40, 1), line("prod_proshuto", 40, 1)], {
     subtotal: 30.68,
-    discount: 0,
-    total: 30.68,
+    discount: 7.67,
+    total: 23.01,
   });
 });
 
-test("a speciality pizza still counts: 2 standard + 1 special is 3 pizzas → no offer", async () => {
+test("2 standard + 1 speciality: the dearest two pair, the third pays its price", async () => {
+  // 11.76 + 9.71 → 16.87, the other 9.71 stays: 31.18 − 4.60 = 26.58
   await assertSame(
     [line("prod_peperoni_maks", 30, 2), line("prod_proshuto", 30, 1)],
-    { subtotal: 31.18, discount: 0, total: 31.18 }
+    { subtotal: 31.18, discount: 4.6, total: 26.58 }
   );
 });
 
@@ -253,21 +256,22 @@ test("one line with quantity 2 is two pizzas — the same as two lines", async (
   await assertSame([line("prod_peperoni_maks", 30, 2)], { subtotal: 19.42, discount: 2.55, total: 16.87 });
 });
 
-test("3 pizzas: all at normal prices, none paired off", async () => {
-  assert.equal(pm([pizza(30, 9.71, 3)]), 0);
-  await assertSame([line("prod_peperoni_maks", 30, 3)], { subtotal: 29.13, discount: 0, total: 29.13 });
+test("3 pizzas: one pair, the cheapest choice for the customer", async () => {
+  assert.equal(pm([pizza(30, 9.71, 3)]), 2.55);
+  await assertSame([line("prod_peperoni_maks", 30, 3)], { subtotal: 29.13, discount: 2.55, total: 26.58 });
+  // 40 (12.78) + 30 (9.71) → 19.43 saves 3.06; the Margherita 30 (6.65) stays.
   await assertSame(
     [line("prod_peperoni_maks", 40, 1), line("prod_moyata_patso", 30, 1), line("prod_margarita", 30, 1)],
-    { subtotal: 29.14, discount: 0, total: 29.14 }
+    { subtotal: 29.14, discount: 3.06, total: 26.08 }
   );
 });
 
-test("4 pizzas: all at normal prices", async () => {
-  assert.equal(pm([pizza(30, 9.71, 2), pizza(40, 12.78, 2)]), 0);
+test("4 pizzas: two pairs, mixed when that is cheaper (2 × 40+30 beats 30+30 & 40+40)", async () => {
+  assert.equal(pm([pizza(30, 9.71, 2), pizza(40, 12.78, 2)]), 6.12);
   await assertSame([line("prod_peperoni_maks", 30, 2), line("prod_moyata_patso", 40, 2)], {
     subtotal: 44.98,
-    discount: 0,
-    total: 44.98,
+    discount: 6.12,
+    total: 38.86,
   });
 });
 
@@ -368,8 +372,8 @@ test("basket edits switch the offer on and off and recompute the total", () => {
 
   const lineId = useCartStore.getState().items[0].lineId;
   store.updateQuantity(lineId, 3);
-  assert.equal(totals().discount, 0, "three pizzas: no offer");
-  assert.equal(totals().total, 29.13);
+  assert.equal(totals().discount, 2.55, "three pizzas: one pair");
+  assert.equal(totals().total, 26.58);
 
   store.updateQuantity(lineId, 2);
   assert.equal(totals().total, 16.87, "back to two: the offer returns");
@@ -383,10 +387,10 @@ test("basket edits switch the offer on and off and recompute the total", () => {
     { s: 31.7, d: 2.55, t: 29.15 }
   );
 
-  // A speciality pizza joins: three pizzas → normal prices.
+  // A speciality 30 cm joins: 40 (12.78) + 30 (11.76) → 19.43 saves 5.11.
   store.addProduct(MENU.prod_syomga, MENU.prod_syomga.variants![0], 1);
-  assert.equal(totals().discount, 0);
-  assert.equal(totals().total, 43.46);
+  assert.equal(totals().discount, 5.11);
+  assert.equal(totals().total, 38.35);
 
   // …and leaves again.
   const special = useCartStore.getState().items.find((i) => i.product.id === "prod_syomga")!;
@@ -422,6 +426,6 @@ test("BG and EN have every new text, with the same placeholders", () => {
   assert.equal(ph(bg.cart.unavailableAtCheckout), ph(en.cart.unavailableAtCheckout));
   assert.match(bg.cart.pizzaMathHint, /16\.87 €.*19\.43 €.*23\.01 €/);
   assert.match(en.cart.pizzaMathHint, /16\.87 €.*19\.43 €.*23\.01 €/);
-  // British English: “speciality”, not “specialty”.
-  assert.match(en.cart.pizzaMathHint, /speciality/);
+  assert.match(bg.cart.pizzaMathHint, /всеки две пици/);
+  assert.match(en.cart.pizzaMathHint, /every two pizzas/);
 });

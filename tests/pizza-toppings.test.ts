@@ -318,7 +318,10 @@ test("order: 3 × Маргарита 40 cm with mushrooms + bacon + kashkaval = 
   const row = await db.order.findUnique({ where: { orderNumber: r.orderNumber }, include: { items: true } });
   assert.ok(row);
   assert.equal(Number(row.subtotalEur), 64.44);
-  assert.equal(Number(row.totalEur), 64.44);
+  // Three pizzas = one 40+40 combo since 2026-10-17 (base 25.56 → 23.01);
+  // the toppings are never part of it.
+  assert.equal(Number(row.discountEur), 2.55);
+  assert.equal(Number(row.totalEur), 61.89);
   const item = row.items[0];
   assert.equal(Number(item.unitPriceEur), 12.78); // the base stays the base
   assert.equal(Number(item.totalPriceEur), 64.44);

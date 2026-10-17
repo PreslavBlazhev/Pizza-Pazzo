@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   isAndroidPrinterAvailable,
-  requestOrderPrint,
+  requestPrintJson,
   PRINT_RESULT_EVENT,
   type PrintResultDetail,
   type PrintState,
@@ -28,13 +28,11 @@ const RESULT_TIMEOUT_MS = 45_000;
 export function PrintOrderButton({
   order,
   templateId,
-  template,
   compact = false,
 }: {
   order: OrderWithItems;
+  /** Which layout; the server resolves it and builds the job (…/printable). */
   templateId: PrintTemplateId;
-  /** Resolved layout. Absent → the app falls back to its built-in layout. */
-  template?: PrintTemplateData;
   compact?: boolean;
 }) {
   // Bridge detection must happen after mount: during SSR (and the first client
@@ -94,11 +92,36 @@ export function PrintOrderButton({
 
   const busy = state === "CONNECTING" || state === "PRINTING";
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (busy) return; // double-tap guard (the app has its own lock as well)
     setState("CONNECTING");
     setMessage("Свързване с принтера…");
-    const sent = requestOrderPrint(order, { isReprint: printedOnce, template });
+    // The job is built by the SERVER from the order as it is now: an order
+    // that expired at 22:30 is refused there and nothing is printed.
+    let json: string | null = null;
+    try {
+      const res = await fetch(
+        `/api/admin/orders/${encodeURIComponent(order.id)}/printable?t=${templateId.toLowerCase()}${
+          printedOnce ? "&reprint=1" : ""
+        }`,
+        { cache: "no-store" }
+      );
+      if (res.status === 410) {
+        setState("ERROR");
+        setMessage("Поръчката е изтекла (22:30) и вече не може да се печата.");
+        return;
+      }
+      if (!res.ok) throw new Error(String(res.status));
+      json = ((await res.json()) as { json?: string }).json ?? null;
+    } catch {
+      json = null;
+    }
+    if (!json) {
+      setState("ERROR");
+      setMessage("Няма връзка със сървъра — опитайте отново.");
+      return;
+    }
+    const sent = requestPrintJson(json);
     if (!sent) {
       setState("ERROR");
       setMessage("Принтерът не е достъпен.");
@@ -124,7 +147,7 @@ export function PrintOrderButton({
       <button
         type="button"
         disabled={busy}
-        onClick={handlePrint}
+        onClick={() => void handlePrint()}
         className={`rounded-2xl font-extrabold text-white shadow-md transition disabled:opacity-60 ${
           compact ? "px-4 py-2 text-sm" : "w-full px-6 py-3.5 text-lg sm:w-auto"
         } ${state === "ERROR" ? "bg-red-600 hover:bg-red-700" : "bg-pizza-ink hover:bg-neutral-700"}`}
@@ -163,7 +186,6 @@ export function PrintOrderButtons({
           key={template.id}
           order={order}
           templateId={template.id}
-          template={template}
           compact={compact}
         />
       ))}

@@ -10,7 +10,8 @@
  * components, never during SSR (there is no `window` on the server).
  */
 
-import { toOrderExtrasDisplay, withPerUnitHint } from "@/lib/order-extras-display";
+import { withPerUnitHint } from "@/lib/order-extras-display";
+import { buildTicketModel } from "@/lib/printer/ticket-model";
 import { collectInstructionBg } from "@/lib/payments/status";
 import type { OrderWithItems } from "@/types/order";
 import { PRINT_SECTIONS, type PrintTemplateData } from "@/types/print";
@@ -112,6 +113,41 @@ export function buildPrintableOrderJson(
   options: PrintableOrderOptions = {}
 ): string {
   const { isReprint = false, template } = options;
+  // The same grouped, labelled list the web ticket prints (ticket-model):
+  // pizzas first, "Категория: Име" on every line, sauces summed at the end.
+  // The app prints `items` in the order given, so the existing app versions
+  // print the new layout without an update; `section` is extra information
+  // a newer app may use and older ones ignore.
+  const model = buildTicketModel(order);
+  const dishItems = model.groups.flatMap((group) =>
+    group.lines.map((line) => ({
+      name: line.label,
+      quantity: line.quantity,
+      size: line.size,
+      unitPrice: line.quantity > 0 ? Math.round((line.totalPriceEur / line.quantity) * 100) / 100 : 0,
+      totalPrice: line.totalPriceEur,
+      // Always an array (never undefined) — the Kotlin parser expects one.
+      extras: line.extras.map((e) => ({
+        name: withPerUnitHint(e.name, line.quantity),
+        quantity: e.quantity,
+        price: e.totalPriceEur,
+      })),
+      note: line.note,
+      section: "dishes",
+      category: line.categoryLabel,
+    }))
+  );
+  const sauceItems = model.sauces.map((sauce) => ({
+    name: sauce.label,
+    quantity: sauce.quantity,
+    size: sauce.size,
+    unitPrice: sauce.quantity > 0 ? Math.round((sauce.totalPriceEur / sauce.quantity) * 100) / 100 : 0,
+    totalPrice: sauce.totalPriceEur,
+    extras: [],
+    note: sauce.note,
+    section: "sauces",
+    category: "Сосове",
+  }));
   return JSON.stringify({
     orderId: order.id,
     orderNumber: String(order.orderNumber),
@@ -125,23 +161,10 @@ export function buildPrintableOrderJson(
     },
     delivery: {
       type: order.deliveryMethod,
-      address: order.deliveryAddress,
-      city: order.deliveryCity,
+      address: order.deliveryMethod === "PICKUP" ? null : order.deliveryAddress,
+      city: order.deliveryMethod === "PICKUP" ? null : order.deliveryCity,
     },
-    items: order.items.map((item) => ({
-      name: item.productNameBg,
-      quantity: item.quantity,
-      size: item.variantName,
-      unitPrice: item.unitPriceEur,
-      totalPrice: item.totalPriceEur,
-      // Always an array (never undefined) — the Kotlin parser expects one.
-      extras: toOrderExtrasDisplay(item.extras, "bg").map((e) => ({
-        name: withPerUnitHint(e.name, item.quantity),
-        quantity: e.quantity,
-        price: e.totalPriceEur,
-      })),
-      note: item.itemNote,
-    })),
+    items: [...dishItems, ...sauceItems],
     paymentMethod: order.paymentMethod,
     // Ready-made instruction for the receipt (app 1.1.0+ prints it; older
     // builds ignore unknown keys and print the method code instead).
@@ -172,6 +195,16 @@ export function buildPrintableOrderJson(
 export function openAndroidPrinterSettings(): boolean {
   if (!isAndroidPrinterAvailable()) return false;
   window.AndroidPrinter!.openPrinterSettings();
+  return true;
+}
+
+/**
+ * Sends a print job the server already built (GET
+ * /api/admin/orders/:id/printable); the result arrives via PRINT_RESULT_EVENT.
+ */
+export function requestPrintJson(orderJson: string): boolean {
+  if (!isAndroidPrinterAvailable()) return false;
+  window.AndroidPrinter!.printOrder(orderJson);
   return true;
 }
 

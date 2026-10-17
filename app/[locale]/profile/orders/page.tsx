@@ -1,3 +1,4 @@
+import { ExpiryRefresh } from "@/components/orders/ExpiryRefresh";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -43,6 +44,7 @@ export default async function ProfileOrdersPage({ params }: PageProps) {
     <>
       <Header />
       <main className="container max-w-3xl py-12 sm:py-16">
+        <ExpiryRefresh />
         <div className="flex items-center gap-3 text-sm text-pizza-muted">
           <Link href="/profile" className="transition hover:text-brand">
             {tNav("profile")}

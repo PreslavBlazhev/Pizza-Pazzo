@@ -127,6 +127,7 @@ export function useStoreClosedMessage(): string | null {
   if (!status || status.isOpen) return null;
 
   if (!status.reopensAt) {
+    if (status.reason === "daily_cutoff") return t("closedCutoffUnknown");
     return status.reason === "manual_indefinite"
       ? t("closedIndefinite")
       : t("closedUnknown");
@@ -144,6 +145,13 @@ export function useStoreClosedMessage(): string | null {
   // The wording differs by cause: a manual pause is a pause ("приемаме поръчки
   // отново"), the end of the working day is the normal schedule ("работим
   // отново") — the customer should not read a closed evening as a hiccup.
+  // After 22:30 the day is over (lib/order-retention.ts) — say so plainly, so
+  // a basket kept open past the cutoff is not mistaken for a hiccup.
+  if (status.reason === "daily_cutoff") {
+    if (offset <= 1) return t("closedCutoffTomorrow", { time });
+    return t("closedCutoffDate", { date, time });
+  }
+
   if (status.reason === "hours") {
     if (offset <= 0) return t("closedHoursToday", { time });
     if (offset === 1) return t("closedHoursTomorrow", { time });

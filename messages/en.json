@@ -123,7 +123,7 @@
         "offer4030": "40 + 30 → 19.43 €",
         "offer4040": "40 + 40 → 23.01 €",
         "noteLine1": "You add the pizzas up in centimetres, and the arrow points to the price of the combination.",
-        "noteLine2": "This offer does not include the speciality pizzas!"
+        "noteLine2": "Applies automatically to every two pizzas in the order."
       }
     },
     "hero": {
@@ -393,7 +393,8 @@
     "total": "Total",
     "subtotal": "Items",
     "pizzaMathDiscount": "‘Wrong maths’ offer",
-    "pizzaMathHint": "‘Wrong maths’: 30 + 30 cm for 16.87 €, 40 + 30 cm for 19.43 €, 40 + 40 cm for 23.01 € — when the order has exactly 2 pizzas, speciality pizzas excluded. Paid toppings are charged separately.",
+    "pizzaMathCombo": "2-pizza offer {sizes}",
+    "pizzaMathHint": "‘Wrong maths’: 30 + 30 cm for 16.87 €, 40 + 30 cm for 19.43 €, 40 + 40 cm for 23.01 € — automatically for every two pizzas in the order. Paid toppings and sauces are charged separately.",
     "quantity": "Quantity",
     "quantityShort": "Qty: {count}",
     "remove": "Remove",
@@ -426,6 +427,9 @@
     "closedHoursTomorrow": "We are open again tomorrow from {time}.",
     "closedHoursDate": "We are open again on {date} from {time}.",
     "closedUnknown": "We are not taking online orders at the moment.",
+    "closedCutoffTomorrow": "We take no more orders for today after 22:30. Ordering opens again tomorrow from {time}.",
+    "closedCutoffDate": "We take no more orders for today after 22:30. Ordering opens again on {date} from {time}.",
+    "closedCutoffUnknown": "We take no more orders for today after 22:30.",
     "ordersPaused": "Online ordering is paused right now.",
     "closedShort": "Closed"
   },
@@ -493,6 +497,7 @@
     "finalTotalNote": "in euro, VAT included; delivery is free",
     "errors": {
       "STORE_CLOSED": "The restaurant is closed right now and is not taking orders. Please try again when we are open.",
+      "DAILY_CUTOFF": "We take no more orders for today after 22:30. Your basket is kept — order tomorrow when we open.",
       "PAYMENT_METHOD": "Please choose a payment method.",
       "CARD_UNAVAILABLE": "Card payment is not available right now. Please choose cash on delivery.",
       "CART_INVALID": "The basket is empty or invalid.",
@@ -524,7 +529,38 @@
     "backToMenu": "Back to the menu",
     "unconfirmedTitle": "We cannot confirm an order from this page",
     "unconfirmedBody": "This page does not show an accepted order. If you have just ordered, go back to checkout — your details and basket are kept, and sending again will not create a second order. You can also call us.",
-    "backToCheckout": "Back to checkout"
+    "backToCheckout": "Back to checkout",
+    "trackLink": "Track the order"
+  },
+  "tracking": {
+    "metaTitle": "Order tracking",
+    "title": "Track your order",
+    "intro": "The restaurant updates the status at every step — this page shows the last one recorded.",
+    "loading": "Loading…",
+    "connectionLost": "No connection — showing the last known status.",
+    "retry": "Try again",
+    "expired": "Tracking has expired. Orders are kept only until 22:30 on the day they are placed.",
+    "none": "There is no current order to track on this device.",
+    "toMenu": "To the menu",
+    "lastUpdated": "Last updated: {time}",
+    "orderNumber": "Order #{number}",
+    "delivery": "Delivery",
+    "pickup": "Collection",
+    "test": "Test order — it will not be prepared.",
+    "estimate": "Estimated time: about {minutes} min (around {time})",
+    "expiresNote": "Tracking ends today at {time}.",
+    "cancelled": "The order was cancelled. Please call the restaurant with any questions.",
+    "cancelledShort": "Cancelled",
+    "cardTitle": "Track your order",
+    "steps": {
+      "sent": "Sent — awaiting confirmation",
+      "preparing": "Accepted / Being prepared",
+      "ready": "Ready — waiting for the driver",
+      "readyPickup": "Ready for collection",
+      "onTheWay": "Out for delivery",
+      "done": "Delivered",
+      "donePickup": "Collected"
+    }
   },
   "auth": {
     "notConfigured": "This section will be enabled once Supabase is configured.",

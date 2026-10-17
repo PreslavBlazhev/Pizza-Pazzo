@@ -15,6 +15,8 @@ export const CLOSED_REASONS = [
   "manual_indefinite",
   /** Simply outside the opening hours. */
   "hours",
+  /** After 22:30 — the day is over and its orders are deleted (lib/order-retention.ts). */
+  "daily_cutoff",
 ] as const;
 
 export type ClosedReason = (typeof CLOSED_REASONS)[number];

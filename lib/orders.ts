@@ -8,11 +8,12 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { parseOrderItemExtras } from "@/lib/extras-rules";
-import { ACTIVE_ORDER_STATUSES, isTerminalStatus } from "@/lib/order-status";
-import { anonymiseIfPending } from "@/lib/privacy";
+import { parseOfferJson } from "@/lib/pizza-math";
+import { ACTIVE_ORDER_STATUSES } from "@/lib/order-status";
 import { startOfSofiaDay } from "@/lib/report-period";
 import type { AdminDashboardStats } from "@/types/admin";
 import {
+  isDeliveryMethod,
   isOrderStatus,
   isPaymentMethod,
   isPaymentStatus,
@@ -39,6 +40,11 @@ function mapItem(i: PrismaOrderWithItems["items"][number]): OrderItem {
     totalPriceEur: Number(i.totalPriceEur),
     // Defensive parse: legacy "[]" rows and any corrupted JSON both map to [].
     extras: parseOrderItemExtras(i.extrasJson),
+    discountEur: Number(i.discountEur ?? 0),
+    categoryId: i.categoryId ?? null,
+    categoryNameBg: i.categoryNameBg ?? null,
+    categoryNameEn: i.categoryNameEn ?? null,
+    categorySortOrder: i.categorySortOrder ?? null,
     itemNote: i.itemNote,
   };
 }
@@ -72,11 +78,12 @@ export function mapOrderRow(o: PrismaOrderRow): Order {
     notificationStatus: o.notificationStatus,
     notificationAttempts: o.notificationAttempts,
     notificationError: o.notificationError,
-    deliveryMethod: "DELIVERY",
+    deliveryMethod: isDeliveryMethod(o.deliveryMethod) ? o.deliveryMethod : "DELIVERY",
     status: isOrderStatus(o.status) ? o.status : "PENDING",
     subtotalEur: Number(o.subtotalEur),
     discountEur: Number(o.discountEur),
     totalEur: Number(o.totalEur),
+    offer: parseOfferJson(o.offerJson),
     estimatedTimeMinutes: o.estimatedTimeMinutes,
     adminNote: o.adminNote,
     acceptedAt: o.acceptedAt?.toISOString() ?? null,
@@ -137,6 +144,21 @@ export async function getPendingOrders(): Promise<Order[]> {
     where: { status: "PENDING", ...RELEASED_TO_KITCHEN },
     orderBy: { createdAt: "asc" },
     include: { items: true },
+  });
+  return rows.map(mapOrder);
+}
+
+/**
+ * Orders the kitchen is working on (accepted → out for delivery), oldest
+ * first, with their lines — the live board's "В процес" list with the next
+ * step buttons. Expired orders are never returned (lib/db.ts).
+ */
+export async function getActiveOrders(): Promise<Order[]> {
+  const rows = await db.order.findMany({
+    where: { status: { in: [...ACTIVE_ORDER_STATUSES] }, ...RELEASED_TO_KITCHEN },
+    orderBy: { createdAt: "asc" },
+    include: { items: true },
+    take: 50,
   });
   return rows.map(mapOrder);
 }
@@ -221,41 +243,6 @@ export function statusTimestamps(next: OrderStatus): Prisma.OrderUpdateInput {
   if (next === "CANCELLED") return { cancelledAt: now };
   if (next === "DELIVERED") return { completedAt: now };
   return {};
-}
-
-/** Optional fields written together with a status change. */
-export interface StatusUpdateExtras {
-  /** Estimated delivery time, set when accepting an order. */
-  estimatedTimeMinutes?: number;
-  /** Staff note, e.g. the reason for a cancellation. */
-  adminNote?: string;
-}
-
-/** Writes a validated status change. Assumes the transition was already checked. */
-export async function setOrderStatus(
-  id: string,
-  next: OrderStatus,
-  extras: StatusUpdateExtras = {}
-): Promise<void> {
-  await db.order.update({
-    where: { id },
-    data: {
-      status: next,
-      ...(extras.estimatedTimeMinutes !== undefined && {
-        estimatedTimeMinutes: extras.estimatedTimeMinutes,
-      }),
-      ...(extras.adminNote !== undefined && { adminNote: extras.adminNote }),
-      ...statusTimestamps(next),
-    },
-  });
-
-  // The order is closed, so an address nobody will drive to any more has no
-  // reason to exist. This only ever fires for an order whose customer deleted
-  // their account mid-delivery — see lib/privacy.ts. It runs after the status
-  // is safely committed, and does nothing at all otherwise.
-  if (isTerminalStatus(next)) {
-    await anonymiseIfPending(id);
-  }
 }
 
 /**

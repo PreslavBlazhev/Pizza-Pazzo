@@ -48,8 +48,18 @@ export function isPaymentStatus(value: unknown): value is PaymentStatus {
   return typeof value === "string" && (PAYMENT_STATUSES as readonly string[]).includes(value);
 }
 
-export const DELIVERY_METHODS = ["DELIVERY"] as const;
+/**
+ * How the food reaches the customer. The checkout offers DELIVERY only
+ * (lib/delivery-area.ts: pickupAvailable = false); PICKUP is understood by the
+ * status flow, the tracking page and the tickets, ready for the day it is
+ * switched on.
+ */
+export const DELIVERY_METHODS = ["DELIVERY", "PICKUP"] as const;
 export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
+
+export function isDeliveryMethod(value: unknown): value is DeliveryMethod {
+  return typeof value === "string" && (DELIVERY_METHODS as readonly string[]).includes(value);
+}
 
 /** Narrowing guard for a status coming out of the database (typed `string`). */
 export function isOrderStatus(value: unknown): value is OrderStatus {
@@ -62,6 +72,7 @@ export function isOrderStatus(value: unknown): value is OrderStatus {
  */
 export type { OrderItemExtra } from "@/lib/extras-rules";
 import type { OrderItemExtra as ItemExtra } from "@/lib/extras-rules";
+import type { PizzaComboSnapshot } from "@/lib/pizza-math";
 
 /** One line of an order (a snapshot taken at checkout). Money in `number`. */
 export interface OrderItem {
@@ -86,6 +97,14 @@ export interface OrderItem {
 
   /** Extras snapshot parsed from extrasJson; [] for legacy/extra-less rows. */
   extras: ItemExtra[];
+
+  /** This line's share of the order's combo discount (EUR); 0 = none. */
+  discountEur: number;
+  /** Menu category snapshot taken at checkout; null on older rows. */
+  categoryId: string | null;
+  categoryNameBg: string | null;
+  categoryNameEn: string | null;
+  categorySortOrder: number | null;
 
   itemNote: string | null;
 }
@@ -132,6 +151,8 @@ export interface Order {
   /** „Грешна математика“ discount; 0 = none. totalEur = subtotalEur − discountEur. */
   discountEur: number;
   totalEur: number;
+  /** The combos that make up `discountEur` (Order.offerJson); [] = none. */
+  offer: PizzaComboSnapshot[];
 
   estimatedTimeMinutes: number | null;
   adminNote: string | null;

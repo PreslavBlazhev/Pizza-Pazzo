@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useActionState } from "react";
-import { ORDER_STATUS_FLOW, ORDER_STATUS_LABELS_BG } from "@/lib/order-status";
+import { nextStepLabelBg, statusFlowFor } from "@/lib/order-status";
 import { updateOrderStatusAction } from "@/app/actions/order-admin";
 import { FormAlert } from "@/components/ui/FormAlert";
-import type { OrderStatus } from "@/types/order";
+import type { DeliveryMethod, OrderStatus } from "@/types/order";
 import type { ActionResult } from "@/types/auth";
 
 const QUICK_TIMES = [20, 30, 45, 60];
@@ -17,10 +17,13 @@ const QUICK_TIMES = [20, 30, 45, 60];
 export function OrderStatusControl({
   orderId,
   status,
+  deliveryMethod = "DELIVERY",
   cancelOnly = false,
 }: {
   orderId: string;
   status: OrderStatus;
+  /** Decides the allowed steps (a pickup order has no "В доставка"). */
+  deliveryMethod?: DeliveryMethod;
   /** Unconfirmed card payment: the only thing staff may do is cancel. */
   cancelOnly?: boolean;
 }) {
@@ -31,9 +34,8 @@ export function OrderStatusControl({
   const [quickTime, setQuickTime] = useState(30);
   const [customTime, setCustomTime] = useState("");
 
-  const nextStatuses = cancelOnly
-    ? ORDER_STATUS_FLOW[status].filter((s) => s === "CANCELLED")
-    : ORDER_STATUS_FLOW[status];
+  const flow = statusFlowFor(deliveryMethod);
+  const nextStatuses = cancelOnly ? flow[status].filter((s) => s === "CANCELLED") : flow[status];
   const canAccept = nextStatuses.includes("ACCEPTED");
   const canCancel = nextStatuses.includes("CANCELLED");
   const plainStatuses = nextStatuses.filter((s) => s !== "ACCEPTED" && s !== "CANCELLED");
@@ -53,6 +55,7 @@ export function OrderStatusControl({
       {canAccept && (
         <form action={formAction} className="rounded-xl border border-pizza-green/30 bg-pizza-green/5 p-3">
           <input type="hidden" name="orderId" value={orderId} />
+          <input type="hidden" name="fromStatus" value={status} />
           <input type="hidden" name="status" value="ACCEPTED" />
           <input type="hidden" name="estimatedTimeMinutes" value={resolvedTime} />
 
@@ -117,13 +120,14 @@ export function OrderStatusControl({
           {plainStatuses.map((s) => (
             <form key={s} action={formAction}>
               <input type="hidden" name="orderId" value={orderId} />
+          <input type="hidden" name="fromStatus" value={status} />
               <input type="hidden" name="status" value={s} />
               <button
                 type="submit"
                 disabled={isPending}
                 className="rounded-full border border-pizza-green/40 bg-white px-4 py-2 text-sm font-semibold text-pizza-green-dark transition hover:bg-pizza-green hover:text-white disabled:opacity-60"
               >
-                → {ORDER_STATUS_LABELS_BG[s]}
+                → {nextStepLabelBg(s, deliveryMethod)}
               </button>
             </form>
           ))}
@@ -133,6 +137,7 @@ export function OrderStatusControl({
       {canCancel && (
         <form action={formAction} className="rounded-xl border border-red-200 bg-red-50/50 p-3">
           <input type="hidden" name="orderId" value={orderId} />
+          <input type="hidden" name="fromStatus" value={status} />
           <input type="hidden" name="status" value="CANCELLED" />
           <input
             type="text"

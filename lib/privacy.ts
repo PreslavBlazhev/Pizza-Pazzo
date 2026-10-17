@@ -20,7 +20,7 @@ import { isTerminalStatus } from "@/lib/order-status";
  * driven. Its address is the only way to finish delivering it, and a delivery
  * the customer already paid for is a contract, not surveillance. Those are
  * marked [anonymizePending] and scrubbed the moment they reach DELIVERED or
- * CANCELLED — see `setOrderStatus` in lib/orders.ts.
+ * CANCELLED — see `changeOrderStatus` in lib/order-workflow.ts.
  */
 
 /**

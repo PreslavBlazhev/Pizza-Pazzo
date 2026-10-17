@@ -5,7 +5,7 @@
  * (see prisma/schema.prisma and types/order.ts). Pure data + a transition
  * guard — safe to import from both server and client code.
  */
-import { isOrderStatus, type OrderStatus } from "@/types/order";
+import { isOrderStatus, type DeliveryMethod, type OrderStatus } from "@/types/order";
 
 /** Bulgarian labels shown to staff/customers. */
 export const ORDER_STATUS_LABELS_BG: Record<OrderStatus, string> = {
@@ -49,23 +49,81 @@ export const ACTIVE_ORDER_STATUSES = [
 ] as const satisfies readonly OrderStatus[];
 
 /**
- * Allowed next statuses for each status. An empty array means the order has
- * reached a terminal state. Use {@link canTransition} to enforce this before
- * writing a status change.
+ * Allowed next statuses for a DELIVERY order. An empty array means the order
+ * has reached a terminal state. Use {@link canTransition} to enforce this
+ * before writing a status change.
+ *
+ * Every step the customer sees on the tracking page is a step staff take:
+ * a delivery goes READY → OUT_FOR_DELIVERY → DELIVERED (no skipping "В
+ * доставка", so the page never jumps from "Готова" to "Доставена").
  */
 export const ORDER_STATUS_FLOW: Record<OrderStatus, readonly OrderStatus[]> = {
   PENDING: ["ACCEPTED", "CANCELLED"],
   ACCEPTED: ["PREPARING", "CANCELLED"],
   PREPARING: ["READY", "CANCELLED"],
-  READY: ["OUT_FOR_DELIVERY", "DELIVERED"],
+  READY: ["OUT_FOR_DELIVERY"],
   OUT_FOR_DELIVERY: ["DELIVERED"],
   DELIVERED: [],
   CANCELLED: [],
 };
 
-/** True if `from → to` is a permitted status transition. */
-export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
-  return ORDER_STATUS_FLOW[from].includes(to);
+/**
+ * The same for an order the customer collects: there is no delivery step —
+ * READY ("Готова за получаване") is followed by DELIVERED, shown as
+ * "Получена".
+ */
+export const PICKUP_STATUS_FLOW: Record<OrderStatus, readonly OrderStatus[]> = {
+  ...ORDER_STATUS_FLOW,
+  READY: ["DELIVERED"],
+  OUT_FOR_DELIVERY: [],
+};
+
+/** The flow that applies to an order. */
+export function statusFlowFor(method: DeliveryMethod | string = "DELIVERY") {
+  return method === "PICKUP" ? PICKUP_STATUS_FLOW : ORDER_STATUS_FLOW;
+}
+
+/** True if `from → to` is a permitted status transition for that kind of order. */
+export function canTransition(
+  from: OrderStatus,
+  to: OrderStatus,
+  method: DeliveryMethod | string = "DELIVERY"
+): boolean {
+  return statusFlowFor(method)[from].includes(to);
+}
+
+/**
+ * The staff's labels for the step buttons, by delivery method. Not the same
+ * as the status names: a button says what the person DOES ("Изпрати с
+ * доставчик"), the badge what the order IS ("В доставка").
+ */
+export function nextStepLabelBg(to: OrderStatus, method: DeliveryMethod | string = "DELIVERY"): string {
+  switch (to) {
+    case "ACCEPTED":
+      return "Приеми";
+    case "PREPARING":
+      return "Започни приготвяне";
+    case "READY":
+      return method === "PICKUP" ? "Готова за получаване" : "Готова — чака доставчик";
+    case "OUT_FOR_DELIVERY":
+      return "Предадена на доставчик";
+    case "DELIVERED":
+      return method === "PICKUP" ? "Получена от клиента" : "Доставена";
+    case "CANCELLED":
+      return "Откажи";
+    default:
+      return ORDER_STATUS_LABELS_BG[to];
+  }
+}
+
+/** Status name for staff, with the pickup wording where it differs. */
+export function statusLabelBg(status: OrderStatus, method: DeliveryMethod | string = "DELIVERY"): string {
+  if (method === "PICKUP") {
+    if (status === "READY") return "Готова за получаване";
+    if (status === "DELIVERED") return "Получена";
+  }
+  if (status === "READY") return "Готова — чака доставчик";
+  return ORDER_STATUS_LABELS_BG[status];
 }
 
 /**

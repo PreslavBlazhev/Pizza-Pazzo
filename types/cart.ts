@@ -99,6 +99,8 @@ export interface CartTotals {
   total: number;
   /** Pizzas in the basket by quantity, speciality pizzas included. */
   pizzaCount: number;
+  /** The combos applied, counted by size pair (empty = none). */
+  combos: { sizes: "30+30" | "30+40" | "40+40"; count: number; comboEur: number }[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

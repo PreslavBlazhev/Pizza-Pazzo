@@ -2,6 +2,7 @@ import type { Order } from "@/types/order";
 import { formatEurPrice } from "@/lib/format-price";
 import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatDateTime } from "@/lib/utils";
+import { comboSizesLabel } from "@/lib/pizza-math";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { PrintOrderButtons } from "./PrintOrderButton";
@@ -124,6 +125,7 @@ export function OrderDetails({
         <OrderStatusControl
           orderId={order.id}
           status={order.status}
+          deliveryMethod={order.deliveryMethod}
           cancelOnly={awaitingMoney}
         />
       </section>
@@ -227,6 +229,12 @@ export function OrderDetails({
         {order.discountEur > 0 && (
           <>
             {priceRow("Продукти", order.subtotalEur)}
+            {order.offer.map((combo, i) => (
+              <p key={i} className="text-xs text-neutral-500" data-testid="order-combo">
+                Оферта {comboSizesLabel(combo.sizes)} = {formatEurPrice(combo.comboEur)}:{" "}
+                {combo.pizzasBg.join(" + ")} (редовно {formatEurPrice(combo.regularEur)})
+              </p>
+            ))}
             {priceRow("Отстъпка „Грешна математика“", -order.discountEur)}
           </>
         )}

@@ -1,6 +1,7 @@
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { CartTotals } from "@/types/cart";
 import { formatEurPrice } from "@/lib/format-price";
+import { comboSizesLabel } from "@/lib/pizza-math";
 
 /**
  * Euro total for the cart and checkout. Delivery is free, so without an offer
@@ -10,6 +11,7 @@ import { formatEurPrice } from "@/lib/format-price";
  */
 export function CartSummary({ totals }: { totals: CartTotals }) {
   const t = useTranslations("cart");
+  const unit = useLocale() === "en" ? "cm" : "см";
 
   return (
     <div className="space-y-1.5">
@@ -21,6 +23,21 @@ export function CartSummary({ totals }: { totals: CartTotals }) {
               {formatEurPrice(totals.subtotal)}
             </span>
           </div>
+          {totals.combos.map((c) => (
+            <div
+              key={c.sizes}
+              className="flex items-baseline justify-between gap-3 text-xs text-pizza-muted"
+              data-testid="cart-combo"
+            >
+              <span>
+                {t("pizzaMathCombo", { sizes: comboSizesLabel(c.sizes, unit) })}
+              </span>
+              <span className="whitespace-nowrap text-right">
+                {c.count > 1 ? `${c.count} × ` : ""}
+                {formatEurPrice(c.comboEur)}
+              </span>
+            </div>
+          ))}
           <div className="flex items-baseline justify-between gap-3 text-sm font-medium text-pizza-green-dark">
             <span>{t("pizzaMathDiscount")}</span>
             <span className="whitespace-nowrap text-right" data-testid="cart-discount">

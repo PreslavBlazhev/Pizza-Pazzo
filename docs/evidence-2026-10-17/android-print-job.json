@@ -1,0 +1,255 @@
+{
+  "orderId": "preview",
+  "orderNumber": "1042",
+  "createdAt": "2026-08-03T09:05:00.000Z",
+  "acceptedAt": "2026-08-03T09:12:00.000Z",
+  "estimatedMinutes": 30,
+  "customer": {
+    "name": "Иван Петров",
+    "phone": "+359 88 123 4567",
+    "email": "ivan@example.com"
+  },
+  "delivery": {
+    "type": "DELIVERY",
+    "address": "ул. Георги Кочев 13, вх. Б, ет. 3, ап. 12",
+    "city": "Плевен"
+  },
+  "items": [
+    {
+      "name": "Пица: Маргарита",
+      "quantity": 2,
+      "size": "40 см",
+      "unitPrice": 14.83,
+      "totalPrice": 29.66,
+      "extras": [
+        {
+          "name": "Кашкавален борд / всяка",
+          "quantity": 1,
+          "price": 4.6
+        }
+      ],
+      "note": null,
+      "section": "dishes",
+      "category": "Пица"
+    },
+    {
+      "name": "Пица: Пеперони Макс",
+      "quantity": 1,
+      "size": "40 см",
+      "unitPrice": 12.78,
+      "totalPrice": 12.78,
+      "extras": [],
+      "note": "Добре изпечена, нарязана на 8 парчета",
+      "section": "dishes",
+      "category": "Пица"
+    },
+    {
+      "name": "Пица: Пеперони Макс",
+      "quantity": 1,
+      "size": "30 см",
+      "unitPrice": 9.71,
+      "totalPrice": 9.71,
+      "extras": [],
+      "note": null,
+      "section": "dishes",
+      "category": "Пица"
+    },
+    {
+      "name": "Бургер: Пилешки",
+      "quantity": 1,
+      "size": null,
+      "unitPrice": 7.67,
+      "totalPrice": 7.67,
+      "extras": [],
+      "note": null,
+      "section": "dishes",
+      "category": "Бургер"
+    },
+    {
+      "name": "Салата: Шопска",
+      "quantity": 1,
+      "size": null,
+      "unitPrice": 8,
+      "totalPrice": 8,
+      "extras": [],
+      "note": "Без лук",
+      "section": "dishes",
+      "category": "Салата"
+    },
+    {
+      "name": "Напитка: Coca-Cola",
+      "quantity": 1,
+      "size": "1 л",
+      "unitPrice": 2.3,
+      "totalPrice": 2.3,
+      "extras": [],
+      "note": null,
+      "section": "dishes",
+      "category": "Напитка"
+    },
+    {
+      "name": "Сосове: Бургер сос",
+      "quantity": 1,
+      "size": null,
+      "unitPrice": 1.02,
+      "totalPrice": 1.02,
+      "extras": [],
+      "note": null,
+      "section": "sauces",
+      "category": "Сосове"
+    },
+    {
+      "name": "Сосове: Чеснов сос",
+      "quantity": 5,
+      "size": null,
+      "unitPrice": 1.02,
+      "totalPrice": 5.1,
+      "extras": [],
+      "note": null,
+      "section": "sauces",
+      "category": "Сосове"
+    }
+  ],
+  "paymentMethod": "CASH_ON_DELIVERY",
+  "paymentStatus": "CASH_DUE",
+  "paymentText": "В БРОЙ ПРИ ДОСТАВКА — СЪБЕРИ 73.18 €",
+  "isTest": false,
+  "customerNote": "Звънете при пристигане, звънецът не работи.",
+  "discount": 3.06,
+  "total": 73.18,
+  "currency": "EUR",
+  "isReprint": false,
+  "print": {
+    "templateId": "KITCHEN",
+    "name": "КУХНЯ",
+    "charsPerLine": 42,
+    "showDividers": true,
+    "feedLinesAfter": 4,
+    "autoCut": true,
+    "copies": 1,
+    "headerText": "PIZZA PAZZO",
+    "footerText": "",
+    "sections": {
+      "header": {
+        "visible": true,
+        "scale": 1,
+        "align": "center",
+        "bold": true
+      },
+      "ticketType": {
+        "visible": true,
+        "scale": 2,
+        "align": "center",
+        "bold": true
+      },
+      "orderNumber": {
+        "visible": true,
+        "scale": 2,
+        "align": "center",
+        "bold": true
+      },
+      "reprint": {
+        "visible": true,
+        "scale": 1,
+        "align": "center",
+        "bold": true
+      },
+      "createdAt": {
+        "visible": true,
+        "scale": 1,
+        "align": "center",
+        "bold": false
+      },
+      "acceptedAt": {
+        "visible": false,
+        "scale": 1,
+        "align": "center",
+        "bold": false
+      },
+      "eta": {
+        "visible": true,
+        "scale": 2,
+        "align": "center",
+        "bold": true
+      },
+      "customerName": {
+        "visible": false,
+        "scale": 1,
+        "align": "left",
+        "bold": false
+      },
+      "customerPhone": {
+        "visible": false,
+        "scale": 1,
+        "align": "left",
+        "bold": false
+      },
+      "deliveryType": {
+        "visible": true,
+        "scale": 1,
+        "align": "left",
+        "bold": true
+      },
+      "address": {
+        "visible": false,
+        "scale": 1,
+        "align": "left",
+        "bold": false
+      },
+      "items": {
+        "visible": true,
+        "scale": 2,
+        "align": "left",
+        "bold": true
+      },
+      "itemSize": {
+        "visible": true,
+        "scale": 1,
+        "align": "left",
+        "bold": false
+      },
+      "itemExtras": {
+        "visible": true,
+        "scale": 1,
+        "align": "left",
+        "bold": true
+      },
+      "itemNote": {
+        "visible": true,
+        "scale": 1,
+        "align": "left",
+        "bold": true
+      },
+      "itemPrice": {
+        "visible": false,
+        "scale": 1,
+        "align": "right",
+        "bold": false
+      },
+      "payment": {
+        "visible": false,
+        "scale": 1,
+        "align": "left",
+        "bold": false
+      },
+      "grandTotal": {
+        "visible": false,
+        "scale": 1,
+        "align": "left",
+        "bold": true
+      },
+      "customerNote": {
+        "visible": true,
+        "scale": 1,
+        "align": "left",
+        "bold": true
+      },
+      "footer": {
+        "visible": false,
+        "scale": 1,
+        "align": "center",
+        "bold": false
+      }
+    }
+  }
+}

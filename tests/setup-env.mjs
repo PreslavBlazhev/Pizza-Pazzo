@@ -31,6 +31,27 @@ process.env.PAYMENT_SIMULATOR_SECRET = "test-simulator-secret-0123456789";
 process.env.RESEND_API_KEY = "";
 process.env.ORDER_NOTIFICATION_EMAIL = "kitchen@example.test";
 process.env.FROM_EMAIL = "test@example.test";
+// Signs the order receipt and the tracking tokens. Set here so the suites do
+// not depend on whatever the developer's shell or .env happens to hold.
+process.env.AUTH_SECRET = "test-auth-secret-0123456789abcdef-tests-only";
+
+// Orders exist only until 22:30 Europe/Sofia (lib/order-retention.ts), and no
+// order can be placed between 22:30 and midnight. So that the suites pass at
+// any hour, a run that starts inside that window moves the retention clock
+// two hours back — the same Sofia day, so "today" in the reports still
+// matches. Tests about the cutoff itself pin the clock explicitly
+// (setRetentionClockForTests).
+{
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Sofia",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  const hour = Number(parts.find((p) => p.type === "hour")?.value);
+  const minute = Number(parts.find((p) => p.type === "minute")?.value);
+  if (hour * 60 + minute >= 22 * 60 + 25) globalThis.__ppRetentionOffsetMs = -2 * 60 * 60 * 1000;
+}
 
 execSync("npx prisma migrate deploy", {
   stdio: "ignore",

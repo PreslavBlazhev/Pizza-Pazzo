@@ -78,12 +78,21 @@ export default async function OrderSuccessPage({ params, searchParams }: PagePro
         <p className="mt-4 max-w-lg leading-relaxed text-pizza-muted">
           {t("subtitle")}
         </p>
-        <Link
-          href="/menu"
-          className="mt-8 rounded-full bg-brand px-8 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark"
-        >
-          {t("backToMenu")}
-        </Link>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link
+            href="/track"
+            className="rounded-full bg-pizza-green px-8 py-3.5 font-semibold text-white shadow-soft transition hover:bg-pizza-green-dark"
+            data-testid="track-link"
+          >
+            {t("trackLink")}
+          </Link>
+          <Link
+            href="/menu"
+            className="rounded-full bg-brand px-8 py-3.5 font-semibold text-white shadow-soft transition hover:bg-brand-dark"
+          >
+            {t("backToMenu")}
+          </Link>
+        </div>
       </main>
       <Footer />
     </>

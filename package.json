@@ -32,7 +32,8 @@
     "test:ubb": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/ubb-compliance.test.ts",
     "test:owner": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/owner-corrections.test.ts tests/checkout-resilience.test.ts tests/pizza-math.test.ts tests/checkout-trace.test.ts tests/pizza-toppings.test.ts",
     "test:toppings": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/pizza-toppings.test.ts",
-    "test": "npm run test:payments && npm run test:ubb && npm run test:owner",
+    "test:daily": "node --import tsx --import ./tests/setup-env.mjs --test --test-concurrency=1 tests/daily-retention.test.ts tests/pizza-combos.test.ts tests/ticket-model.test.ts tests/email-outbox.test.ts tests/order-tracking.test.ts",
+    "test": "npm run test:payments && npm run test:ubb && npm run test:owner && npm run test:daily",
     "db:verify-migration": "node scripts/verify-consent-migration.mjs",
     "e2e:ubb": "node --env-file=.env --import tsx scripts/e2e-ubb-browser.ts",
     "e2e:prod-guard": "node --env-file=.env --import tsx scripts/e2e-production-guard.ts",
@@ -41,7 +42,8 @@
     "e2e:checkout-language": "node --env-file=.env --import tsx scripts/e2e-checkout-language.ts",
     "e2e:hydration": "node --import tsx scripts/e2e-hydration.ts",
     "e2e:toppings-ui": "node --import tsx scripts/e2e-toppings-ui.ts",
-    "e2e:upgrade": "node --import tsx scripts/e2e-framework-upgrade.ts"
+    "e2e:upgrade": "node --import tsx scripts/e2e-framework-upgrade.ts",
+    "email:preview": "node --import tsx scripts/preview-accepted-email.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"

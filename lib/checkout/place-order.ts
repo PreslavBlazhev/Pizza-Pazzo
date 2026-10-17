@@ -17,6 +17,7 @@
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { isAfterDailyCutoff, retentionNow } from "@/lib/order-retention";
 import {
   checkoutSchema,
   CHECKOUT_FIELD_ERRORS,
@@ -29,7 +30,12 @@ import {
 import { LEGAL_VERSIONS } from "@/content/legal/versions";
 import { resolveOrderItemExtras, type ExtraSourceProduct } from "@/lib/extras-resolve";
 import { minimumOrderShortfallEur } from "@/lib/delivery-area";
-import { pizzaMathDiscount, type PizzaMathLine } from "@/lib/pizza-math";
+import {
+  comboSizeOf,
+  pizzaMathDiscount,
+  type PizzaComboSnapshot,
+  type PizzaMathLine,
+} from "@/lib/pizza-math";
 import {
   EXTRAS_LIMITS,
   isAddonOnlyCategory,
@@ -91,11 +97,25 @@ export interface PlaceOrderInput {
 export interface PlaceOrderDeps {
   /** Menu lookup, locale-aware (the action passes lib/menu-data getProductById). */
   getProduct: (id: string, locale: "bg" | "en") => Promise<Product | null | undefined>;
+  /**
+   * Category lookup for the snapshot the tickets group by (the action passes
+   * lib/menu-data getCategoryById). Optional: without it the lines keep only
+   * the category id, and the ticket prints the plain product name.
+   */
+  getCategory?: (
+    id: string,
+    locale: "bg" | "en"
+  ) => Promise<{ name: string; sortOrder: number } | null | undefined>;
 }
+
+/** Thrown inside the order transaction when the clock has passed 22:30. */
+class DailyCutoffError extends Error {}
 
 export type PlaceOrderResult =
   | {
       ok: true;
+      /** Internal id — the server derives the tracking token from it; never shown. */
+      orderId: string;
       orderNumber: number;
       paymentMethod: "CASH_ON_DELIVERY" | "CARD_ONLINE";
       /** Card orders only: the customer's key to the payment pages. */
@@ -127,6 +147,7 @@ function isUniqueViolation(err: unknown, field: string): boolean {
 }
 
 function resultForExisting(order: {
+  id: string;
   orderNumber: number;
   paymentMethod: string;
   accessToken: string | null;
@@ -134,6 +155,7 @@ function resultForExisting(order: {
   const card = order.paymentMethod === "CARD_ONLINE";
   return {
     ok: true,
+    orderId: order.id,
     orderNumber: order.orderNumber,
     paymentMethod: card ? "CARD_ONLINE" : "CASH_ON_DELIVERY",
     ...(card && order.accessToken ? { accessToken: order.accessToken } : {}),
@@ -237,7 +259,13 @@ export async function placeOrder(
     unitPriceEur: number;
     totalPriceEur: number;
     extrasJson: string;
+    discountEur: number;
+    categoryId: string;
+    categoryNameBg: string | null;
+    categoryNameEn: string | null;
+    categorySortOrder: number | null;
   }[] = [];
+  const categoryCache = new Map<string, { bg: string | null; en: string | null; sort: number | null }>();
 
   let subtotalEur = 0;
   const pizzaMathLines: PizzaMathLine[] = [];
@@ -326,6 +354,7 @@ export async function placeOrder(
     subtotalEur = (Math.round(subtotalEur * 100) + perUnitCents * it.quantity) / 100;
 
     pizzaMathLines.push({
+      key: `L${lineData.length}`,
       categoryId: pBg.categoryId,
       variantName: mainVariantNameBg ?? null,
       baseUnitEur: unitEur,
@@ -344,13 +373,43 @@ export async function placeOrder(
       unitPriceEur: unitEur,
       totalPriceEur: lineEur,
       extrasJson: JSON.stringify(extras),
+      discountEur: 0,
+      categoryId: pBg.categoryId,
+      ...(await (async () => {
+        let c = categoryCache.get(pBg.categoryId);
+        if (!c) {
+          const cBg = deps.getCategory ? await deps.getCategory(pBg.categoryId, "bg") : null;
+          const cEn = deps.getCategory ? await deps.getCategory(pBg.categoryId, "en") : null;
+          c = { bg: cBg?.name ?? null, en: cEn?.name ?? null, sort: cBg?.sortOrder ?? null };
+          categoryCache.set(pBg.categoryId, c);
+        }
+        return { categoryNameBg: c.bg, categoryNameEn: c.en, categorySortOrder: c.sort };
+      })()),
     });
   }
 
-  // ── 3b. „Грешна математика“ — the two-pizza combo, priced from the
-  //    SERVER's own menu rows (lib/pizza-math.ts; the basket previews the
-  //    same function). It lowers only the two base prices; extras stay on top.
-  const discountEur = pizzaMathDiscount(pizzaMathLines).discountEur;
+  // ── 3b. „Грешна математика“ — the two-pizza combos, priced from the
+  //    SERVER's own menu rows and categories (lib/pizza-math.ts; the basket
+  //    previews the same function). They replace only the base prices of the
+  //    paired pizzas; extras stay on top. This is the order's ONLY discount,
+  //    so nothing can be discounted twice.
+  const offer = pizzaMathDiscount(pizzaMathLines);
+  const discountEur = offer.discountEur;
+  lineData.forEach((line, i) => {
+    line.discountEur = offer.lineDiscountsEur[`L${i}`] ?? 0;
+  });
+  const pizzaLabel = (key: string) => {
+    const line = lineData[Number(key.slice(1))];
+    const size = line ? comboSizeOf({ categoryId: line.categoryId, variantName: line.variantName }) : null;
+    return line ? `${line.productNameBg}${size ? ` ${size} см` : ""}` : "";
+  };
+  const offerSnapshot: PizzaComboSnapshot[] = offer.pairs.map((p) => ({
+    sizes: p.sizes,
+    comboEur: p.comboEur,
+    regularEur: p.regularEur,
+    discountEur: p.discountEur,
+    pizzasBg: [pizzaLabel(p.lineKeys[0]), pizzaLabel(p.lineKeys[1])],
+  }));
   // Delivery is free: the items after the discount are the whole bill.
   const totalEur = round2(subtotalEur - discountEur);
 
@@ -368,12 +427,31 @@ export async function placeOrder(
   for (let attempt = 0; attempt < ORDER_NUMBER_RETRIES; attempt++) {
     try {
       const order = await db.$transaction(async (tx) => {
+        // The cutoff is checked HERE, on the clock of the write itself: a
+        // request that started at 22:29:59 and reaches the database at
+        // 22:30:00 is refused, never saved into a day that has ended.
+        const now = retentionNow();
+        if (isAfterDailyCutoff(now)) throw new DailyCutoffError();
+
+        // Numbers keep counting across days (OrderSequence, prisma/schema):
+        // yesterday's #1042 is deleted, but no other order ever gets its number.
+        // (Through `tx`: the pool has ONE connection — lib/db.ts — and this
+        // transaction holds it.)
+        const seq = await tx.orderSequence.upsert({
+          where: { id: "order" },
+          create: { id: "order", lastNumber: 1001 },
+          update: { lastNumber: { increment: 1 } },
+        });
+        // A table emptied by hand would leave the counter behind the real
+        // numbers; the max of both keeps the unique index safe either way.
         const last = await tx.order.findFirst({
           orderBy: { orderNumber: "desc" },
           select: { orderNumber: true },
         });
-        const orderNumber = (last?.orderNumber ?? 1000) + 1;
-        const now = new Date();
+        const orderNumber = Math.max(seq.lastNumber, (last?.orderNumber ?? 1000) + 1);
+        if (orderNumber !== seq.lastNumber) {
+          await tx.orderSequence.update({ where: { id: "order" }, data: { lastNumber: orderNumber } });
+        }
 
         return tx.order.create({
           data: {
@@ -398,6 +476,8 @@ export async function placeOrder(
             subtotalEur,
             discountEur,
             totalEur,
+            offerJson: JSON.stringify(offerSnapshot),
+            createdAt: now,
             // Proof of the explicit confirmations: WHICH versions were
             // accepted, and when (server clock). Nothing else is recorded —
             // no IP, no user agent: not needed to prove the contract.
@@ -418,12 +498,14 @@ export async function placeOrder(
 
       return {
         ok: true,
+        orderId: order.id,
         orderNumber: order.orderNumber,
         paymentMethod: card ? "CARD_ONLINE" : "CASH_ON_DELIVERY",
         ...(card && order.accessToken ? { accessToken: order.accessToken } : {}),
         duplicate: false,
       };
     } catch (err) {
+      if (err instanceof DailyCutoffError) return { ok: false, error: "DAILY_CUTOFF" };
       if (checkoutKey && isUniqueViolation(err, "checkoutKey")) {
         // The twin request won the race — return what it created.
         const existing = await db.order.findUnique({ where: { checkoutKey } });

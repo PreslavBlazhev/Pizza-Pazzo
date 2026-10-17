@@ -1,33 +1,26 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
-import {
-  getOrderById,
-  getOrderStatus,
-  setOrderStatus,
-  type StatusUpdateExtras,
-} from "@/lib/orders";
-import { canTransition } from "@/lib/order-status";
-import { paymentBlocksStatusChange } from "@/lib/payments/status";
-import { sendCustomerOrderAcceptedEmail } from "@/lib/email/resend";
+import { changeOrderStatus } from "@/lib/order-workflow";
+import { drainEmailOutbox } from "@/lib/email/outbox";
 import { isOrderStatus } from "@/types/order";
 import type { ActionResult } from "@/types/auth";
 
-/** Sanity bounds for the estimated delivery time (minutes). */
-const MIN_ESTIMATE = 1;
-const MAX_ESTIMATE = 480;
-const MAX_NOTE_LENGTH = 500;
-
 /**
- * Admin: change an order's status. Staff and up may do this. The transition is
- * validated against ORDER_STATUS_FLOW so, e.g., a DELIVERED order can't be moved
- * back to PENDING.
+ * Admin: change an order's status. Staff and up may do this. Everything else
+ * — allowed transitions per delivery method, the two-screens conflict check,
+ * the money gate, the estimate, and queuing the customer e-mail in the same
+ * transaction — lives in lib/order-workflow.ts.
  *
- * ACCEPTED requires an estimated delivery time (minutes); CANCELLED may carry a
- * reason (adminNote, shown in the admin only). After the write, ACCEPTED — and
- * only ACCEPTED — triggers a best-effort email to the customer; a failed email
- * never rolls back the status change.
+ * Form fields: orderId, status (the next one), fromStatus (what the screen
+ * showed — optional for older screens), estimatedTimeMinutes (ACCEPTED),
+ * adminNote (ACCEPTED / CANCELLED).
+ *
+ * The e-mail goes out AFTER the response (Next `after()`), so a slow or broken
+ * mail provider never delays or fails "Приеми"; if this process dies first,
+ * the kitchen poll / maintenance job delivers it from the outbox.
  */
 export async function updateOrderStatusAction(
   _prev: ActionResult | null,
@@ -37,79 +30,31 @@ export async function updateOrderStatusAction(
 
   const id = String(formData.get("orderId") ?? "");
   const next = String(formData.get("status") ?? "");
+  const from = String(formData.get("fromStatus") ?? "");
 
   if (!id || !isOrderStatus(next)) {
     return { ok: false, error: "Невалиден статус." };
   }
 
-  const current = await getOrderStatus(id);
-  if (!current) return { ok: false, error: "Поръчката не беше намерена." };
+  const rawMinutes = String(formData.get("estimatedTimeMinutes") ?? "").trim();
+  const result = await changeOrderStatus({
+    orderId: id,
+    next,
+    expectedStatus: isOrderStatus(from) ? from : null,
+    estimatedTimeMinutes: rawMinutes ? Number(rawMinutes) : undefined,
+    adminNote:
+      formData.get("adminNote") === null ? undefined : String(formData.get("adminNote") ?? "").trim(),
+  });
 
-  if (!canTransition(current, next)) {
-    return { ok: false, error: "Недопустима смяна на статус." };
-  }
+  if (!result.ok) return { ok: false, error: result.error };
 
-  // The money gate. A card order the provider has not confirmed was never
-  // released to the kitchen and must not be accepted, prepared or delivered —
-  // only cancelled (e.g. an abandoned payment). Checked on the server so a
-  // stale screen or a crafted request cannot get round it.
-  const before = await getOrderById(id);
-  if (!before) return { ok: false, error: "Поръчката не беше намерена." };
-  if (paymentBlocksStatusChange(before, next)) {
-    return {
-      ok: false,
-      error:
-        "Поръчката чака потвърждение на плащането с карта и не може да бъде приета. Може само да бъде отказана.",
-    };
-  }
-
-  const extras: StatusUpdateExtras = {};
-
-  if (next === "ACCEPTED") {
-    const raw = String(formData.get("estimatedTimeMinutes") ?? "").trim();
-    const minutes = Number(raw);
-    if (!raw || !Number.isInteger(minutes) || minutes < MIN_ESTIMATE || minutes > MAX_ESTIMATE) {
-      return { ok: false, error: "Въведете валидно време в минути (цяло число)." };
-    }
-    extras.estimatedTimeMinutes = minutes;
-  }
-
-  if (next === "ACCEPTED" || next === "CANCELLED") {
-    const note = String(formData.get("adminNote") ?? "").trim();
-    if (note.length > MAX_NOTE_LENGTH) {
-      return { ok: false, error: `Бележката е твърде дълга (до ${MAX_NOTE_LENGTH} знака).` };
-    }
-    if (note) extras.adminNote = note;
-  }
-
-  try {
-    await setOrderStatus(id, next, extras);
-  } catch {
-    return { ok: false, error: "Статусът не можа да бъде обновен." };
-  }
-
-  // Status is committed; the customer email is best-effort on top of it. The
-  // sender logs and swallows its own failures, so a broken mail setup can't
-  // surface an error here or undo the write. ACCEPTED is the only status the
-  // customer is ever emailed about, and only if they gave an email address.
-  if (next === "ACCEPTED") {
-    const order = await getOrderById(id);
-    if (order?.items) {
-      await sendCustomerOrderAcceptedEmail({ ...order, items: order.items });
-    }
+  if (result.emailQueued) {
+    after(async () => {
+      await drainEmailOutbox({ orderId: id, limit: 1 });
+    });
   }
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${id}`);
-
-  // Cancelling does NOT refund anything — nothing here talks to the bank. Say
-  // so, instead of letting anyone believe the money went back by itself.
-  if (next === "CANCELLED" && before.paymentMethod === "CARD_ONLINE" && before.paymentStatus === "PAID") {
-    return {
-      ok: true,
-      message:
-        "Поръчката е отказана. Тя е платена с карта — възстановете сумата ръчно през портала на банката.",
-    };
-  }
-  return { ok: true, message: "Статусът е обновен." };
+  return { ok: true, message: result.message };
 }

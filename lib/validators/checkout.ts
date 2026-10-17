@@ -31,6 +31,8 @@ export type CheckoutFieldError = (typeof CHECKOUT_FIELD_ERRORS)[number];
 /** Whole-form refusal codes (checkout.errors.<code>). */
 export const CHECKOUT_FORM_ERRORS = [
   "STORE_CLOSED",
+  /** After 22:30 Europe/Sofia — the day's orders are being deleted (lib/order-retention.ts). */
+  "DAILY_CUTOFF",
   "PAYMENT_METHOD",
   "CARD_UNAVAILABLE",
   "CART_INVALID",
