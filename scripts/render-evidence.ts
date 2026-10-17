@@ -106,7 +106,7 @@ const scenarios: { title: string; lines: PizzaMathLine[]; extrasEur?: number; no
 ];
 
 const rows: string[] = [
-  "| Поръчка | Редовна цена на основите | Двойки | Добавки | Доставка | Крайно (never_dearer, по подразбиране) | Крайно („fixed“) |",
+  "| Поръчка | Редовна цена на основите | Двойки (fixed) | Добавки | Доставка | Крайно — fixed (АКТИВНО) | Крайно — never_dearer (изключено) |",
   "|---|---|---|---|---|---|---|",
 ];
 for (const s of scenarios) {
@@ -115,11 +115,14 @@ for (const s of scenarios) {
   const nd = res("never_dearer");
   const fx = res("fixed");
   const extras = s.extrasEur ?? 0;
-  const pairs = nd.pairs.length ? nd.pairs.map((p) => `${p.sizes} → ${eur(p.comboEur)}`).join("; ") : "—";
+  const pairs = fx.pairs.length
+    ? fx.pairs.map((p) => `${p.sizes} → ${eur(p.comboEur)} (редовно ${eur(p.regularEur)})`).join("; ")
+    : "—";
+  const diff = fx.discountEur > 0 ? ` (отстъпка ${eur(fx.discountEur)})` : fx.discountEur < 0 ? ` (**+${eur(-fx.discountEur)} над редовната**)` : "";
   rows.push(
     `| ${s.title} | ${eur(regular)} | ${pairs} | ${extras ? `${eur(extras)} (${s.note})` : "—"} | 0.00 € | ${eur(
-      regular - nd.discountEur + extras
-    )} | ${eur(regular - fx.discountEur + extras)} |`
+      regular - fx.discountEur + extras
+    )}${diff} | ${eur(regular - nd.discountEur + extras)} |`
   );
 }
 

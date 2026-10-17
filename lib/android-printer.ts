@@ -12,6 +12,8 @@
 
 import { withPerUnitHint } from "@/lib/order-extras-display";
 import { buildTicketModel } from "@/lib/printer/ticket-model";
+import { comboSizesLabel } from "@/lib/pizza-math";
+import { offerAdjustment } from "@/lib/offer-display";
 import { collectInstructionBg } from "@/lib/payments/status";
 import type { OrderWithItems } from "@/types/order";
 import { PRINT_SECTIONS, type PrintTemplateData } from "@/types/print";
@@ -148,6 +150,27 @@ export function buildPrintableOrderJson(
     section: "sauces",
     category: "Сосове",
   }));
+  // The app prints `discount` as "Отстъпка -X" and only when it is positive.
+  // When the fixed package prices are ABOVE the regular prices the
+  // difference travels as its own line instead, named with the combos, so
+  // the ticket's lines still add up to "ОБЩО" and nothing reads "--X".
+  const adj = offerAdjustment(order.discountEur);
+  const offerItems =
+    adj.kind === "surcharge"
+      ? [
+          {
+            name: `Разлика до пакетната цена (${(order.offer ?? []).map((c) => comboSizesLabel(c.sizes)).join(", ")})`,
+            quantity: 1,
+            size: null,
+            unitPrice: adj.amountEur,
+            totalPrice: adj.amountEur,
+            extras: [],
+            note: null,
+            section: "offer",
+            category: null,
+          },
+        ]
+      : [];
   return JSON.stringify({
     orderId: order.id,
     orderNumber: String(order.orderNumber),
@@ -164,7 +187,7 @@ export function buildPrintableOrderJson(
       address: order.deliveryMethod === "PICKUP" ? null : order.deliveryAddress,
       city: order.deliveryMethod === "PICKUP" ? null : order.deliveryCity,
     },
-    items: [...dishItems, ...sauceItems],
+    items: [...dishItems, ...sauceItems, ...offerItems],
     paymentMethod: order.paymentMethod,
     // Ready-made instruction for the receipt (app 1.1.0+ prints it; older
     // builds ignore unknown keys and print the method code instead).
@@ -176,7 +199,7 @@ export function buildPrintableOrderJson(
     ),
     isTest: order.isTest,
     customerNote: order.deliveryNote,
-    discount: order.discountEur,
+    discount: adj.kind === "discount" ? adj.amountEur : 0,
     total: order.totalEur,
     currency: "EUR",
     isReprint,

@@ -10,7 +10,7 @@
  */
 import type { CartItem, CartTotals } from "../types/cart";
 import { PIZZA_CATEGORY_IDS, isRetiredExtraKey } from "./extras-rules";
-import { pizzaMathDiscount, summariseCombos } from "./pizza-math";
+import { pizzaMathDiscount } from "./pizza-math";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -65,6 +65,6 @@ export function cartTotals(items: readonly CartItem[]): CartTotals {
     discount,
     total: round2(subtotal - discount),
     pizzaCount,
-    combos: summariseCombos(offer.pairs),
+    combos: offer.pairs.map((p) => ({ sizes: p.sizes, comboEur: p.comboEur, regularEur: p.regularEur })),
   };
 }

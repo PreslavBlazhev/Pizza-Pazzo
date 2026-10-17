@@ -83,22 +83,39 @@ services:
       - key: MAINTENANCE_SECRET
         sync: false
 
-  # The scheduler for the daily 22:30 retention (lib/order-purge.ts). A Cron
-  # Job cannot mount the web service's disk, so it CALLS the web service.
-  # Every 5 minutes, UTC-agnostic: the purge is idempotent and the 22:30
-  # Sofia cutoff is computed by the app (summer/winter time included), so
-  # the schedule needs no DST handling. Commented out on purpose: creating it
-  # adds a (billed) service — enable it deliberately when deploying this
-  # change (IMPLEMENTATION_REPORT.md §10).
+  # The schedulers for the daily 22:30 retention (lib/order-purge.ts). A
+  # Cron Job cannot mount the web service's disk, so it CALLS the web service.
+  # Render cron schedules are UTC; 22:30 Europe/Sofia is 19:30 UTC in summer
+  # and 20:30 UTC in winter, so the PRIMARY job runs at both — the run that
+  # is an hour off is a harmless no-op (the cutoff is computed by the app).
+  # The FALLBACK runs every 5 minutes and catches a missed or failed run.
+  # The endpoint answers 500 on any failure, so Render marks the run failed.
+  # Exact unavailability at 22:30 does not depend on these (lib/db.ts); the
+  # time of physical deletion does — MaintenanceState records it.
+  # Commented out on purpose: each job is a (billed) service — create them
+  # deliberately when deploying this change (IMPLEMENTATION_REPORT.md §9–10).
   #
   # - type: cron
-  #   name: pizza-pazzo-maintenance
+  #   name: pizza-pazzo-purge-2230
+  #   runtime: node
+  #   schedule: "30 19,20 * * *"
+  #   buildCommand: "true"
+  #   startCommand: >-
+  #     curl -fsS --retry 3 --retry-delay 10 -X POST
+  #     -H "Authorization: Bearer $MAINTENANCE_SECRET"
+  #     "https://pizzapazzo.bg/api/maintenance/run?trigger=cutoff"
+  #   envVars:
+  #     - key: MAINTENANCE_SECRET
+  #       sync: false
+  #
+  # - type: cron
+  #   name: pizza-pazzo-maintenance-fallback
   #   runtime: node
   #   schedule: "*/5 * * * *"
   #   buildCommand: "true"
   #   startCommand: >-
   #     curl -fsS -X POST -H "Authorization: Bearer $MAINTENANCE_SECRET"
-  #     https://pizzapazzo.bg/api/maintenance/run
+  #     "https://pizzapazzo.bg/api/maintenance/run?trigger=fallback"
   #   envVars:
   #     - key: MAINTENANCE_SECRET
   #       sync: false

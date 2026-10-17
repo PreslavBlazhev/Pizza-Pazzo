@@ -93,14 +93,22 @@ export interface CartTotals {
   itemsCount: number;
   /** Lines incl. extras, before any offer. */
   subtotal: number;
-  /** „Грешна математика“ discount (lib/pizza-math.ts); 0 = none. */
+  /**
+   * regular − package price of the combos (lib/pizza-math.ts); 0 = none.
+   * NEGATIVE when the package prices are above the pizzas' regular prices.
+   */
   discount: number;
   /** What the customer pays: subtotal − discount (delivery is free). */
   total: number;
   /** Pizzas in the basket by quantity, speciality pizzas included. */
   pizzaCount: number;
-  /** The combos applied, counted by size pair (empty = none). */
-  combos: { sizes: "30+30" | "30+40" | "40+40"; count: number; comboEur: number }[];
+  /**
+   * Every combo applied, one per pair (empty = none): its package price and
+   * the regular price of the two pizzas it replaces. With fixed package
+   * prices `discount` may be negative (the package is dearer) — show it
+   * through lib/offer-display.ts, never as a negative discount.
+   */
+  combos: { sizes: "30+30" | "30+40" | "40+40"; comboEur: number; regularEur: number }[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

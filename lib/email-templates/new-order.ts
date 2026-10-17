@@ -6,6 +6,14 @@
 
 import type { OrderItemExtra } from "@/lib/extras-rules";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
+import {
+  adjustmentLabelBg,
+  comboLineBg,
+  offerAdjustment,
+  signedAdjustment,
+  type ComboLike,
+} from "@/lib/offer-display";
+import { esc } from "@/lib/email-templates/escape";
 
 export interface NewOrderEmailItem {
   nameBg: string;
@@ -25,8 +33,14 @@ export interface NewOrderEmailData {
   deliveryAddress: string;
   deliveryNote?: string | null;
   totalEur: number;
-  /** „Грешна математика“ discount already taken off totalEur; 0 = none. */
+  /**
+   * regular − package price of the combos, already in totalEur; 0 = none.
+   * Negative when the package prices are above the regular prices — shown
+   * as "Разлика до пакетната цена +X €" (lib/offer-display.ts).
+   */
   discountEur?: number;
+  /** The combos, with package and regular price (Order.offerJson). */
+  offer?: ComboLike[];
   items: NewOrderEmailItem[];
   /**
    * How the money is handled, e.g. "ПЛАТЕНО ОНЛАЙН С КАРТА — НЕ СЪБИРАЙ ПАРИ"
@@ -46,6 +60,12 @@ export function newOrderEmail(data: NewOrderEmailData): {
   text: string;
 } {
   const testPrefix = data.isTest ? "[ТЕСТ — НЕ ПРИГОТВЯЙ] " : "";
+  const adj = offerAdjustment(data.discountEur ?? 0);
+  const adjLabel = adjustmentLabelBg(adj.kind);
+  const offerLines = [
+    ...(data.offer ?? []).map((c) => comboLineBg(c, eur)),
+    ...(adjLabel ? [`${adjLabel}: ${signedAdjustment(adj, eur, "-")}`] : []),
+  ];
   const subject = `${testPrefix}Нова поръчка #${data.orderNumber} — Pizza Pazzo`;
   const paymentLine = data.paymentLine ?? "В брой при доставка (наложен платеж)";
 
@@ -73,7 +93,7 @@ export function newOrderEmail(data: NewOrderEmailData): {
     `Поръчка:`,
     ...itemLines,
     ``,
-    ...(data.discountEur ? [`Отстъпка „Грешна математика“: -${eur(data.discountEur)}`] : []),
+    ...offerLines,
     `Общо: ${eur(data.totalEur)}`,
     `Плащане: ${paymentLine}`,
   ]
@@ -88,15 +108,14 @@ export function newOrderEmail(data: NewOrderEmailData): {
       const extraLines = extras
         .map(
           (e) =>
-            `<div style="padding-left:14px;font-size:13px;color:#555;">+ ${extraKitchenLabel(
-              e,
-              i.quantity
+            `<div style="padding-left:14px;font-size:13px;color:#555;">+ ${esc(
+              extraKitchenLabel(e, i.quantity)
             )}</div>`
         )
         .join("");
       return `<tr>
-      <td style="padding:6px 0;border-bottom:1px solid #eee;">${i.quantity}× ${i.nameBg}${
-        i.variantName ? ` <span style="color:#888;">(${i.variantName})</span>` : ""
+      <td style="padding:6px 0;border-bottom:1px solid #eee;">${i.quantity}× ${esc(i.nameBg)}${
+        i.variantName ? ` <span style="color:#888;">(${esc(i.variantName)})</span>` : ""
       }${extraLines}</td>
       <td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right;vertical-align:top;white-space:nowrap;">${eur(
         i.totalPriceEur
@@ -107,13 +126,13 @@ export function newOrderEmail(data: NewOrderEmailData): {
 
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#222;">
   <h2 style="color:#c0392b;">${testPrefix}Нова поръчка #${data.orderNumber}</h2>
-  <p style="margin:4px 0;"><strong>Клиент:</strong> ${data.customerName}</p>
-  <p style="margin:4px 0;"><strong>Телефон:</strong> ${data.customerPhone}</p>
-  <p style="margin:4px 0;"><strong>Имейл:</strong> ${data.customerEmail || "— (не е посочен)"}</p>
-  <p style="margin:4px 0;"><strong>Адрес:</strong> ${data.deliveryAddress}, ${data.deliveryCity}</p>
-  ${data.deliveryNote ? `<p style="margin:4px 0;"><strong>Бележка:</strong> ${data.deliveryNote}</p>` : ""}
+  <p style="margin:4px 0;"><strong>Клиент:</strong> ${esc(data.customerName)}</p>
+  <p style="margin:4px 0;"><strong>Телефон:</strong> ${esc(data.customerPhone)}</p>
+  <p style="margin:4px 0;"><strong>Имейл:</strong> ${esc(data.customerEmail || "— (не е посочен)")}</p>
+  <p style="margin:4px 0;"><strong>Адрес:</strong> ${esc(data.deliveryAddress)}, ${esc(data.deliveryCity)}</p>
+  ${data.deliveryNote ? `<p style="margin:4px 0;"><strong>Бележка:</strong> ${esc(data.deliveryNote)}</p>` : ""}
   <table style="width:100%;border-collapse:collapse;margin:16px 0;">${itemRows}</table>
-  ${data.discountEur ? `<p style="margin:4px 0;">Отстъпка „Грешна математика“: -${eur(data.discountEur)}</p>` : ""}
+  ${offerLines.map((l) => `<p style="margin:4px 0;">${esc(l)}</p>`).join("\n  ")}
   <p style="font-size:18px;"><strong>Общо: ${eur(data.totalEur)}</strong></p>
   <p style="font-weight:bold;">Плащане: ${paymentLine}</p>
 </div>`;

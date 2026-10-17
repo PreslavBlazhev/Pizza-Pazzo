@@ -1,0 +1,121 @@
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env
+✓ Running next.config.ts took 121ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 8.1s
+  Running TypeScript ...
+  Finished TypeScript in 13.9s ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (0/87) ...
+  Generating static pages using 5 workers (21/87) 
+  Generating static pages using 5 workers (43/87) 
+  Generating static pages using 5 workers (65/87) 
+✓ Generating static pages using 5 workers (87/87) in 3.2s
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /_not-found
+├ ƒ /[locale]
+├   /[locale]/account-deleted
+│ ├ ● /bg/account-deleted
+│ └ ● /en/account-deleted
+├   /[locale]/account-deletion
+│ ├ ● /bg/account-deletion
+│ └ ● /en/account-deletion
+├ ƒ /[locale]/admin
+├ ƒ /[locale]/admin/categories
+├ ƒ /[locale]/admin/menu
+├ ƒ /[locale]/admin/orders
+├ ƒ /[locale]/admin/orders/[id]
+├ ƒ /[locale]/admin/orders/[id]/print
+├ ƒ /[locale]/admin/orders/live
+├ ƒ /[locale]/admin/products
+├ ƒ /[locale]/admin/products/[id]
+├ ƒ /[locale]/admin/products/new
+├ ƒ /[locale]/admin/reports
+├ ƒ /[locale]/admin/settings
+├ ƒ /[locale]/admin/settings/print
+├ ƒ /[locale]/admin/users
+├   /[locale]/app-privacy
+│ ├ ● /bg/app-privacy
+│ └ ● /en/app-privacy
+├ ƒ /[locale]/auth/check-email
+├ ƒ /[locale]/auth/login
+├ ƒ /[locale]/auth/register
+├   /[locale]/cart
+│ ├ ● /bg/cart
+│ └ ● /en/cart
+├ ƒ /[locale]/checkout
+├ ƒ /[locale]/checkout/pay/[token]
+├   /[locale]/contacts
+│ ├ ● /bg/contacts
+│ └ ● /en/contacts
+├   /[locale]/cookies
+│ ├ ● /bg/cookies
+│ └ ● /en/cookies
+├   /[locale]/delivery
+│ ├ ● /bg/delivery
+│ └ ● /en/delivery
+├   /[locale]/gallery
+│ ├ ● /bg/gallery
+│ └ ● /en/gallery
+├ ƒ /[locale]/menu
+├ ƒ /[locale]/menu/[category]
+├ ƒ /[locale]/opengraph-image
+├ ƒ /[locale]/order-success
+├   /[locale]/payment-methods
+│ ├ ● /bg/payment-methods
+│ └ ● /en/payment-methods
+├ ƒ /[locale]/payment-simulator/[id]
+├ ƒ /[locale]/payment/failed
+├ ƒ /[locale]/payment/pending
+├ ƒ /[locale]/payment/return
+├ ƒ /[locale]/payment/success
+├ ƒ /[locale]/popular
+├   /[locale]/privacy
+│ ├ ● /bg/privacy
+│ └ ● /en/privacy
+├ ƒ /[locale]/product/[id]
+├ ƒ /[locale]/profile
+├ ƒ /[locale]/profile/orders
+├   /[locale]/refunds
+│ ├ ● /bg/refunds
+│ └ ● /en/refunds
+├   /[locale]/reviews
+│ ├ ● /bg/reviews
+│ └ ● /en/reviews
+├   /[locale]/terms
+│ ├ ● /bg/terms
+│ └ ● /en/terms
+├ ƒ /[locale]/track
+├ ƒ /[locale]/twitter-image
+├   /[locale]/unauthorized
+│ ├ ● /bg/unauthorized
+│ └ ● /en/unauthorized
+├ ƒ /api/admin/orders/[id]/printable
+├ ƒ /api/admin/pending-orders
+├ ƒ /api/admin/upload-product-image
+├ ƒ /api/auth/session
+├ ƒ /api/checkout-trace
+├ ƒ /api/maintenance/run
+├ ƒ /api/orders
+├ ƒ /api/payments/callback/[provider]
+├ ƒ /api/payments/reconcile
+├ ƒ /api/payments/return
+├ ƒ /api/payments/start
+├ ƒ /api/payments/status
+├ ƒ /api/print
+├ ƒ /api/store-status
+├ ƒ /api/track
+├ ○ /robots.txt
+├ ○ /sitemap.xml
+└ ƒ /uploads/products/[filename]
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+

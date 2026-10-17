@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { openStoreAction } from "@/app/actions/store-closure";
 import { formatEurPrice } from "@/lib/format-price";
 import { comboSizesLabel } from "@/lib/pizza-math";
+import { adjustmentLabelBg, offerAdjustment, signedAdjustment } from "@/lib/offer-display";
 import { extraKitchenLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatSofiaTime, sofiaDayOffset } from "@/lib/store-hours";
 import { AndroidPrinterSettingsButton } from "./AndroidPrinterSettingsButton";
@@ -329,11 +330,14 @@ function LiveOrderCard({
               );
             })}
           </ul>
-          {order.discountEur > 0 && (
+          {order.offer.length > 0 && (
             <p className="mt-2 text-sm font-semibold text-pizza-green-dark" data-testid="live-combo">
-              Оферта „Грешна математика“
-              {order.offer.length > 0 ? ` (${order.offer.map((c) => comboSizesLabel(c.sizes)).join(", ")})` : ""}: −
-              {formatEurPrice(order.discountEur)}
+              Оферта 2 пици: {order.offer.map((c) => comboSizesLabel(c.sizes)).join(", ")}
+              {(() => {
+                const adj = offerAdjustment(order.discountEur);
+                const label = adjustmentLabelBg(adj.kind);
+                return label ? ` · ${label}: ${signedAdjustment(adj, formatEurPrice)}` : "";
+              })()}
             </p>
           )}
           <p className="mt-2 border-t pt-2 text-xl font-bold">

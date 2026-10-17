@@ -25,6 +25,7 @@ import { randomBytes } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { parseOrderItemExtras } from "@/lib/extras-rules";
+import { parseOfferJson } from "@/lib/pizza-math";
 import { sendNewOrderNotification } from "@/lib/email/resend";
 import { toMinorUnits } from "./money";
 import { getProviderForAttempt, getProviderForNewPayment, providerIdFromSlug, providerSlug } from "./providers";
@@ -246,6 +247,7 @@ function buildNewOrderEmail(
     deliveryNote: order.deliveryNote,
     totalEur,
     discountEur: Number(order.discountEur),
+    offer: parseOfferJson(order.offerJson),
     paymentLine: collectInstructionBg(method, status, `${totalEur.toFixed(2)} €`),
     isTest: order.isTest,
     items: order.items.map((i) => ({

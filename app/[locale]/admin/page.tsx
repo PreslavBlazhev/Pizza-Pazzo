@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { AdminStatsCards } from "@/components/admin/AdminStatsCards";
 import { OrderCard } from "@/components/admin/OrderCard";
+import { RetentionStatus } from "@/components/admin/RetentionStatus";
 import { getSessionUser } from "@/lib/auth";
 import { getAdminDashboardStats, getLatestOrders } from "@/lib/orders";
 import { isAdminRole } from "@/types/auth";
@@ -33,6 +34,8 @@ export default async function AdminDashboardPage() {
       <div className="mt-6">
         <AdminStatsCards stats={stats} />
       </div>
+
+      <RetentionStatus />
 
       <div className="mt-8">
         <div className="flex items-center justify-between">

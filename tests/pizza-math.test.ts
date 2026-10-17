@@ -203,17 +203,23 @@ test("40 + 40: 12.78 + 12.78 = 25.56 → 23.01 (−2.55)", async () => {
   });
 });
 
-test("a pair already cheaper than the combo keeps its regular price (13.30 stays 13.30)", async () => {
-  assert.equal(pm([pizza(30, 6.65), pizza(30, 6.65)]), 0);
+// 2026-10-17: FIXED package prices (the current brief) — a pair costs exactly
+// its package price, also when the regular prices are lower. The difference
+// is then negative and shown as "Разлика до пакетната цена" (tests/
+// pizza-combos.test.ts covers how every surface shows it).
+test("fixed package price: a pair cheaper than the package costs the package (13.30 → 16.87)", async () => {
+  assert.equal(pm([pizza(30, 6.65), pizza(30, 6.65)]), -3.57);
   await assertSame([line("prod_margarita", 30, 1), line("prod_kashkavalina", 30, 1)], {
     subtotal: 13.3,
-    discount: 0,
-    total: 13.3,
+    discount: -3.57,
+    total: 16.87,
   });
-  // 40 + 40 Маргарита: 20.46 < 23.01 — no change either.
-  await assertSame([line("prod_margarita", 40, 2)], { subtotal: 20.46, discount: 0, total: 20.46 });
-  // Equal to the combo (6.65 + 12.78 = 19.43): nothing to take off.
+  // 40 + 40 Маргарита: 20.46 → 23.01.
+  await assertSame([line("prod_margarita", 40, 2)], { subtotal: 20.46, discount: -2.55, total: 23.01 });
+  // Equal to the combo (6.65 + 12.78 = 19.43): no difference either way.
   assert.equal(pm([pizza(30, 6.65), pizza(40, 12.78)]), 0);
+  // The earlier "never dearer" rule is still available, one constant away.
+  assert.equal(pizzaMathDiscount([pizza(30, 6.65), pizza(30, 6.65)], { mode: "never_dearer" }).discountEur, 0);
 });
 
 test("a pair with one cheap and one regular pizza: only the excess comes off", async () => {

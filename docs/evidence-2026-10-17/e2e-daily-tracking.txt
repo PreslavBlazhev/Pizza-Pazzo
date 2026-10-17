@@ -1,7 +1,7 @@
 1. Two orders from one phone; the success page and the cookie
-  ✓ order #1005 placed
+  ✓ order #1007 placed
   ✓ success page links to tracking
-  ✓ second order #1006
+  ✓ second order #1008
   ✓ tracking cookie is HttpOnly
   ✓ the cookie holds both orders
   ✓ it expires within a day (at 22:30)
@@ -45,6 +45,16 @@
   ✓ POST /api/maintenance/run purged them
   ✓ no order, line or e-mail job left
   ✓ the endpoint refuses a wrong secret
+9. Fixed package price above the regular prices (Маргарита 30 + Кашкавалина 40)
+  ✓ basket lists the combo with its regular price
+  ✓ basket shows the difference as +2.55 €
+  ✓ no negative discount in the basket
+  ✓ basket total 19.43 €
+  ✓ checkout shows the same difference
+  ✓ saved: total 19.43, difference −2.55 stored signed
+  ✓ kitchen card: '+2.55 €'
+  ✓ admin order page: '+2.55 €'
+  ✓ print page: difference line, no double minus
   ✓ no page errors
 
 E2E OK

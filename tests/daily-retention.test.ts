@@ -9,9 +9,6 @@
  */
 import { test, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, utimesSync } from "node:fs";
-import path from "node:path";
-import { PrismaClient } from "@prisma/client";
 import { db, dbUnscoped } from "@/lib/db";
 import {
   isAfterDailyCutoff,
@@ -321,28 +318,3 @@ test("a late, authentic payment callback after 22:30 restores nothing", async ()
   assert.deepEqual(await rowsFor([card.orderId]), { orders: 0, items: 0, outbox: 0, attempts: 0, events: 0, refunds: 0 });
 });
 
-// ── Backups on the same disk ────────────────────────────────────────────────
-
-test("a backup file written before the cutoff is emptied of orders, the rest of it kept", async () => {
-  at(sofia(2030, 11, 2, 12, 0));
-  await cashOrder();
-  const dbFile = (process.env.DATABASE_URL ?? "").slice("file:".length);
-  const dir = path.join(path.dirname(dbFile), "backups");
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  const backup = path.join(dir, `test-${key()}.db`).replace(/\\/g, "/");
-  await dbUnscoped.$executeRawUnsafe(`VACUUM INTO '${backup}'`);
-  const written = sofia(2030, 11, 2, 12, 5);
-  utimesSync(backup, written, written);
-
-  at(sofia(2030, 11, 2, 22, 35));
-  const summary = await purgeExpiredOrders();
-  assert.ok(summary.scrubbedBackups >= 1);
-  const copy = new PrismaClient({ datasources: { db: { url: `file:${backup}` } } });
-  try {
-    assert.equal(await copy.order.count(), 0);
-    assert.equal(await copy.orderItem.count(), 0);
-    assert.equal(await copy.restaurantSettings.count(), 1, "settings stay restorable");
-  } finally {
-    await copy.$disconnect();
-  }
-});

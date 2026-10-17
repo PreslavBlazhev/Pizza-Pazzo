@@ -274,6 +274,57 @@ async function main() {
     const unauth = await fetch(`${BASE}/api/maintenance/run`, { method: "POST", headers: { authorization: "Bearer wrong" } });
     check(unauth.status === 401, "the endpoint refuses a wrong secret");
 
+    console.log("9. Fixed package price above the regular prices (Маргарита 30 + Кашкавалина 40)");
+    const cartPage = await phone.newPage();
+    await cartPage.goto(`${BASE}/product/margarita`);
+    await cartPage.getByRole("button", { name: "Добави в количката" }).first().click();
+    await cartPage.waitForFunction(() => (localStorage.getItem("pp-cart") ?? "").includes("prod_margarita"));
+    await cartPage.goto(`${BASE}/product/kashkavalina`);
+    await cartPage.getByRole("button", { name: /^40 см/ }).first().click().catch(() => undefined);
+    await cartPage.getByRole("button", { name: "Добави в количката" }).first().click();
+    await cartPage.waitForFunction(() => (localStorage.getItem("pp-cart") ?? "").includes("prod_kashkavalina"));
+    await cartPage.goto(`${BASE}/cart`);
+    await cartPage.locator('[data-testid="cart-total"]').first().waitFor();
+    const cartText = await cartPage.locator("main").innerText();
+    const surcharge = await cartPage.locator('[data-testid="cart-surcharge"]').first().innerText().catch(() => "");
+    check(/Оферта 2 пици 40 \+ 30 см \(редовно 16\.88 €\)/.test(cartText), "basket lists the combo with its regular price", cartText.slice(0, 400));
+    check(surcharge === "+2.55 €", "basket shows the difference as +2.55 €", surcharge);
+    check(!/Отстъпка/.test(cartText) && !/--|−−|-−/.test(cartText), "no negative discount in the basket");
+    check((await cartPage.locator('[data-testid="cart-total"]').first().innerText()) === "19.43 €", "basket total 19.43 €");
+    await shot(cartPage, "14-cart-package-above-regular-mobile");
+    await cartPage.goto(`${BASE}/checkout`);
+    await cartPage.locator('[name="customerName"]').waitFor();
+    await cartPage.locator('[name="customerName"]').fill("Тест Пакетна Цена");
+    await cartPage.locator('[name="customerPhone"]').fill("0888111333");
+    await cartPage.locator('[name="customerEmail"]').fill("tracking-e2e@example.test");
+    await cartPage.locator('[name="deliveryAddress"]').fill("ул. Тестова 8");
+    for (const name of ["consentTerms", "consentRefunds", "consentPrivacy"]) {
+      await cartPage.locator(`input[name="${name}"]`).check();
+    }
+    check((await cartPage.locator("main").innerText()).includes("+2.55 €"), "checkout shows the same difference");
+    await cartPage.locator('[data-testid="place-order"]').click();
+    await cartPage.waitForURL(/order-success/, { timeout: 30_000 });
+    const n3 = Number(/#(\d+)/.exec(await cartPage.locator("main").innerText())?.[1]);
+    const o3 = await prisma.order.findFirstOrThrow({ where: { orderNumber: n3 } });
+    check(Number(o3.totalEur) === 19.43 && Number(o3.discountEur) === -2.55, "saved: total 19.43, difference −2.55 stored signed");
+    await board.goto(`${BASE}/admin/orders/live`);
+    const pending = board.locator('[data-testid="live-combo"]').first();
+    await pending.waitFor({ timeout: 20_000 });
+    check((await pending.innerText()).includes("Разлика до пакетната цена: +2.55 €"), "kitchen card: '+2.55 €'", await pending.innerText());
+    await shot(board, "15-kitchen-package-above-regular");
+    const detailPage = await staff.newPage();
+    await detailPage.goto(`${BASE}/admin/orders/${o3.id}`);
+    const adjText = await detailPage.locator('[data-testid="order-adjustment"]').innerText();
+    check(/Разлика до пакетната цена\s*\+2\.55 €/.test(adjText), "admin order page: '+2.55 €'", adjText);
+    await shot(detailPage, "16-admin-order-package-above-regular");
+    const printPage = await staff.newPage();
+    await printPage.goto(`${BASE}/admin/orders/${o3.id}/print?t=delivery`);
+    const printed = await printPage.locator("body").innerText();
+    check(/Разлика до пакетната цена/.test(printed) && !/--\d|-−/.test(printed), "print page: difference line, no double minus");
+    await shot(printPage, "17-print-package-above-regular");
+    await prisma.order.updateMany({ where: { id: o3.id }, data: { createdAt: new Date(Date.now() - 26 * 3600 * 1000) } });
+    await fetch(`${BASE}/api/maintenance/run`, { method: "POST", headers: { authorization: `Bearer ${secret}` } });
+
     check(errors.length === 0, "no page errors", errors.join(" | "));
   } finally {
     await browser.close();

@@ -16,8 +16,9 @@
  * safe, every menu name — is HTML-escaped.
  */
 import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
-import { comboSizesLabel, summariseCombos } from "@/lib/pizza-math";
+import { adjustmentLabelBg, comboLineBg, offerAdjustment, signedAdjustment } from "@/lib/offer-display";
 import type { OrderWithItems } from "@/types/order";
+import { esc } from "@/lib/email-templates/escape";
 
 /** What the sender (lib/email/resend.ts) passes in besides the order. */
 export interface AcceptedEmailContact {
@@ -29,14 +30,7 @@ export interface AcceptedEmailContact {
 
 const eur = (n: number) => `${n.toFixed(2)} €`;
 
-/** HTML escaping for text and attribute values. */
-export const esc = (s: string) =>
-  s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+export { esc };
 
 /** "Маргарита (30 см)" or just the product name when there is no variant. */
 const itemLabel = (name: string, variant: string | null) => (variant ? `${name} (${variant})` : name);
@@ -64,9 +58,13 @@ export function customerOrderAcceptedEmail(
   const etaLabel = pickup ? "Ориентировъчно време за получаване" : "Ориентировъчно време за доставка";
   const minutes = order.estimatedTimeMinutes ?? 30;
   const address = pickup ? null : `${order.deliveryAddress}, ${order.deliveryCity}`;
-  const combos = summariseCombos(order.offer ?? []);
-  const comboLine = (c: (typeof combos)[number]) =>
-    `${c.count > 1 ? `${c.count} × ` : ""}Оферта за 2 пици ${comboSizesLabel(c.sizes)} — ${eur(c.comboEur)}`;
+  // Every combo with its package price and the regular price it replaces;
+  // the money line is a discount or the difference up to the package price —
+  // never a negative discount (lib/offer-display.ts).
+  const combos = order.offer ?? [];
+  const adj = offerAdjustment(order.discountEur);
+  const adjLabel = adjustmentLabelBg(adj.kind);
+  const adjAmount = signedAdjustment(adj, eur, "-");
 
   // Extras use their BG snapshot names; "за всяка бройка" clarifies
   // multi-quantity lines.
@@ -93,11 +91,8 @@ export function customerOrderAcceptedEmail(
     `Вашата поръчка:`,
     ...textItems,
     ``,
-    ...(combos.length > 0
-      ? [...combos.map((c) => comboLine(c)), `Отстъпка „Грешна математика“: -${eur(order.discountEur)}`]
-      : order.discountEur > 0
-        ? [`Отстъпка „Грешна математика“: -${eur(order.discountEur)}`]
-        : []),
+    ...combos.map((c) => comboLineBg(c, eur)),
+    ...(adjLabel ? [`${adjLabel}: ${adjAmount}`] : []),
     `Обща сума: ${eur(order.totalEur)}`,
     `Плащане: ${paymentNote}`,
     `Получаване: ${receiving}`,
@@ -131,21 +126,23 @@ export function customerOrderAcceptedEmail(
     })
     .join("\n");
 
-  const comboRows =
-    combos.length > 0 || order.discountEur > 0
-      ? `${combos
-          .map(
-            (c) => `    <tr>
-      <td colspan="2" style="padding:4px 8px;font-size:13px;color:#555;">${esc(comboLine(c))}</td>
-    </tr>`
-          )
-          .join("\n")}
-    <tr>
-      <td style="padding:6px 8px;color:#178A3D;">Отстъпка „Грешна математика“</td>
-      <td style="padding:6px 8px;text-align:right;white-space:nowrap;color:#178A3D;">-${eur(order.discountEur)}</td>
+  const adjColor = adj.kind === "discount" ? "#178A3D" : "#222";
+  const comboRows = `${combos
+    .map(
+      (c) => `    <tr>
+      <td colspan="2" style="padding:4px 8px;font-size:13px;color:#555;">${esc(comboLineBg(c, eur))}</td>
     </tr>
 `
-      : "";
+    )
+    .join("")}${
+    adjLabel
+      ? `    <tr>
+      <td style="padding:6px 8px;color:${adjColor};">${esc(adjLabel)}</td>
+      <td style="padding:6px 8px;text-align:right;white-space:nowrap;color:${adjColor};">${esc(adjAmount)}</td>
+    </tr>
+`
+      : ""
+  }`;
 
   const button = contact.trackingUrl
     ? `  <p style="margin:20px 0;text-align:center;">

@@ -583,16 +583,28 @@ model OrderSequence {
   lastNumber Int
 }
 
-/// Bookkeeping of the purge job — when it last ran and how many orders it
-/// removed. Counts and times only, never anything about an order. One row,
-/// id "orders".
+/// Bookkeeping of the purge job (lib/order-purge.ts) — counts, times, the
+/// trigger and error texts only, never anything about an order. One row,
+/// id "orders". Read it to know when tonight's orders were REALLY deleted.
 model MaintenanceState {
-  id           String    @id
-  lastRunAt    DateTime?
-  lastCutoffAt DateTime?
-  lastDeleted  Int       @default(0)
-  lastError    String?
-  updatedAt    DateTime  @updatedAt
+  id                   String    @id
+  /// The last run of any kind, and what started it (timer, cutoff, fallback…).
+  lastRunAt            DateTime?
+  lastTrigger          String?
+  /// The last run that finished without any failure.
+  lastSuccessAt        DateTime?
+  /// The newest cutoff whose orders a successful run has deleted, how many
+  /// seconds after that cutoff it happened, and which trigger did it.
+  lastCutoffAt         DateTime?
+  lastCutoffLagSeconds Int?
+  lastCutoffTrigger    String?
+  lastDeleted          Int       @default(0)
+  /// Null when the last run succeeded; otherwise why it did not.
+  lastError            String?
+  lastBackupsScrubbed  Int       @default(0)
+  /// JSON [{file, error}] of the backup files the last run could not clean.
+  lastBackupErrors     String?
+  updatedAt            DateTime  @updatedAt
 }
 
 /// Transactional outbox for customer e-mails (lib/email/outbox.ts). A row is

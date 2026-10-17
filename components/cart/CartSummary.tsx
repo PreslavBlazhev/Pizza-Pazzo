@@ -2,20 +2,25 @@ import { useLocale, useTranslations } from "next-intl";
 import type { CartTotals } from "@/types/cart";
 import { formatEurPrice } from "@/lib/format-price";
 import { comboSizesLabel } from "@/lib/pizza-math";
+import { offerAdjustment, signedAdjustment } from "@/lib/offer-display";
 
 /**
  * Euro total for the cart and checkout. Delivery is free, so without an offer
- * it is one line; with the „Грешна математика“ pair it shows the products,
- * the discount and the amount to pay. With pizzas in the basket but no
- * discount, a short line says when the offer applies.
+ * it is one line. With „Грешна математика“ combos it shows the products,
+ * every combo with its package price and the regular price it replaces, the
+ * difference (a discount, or — with fixed package prices — the amount the
+ * package is above the regular prices; never a negative discount) and the
+ * amount to pay. With pizzas but no combo, a short line says how it works.
  */
 export function CartSummary({ totals }: { totals: CartTotals }) {
   const t = useTranslations("cart");
   const unit = useLocale() === "en" ? "cm" : "см";
+  const adj = offerAdjustment(totals.discount);
+  const hasCombos = totals.combos.length > 0;
 
   return (
     <div className="space-y-1.5">
-      {totals.discount > 0 && (
+      {hasCombos && (
         <>
           <div className="flex items-baseline justify-between text-sm text-pizza-muted">
             <span>{t("subtotal")}</span>
@@ -23,27 +28,36 @@ export function CartSummary({ totals }: { totals: CartTotals }) {
               {formatEurPrice(totals.subtotal)}
             </span>
           </div>
-          {totals.combos.map((c) => (
+          {totals.combos.map((c, i) => (
             <div
-              key={c.sizes}
+              key={`${c.sizes}-${i}`}
               className="flex items-baseline justify-between gap-3 text-xs text-pizza-muted"
               data-testid="cart-combo"
             >
               <span>
-                {t("pizzaMathCombo", { sizes: comboSizesLabel(c.sizes, unit) })}
+                {t("pizzaMathCombo", {
+                  sizes: comboSizesLabel(c.sizes, unit),
+                  regular: formatEurPrice(c.regularEur),
+                })}
               </span>
-              <span className="whitespace-nowrap text-right">
-                {c.count > 1 ? `${c.count} × ` : ""}
-                {formatEurPrice(c.comboEur)}
-              </span>
+              <span className="whitespace-nowrap text-right">{formatEurPrice(c.comboEur)}</span>
             </div>
           ))}
-          <div className="flex items-baseline justify-between gap-3 text-sm font-medium text-pizza-green-dark">
-            <span>{t("pizzaMathDiscount")}</span>
-            <span className="whitespace-nowrap text-right" data-testid="cart-discount">
-              −{formatEurPrice(totals.discount)}
-            </span>
-          </div>
+          {adj.kind !== "none" && (
+            <div
+              className={`flex items-baseline justify-between gap-3 text-sm font-medium ${
+                adj.kind === "discount" ? "text-pizza-green-dark" : "text-pizza-ink"
+              }`}
+            >
+              <span>{adj.kind === "discount" ? t("pizzaMathDiscount") : t("pizzaMathSurcharge")}</span>
+              <span
+                className="whitespace-nowrap text-right"
+                data-testid={adj.kind === "discount" ? "cart-discount" : "cart-surcharge"}
+              >
+                {signedAdjustment(adj, formatEurPrice)}
+              </span>
+            </div>
+          )}
         </>
       )}
       <div className="flex items-baseline justify-between text-base font-semibold text-pizza-ink">
@@ -52,7 +66,7 @@ export function CartSummary({ totals }: { totals: CartTotals }) {
           {formatEurPrice(totals.total)}
         </span>
       </div>
-      {totals.discount === 0 && totals.pizzaCount > 0 && (
+      {!hasCombos && totals.pizzaCount > 0 && (
         <p className="text-xs text-pizza-muted" data-testid="pizza-math-hint">
           {t("pizzaMathHint")}
         </p>

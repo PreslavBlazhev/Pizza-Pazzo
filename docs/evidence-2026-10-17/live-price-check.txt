@@ -1,0 +1,39 @@
+# Live price check — https://pizzapazzo.bg/product/<slug>, 2026-10-17T01:06:52.761Z
+# Prices as PUBLISHED on the live site (read-only GET), compared with data/pizza-pazzo-menu.json
+# slug seed30 seed40 live30 live40
+margarita 6.65 10.23 6.65 10.23
+kashkavalina 6.65 10.23 6.65 10.23
+margarita-de-luks 9.71 12.78 9.71 12.78
+brusketitsa 9.71 12.78 9.71 12.78
+tribagra 9.71 12.78 9.71 12.78
+shopska 9.71 12.78 9.71 12.78
+balkanska 9.71 12.78 9.71 12.78
+vege 9.71 12.78 9.71 12.78
+vege-vulkano 9.71 12.78 9.71 12.78
+staroselska 9.71 12.78 9.71 12.78
+chinkue-patsoni 9.71 12.78 9.71 12.78
+selska 9.71 12.78 9.71 12.78
+havayska 9.71 12.78 9.71 12.78
+peperoni-maks 9.71 12.78 9.71 12.78
+div-zapad 9.71 12.78 9.71 12.78
+chika-latina 9.71 12.78 9.71 12.78
+tsezar 9.71 12.78 9.71 12.78
+karbonara 9.71 12.78 9.71 12.78
+angliyska-zakuska 9.71 12.78 9.71 12.78
+amerikanski-burger 9.71 12.78 9.71 12.78
+nyu-york-hot-dog 9.71 12.78 9.71 12.78
+teksasko-bbq 9.71 12.78 9.71 12.78
+meksiko 9.71 12.78 9.71 12.78
+mestna-mesna 9.71 12.78 9.71 12.78
+vulkano 9.71 12.78 9.71 12.78
+printsesa 9.71 12.78 9.71 12.78
+pile 9.71 12.78 9.71 12.78
+indiysko-pile 9.71 12.78 9.71 12.78
+rancho 9.71 12.78 9.71 12.78
+byalo-pile 9.71 12.78 9.71 12.78
+nikulden 9.71 12.78 9.71 12.78
+okeana 9.71 12.78 9.71 12.78
+moyata-patso 9.71 12.78 9.71 12.78
+spetsialna 9.71 12.78 9.71 12.78
+syomga 11.76 15.34 11.76 15.34
+proshuto 11.76 15.34 11.76 15.34

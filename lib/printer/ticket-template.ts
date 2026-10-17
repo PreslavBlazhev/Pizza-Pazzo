@@ -3,7 +3,8 @@ import { formatEurPrice } from "@/lib/format-price";
 import { collectInstructionBg } from "@/lib/payments/status";
 import { extraKitchenLabel } from "@/lib/order-extras-display";
 import { buildTicketModel } from "@/lib/printer/ticket-model";
-import { comboSizesLabel, summariseCombos } from "@/lib/pizza-math";
+import { comboSizesLabel } from "@/lib/pizza-math";
+import { adjustmentLabelBg, offerAdjustment, signedAdjustment } from "@/lib/offer-display";
 import {
   type PrintAlign,
   type PrintSectionId,
@@ -251,20 +252,19 @@ export function buildTicket(
   divider();
 
   // ── Money ──
-  for (const combo of summariseCombos(order.offer ?? [])) {
+  // Every combo with its package price and the regular price it replaces,
+  // then ONE money line: a discount or the difference up to the package
+  // price — never a negative discount (lib/offer-display.ts).
+  for (const combo of order.offer ?? []) {
     push(
       "payment",
-      `${combo.count > 1 ? `${combo.count} x ` : ""}Оферта 2 пици ${comboSizesLabel(combo.sizes)}`,
+      `Оферта 2 пици ${comboSizesLabel(combo.sizes)} (редовно ${formatEurPrice(combo.regularEur)})`,
       { right: formatEurPrice(combo.comboEur) }
     );
   }
-  if (order.discountEur > 0) {
-    push("payment", "Отстъпка „Грешна математика“", { right: `-${formatEurPrice(order.discountEur)}` });
-  } else if (order.discountEur < 0) {
-    // Only in the "fixed" combo mode (lib/pizza-math.ts): the package price
-    // was above the pizzas' regular prices.
-    push("payment", "Пакетна цена над редовната", { right: `+${formatEurPrice(-order.discountEur)}` });
-  }
+  const adj = offerAdjustment(order.discountEur);
+  const adjLabel = adjustmentLabelBg(adj.kind);
+  if (adjLabel) push("payment", adjLabel, { right: signedAdjustment(adj, formatEurPrice, "-") });
   push("payment", `Плащане: ${paymentLabel(order)}`);
   push("grandTotal", "ОБЩО", { right: formatEurPrice(order.totalEur) });
 

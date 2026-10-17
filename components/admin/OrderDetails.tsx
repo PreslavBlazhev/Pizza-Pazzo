@@ -2,7 +2,7 @@ import type { Order } from "@/types/order";
 import { formatEurPrice } from "@/lib/format-price";
 import { extraLabel, toOrderExtrasDisplay } from "@/lib/order-extras-display";
 import { formatDateTime } from "@/lib/utils";
-import { comboSizesLabel } from "@/lib/pizza-math";
+import { adjustmentLabelBg, comboLineBg, offerAdjustment, signedAdjustment } from "@/lib/offer-display";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { PrintOrderButtons } from "./PrintOrderButton";
@@ -226,16 +226,24 @@ export function OrderDetails({
       </section>
 
       <section className="max-w-xs space-y-2 text-sm">
-        {order.discountEur > 0 && (
+        {(order.offer.length > 0 || order.discountEur !== 0) && (
           <>
             {priceRow("Продукти", order.subtotalEur)}
             {order.offer.map((combo, i) => (
               <p key={i} className="text-xs text-neutral-500" data-testid="order-combo">
-                Оферта {comboSizesLabel(combo.sizes)} = {formatEurPrice(combo.comboEur)}:{" "}
-                {combo.pizzasBg.join(" + ")} (редовно {formatEurPrice(combo.regularEur)})
+                {comboLineBg(combo, formatEurPrice)} — {combo.pizzasBg.join(" + ")}
               </p>
             ))}
-            {priceRow("Отстъпка „Грешна математика“", -order.discountEur)}
+            {(() => {
+              const adj = offerAdjustment(order.discountEur);
+              const label = adjustmentLabelBg(adj.kind);
+              return label ? (
+                <div className="flex justify-between" data-testid="order-adjustment">
+                  <span className="text-neutral-600">{label}</span>
+                  <span>{signedAdjustment(adj, formatEurPrice)}</span>
+                </div>
+              ) : null;
+            })()}
           </>
         )}
         {priceRow("Общо", order.totalEur, true)}

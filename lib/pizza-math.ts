@@ -24,16 +24,17 @@
  *   - everything is whole cents; the combo prices are integers, never
  *     converted.
  *
- * Pricing mode. The owner's earlier rule (2026-10-12) was that the offer may
- * never make an order DEARER: a pair whose two regular prices together are
- * below the combo price keeps its regular price. The current menu has such
- * pairs (Маргарита/Кашкавалина: 30+30 = 13.30 €, 30+40 = 16.88 €, 40+40 =
- * 20.46 €), so making the combo prices strictly "fixed" would charge those
- * customers more. That is a business decision, so it is a single switch:
- *   "never_dearer" (DEFAULT, the rule the owner already approved) — a pair
- *                  costs min(regular, combo);
- *   "fixed"        — a pair always costs exactly the combo price, even when
- *                  that is more than the regular prices.
+ * Pricing mode. The CURRENT brief (2026-10-17) sets FIXED package prices, and
+ * it takes precedence over the owner's earlier rule (2026-10-12: "never
+ * dearer"). So the active mode is "fixed": a pair always costs exactly its
+ * package price — also when the two pizzas' regular prices together are
+ * LOWER, which with the seed menu happens for Маргарита/Кашкавалина pairs
+ * (30+30 = 13.30 €, 30+40 = 16.88 €, 40+40 = 20.46 €; see
+ * IMPLEMENTATION_REPORT.md §4). The difference is then shown as "Разлика до
+ * пакетната цена +X €", never as a negative discount (lib/offer-display.ts).
+ *   "fixed"        (ACTIVE) — a pair costs exactly the package price;
+ *   "never_dearer" — a pair costs min(regular, combo); kept, tested, one
+ *                    constant away, for when the owner decides otherwise.
  * The same function runs in the basket and on the server, so both always
  * agree; the server feeds it its own menu prices and categories.
  *
@@ -66,7 +67,7 @@ import { PIZZA_CATEGORY_IDS, parseVariantSize } from "./extras-rules";
 export type ComboPricingMode = "never_dearer" | "fixed";
 
 /** The active mode — see the module comment before changing it. */
-export const COMBO_PRICING_MODE: ComboPricingMode = "never_dearer";
+export const COMBO_PRICING_MODE: ComboPricingMode = "fixed";
 
 /**
  * The categories whose pizzas take part: every pizza category of the menu,
