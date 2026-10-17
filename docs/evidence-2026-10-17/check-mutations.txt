@@ -1,0 +1,49 @@
+node v22.23.3; code at 9e40e1a3d732d77b1c5ed06d9d8616aa41116ae4
+Mutations are applied temporarily to lib/order-purge.ts and reverted with git checkout afterwards.
+
+== MUTATION A: old defect - skip a backup whose mtime is after the cutoff
+warning: in the working copy of 'lib/order-purge.ts', LF will be replaced by CRLF the next time Git touches it
+ lib/order-purge.ts | 3 ++-
+-- NEW tests/backup-scrub.test.ts (9e40e1a):
+not ok 1 - a NEW backup file (written AFTER the cutoff) holding yesterday's orders is cleaned — the file date is not what decides
+ok 2 - a backup with old AND current orders keeps the current ones and their lines
+ok 3 - an OLD-schema backup (first migration only, text dates, missing tables) is cleaned too
+ok 4 - a backup that cannot be cleaned is a FAILURE: not counted, reported, recorded, HTTP-worthy
+ok 5 - an interrupted clean-up changes nothing; the next run completes it; a third run finds it clean
+ok 6 - start and COMPLETION are recorded apart: started 22:30:01, finished 22:32:01 → 1 s and 121 s
+ok 7 - a FAILED run is recorded as finished, never as a completed clean-up
+# pass 6
+# fail 1
+-- OLD tests/backup-scrub.test.ts (e433485); its test 6 fails only on the renamed lagSeconds field:
+ok 1 - a NEW backup file holding yesterday's orders is cleaned (the file date is not what decides)
+ok 2 - a backup with old AND current orders keeps the current ones and their lines
+ok 3 - an OLD-schema backup (first migration only, text dates, missing tables) is cleaned too
+ok 4 - a backup that cannot be cleaned is a FAILURE: not counted, reported, recorded, HTTP-worthy
+ok 5 - an interrupted clean-up changes nothing; the next run completes it; a third run finds it clean
+not ok 6 - the run records its trigger, the cutoff it covered and how late it was
+# pass 5
+# fail 1
+
+== MUTATION B: old defect - finish/success stamped with the start time
+ lib/order-purge.ts | 2 +-
+-- NEW tests/backup-scrub.test.ts (9e40e1a):
+ok 1 - a NEW backup file (written AFTER the cutoff) holding yesterday's orders is cleaned — the file date is not what decides
+ok 2 - a backup with old AND current orders keeps the current ones and their lines
+ok 3 - an OLD-schema backup (first migration only, text dates, missing tables) is cleaned too
+ok 4 - a backup that cannot be cleaned is a FAILURE: not counted, reported, recorded, HTTP-worthy
+ok 5 - an interrupted clean-up changes nothing; the next run completes it; a third run finds it clean
+not ok 6 - start and COMPLETION are recorded apart: started 22:30:01, finished 22:32:01 → 1 s and 121 s
+not ok 7 - a FAILED run is recorded as finished, never as a completed clean-up
+# pass 5
+# fail 2
+
+== Unmutated code:
+ok 1 - a NEW backup file (written AFTER the cutoff) holding yesterday's orders is cleaned — the file date is not what decides
+ok 2 - a backup with old AND current orders keeps the current ones and their lines
+ok 3 - an OLD-schema backup (first migration only, text dates, missing tables) is cleaned too
+ok 4 - a backup that cannot be cleaned is a FAILURE: not counted, reported, recorded, HTTP-worthy
+ok 5 - an interrupted clean-up changes nothing; the next run completes it; a third run finds it clean
+ok 6 - start and COMPLETION are recorded apart: started 22:30:01, finished 22:32:01 → 1 s and 121 s
+ok 7 - a FAILED run is recorded as finished, never as a completed clean-up
+# pass 7
+# fail 0
