@@ -33,7 +33,17 @@ export type EmailFailureKind = "TEMPORARY" | "PERMANENT" | "CONFIG";
 export type EmailOutcome =
   | { status: "sent"; id?: string }
   | { status: "skipped"; reason: string }
-  | { status: "failed"; error: string; kind?: EmailFailureKind };
+  | {
+      status: "failed";
+      error: string;
+      kind?: EmailFailureKind;
+      /**
+       * True only when Resend answered with a refusal that proves the
+       * message was NOT accepted (rate limit, quota). A timeout, a network
+       * error, a 5xx or a thrown error leave it unknown (undefined).
+       */
+      notSent?: boolean;
+    };
 
 /** A send that has not answered after this long is abandoned and retried. */
 export const EMAIL_SEND_TIMEOUT_MS = 15_000;
@@ -81,6 +91,20 @@ export function classifyEmailError(error: unknown): EmailFailureKind {
     return "TEMPORARY";
   }
   return "PERMANENT";
+}
+
+/**
+ * Whether a Resend error PROVES the message was not accepted — a rate-limit
+ * or quota refusal. Everything else that is TEMPORARY (timeout, network,
+ * 5xx, a concurrent request with the same key) leaves the outcome unknown.
+ */
+export function provesNotSent(error: unknown): boolean {
+  const e = (error ?? {}) as { name?: unknown; statusCode?: unknown };
+  const name = typeof e.name === "string" ? e.name : "";
+  return (
+    e.statusCode === 429 ||
+    ["rate_limit_exceeded", "daily_quota_exceeded", "monthly_quota_exceeded"].includes(name)
+  );
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -188,7 +212,8 @@ async function sendToCustomer(
         },
         // The same e-mail for the same order is sent at most once by Resend,
         // even if we call this again after a timeout whose answer we never
-        // saw (24-hour idempotency window — longer than an order lives).
+        // saw — within Resend's 24-hour idempotency window. The outbox
+        // (lib/email/outbox.ts) never retries an unclear attempt after it.
         { idempotencyKey }
       ),
       EMAIL_SEND_TIMEOUT_MS
@@ -197,7 +222,12 @@ async function sendToCustomer(
     // is never mistaken for a send.
     if (error) {
       console.error(`[email] Resend rejected "${kind}" email for order #${order.orderNumber}:`, describe(error));
-      return { status: "failed", error: describe(error), kind: classifyEmailError(error) };
+      return {
+        status: "failed",
+        error: describe(error),
+        kind: classifyEmailError(error),
+        ...(provesNotSent(error) ? { notSent: true } : {}),
+      };
     }
     return { status: "sent", ...(data?.id ? { id: data.id } : {}) };
   } catch (err) {

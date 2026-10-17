@@ -9,6 +9,8 @@ export const EMAIL_JOB_STATUSES = [
   "PROVIDER_ACCEPTED",
   "FAILED",
   "SKIPPED",
+  /** Unclear whether Resend accepted it, and the safe retry window is over: a person checks. */
+  "NEEDS_REVIEW",
 ] as const;
 export type EmailJobStatus = (typeof EMAIL_JOB_STATUSES)[number];
 
@@ -39,6 +41,8 @@ export function emailJobLabelBg(job: EmailJobView | null | undefined, hasEmail: 
       return "Имейл: приет от доставчика (не гарантира входящата поща)";
     case "SKIPPED":
       return `Имейл: не е изпратен — ${job.lastError ?? "пропуснат"}`;
+    case "NEEDS_REVIEW":
+      return "Имейл: НУЖНА Е ПРОВЕРКА — не е сигурно дали е изпратен; няма автоматичен нов опит. Проверете в Resend → Emails.";
     case "FAILED":
       return job.lastErrorKind === "CONFIG"
         ? `Имейл: НЕ Е ИЗПРАТЕН — настройка: ${job.lastError ?? ""}`

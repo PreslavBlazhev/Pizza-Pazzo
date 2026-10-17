@@ -629,7 +629,7 @@ model EmailOutbox {
   kind              String
   /// "<kind>:<orderId>" — one e-mail per order and kind, ever.
   dedupeKey         String    @unique
-  /// PENDING | SENDING | RETRY | PROVIDER_ACCEPTED | FAILED | SKIPPED.
+  /// PENDING | SENDING | RETRY | PROVIDER_ACCEPTED | FAILED | SKIPPED | NEEDS_REVIEW.
   /// PROVIDER_ACCEPTED means Resend took the message — NOT that it reached
   /// the customer's inbox.
   status            String    @default("PENDING")
@@ -644,6 +644,17 @@ model EmailOutbox {
   lastErrorKind     String?
   providerMessageId String?
   sentAt            DateTime?
+  /// When the FIRST attempt was claimed — the start of Resend's 24-hour
+  /// idempotency window for this e-mail's key.
+  firstAttemptAt    DateTime?
+  /// firstAttemptAt + 23 h (lib/email/outbox.ts SAFE_AUTO_RETRY_MS). Until
+  /// then an automatic retry with the same idempotency key cannot deliver
+  /// twice; after it, an attempt whose outcome is unknown is NOT retried
+  /// automatically (status NEEDS_REVIEW — a person checks in Resend).
+  safeRetryUntil    DateTime?
+  /// True once any attempt ended without a clear answer (timeout, network,
+  /// 5xx, a worker that died mid-send): Resend MAY have accepted it.
+  ambiguousAttempt  Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

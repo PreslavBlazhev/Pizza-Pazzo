@@ -17,6 +17,8 @@ import { placeOrder } from "@/lib/checkout/place-order";
 import { changeOrderStatus } from "@/lib/order-workflow";
 import {
   MAX_ATTEMPTS,
+  NEEDS_REVIEW_REASON,
+  SAFE_AUTO_RETRY_MS,
   SENDING_LEASE_MS,
   drainEmailOutbox,
   providerIdempotencyKey,
@@ -162,7 +164,10 @@ test("a timeout (the message may have gone) and a dead worker are retried with t
 
   // A worker died after claiming: the row is stuck in SENDING until its lease runs out.
   const id2 = await acceptedOrder();
-  await dbUnscoped.emailOutbox.updateMany({ where: { orderId: id2 }, data: { status: "SENDING", claimedAt: NOON, attempts: 1 } });
+  await dbUnscoped.emailOutbox.updateMany({
+    where: { orderId: id2 },
+    data: { status: "SENDING", claimedAt: NOON, attempts: 1, firstAttemptAt: NOON, safeRetryUntil: new Date(NOON.getTime() + SAFE_AUTO_RETRY_MS) },
+  });
   const w = recorder([{ status: "sent" }]);
   await drainEmailOutbox({ send: w.send, now: later(SENDING_LEASE_MS / 2) });
   assert.equal(w.calls.length, 0, "a live lease is respected");
@@ -171,14 +176,160 @@ test("a timeout (the message may have gone) and a dead worker are retried with t
   assert.equal(w.calls[0].key, providerIdempotencyKey(id2));
 });
 
-test("temporary failures stop after MAX_ATTEMPTS", async () => {
+test("temporary failures stop after MAX_ATTEMPTS — unclear ones end in NEEDS_REVIEW, proven refusals in FAILED", async () => {
+  // 500s: Resend MAY have taken it — "НЕ Е ИЗПРАТЕН" would be a guess.
   const id = await acceptedOrder();
   const r = recorder([{ status: "failed", error: "500", kind: "TEMPORARY" }]);
   for (let i = 0; i < MAX_ATTEMPTS + 3; i++) {
-    await drainEmailOutbox({ send: r.send, now: later((i + 1) * 3_600_000) });
+    await drainEmailOutbox({ orderId: id, send: r.send, now: later((i + 1) * 3_600_000) });
   }
   assert.equal(r.calls.length, MAX_ATTEMPTS);
-  assert.equal((await job(id)).status, "FAILED");
+  assert.equal((await job(id)).status, "NEEDS_REVIEW");
+  // Rate limits (a proven refusal every time): it was never taken — FAILED.
+  const id2 = await acceptedOrder();
+  const q = recorder([{ status: "failed", error: "rate_limit_exceeded 429", kind: "TEMPORARY", notSent: true }]);
+  for (let i = 0; i < MAX_ATTEMPTS + 3; i++) {
+    await drainEmailOutbox({ orderId: id2, send: q.send, now: later((i + 1) * 3_600_000) });
+  }
+  assert.equal(q.calls.length, MAX_ATTEMPTS);
+  const row2 = await job(id2);
+  assert.equal(row2.status, "FAILED");
+  assert.equal(row2.ambiguousAttempt, false);
+});
+
+// ── The safe retry window (Resend forgets an idempotency key after 24 h) ────
+
+const HOUR = 3_600_000;
+
+test("LOST ANSWER: Resend took it, the answer was lost; after a 25-hour outage there is NO second send", async () => {
+  const id = await acceptedOrder();
+  // The provider accepted the e-mail, but the request timed out on our side.
+  const lost = recorder([new Error("timeout after 15000 ms")]);
+  await drainEmailOutbox({ orderId: id, send: lost.send, now: NOON });
+  assert.equal(lost.calls.length, 1);
+  let row = await job(id);
+  assert.equal(row.status, "RETRY");
+  assert.equal(row.ambiguousAttempt, true, "the outcome is recorded as unclear");
+  assert.equal(row.firstAttemptAt?.toISOString(), NOON.toISOString(), "the window starts at the FIRST attempt");
+  assert.equal(row.safeRetryUntil?.toISOString(), new Date(NOON.getTime() + SAFE_AUTO_RETRY_MS).toISOString(), "and is stored");
+  assert.ok(SAFE_AUTO_RETRY_MS < 24 * HOUR, "the window ends before Resend's 24 h");
+
+  // 25 hours later the process is back (outage, deploy, a closed tablet).
+  const back = recorder([{ status: "sent", id: "re_DUPLICATE" }]);
+  const s = await drainEmailOutbox({ orderId: id, send: back.send, now: later(25 * HOUR) });
+  assert.equal(back.calls.length, 0, "no automatic retry with a key Resend may have forgotten");
+  assert.equal(s.review, 1);
+  row = await job(id);
+  assert.equal(row.status, "NEEDS_REVIEW");
+  assert.equal(row.attempts, 1, "no attempt was made");
+  assert.equal(row.sentAt, null, "an unconfirmed send is NOT marked as sent");
+  assert.equal(row.providerMessageId, null);
+  assert.equal(row.lastErrorKind, "UNCERTAIN");
+  assert.equal(row.lastError, NEEDS_REVIEW_REASON);
+  // The staff see it.
+  const label = emailJobLabelBg({ ...row, status: "NEEDS_REVIEW", nextAttemptAt: null }, true);
+  assert.match(label, /НУЖНА Е ПРОВЕРКА/);
+  assert.match(label, /няма автоматичен нов опит/);
+  // It stays like that: later drains never pick it up, nothing is deleted.
+  await drainEmailOutbox({ orderId: id, send: back.send, now: later(30 * HOUR) });
+  await drainEmailOutbox({ send: back.send, now: later(72 * HOUR) });
+  assert.equal(back.calls.filter((c) => c.orderId === id).length, 0);
+  assert.equal((await job(id)).status, "NEEDS_REVIEW");
+  assert.equal(await dbUnscoped.emailOutbox.count({ where: { orderId: id } }), 1);
+  assert.ok(await getOrderById(id), "the order is kept");
+});
+
+test("LOST ANSWER via a worker that died mid-send (expired SENDING lease), recovered after 25 h: NEEDS_REVIEW", async () => {
+  const id = await acceptedOrder();
+  // A worker claimed the first attempt at NOON and died before recording the answer.
+  await dbUnscoped.emailOutbox.updateMany({
+    where: { orderId: id },
+    data: { status: "SENDING", claimedAt: NOON, attempts: 1, firstAttemptAt: NOON, safeRetryUntil: new Date(NOON.getTime() + SAFE_AUTO_RETRY_MS) },
+  });
+  const r = recorder([{ status: "sent" }]);
+  await drainEmailOutbox({ orderId: id, send: r.send, now: later(25 * HOUR) });
+  assert.equal(r.calls.length, 0);
+  const row = await job(id);
+  assert.equal(row.status, "NEEDS_REVIEW");
+  assert.equal(row.ambiguousAttempt, true);
+  assert.equal(row.sentAt, null);
+});
+
+test("inside the safe window an unclear attempt IS retried normally — same key, window not reset", async () => {
+  const id = await acceptedOrder();
+  const r = recorder([new Error("timeout after 15000 ms"), { status: "failed", error: "500", kind: "TEMPORARY" }, { status: "sent", id: "re_ok" }]);
+  await drainEmailOutbox({ orderId: id, send: r.send, now: NOON });
+  // 22 hours later: still safe (Resend still knows the key).
+  await drainEmailOutbox({ orderId: id, send: r.send, now: later(22 * HOUR) });
+  let row = await job(id);
+  assert.equal(row.status, "RETRY");
+  assert.equal(row.firstAttemptAt?.toISOString(), NOON.toISOString(), "a later attempt does not move the window");
+  assert.equal(row.safeRetryUntil?.toISOString(), new Date(NOON.getTime() + SAFE_AUTO_RETRY_MS).toISOString());
+  // 22 h 30 min: the next retry is sent, with the same idempotency key.
+  await drainEmailOutbox({ orderId: id, send: r.send, now: later(22.5 * HOUR) });
+  assert.equal(r.calls.length, 3);
+  assert.ok(r.calls.every((c) => c.key === providerIdempotencyKey(id)));
+  row = await job(id);
+  assert.equal(row.status, "PROVIDER_ACCEPTED");
+  assert.equal(row.providerMessageId, "re_ok");
+
+  // A worker that died mid-send WITHIN the window is re-sent too (same key).
+  const id2 = await acceptedOrder();
+  await dbUnscoped.emailOutbox.updateMany({
+    where: { orderId: id2 },
+    data: { status: "SENDING", claimedAt: NOON, attempts: 1, firstAttemptAt: NOON, safeRetryUntil: new Date(NOON.getTime() + SAFE_AUTO_RETRY_MS) },
+  });
+  const w = recorder([{ status: "sent" }]);
+  await drainEmailOutbox({ orderId: id2, send: w.send, now: later(10 * 60_000) });
+  assert.equal(w.calls.length, 1);
+  assert.equal(w.calls[0].key, providerIdempotencyKey(id2));
+  assert.equal((await job(id2)).status, "PROVIDER_ACCEPTED");
+});
+
+test("a retry that would land after the window is not scheduled: the unclear job goes to NEEDS_REVIEW at once", async () => {
+  const id = await acceptedOrder();
+  const r = recorder([new Error("timeout after 15000 ms")]);
+  await drainEmailOutbox({ orderId: id, send: r.send, now: NOON });
+  // The retry at 22 h 59 min fails unclear again; the next wait (2 min) would end after 23 h.
+  await drainEmailOutbox({ orderId: id, send: r.send, now: later(SAFE_AUTO_RETRY_MS - 60_000) });
+  assert.equal(r.calls.length, 2);
+  const row = await job(id);
+  assert.equal(row.status, "NEEDS_REVIEW");
+  assert.match(row.lastError ?? "", /Последна грешка: timeout/);
+});
+
+test("a PROVEN refusal (rate limit) is not unclear: it may still be retried after 24 h — it cannot have been delivered", async () => {
+  const id = await acceptedOrder();
+  const r = recorder([{ status: "failed", error: "rate_limit_exceeded 429", kind: "TEMPORARY", notSent: true }, { status: "sent", id: "re_late" }]);
+  await drainEmailOutbox({ orderId: id, send: r.send, now: NOON });
+  assert.equal((await job(id)).ambiguousAttempt, false);
+  await drainEmailOutbox({ orderId: id, send: r.send, now: later(25 * HOUR) });
+  assert.equal(r.calls.length, 2);
+  assert.equal((await job(id)).status, "PROVIDER_ACCEPTED");
+});
+
+test("a row from before the migration (no stored window) counts the window from its creation", async () => {
+  const id = await acceptedOrder();
+  const created = (await job(id)).createdAt;
+  await dbUnscoped.emailOutbox.updateMany({
+    where: { orderId: id },
+    data: { status: "RETRY", attempts: 1, ambiguousAttempt: true, firstAttemptAt: null, safeRetryUntil: null, nextAttemptAt: new Date(0) },
+  });
+  const r = recorder([{ status: "sent" }]);
+  await drainEmailOutbox({ orderId: id, send: r.send, now: new Date(created.getTime() + 25 * HOUR) });
+  assert.equal(r.calls.length, 0);
+  const row = await job(id);
+  assert.equal(row.status, "NEEDS_REVIEW");
+  assert.equal(row.firstAttemptAt?.toISOString(), created.toISOString());
+});
+
+test("the real sender marks only rate-limit/quota refusals as proven-not-sent", async () => {
+  const { provesNotSent } = await import("@/lib/email/resend");
+  assert.equal(provesNotSent({ name: "rate_limit_exceeded", statusCode: 429 }), true);
+  assert.equal(provesNotSent({ name: "daily_quota_exceeded" }), true);
+  assert.equal(provesNotSent({ name: "application_error", statusCode: 500 }), false);
+  assert.equal(provesNotSent({ name: "concurrent_idempotent_requests", statusCode: 409 }), false);
+  assert.equal(provesNotSent(new Error("timeout after 15000 ms")), false);
 });
 
 test("history kept: a retry after 22:30 (and the next day) still sends, and deletes nothing", async () => {
@@ -369,4 +520,56 @@ test("the outbox renders from the saved order (number, items, total) at send tim
   });
   assert.ok(rendered.includes(`#${order!.orderNumber}`));
   assert.ok(rendered.includes(`Обща сума: ${order!.totalEur.toFixed(2)} €`));
+});
+
+test("the migration fills the window for jobs that were already attempted (old schema → new)", async () => {
+  const { mkdtempSync, readdirSync, readFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const pathMod = await import("node:path");
+  const { PrismaClient } = await import("@prisma/client");
+  const dir = mkdtempSync(pathMod.join(tmpdir(), "pp-outbox-mig-"));
+  const file = pathMod.join(dir, "old.db").split(pathMod.sep).join("/");
+  const c = new PrismaClient({ datasources: { db: { url: `file:${file}?connection_limit=1` } } });
+  const NEW = "20261018120000_email_outbox_safe_retry_window";
+  const run = async (sql: string) => {
+    const statements = sql
+      .split(/\r?\n/)
+      .filter((l) => !l.trim().startsWith("--"))
+      .join("\n")
+      .split(/;\s*\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const s of statements) await c.$executeRawUnsafe(s);
+  };
+  try {
+    for (const m of readdirSync("prisma/migrations").filter((n) => /^\d{14}_/.test(n) && n < NEW).sort()) {
+      await run(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    }
+    await c.$executeRawUnsafe("PRAGMA foreign_keys = OFF");
+    const t0 = 1_900_000_000_000; // integer ms, as Prisma stores DateTime
+    await c.$executeRawUnsafe(
+      `INSERT INTO "EmailOutbox" ("id","orderId","kind","dedupeKey","status","attempts","nextAttemptAt","createdAt","updatedAt") VALUES
+       ('j_retry','o1','ORDER_ACCEPTED','k1','RETRY',2,${t0},${t0},${t0}),
+       ('j_sending','o2','ORDER_ACCEPTED','k2','SENDING',1,${t0},${t0},${t0}),
+       ('j_new','o3','ORDER_ACCEPTED','k3','PENDING',0,${t0},${t0},${t0}),
+       ('j_done','o4','ORDER_ACCEPTED','k4','PROVIDER_ACCEPTED',1,${t0},${t0},${t0})`
+    );
+    await run(readFileSync(`prisma/migrations/${NEW}/migration.sql`, "utf8"));
+    const rows = await c.$queryRawUnsafe<
+      { id: string; status: string; firstAttemptAt: number | null; safeRetryUntil: number | null; ambiguousAttempt: number | bigint }[]
+    >(`SELECT "id","status","firstAttemptAt","safeRetryUntil","ambiguousAttempt" FROM "EmailOutbox" ORDER BY "id"`);
+    const by = Object.fromEntries(rows.map((r) => [r.id, r]));
+    assert.equal(rows.length, 4, "no row deleted");
+    assert.equal(Number(by.j_retry.firstAttemptAt), t0);
+    assert.equal(Number(by.j_retry.safeRetryUntil), t0 + SAFE_AUTO_RETRY_MS);
+    assert.equal(Number(by.j_retry.ambiguousAttempt), 1, "a waiting retry is treated as unclear");
+    assert.equal(Number(by.j_sending.ambiguousAttempt), 1);
+    assert.equal(by.j_new.firstAttemptAt, null, "never attempted: the window starts at its first attempt");
+    assert.equal(Number(by.j_new.ambiguousAttempt), 0);
+    assert.equal(Number(by.j_done.ambiguousAttempt), 0);
+    assert.deepEqual(rows.map((r) => r.status), ["PROVIDER_ACCEPTED", "PENDING", "RETRY", "SENDING"], "no status changed");
+  } finally {
+    await c.$disconnect();
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

@@ -1,0 +1,13 @@
+DNS check for the Resend sending domain — 2026-10-17T12:54Z, public resolvers (dns.google, cloudflare-dns.com). DKIM key value elided.
+
+== TXT resend._domainkey.pizzapazzo.bg
+  p=<DKIM public key>
+
+== TXT send.pizzapazzo.bg
+  v=spf1 include.com ~all
+
+== MX send.pizzapazzo.bg
+  10 feedback-smtp.eu-west-1.amazonses.com.
+
+== TXT _dmarc.pizzapazzo.bg
+  v=DMARC1; p=none;

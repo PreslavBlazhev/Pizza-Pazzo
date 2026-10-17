@@ -1,0 +1,11 @@
+node v22.23.3 — mutation check of the safe retry window (lib/email/outbox.ts), restored afterwards
+== MUTATION: the old behaviour (retry regardless of the 24 h window)
+not ok 7 - LOST ANSWER: Resend took it, the answer was lost; after a 25-hour outage there is NO second send
+not ok 8 - LOST ANSWER via a worker that died mid-send (expired SENDING lease), recovered after 25 h: NEEDS_REVIEW
+not ok 10 - a retry that would land after the window is not scheduled: the unclear job goes to NEEDS_REVIEW at once
+not ok 12 - a row from before the migration (no stored window) counts the window from its creation
+# pass 18
+# fail 4
+== restored:
+# pass 22
+# fail 0

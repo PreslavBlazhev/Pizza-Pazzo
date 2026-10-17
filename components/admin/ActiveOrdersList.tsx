@@ -44,7 +44,7 @@ export function ActiveOrdersList({
           const next = statusFlowFor(method)[order.status].filter((s) => s !== "CANCELLED");
           const job = emailJobs[order.id];
           const emailLine = emailJobLabelBg(job, !!order.customerEmail);
-          const emailBad = job?.status === "FAILED";
+          const emailBad = job?.status === "FAILED" || job?.status === "NEEDS_REVIEW";
           const busy = busyOrderId === order.id;
           return (
             <div
