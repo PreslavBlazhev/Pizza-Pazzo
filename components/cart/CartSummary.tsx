@@ -6,11 +6,11 @@ import { offerAdjustment, signedAdjustment } from "@/lib/offer-display";
 
 /**
  * Euro total for the cart and checkout. Delivery is free, so without an offer
- * it is one line. With „Грешна математика“ combos it shows the products,
- * every combo with its package price and the regular price it replaces, the
- * difference (a discount, or — with fixed package prices — the amount the
- * package is above the regular prices; never a negative discount) and the
- * amount to pay. With pizzas but no combo, a short line says how it works.
+ * it is one line. With „Грешна математика“ combos (only pairs that really
+ * save) it shows the products, every combo with its package price and the
+ * regular price it replaces, the discount and the amount to pay. With
+ * standard pizzas but no combo, a short line says how the offer works; a
+ * basket of special pizzas only gets no such promise.
  */
 export function CartSummary({ totals }: { totals: CartTotals }) {
   const t = useTranslations("cart");
@@ -66,7 +66,7 @@ export function CartSummary({ totals }: { totals: CartTotals }) {
           {formatEurPrice(totals.total)}
         </span>
       </div>
-      {!hasCombos && totals.pizzaCount > 0 && (
+      {!hasCombos && totals.comboPizzaCount > 0 && (
         <p className="text-xs text-pizza-muted" data-testid="pizza-math-hint">
           {t("pizzaMathHint")}
         </p>

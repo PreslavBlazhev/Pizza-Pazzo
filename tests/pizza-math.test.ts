@@ -1,13 +1,17 @@
 /**
- * „Грешна математика“ and the delivery minimum after it — the owner's rules
- * of 2026-10-12, proven on the pure function, the basket and the server:
+ * „Грешна математика“ and the delivery minimum after it — the FINAL rule
+ * (owner, 2026-10-17), proven on the pure function, the basket and the server:
  *
- *   - 30+30 → 16.87 €, 40+30 → 19.43 €, 40+40 → 23.01 €
- *   - only with exactly 2 pizzas, counted by quantity (one line × 2 counts);
- *     3 or 4 pizzas: every pizza at its normal price, nothing paired off
- *   - speciality pizzas are excluded (and still count as pizzas)
- *   - the pair costs the lower of its regular base prices and the combo
- *   - paid extras stay on top, per pizza; „Моята Пацо“'s free toppings stay 0
+ *   - 30+30 → 16.87 €, 40+30 → 19.43 €, 40+40 → 23.01 €, applied ONLY when
+ *     the two pizzas' regular BASE prices together are strictly greater;
+ *     equal or lower keeps the regular price, with no combo shown
+ *   - only cat_pizzas_standard takes part; cat_pizzas_special never pairs
+ *     (special + special, special + standard), and does not stop two
+ *     standard pizzas from pairing
+ *   - counted by quantity (one line × 2 counts); 3+ pizzas: the cheapest
+ *     pairing, never a pair that saves nothing
+ *   - paid extras stay on top and never count towards the package price;
+ *     „Моята Пацо“'s free toppings stay 0
  *   - the minimum of 10 € is measured AFTER the discount: 9.99 refused,
  *     10.00 and 10.01 accepted
  *   - basket preview = server answer = saved order, in BG and in EN
@@ -18,7 +22,14 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { db } from "@/lib/db";
 import { placeOrder, type PlaceOrderInput } from "@/lib/checkout/place-order";
-import { PIZZA_MATH_PRICES_EUR, pizzaMathDiscount, type PizzaMathLine } from "@/lib/pizza-math";
+import {
+  COMBO_PRICING_MODE,
+  PIZZA_COMBO_CATEGORY_IDS,
+  PIZZA_MATH_PRICES_EUR,
+  pizzaMathDiscount,
+  type PizzaMathLine,
+} from "@/lib/pizza-math";
+import { PIZZA_CATEGORY_IDS } from "@/lib/extras-rules";
 import { cartTotals } from "@/lib/cart-totals";
 import { minimumOrderShortfallEur } from "@/lib/delivery-area";
 import { useCartStore } from "@/store/cart-store";
@@ -203,23 +214,83 @@ test("40 + 40: 12.78 + 12.78 = 25.56 → 23.01 (−2.55)", async () => {
   });
 });
 
-// 2026-10-17: FIXED package prices (the current brief) — a pair costs exactly
-// its package price, also when the regular prices are lower. The difference
-// is then negative and shown as "Разлика до пакетната цена" (tests/
-// pizza-combos.test.ts covers how every surface shows it).
-test("fixed package price: a pair cheaper than the package costs the package (13.30 → 16.87)", async () => {
-  assert.equal(pm([pizza(30, 6.65), pizza(30, 6.65)]), -3.57);
+// ── FINAL rule (2026-10-17): only when it saves, only standard pizzas ───────
+
+test("the active mode is never_dearer; only cat_pizzas_standard takes part; the general pizza list is unchanged", () => {
+  assert.equal(COMBO_PRICING_MODE, "never_dearer");
+  assert.deepEqual([...PIZZA_COMBO_CATEGORY_IDS], ["cat_pizzas_standard"]);
+  // Toppings, sizes and printing still know both pizza categories.
+  assert.deepEqual([...PIZZA_CATEGORY_IDS].sort(), ["cat_pizzas_special", "cat_pizzas_standard"]);
+});
+
+// Below, equal and above the package price, for every size combination.
+// (base prices of ONE unit each; equal = exactly the package price)
+for (const [a, b, below, equal, above, saving] of [
+  [30, 30, [6.65, 6.65], [6.65, 10.22], [9.71, 9.71], 2.55],
+  [30, 40, [6.65, 10.23], [6.65, 12.78], [9.71, 12.78], 3.06],
+  [40, 40, [10.23, 10.23], [10.23, 12.78], [12.78, 12.78], 2.55],
+] as const) {
+  test(`${a} + ${b}: below and equal keep the regular price with no combo; strictly above gets the package`, () => {
+    for (const [label, pr] of [["below", below], ["equal", equal]] as const) {
+      const r = pizzaMathDiscount([pizza(a, pr[0]), pizza(b, pr[1])]);
+      assert.equal(r.discountEur, 0, `${label}: no discount`);
+      assert.equal(r.pairs.length, 0, `${label}: no combo shown`);
+      assert.equal(r.eligible, false);
+      assert.deepEqual(r.lineDiscountsEur, {});
+    }
+    const r = pizzaMathDiscount([pizza(a, above[0]), pizza(b, above[1])]);
+    assert.equal(r.discountEur, saving);
+    assert.equal(r.pairs.length, 1);
+    assert.ok(r.pairs[0].discountEur > 0);
+    // One cent above the package price is enough.
+    const pkg = PIZZA_MATH_PRICES_EUR[`${a}+${b}` as "30+30" | "30+40" | "40+40"];
+    const oneCent = pizzaMathDiscount([pizza(a, equal[0]), pizza(b, Math.round((equal[1] + 0.01) * 100) / 100)]);
+    assert.equal(oneCent.discountEur, 0.01, `${pkg} + 0.01`);
+  });
+}
+
+test("cheaper or equal pairs on the server: the regular price stays, nothing is shown, never dearer", async () => {
+  // Маргарита 30 + Кашкавалина 30: 13.30 < 16.87.
   await assertSame([line("prod_margarita", 30, 1), line("prod_kashkavalina", 30, 1)], {
     subtotal: 13.3,
-    discount: -3.57,
-    total: 16.87,
+    discount: 0,
+    total: 13.3,
   });
-  // 40 + 40 Маргарита: 20.46 → 23.01.
-  await assertSame([line("prod_margarita", 40, 2)], { subtotal: 20.46, discount: -2.55, total: 23.01 });
-  // Equal to the combo (6.65 + 12.78 = 19.43): no difference either way.
-  assert.equal(pm([pizza(30, 6.65), pizza(40, 12.78)]), 0);
-  // The earlier "never dearer" rule is still available, one constant away.
-  assert.equal(pizzaMathDiscount([pizza(30, 6.65), pizza(30, 6.65)], { mode: "never_dearer" }).discountEur, 0);
+  // Маргарита 30 + Кашкавалина 40 (the brief's example): 16.88 < 19.43.
+  await assertSame([line("prod_margarita", 30, 1), line("prod_kashkavalina", 40, 1)], {
+    subtotal: 16.88,
+    discount: 0,
+    total: 16.88,
+  });
+  // 2 × Маргарита 40 in one line: 20.46 < 23.01.
+  await assertSame([line("prod_margarita", 40, 2)], { subtotal: 20.46, discount: 0, total: 20.46 });
+  // Маргарита 30 + Пеперони 40: 6.65 + 12.78 = 19.43 — EQUAL, so no combo.
+  await assertSame([line("prod_margarita", 30, 1), line("prod_peperoni_maks", 40, 1)], {
+    subtotal: 19.43,
+    discount: 0,
+    total: 19.43,
+  });
+  assert.deepEqual(cartTotals([line("prod_margarita", 30, 1), line("prod_peperoni_maks", 40, 1)]).combos, []);
+  // The unused "fixed" mode would have charged the package (kept only for the proof).
+  assert.equal(pizzaMathDiscount([pizza(30, 6.65), pizza(30, 6.65)], { mode: "fixed" }).discountEur, -3.57);
+});
+
+test("cheap bases + toppings over the package price: still NO offer — only the bases count", async () => {
+  // (6.65 + 2.56 meat) + (6.65 + 2.56 meat) = 18.42 > 16.87, but the bases are 13.30.
+  const lines = [
+    line("prod_margarita", 30, 1, [{ sel: MEAT, price: 2.56 }]),
+    line("prod_kashkavalina", 30, 1, [{ sel: MEAT, price: 2.56 }]),
+  ];
+  assert.equal(cartTotals(lines).combos.length, 0);
+  await assertSame(lines, { subtotal: 18.42, discount: 0, total: 18.42 });
+  // 30 + 40 with a meat topping on each and a sauce: 16.88 bases, 22.53 in all.
+  await assertSame(
+    [
+      line("prod_margarita", 30, 1, [{ sel: MEAT, price: 2.56 }, { sel: SAUCE, price: 1.02 }]),
+      line("prod_kashkavalina", 40, 1, [{ sel: MEAT, price: 3.07 }]),
+    ],
+    { subtotal: 23.53, discount: 0, total: 23.53 }
+  );
 });
 
 test("a pair with one cheap and one regular pizza: only the excess comes off", async () => {
@@ -233,28 +304,36 @@ test("a pair with one cheap and one regular pizza: only the excess comes off", a
   });
 });
 
-// 2026-10-17: the combos apply to every pizza category ("независимо от вида
-// им") and to 3+ pizzas — tests/pizza-combos.test.ts covers the algorithm.
-test("speciality pizzas take part like any other pizza", async () => {
-  assert.equal(pm([pizza(30, 11.76, 1, "cat_pizzas_special"), pizza(30, 9.71)]), 4.6);
-  await assertSame([line("prod_syomga", 30, 1), line("prod_peperoni_maks", 30, 1)], {
-    subtotal: 21.47,
-    discount: 4.6,
-    total: 16.87,
-  });
-  await assertSame([line("prod_syomga", 40, 1), line("prod_proshuto", 40, 1)], {
-    subtotal: 30.68,
-    discount: 7.67,
-    total: 23.01,
-  });
+test("special + special never pairs, in any size (their regular prices would save)", async () => {
+  const SP = "cat_pizzas_special";
+  assert.equal(pm([pizza(30, 11.76, 1, SP), pizza(30, 11.76, 1, SP)]), 0);
+  assert.equal(pm([pizza(30, 11.76, 1, SP), pizza(40, 15.34, 1, SP)]), 0);
+  assert.equal(pm([pizza(40, 15.34, 2, SP)]), 0);
+  await assertSame([line("prod_syomga", 30, 1), line("prod_proshuto", 30, 1)], { subtotal: 23.52, discount: 0, total: 23.52 });
+  await assertSame([line("prod_syomga", 40, 1), line("prod_proshuto", 40, 1)], { subtotal: 30.68, discount: 0, total: 30.68 });
+  await assertSame([line("prod_syomga", 40, 2)], { subtotal: 30.68, discount: 0, total: 30.68 });
 });
 
-test("2 standard + 1 speciality: the dearest two pair, the third pays its price", async () => {
-  // 11.76 + 9.71 → 16.87, the other 9.71 stays: 31.18 − 4.60 = 26.58
+test("special + standard never pairs", async () => {
+  assert.equal(pm([pizza(30, 11.76, 1, "cat_pizzas_special"), pizza(30, 9.71)]), 0);
+  await assertSame([line("prod_syomga", 30, 1), line("prod_peperoni_maks", 30, 1)], { subtotal: 21.47, discount: 0, total: 21.47 });
+  await assertSame([line("prod_proshuto", 40, 1), line("prod_peperoni_maks", 30, 1)], { subtotal: 25.05, discount: 0, total: 25.05 });
+});
+
+test("two standard + special pizzas: the standard pair still gets its offer, the specials pay in full", async () => {
+  // 2 × Пеперони 30 (19.42 → 16.87) + Сьомга 40 15.34 + Прошуто 30 11.76.
   await assertSame(
-    [line("prod_peperoni_maks", 30, 2), line("prod_proshuto", 30, 1)],
-    { subtotal: 31.18, discount: 4.6, total: 26.58 }
+    [line("prod_syomga", 40, 1), line("prod_peperoni_maks", 30, 2), line("prod_proshuto", 30, 1)],
+    { subtotal: 46.52, discount: 2.55, total: 43.97 }
   );
+  // Пеперони 40 + Моята Пацо 30 + Сьомга 30: the special is dearer than the
+  // 30 cm standard, yet only the two standard pizzas pair (−3.06).
+  await assertSame(
+    [line("prod_peperoni_maks", 40, 1), line("prod_syomga", 30, 1), line("prod_moyata_patso", 30, 1)],
+    { subtotal: 34.25, discount: 3.06, total: 31.19 }
+  );
+  const r = pizzaMathDiscount([pizza(40, 12.78), pizza(30, 11.76, 1, "cat_pizzas_special"), pizza(30, 9.71)]);
+  assert.deepEqual(r.pairs.map((p) => p.regularEur), [22.49], "the pair is the two STANDARD pizzas");
 });
 
 test("one line with quantity 2 is two pizzas — the same as two lines", async () => {
@@ -393,10 +472,12 @@ test("basket edits switch the offer on and off and recompute the total", () => {
     { s: 31.7, d: 2.55, t: 29.15 }
   );
 
-  // A speciality 30 cm joins: 40 (12.78) + 30 (11.76) → 19.43 saves 5.11.
+  // A special 30 cm joins: it does NOT take part — the 40 + 40 pair stays,
+  // the special pays its full price (29.15 + 11.76).
   store.addProduct(MENU.prod_syomga, MENU.prod_syomga.variants![0], 1);
-  assert.equal(totals().discount, 5.11);
-  assert.equal(totals().total, 38.35);
+  assert.equal(totals().discount, 2.55);
+  assert.equal(totals().total, 40.91);
+  assert.equal(totals().combos.length, 1);
 
   // …and leaves again.
   const special = useCartStore.getState().items.find((i) => i.product.id === "prod_syomga")!;
@@ -432,6 +513,18 @@ test("BG and EN have every new text, with the same placeholders", () => {
   assert.equal(ph(bg.cart.unavailableAtCheckout), ph(en.cart.unavailableAtCheckout));
   assert.match(bg.cart.pizzaMathHint, /16\.87 €.*19\.43 €.*23\.01 €/);
   assert.match(en.cart.pizzaMathHint, /16\.87 €.*19\.43 €.*23\.01 €/);
-  assert.match(bg.cart.pizzaMathHint, /всеки две пици/);
-  assert.match(en.cart.pizzaMathHint, /every two pizzas/);
+  // The final rule, in both languages: standard pizzas only, specials
+  // excluded, only when it is cheaper — no "every two pizzas" promise.
+  for (const s of [bg.cart.pizzaMathHint, bg.home.promos.pizzaMath.ariaLabel, bg.home.promos.pizzaMath.noteLine2]) {
+    assert.match(s, /стандартни пици/i);
+    assert.match(s, /по-изгод/);
+    assert.doesNotMatch(s, /всеки две пици|фиксирани/);
+  }
+  for (const s of [en.cart.pizzaMathHint, en.home.promos.pizzaMath.ariaLabel, en.home.promos.pizzaMath.noteLine2]) {
+    assert.match(s, /standard pizzas/i);
+    assert.match(s, /cheaper|saves you money/);
+    assert.doesNotMatch(s, /every two pizzas|fixed/);
+  }
+  assert.match(bg.cart.pizzaMathHint, /Специалните пици не участват/);
+  assert.match(en.cart.pizzaMathHint, /Special pizzas are not included/);
 });

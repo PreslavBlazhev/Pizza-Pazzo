@@ -9,8 +9,8 @@
  * Pure and dependency-free (relative imports only), so the tests can call it.
  */
 import type { CartItem, CartTotals } from "../types/cart";
-import { PIZZA_CATEGORY_IDS, isRetiredExtraKey } from "./extras-rules";
-import { pizzaMathDiscount } from "./pizza-math";
+import { isRetiredExtraKey } from "./extras-rules";
+import { comboSizeOf, pizzaMathDiscount } from "./pizza-math";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -45,26 +45,23 @@ export function linePreviewTotalEur(item: CartItem): number {
 export function cartTotals(items: readonly CartItem[]): CartTotals {
   const itemsCount = items.reduce((n, i) => n + i.quantity, 0);
   const subtotal = items.reduce((s, i) => s + cents(linePreviewTotalEur(i)), 0) / 100;
-  const offer = pizzaMathDiscount(
-    items.map((i) => ({
-      key: i.lineId,
-      categoryId: i.product.categoryId,
-      variantName: i.selectedVariant?.names?.bg ?? i.selectedVariant?.name ?? null,
-      baseUnitEur: i.unitPrice,
-      quantity: i.quantity,
-    }))
-  );
+  const lines = items.map((i) => ({
+    key: i.lineId,
+    categoryId: i.product.categoryId,
+    variantName: i.selectedVariant?.names?.bg ?? i.selectedVariant?.name ?? null,
+    // The BASE price only — extras never count towards the package price.
+    baseUnitEur: i.unitPrice,
+    quantity: i.quantity,
+  }));
+  const offer = pizzaMathDiscount(lines);
   const discount = offer.discountEur;
-  const pizzaCount = items.reduce(
-    (n, i) => ((PIZZA_CATEGORY_IDS as readonly string[]).includes(i.product.categoryId) ? n + i.quantity : n),
-    0
-  );
+  const comboPizzaCount = lines.reduce((n, l) => (comboSizeOf(l) !== null ? n + l.quantity : n), 0);
   return {
     itemsCount,
     subtotal,
     discount,
     total: round2(subtotal - discount),
-    pizzaCount,
+    comboPizzaCount,
     combos: offer.pairs.map((p) => ({ sizes: p.sizes, comboEur: p.comboEur, regularEur: p.regularEur })),
   };
 }

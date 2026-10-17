@@ -15,7 +15,9 @@ import { pizzaMathDiscount } from "@/lib/pizza-math";
  *   - the same pizza twice with different modifications stays two lines;
  *   - sauces chosen ON dishes (2 × 2 garlic sauces, 1 burger sauce) plus a
  *     garlic sauce ordered on its own add up in the sauce section (5 + 1);
- *   - a two-pizza combo, computed by the real lib/pizza-math.ts;
+ *   - a two-pizza combo that really saves (Пеперони 40 + 30), computed by
+ *     the real lib/pizza-math.ts — the 2 × Маргарита 40 do not pair (20.46 €
+ *     is below the 23.01 € package);
  *   - a long name that has to wrap, an item note and a customer note.
  */
 

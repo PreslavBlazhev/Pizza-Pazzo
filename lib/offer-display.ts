@@ -4,12 +4,12 @@
  * restaurant e-mail, the admin order page, the live board, the web ticket and
  * the Android print job.
  *
- * With fixed package prices (lib/pizza-math.ts, "fixed") the combos can make
- * an order CHEAPER (the pizzas' regular prices were higher) or DEARER (they
- * were lower — e.g. Маргарита 30 + Кашкавалина 40: 16.88 € regular, 19.43 €
- * as a package). Stored, that is one signed number, Order.discountEur
- * (regular − package). Shown, it must never read as a negative "discount" or
- * a double minus:
+ * In the active mode (lib/pizza-math.ts, "never_dearer") a combo exists only
+ * when it makes the order CHEAPER, so Order.discountEur (regular − package)
+ * is positive whenever there is a combo, and 0 without one. The other
+ * branches stay as a defensive guard for any stored value (and the unused
+ * "fixed" mode): shown, an amount must never read as a negative "discount"
+ * or a double minus:
  *   discountEur > 0  → "Отстъпка „Грешна математика“   −2.55 €"
  *   discountEur < 0  → "Разлика до пакетната цена      +2.55 €"
  *   discountEur = 0  → no money line (the combo line itself still shows)
@@ -63,7 +63,7 @@ export interface ComboLike {
   regularEur: number;
 }
 
-/** "Оферта 2 пици 40 + 30 см: 19.43 € (редовно 16.88 €)". */
+/** "Оферта 2 пици 40 + 30 см: 19.43 € (редовно 22.49 €)". */
 export function comboLineBg(combo: ComboLike, format: (eur: number) => string): string {
   return `Оферта 2 пици ${comboSizesLabel(combo.sizes)}: ${format(combo.comboEur)} (редовно ${format(
     combo.regularEur

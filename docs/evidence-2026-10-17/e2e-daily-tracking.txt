@@ -46,16 +46,30 @@ node v22.23.3
   ✓ POST /api/maintenance/run purged them
   ✓ no order, line or e-mail job left
   ✓ the endpoint refuses a wrong secret
-9. Fixed package price above the regular prices (Маргарита 30 + Кашкавалина 40)
-  ✓ basket lists the combo with its regular price
-  ✓ basket shows the difference as +2.55 €
-  ✓ no negative discount in the basket
-  ✓ basket total 19.43 €
-  ✓ checkout shows the same difference
-  ✓ saved: total 19.43, difference −2.55 stored signed
-  ✓ kitchen card: '+2.55 €'
-  ✓ admin order page: '+2.55 €'
-  ✓ print page: difference line, no double minus
+9a. A pair that would NOT save (Маргарита 30 + Кашкавалина 40): regular price, no offer anywhere
+  ✓ basket total 16.88 € (regular)
+  ✓ basket: no combo line
+  ✓ basket: no discount and no difference line
+  ✓ basket: nothing about a package price
+  ✓ checkout: no offer shown
+  ✓ saved: 16.88, discount 0
+  ✓ saved: no combo snapshot
+  ✓ kitchen card: no combo line
+  ✓ admin order page: no offer line
+  ✓ admin order page: 16.88 €
+  ✓ print page: regular price, no offer
+9b. Two standard pizzas + a special (Пеперони 40 + Пеперони 30 + Сьомга 30): only the standard pair
+  ✓ basket: exactly one combo
+  ✓ basket: the standard pair, regular 22.49 €
+  ✓ basket: discount −3.06 €
+  ✓ basket total 31.19 €
+  ✓ checkout: the same discount and total
+  ✓ saved: 34.25 − 3.06 = 31.19
+  ✓ saved: the special pays in full
+  ✓ kitchen card: discount −3.06 €
+  ✓ admin order page: discount −3.06 €
+  ✓ print page: −3.06 €, total 31.19 €
+  ✓ print page: one minus, no difference line
   ✓ no page errors
 
 E2E OK

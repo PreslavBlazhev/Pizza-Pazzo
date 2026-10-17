@@ -1,40 +1,42 @@
 /**
  * „Грешна математика, правилни оферти“ — automatic two-pizza combos.
  *
- * Fixed prices for the BASES of two pizzas, whatever pizzas they are:
+ * Package prices for the BASES of two STANDARD pizzas:
  *   30 см + 30 см → 16.87 €   (1687 cents)
  *   40 см + 30 см → 19.43 €   (1943 cents)
  *   40 см + 40 см → 23.01 €   (2301 cents)
  *
- * Rules (owner's brief of 2026-10-17, see IMPLEMENTATION_REPORT.md §3):
- *   - automatic: no promo code, nothing to switch on;
- *   - a pizza is a line whose MENU CATEGORY is a pizza category
- *     (PIZZA_COMBO_CATEGORY_IDS) and whose size variant parses to 30 or 40 —
- *     never a match on the product's name. Other sizes and categories never
- *     take part;
+ * FINAL rule (owner, 2026-10-17 — replaces the earlier "fixed package
+ * prices" and "special pizzas take part" instructions):
+ *   - a pair gets the package price ONLY when the two pizzas' regular base
+ *     prices together are STRICTLY GREATER than the package price. Equal or
+ *     lower: the regular price stays, and nothing is shown as a combo or a
+ *     discount. The offer never makes an order dearer ("never_dearer");
+ *   - only products of the menu category cat_pizzas_standard („Стандартни
+ *     пици“) take part (PIZZA_COMBO_CATEGORY_IDS). cat_pizzas_special is
+ *     excluded entirely: special + special and special + standard never
+ *     pair, and special pizzas in the basket do not stop two standard ones
+ *     from pairing. Eligibility is decided by the line's category from the
+ *     server's own menu — never by a product name (the standard pizza named
+ *     „Специална“ takes part; the special „Сьомга“ does not). The general
+ *     pizza classification (PIZZA_CATEGORY_IDS: toppings, sizes, printing)
+ *     is a different list and still holds both pizza categories;
+ *   - the size comes from the 30 / 40 size variant; other sizes never take part;
  *   - a line with quantity 2 is two pizzas; two identical pizzas pair;
  *   - every physical pizza is in at most one pair;
- *   - with 3+ pizzas the maximum number of pairs is formed, and among all the
- *     possible ways to pair them the one with the LOWEST total for the
- *     customer is chosen (an odd pizza out pays its normal price). The result
- *     depends only on the multiset of (size, price) — never on the order in
- *     which the basket was filled;
- *   - extras (crusts, toppings, sauces) are never part of the combo price:
- *     they are charged at their own price and quantity, on top;
- *   - everything is whole cents; the combo prices are integers, never
- *     converted.
+ *   - with 3+ eligible pizzas, the pairing with the LOWEST total for the
+ *     customer is chosen; a pair without a positive saving is never forced.
+ *     The result depends only on the multiset of (size, price) — never on
+ *     the order in which the basket was filled;
+ *   - extras (crusts, toppings, sauces) are paid separately and never count
+ *     towards whether a pair reaches the package price: only BASE prices are
+ *     compared;
+ *   - everything is whole cents; the package prices are integers.
  *
- * Pricing mode. The CURRENT brief (2026-10-17) sets FIXED package prices, and
- * it takes precedence over the owner's earlier rule (2026-10-12: "never
- * dearer"). So the active mode is "fixed": a pair always costs exactly its
- * package price — also when the two pizzas' regular prices together are
- * LOWER, which with the seed menu happens for Маргарита/Кашкавалина pairs
- * (30+30 = 13.30 €, 30+40 = 16.88 €, 40+40 = 20.46 €; see
- * IMPLEMENTATION_REPORT.md §4). The difference is then shown as "Разлика до
- * пакетната цена +X €", never as a negative discount (lib/offer-display.ts).
- *   "fixed"        (ACTIVE) — a pair costs exactly the package price;
- *   "never_dearer" — a pair costs min(regular, combo); kept, tested, one
- *                    constant away, for when the owner decides otherwise.
+ * Modes: "never_dearer" (ACTIVE) — a pair costs min(regular, package), and
+ * only pairs with a positive saving are formed. "fixed" — every possible pair
+ * costs exactly the package price (also when that is dearer); NOT used, kept
+ * only because the algorithm and its proof cover both.
  * The same function runs in the basket and on the server, so both always
  * agree; the server feeds it its own menu prices and categories.
  *
@@ -62,18 +64,22 @@
  *
  * Pure and dependency-free (relative imports only), like lib/extras-rules.ts.
  */
-import { PIZZA_CATEGORY_IDS, parseVariantSize } from "./extras-rules";
+import { parseVariantSize } from "./extras-rules";
 
 export type ComboPricingMode = "never_dearer" | "fixed";
 
 /** The active mode — see the module comment before changing it. */
-export const COMBO_PRICING_MODE: ComboPricingMode = "fixed";
+export const COMBO_PRICING_MODE: ComboPricingMode = "never_dearer";
+
+/** The menu category of the standard pizzas — the only one that takes part. */
+export const STANDARD_PIZZA_CATEGORY_ID = "cat_pizzas_standard";
 
 /**
- * The categories whose pizzas take part: every pizza category of the menu,
- * standard and speciality alike ("независимо от вида им").
+ * The categories whose pizzas take part in the offer: ONLY the standard
+ * pizzas. Deliberately separate from PIZZA_CATEGORY_IDS (which also holds
+ * cat_pizzas_special and drives toppings, sizes and printing).
  */
-export const PIZZA_COMBO_CATEGORY_IDS: readonly string[] = PIZZA_CATEGORY_IDS;
+export const PIZZA_COMBO_CATEGORY_IDS: readonly string[] = [STANDARD_PIZZA_CATEGORY_ID];
 
 export type ComboSizes = "30+30" | "30+40" | "40+40";
 
@@ -109,7 +115,7 @@ export interface PizzaComboPair {
   comboEur: number;
   /** The two pizzas' regular base prices together. */
   regularEur: number;
-  /** regular − combo (negative only in "fixed" mode). */
+  /** regular − combo: always > 0 in the active mode (negative only in "fixed"). */
   discountEur: number;
   /** The two lines the pizzas come from (the same key twice for qty ≥ 2). */
   lineKeys: [string, string];

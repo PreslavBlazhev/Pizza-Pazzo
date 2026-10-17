@@ -1,11 +1,18 @@
 /**
- * B (presentation). With FIXED package prices a combo can be dearer than the
- * pizzas' regular prices (Маргарита 30 + Кашкавалина 40: 16.88 € regular,
- * 19.43 € package). Every real consumer must show that as "Разлика до
- * пакетната цена +2.55 €" next to the combo's package and regular price —
- * never as a negative discount, never with a double minus — and must still
- * add up to the total. Tested through the components and templates that
- * customers and staff actually see, not only through the arithmetic.
+ * B (presentation) — the FINAL rule (owner, 2026-10-17): a combo exists only
+ * for two STANDARD pizzas whose regular base prices are strictly above the
+ * package price. So every real consumer must:
+ *   - show NOTHING about a package when the pair would not save (Маргарита
+ *     30 + Кашкавалина 40: 16.88 € regular stays 16.88 €) — no combo line, no
+ *     "discount", no "difference";
+ *   - leave special pizzas out of every combo, and show no package promise
+ *     for a basket of special pizzas only;
+ *   - show a real saving as one discount line with one minus, next to the
+ *     combo's package and regular price;
+ *   - add up to the same total in the basket, the saved order, both e-mails,
+ *     the web ticket and the Android job.
+ * Tested through the components and templates that customers and staff
+ * actually see, not only through the arithmetic.
  */
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
@@ -36,12 +43,14 @@ after(async () => {
   await db.$disconnect();
 });
 
-const pizza = (id: string, name: string, p30: number, p40: number): Product => ({
+const STD = "cat_pizzas_standard";
+const SPECIAL = "cat_pizzas_special";
+const pizza = (id: string, name: string, p30: number, p40: number, categoryId = STD): Product => ({
   id,
   name,
   slug: id,
   description: "",
-  categoryId: "cat_pizzas_standard",
+  categoryId,
   priceEur: p30,
   imageUrl: "/x.svg",
   allergens: [],
@@ -56,16 +65,22 @@ const MENU: Record<string, Product> = {
   marg: pizza("marg", "Маргарита", 6.65, 10.23),
   kash: pizza("kash", "Кашкавалина", 6.65, 10.23),
   pep: pizza("pep", "Пеперони Макс", 9.71, 12.78),
+  salmon: pizza("salmon", "Сьомга", 11.76, 15.34, SPECIAL),
+  prosh: pizza("prosh", "Прошуто", 11.76, 15.34, SPECIAL),
+};
+const CATS: Record<string, { name: string; sortOrder: number }> = {
+  [STD]: { name: "Стандартни пици", sortOrder: 1 },
+  [SPECIAL]: { name: "Специални пици", sortOrder: 2 },
 };
 const deps = {
   getProduct: async (id: string) => MENU[id] ?? null,
-  getCategory: async () => ({ name: "Стандартни пици", sortOrder: 1 }),
+  getCategory: async (id: string) => CATS[id] ?? null,
 };
 
-const cartLine = (id: string, size: 30 | 40): CartItem => {
+const cartLine = (id: string, size: 30 | 40, quantity = 1): CartItem => {
   const product = MENU[id];
   const variant = product.variants!.find((v) => v.name.startsWith(String(size)))!;
-  return { lineId: `${id}::${variant.id}`, product, selectedVariant: variant, extras: [], quantity: 1, unitPrice: variant.priceEur };
+  return { lineId: `${id}::${variant.id}`, product, selectedVariant: variant, extras: [], quantity, unitPrice: variant.priceEur };
 };
 
 function renderSummary(items: CartItem[], locale: "bg" | "en" = "bg"): string {
@@ -93,58 +108,18 @@ function assertNoNegativeDiscount(raw: string, where: string) {
   assert.ok(!/Отстъпка[^\n<]*\+/.test(text), `${where} shows a positive amount labelled as a discount`);
 }
 
-test("the active mode is FIXED package prices (current brief)", () => {
-  assert.equal(COMBO_PRICING_MODE, "fixed");
-});
+/** Nothing about a package, discount or difference. */
+function assertNoOffer(raw: string, where: string) {
+  for (const word of ["Оферта", "Отстъпка", "Грешна математика", "Разлика до пакетната цена", "редовно"]) {
+    assert.ok(!raw.includes(word), `${where} mentions "${word}"`);
+  }
+}
 
-test("the presenter turns the signed difference into a discount or a difference, never a negative discount", () => {
-  const f = (n: number) => `${n.toFixed(2)} €`;
-  assert.deepEqual(offerAdjustment(2.55), { kind: "discount", amountEur: 2.55 });
-  assert.deepEqual(offerAdjustment(-2.55), { kind: "surcharge", amountEur: 2.55 });
-  assert.deepEqual(offerAdjustment(0), { kind: "none", amountEur: 0 });
-  assert.equal(signedAdjustment(offerAdjustment(2.55), f), "−2.55 €");
-  assert.equal(signedAdjustment(offerAdjustment(-2.55), f), "+2.55 €");
-  assert.equal(signedAdjustment(offerAdjustment(-2.55), f, "-"), "+2.55 €");
-});
-
-test("basket/checkout (CartSummary): a DEARER package shows the package, the regular price and '+2.55 €'", () => {
-  const html = renderSummary([cartLine("marg", 30), cartLine("kash", 40)]);
-  assert.ok(html.includes("Оферта 2 пици 40 + 30 см (редовно 16.88 €)"), html);
-  assert.ok(html.includes("19.43 €"));
-  assert.ok(html.includes("Разлика до пакетната цена"));
-  assert.ok(html.includes('data-testid="cart-surcharge">+2.55 €'));
-  assert.ok(html.includes('data-testid="cart-total">19.43 €'));
-  assert.ok(!html.includes("Отстъпка"), "no 'discount' label for a dearer package");
-  assertNoNegativeDiscount(html, "CartSummary");
-  // The combo is shown even though totals.discount is not > 0 (it was hidden before).
-  assert.ok(html.includes('data-testid="cart-combo"'));
-  const enHtml = renderSummary([cartLine("marg", 30), cartLine("kash", 40)], "en");
-  assert.ok(enHtml.includes("2-pizza offer 40 + 30 cm (regular 16.88 €)"));
-  assert.ok(enHtml.includes("Difference to the package price"));
-});
-
-test("basket: a CHEAPER package shows a real discount with one minus; an equal one shows no money line", () => {
-  const html = renderSummary([cartLine("pep", 40), cartLine("pep", 30)]);
-  assert.ok(html.includes("Отстъпка „Грешна математика“"));
-  assert.ok(html.includes('data-testid="cart-discount">−3.06 €'));
-  assert.ok(html.includes('data-testid="cart-total">19.43 €'));
-  assertNoNegativeDiscount(html, "CartSummary (discount)");
-  // Маргарита 30 (6.65) + Пеперони 40 (12.78) = 19.43 exactly: combo shown, no money line.
-  const even = renderSummary([cartLine("marg", 30), cartLine("pep", 40)]);
-  assert.ok(even.includes('data-testid="cart-combo"'));
-  assert.ok(!even.includes("cart-discount") && !even.includes("cart-surcharge"));
-  // One pizza: the hint, no combo.
-  assert.ok(renderSummary([cartLine("pep", 30)]).includes('data-testid="pizza-math-hint"'));
-});
-
-test("server → saved order → customer e-mail, restaurant e-mail, ticket and Android job all agree", async () => {
+async function place(items: { productId: string; variantId: string; quantity: number }[]): Promise<OrderWithItems> {
   const r = await placeOrder(
     {
       contact: CONTACT,
-      itemsJson: JSON.stringify([
-        { productId: "marg", variantId: "marg_30", quantity: 1 },
-        { productId: "kash", variantId: "kash_40", quantity: 1 },
-      ]),
+      itemsJson: JSON.stringify(items),
       paymentMethod: "cash_on_delivery",
       checkoutKey: key(),
       userId: null,
@@ -153,30 +128,13 @@ test("server → saved order → customer e-mail, restaurant e-mail, ticket and 
     deps
   );
   assert.ok(r.ok, JSON.stringify(r));
-  if (!r.ok) return;
-  const order = (await getOrderById(r.orderId)) as OrderWithItems;
-  assert.equal(order.subtotalEur, 16.88);
-  assert.equal(order.discountEur, -2.55, "stored as a signed difference");
-  assert.equal(order.totalEur, 19.43, "the fixed package price is what is charged");
-  assert.equal(order.offer[0].regularEur, 16.88);
-  // The basket said the same.
-  assert.equal(cartTotals([cartLine("marg", 30), cartLine("kash", 40)]).total, order.totalEur);
+  if (!r.ok) throw new Error("refused");
+  return (await getOrderById(r.orderId)) as OrderWithItems;
+}
 
-  // Customer e-mail (text + HTML).
+/** Every surface built from the saved order: customer + restaurant e-mail, ticket, Android job. */
+async function surfaces(order: OrderWithItems) {
   const mail = customerOrderAcceptedEmail(order, { phone: "064 801 999" });
-  for (const [part, where] of [
-    [mail.text, "customer text"],
-    [mail.html, "customer html"],
-  ] as const) {
-    assert.ok(part.includes("Оферта 2 пици 40 + 30 см: 19.43 € (редовно 16.88 €)"), where);
-    assert.ok(part.includes("Разлика до пакетната цена"), where);
-    assert.ok(part.includes("+2.55 €"), where);
-    assert.ok(!part.includes("Отстъпка"), `${where}: no discount label`);
-    assertNoNegativeDiscount(part, where);
-  }
-  assert.ok(mail.text.includes("Обща сума: 19.43 €"));
-
-  // Restaurant e-mail — through the real builder the notifier uses.
   await db.order.update({
     where: { id: order.id },
     data: { notificationStatus: null, notificationSentAt: null, notificationAttempts: 0, notificationClaimedAt: null },
@@ -188,58 +146,178 @@ test("server → saved order → customer e-mail, restaurant e-mail, ticket and 
   });
   assert.ok(captured, "the notifier built the e-mail data");
   const kitchenMail = newOrderEmail(captured!);
-  for (const part of [kitchenMail.text, kitchenMail.html]) {
-    assert.ok(part.includes("Разлика до пакетната цена: +2.55 €"));
-    assert.ok(part.includes("(редовно 16.88 €)"));
-    assertNoNegativeDiscount(part, "restaurant e-mail");
-  }
-
-  // Web ticket.
   const ticket = buildTicketText(order, defaultPrintTemplate("DELIVERY"));
-  assert.match(ticket, /Оферта 2 пици 40 \+ 30 см \(редовно\s+16\.88 €\)\s+19\.43 €|Оферта 2 пици 40 \+ 30 см \(редовно 16\.88 €\)/);
-  assert.match(ticket, /Разлика до пакетната цена\s+\+2\.55 €/);
-  assert.match(ticket, /ОБЩО\s+19\.43 €/);
-  assertNoNegativeDiscount(ticket, "ticket");
-
-  // Android job: no negative `discount`; the difference is its own line, so
-  // the printed lines add up to the total.
   const job = JSON.parse(buildPrintableOrderJson(order, { template: defaultPrintTemplate("DELIVERY") }));
-  assert.equal(job.discount, 0);
-  const last = job.items.at(-1);
-  assert.equal(last.section, "offer");
-  assert.equal(last.totalPrice, 2.55);
-  assert.match(last.name, /^Разлика до пакетната цена \(40 \+ 30 см\)$/);
-  const sum = job.items.reduce((s: number, i: { totalPrice: number }) => s + Math.round(i.totalPrice * 100), 0);
-  assert.equal(sum - Math.round(job.discount * 100), Math.round(job.total * 100));
-  assertNoNegativeDiscount(JSON.stringify(job), "android job");
+  return { mail, kitchenMail, ticket, job };
+}
+
+function assertJobAddsUp(job: { items: { totalPrice: number }[]; discount: number; total: number }) {
+  const sum = job.items.reduce((s, i) => s + Math.round(i.totalPrice * 100), 0);
+  assert.equal(sum - Math.round(job.discount * 100), Math.round(job.total * 100), "Android lines add up to the total");
+}
+
+test("the active mode is never_dearer (final rule)", () => {
+  assert.equal(COMBO_PRICING_MODE, "never_dearer");
 });
 
-test("a CHEAPER package on the ticket and in the Android job: one discount line with one minus", async () => {
-  const r = await placeOrder(
-    {
-      contact: CONTACT,
-      itemsJson: JSON.stringify([
-        { productId: "pep", variantId: "pep_40", quantity: 1 },
-        { productId: "pep", variantId: "pep_30", quantity: 1 },
-      ]),
-      paymentMethod: "cash_on_delivery",
-      checkoutKey: key(),
-      userId: null,
-      consents: ALL_CONSENTS,
-    },
-    deps
-  );
-  assert.ok(r.ok);
-  if (!r.ok) return;
-  const order = (await getOrderById(r.orderId)) as OrderWithItems;
-  assert.equal(order.discountEur, 3.06);
-  const ticket = buildTicketText(order, defaultPrintTemplate("DELIVERY"));
-  assert.match(ticket, /Отстъпка „Грешна математика“\s+-3\.06 €/);
-  assertNoNegativeDiscount(ticket, "ticket (discount)");
-  const job = JSON.parse(buildPrintableOrderJson(order));
-  assert.equal(job.discount, 3.06);
+test("the presenter: a discount has one minus; any other stored value is never shown as a negative discount", () => {
+  const f = (n: number) => `${n.toFixed(2)} €`;
+  assert.deepEqual(offerAdjustment(2.55), { kind: "discount", amountEur: 2.55 });
+  assert.deepEqual(offerAdjustment(0), { kind: "none", amountEur: 0 });
+  assert.equal(signedAdjustment(offerAdjustment(2.55), f), "−2.55 €");
+  // Defensive only (the active rule never stores a negative difference).
+  assert.deepEqual(offerAdjustment(-2.55), { kind: "surcharge", amountEur: 2.55 });
+  assert.equal(signedAdjustment(offerAdjustment(-2.55), f, "-"), "+2.55 €");
+});
+
+test("basket/checkout: a pair that would NOT save shows no combo, no discount and its regular total", () => {
+  for (const [items, total] of [
+    [[cartLine("marg", 30), cartLine("kash", 40)], "16.88 €"], // below 19.43
+    [[cartLine("marg", 30), cartLine("pep", 40)], "19.43 €"], // exactly 19.43
+    [[cartLine("marg", 40, 2)], "20.46 €"], // below 23.01
+  ] as const) {
+    for (const locale of ["bg", "en"] as const) {
+      const html = renderSummary([...items], locale);
+      assert.ok(!html.includes('data-testid="cart-combo"'), `${locale}: no combo`);
+      assert.ok(!html.includes("cart-discount") && !html.includes("cart-surcharge"), `${locale}: no money line`);
+      assert.ok(html.includes(`data-testid="cart-total">${total}`), `${locale}: ${total}`);
+      assert.ok(!html.includes("Разлика до пакетната цена") && !html.includes("Difference to the package price"));
+      assertNoNegativeDiscount(html, "CartSummary");
+    }
+  }
+});
+
+test("basket: a CHEAPER pair shows the package, the regular price and one discount line with one minus", () => {
+  const html = renderSummary([cartLine("pep", 40), cartLine("pep", 30)]);
+  assert.ok(html.includes("Оферта 2 пици 40 + 30 см (редовно 22.49 €)"), html);
+  assert.ok(html.includes("Отстъпка „Грешна математика“"));
+  assert.ok(html.includes('data-testid="cart-discount">−3.06 €'));
+  assert.ok(html.includes('data-testid="cart-total">19.43 €'));
+  assertNoNegativeDiscount(html, "CartSummary (discount)");
+  const enHtml = renderSummary([cartLine("pep", 40), cartLine("pep", 30)], "en");
+  assert.ok(enHtml.includes("2-pizza offer 40 + 30 cm (regular 22.49 €)"));
+  assert.ok(enHtml.includes('data-testid="cart-discount">−3.06 €'));
+});
+
+test("basket: special pizzas — no combo with them, and no package promise for a basket of specials only", () => {
+  // Specials only: no combo, and NOT the hint (it would promise a discount).
+  for (const items of [[cartLine("salmon", 30), cartLine("prosh", 30)], [cartLine("salmon", 40, 2)]]) {
+    for (const locale of ["bg", "en"] as const) {
+      const html = renderSummary(items, locale);
+      assert.ok(!html.includes('data-testid="cart-combo"'));
+      assert.ok(!html.includes('data-testid="pizza-math-hint"'), `${locale}: no hint for specials only`);
+      assert.ok(!html.includes("cart-discount"));
+    }
+  }
+  // Special + standard: no combo; the standard pizza alone may get the hint.
+  const mixed = renderSummary([cartLine("salmon", 30), cartLine("pep", 30)]);
+  assert.ok(!mixed.includes('data-testid="cart-combo"'));
+  assert.ok(mixed.includes('data-testid="cart-total">21.47 €'));
+  // Two standard + specials: exactly the standard pair.
+  const both = renderSummary([cartLine("salmon", 40), cartLine("pep", 30, 2), cartLine("prosh", 30)]);
+  assert.equal(both.split('data-testid="cart-combo"').length - 1, 1);
+  assert.ok(both.includes("Оферта 2 пици 30 + 30 см (редовно 19.42 €)"));
+  assert.ok(both.includes('data-testid="cart-discount">−2.55 €'));
+  // One standard pizza: the hint, which now names the rule.
+  const one = renderSummary([cartLine("pep", 30)]);
+  assert.ok(one.includes('data-testid="pizza-math-hint"'));
+  assert.ok(one.includes("стандартни пици") && one.includes("Специалните пици не участват"));
+});
+
+test("server → saved order → both e-mails, ticket and Android job: a pair that would not save shows NO offer anywhere", async () => {
+  const order = await place([
+    { productId: "marg", variantId: "marg_30", quantity: 1 },
+    { productId: "kash", variantId: "kash_40", quantity: 1 },
+  ]);
+  assert.equal(order.subtotalEur, 16.88);
+  assert.equal(order.discountEur, 0);
+  assert.equal(order.totalEur, 16.88, "never dearer: the regular price is charged");
+  assert.deepEqual(order.offer, []);
+  assert.ok(order.items.every((i) => i.discountEur === 0));
+  assert.equal(cartTotals([cartLine("marg", 30), cartLine("kash", 40)]).total, order.totalEur, "basket = server");
+
+  const { mail, kitchenMail, ticket, job } = await surfaces(order);
+  for (const [part, where] of [
+    [mail.text, "customer text"],
+    [mail.html, "customer html"],
+    [kitchenMail.text, "restaurant text"],
+    [kitchenMail.html, "restaurant html"],
+    [ticket, "ticket"],
+    [JSON.stringify(job), "android job"],
+  ] as const) {
+    assertNoOffer(part, where);
+    assertNoNegativeDiscount(part, where);
+  }
+  assert.ok(mail.text.includes("Обща сума: 16.88 €"));
+  assert.ok(kitchenMail.text.includes("Общо: 16.88 €"));
+  assert.match(ticket, /ОБЩО\s+16\.88 €/);
+  assert.equal(job.discount, 0);
+  assert.equal(job.total, 16.88);
   assert.ok(!job.items.some((i: { section: string }) => i.section === "offer"));
-  const mail = customerOrderAcceptedEmail(order, { phone: "064" });
-  assert.ok(mail.text.includes("Отстъпка „Грешна математика“: -3.06 €"));
-  assertNoNegativeDiscount(mail.text, "customer text (discount)");
+  assertJobAddsUp(job);
+});
+
+test("server → every surface: two standard + a special — the same saving and the same total everywhere", async () => {
+  const items = [
+    { productId: "salmon", variantId: "salmon_30", quantity: 1 },
+    { productId: "pep", variantId: "pep_40", quantity: 1 },
+    { productId: "pep", variantId: "pep_30", quantity: 1 },
+  ];
+  const order = await place(items);
+  // 11.76 + 12.78 + 9.71 = 34.25; only the standard 40 + 30 pair (22.49 → 19.43).
+  assert.equal(order.subtotalEur, 34.25);
+  assert.equal(order.discountEur, 3.06);
+  assert.equal(order.totalEur, 31.19);
+  assert.equal(order.offer.length, 1);
+  assert.deepEqual([...order.offer[0].pizzasBg].sort(), ["Пеперони Макс 30 см", "Пеперони Макс 40 см"]);
+  assert.equal(order.items.find((i) => i.productId === "salmon")?.discountEur, 0, "the special pays in full");
+  const preview = cartTotals([cartLine("salmon", 30), cartLine("pep", 40), cartLine("pep", 30)]);
+  assert.deepEqual([preview.subtotal, preview.discount, preview.total], [34.25, 3.06, 31.19], "basket = server");
+
+  const { mail, kitchenMail, ticket, job } = await surfaces(order);
+  for (const [part, where] of [
+    [mail.text, "customer text"],
+    [mail.html, "customer html"],
+    [kitchenMail.text, "restaurant text"],
+    [kitchenMail.html, "restaurant html"],
+  ] as const) {
+    assert.ok(part.includes("Оферта 2 пици 40 + 30 см: 19.43 € (редовно 22.49 €)"), where);
+    if (where === "customer html") {
+      // The HTML table puts the label and the amount in two cells.
+      assert.ok(part.includes("Отстъпка „Грешна математика“") && part.includes("-3.06 €"), where);
+    } else {
+      assert.ok(part.includes("Отстъпка „Грешна математика“: -3.06 €"), where);
+    }
+    assert.ok(!part.includes("Разлика до пакетната цена"), where);
+    assertNoNegativeDiscount(part, where);
+  }
+  assert.ok(mail.text.includes("Обща сума: 31.19 €"));
+  assert.ok(kitchenMail.text.includes("Общо: 31.19 €"));
+  assert.match(ticket, /Отстъпка „Грешна математика“\s+-3\.06 €/);
+  assert.match(ticket, /ОБЩО\s+31\.19 €/);
+  assert.ok(!ticket.includes("Разлика до пакетната цена"));
+  assertNoNegativeDiscount(ticket, "ticket");
+  assert.equal(job.discount, 3.06);
+  assert.equal(job.total, 31.19);
+  assert.ok(!job.items.some((i: { section: string }) => i.section === "offer"));
+  assertJobAddsUp(job);
+});
+
+test("server: special + special and special + standard save NOTHING on every surface", async () => {
+  for (const [items, total] of [
+    [[{ productId: "salmon", variantId: "salmon_40", quantity: 1 }, { productId: "prosh", variantId: "prosh_40", quantity: 1 }], 30.68],
+    [[{ productId: "salmon", variantId: "salmon_30", quantity: 2 }], 23.52],
+    [[{ productId: "prosh", variantId: "prosh_30", quantity: 1 }, { productId: "pep", variantId: "pep_40", quantity: 1 }], 24.54],
+  ] as const) {
+    const order = await place([...items]);
+    assert.equal(order.discountEur, 0);
+    assert.equal(order.totalEur, total);
+    assert.deepEqual(order.offer, []);
+    const { mail, kitchenMail, ticket, job } = await surfaces(order);
+    for (const part of [mail.text, mail.html, kitchenMail.text, kitchenMail.html, ticket, JSON.stringify(job)]) {
+      assertNoOffer(part, `specials ${total}`);
+    }
+    assert.equal(job.total, total);
+    assertJobAddsUp(job);
+  }
 });

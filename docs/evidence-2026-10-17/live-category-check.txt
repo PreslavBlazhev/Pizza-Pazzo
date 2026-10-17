@@ -1,0 +1,7 @@
+Live category check, 2026-10-17T11:28Z — public pages only (GET), production DB not read
+
+https://pizzapazzo.bg/menu/pizzas-standard → id in page: cat_pizzas_standard  products: 34
+amerikanski-burger angliyska-zakuska balkanska brusketitsa byalo-pile chika-latina chinkue-patsoni div-zapad havayska indiysko-pile karbonara kashkavalina margarita margarita-de-luks meksiko mestna-mesna moyata-patso nikulden nyu-york-hot-dog okeana peperoni-maks pile printsesa rancho selska shopska spetsialna staroselska teksasko-bbq tribagra tsezar vege vege-vulkano vulkano
+
+https://pizzapazzo.bg/menu/pizzas-special → id in page: cat_pizzas_special  products: 2
+proshuto syomga
