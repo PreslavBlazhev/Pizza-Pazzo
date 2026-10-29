@@ -331,6 +331,16 @@ export function OrderDetails({
                           {a.failureReason ? (
                             <span className="block text-red-700">{a.failureReason}</span>
                           ) : null}
+                          {a.notifyAction ? (
+                            <span className="block text-neutral-500">
+                              Банка (NOTIFY {a.notifyTranCode ?? "—"}): {a.notifyAction === "approve" ? "приет" : "отказан (reverse)"}
+                              {a.notifyTranCode === "000"
+                                ? a.bankVerifiedAt
+                                  ? ` · потвърдено при банката ${formatDateTime(a.bankVerifiedAt)}`
+                                  : ` · проверка при банката: ${a.bankCheckCount} опит(а), чака`
+                                : null}
+                            </span>
+                          ) : null}
                         </td>
                         <td className="whitespace-nowrap py-1.5 pr-3">
                           {formatMinor(a.amountMinor, a.currency)}

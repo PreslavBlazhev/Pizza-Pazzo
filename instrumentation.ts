@@ -12,6 +12,14 @@
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  // Card payments: unclear payments and our NOTIFY answers are checked with
+  // the bank every minute, with nobody on the site (lib/payments/background.ts).
+  try {
+    const { startPaymentBackgroundJobs } = await import("@/lib/payments/background");
+    if (startPaymentBackgroundJobs()) console.log("[payments] background checks armed (every 60 s)");
+  } catch (err) {
+    console.error("[payments] background checks not armed:", (err as Error).message);
+  }
   const { orderRetentionEnabled } = await import("@/lib/order-retention");
   if (!orderRetentionEnabled()) return;
   try {

@@ -14,7 +14,7 @@
  */
 import { test, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { createPrivateKey, createPublicKey, generateKeyPairSync } from "node:crypto";
+import { createPrivateKey, createPublicKey, generateKeyPairSync, sign as cryptoSign, verify as cryptoVerify } from "node:crypto";
 import { db } from "@/lib/db";
 import { placeOrder } from "@/lib/checkout/place-order";
 import { startCardPayment, syncAttempt } from "@/lib/payments/service";
@@ -52,21 +52,70 @@ after(async () => {
 
 // ── The stand-in gateway ────────────────────────────────────────────────
 
+/**
+ * The gateway's answer, written as the text protocol's "Key=Value" lines.
+ * The default (JSON) protocol gets the same facts as a JSON envelope signed
+ * RS512 with the stand-in UPC key — the shape the real KBC gateway returned
+ * on 29.10.2026 ({"results":[],"TranCode":"291",…} when nothing is found).
+ */
 type StatusAnswer = string | (() => string) | Error;
 let statusAnswer: StatusAnswer = "TranCode=408\n";
-const statusCalls: { url: string; body: URLSearchParams }[] = [];
+/** Tamper switch: the JSON envelope's signature is broken. */
+let forgeStatusSignature = false;
+const statusCalls: { url: string; body: URLSearchParams; json: Record<string, string> | null }[] = [];
 const realFetch = globalThis.fetch;
+
+function jsonEnvelope(query: Record<string, string>, text: string): string {
+  const kv = parseKeyValueText(text);
+  const code = kv.TranCode ?? "";
+  const results =
+    code === "408"
+      ? []
+      : [
+          {
+            tranCode: code,
+            approvalCode: kv.ApprovalCode ?? "",
+            rrn: kv.Rrn ?? "",
+            comment: "test",
+            cardNumMasked: "499999******0011",
+            amount: Number(kv.TotalAmount ?? query.TotalAmount),
+            currency: kv.Currency ?? query.Currency,
+            operType: "PURCHASE",
+          },
+        ];
+  const b64u = (v: string) => Buffer.from(v).toString("base64url");
+  const header = b64u(JSON.stringify({ alg: "RS512" }));
+  const payload = b64u(JSON.stringify(code === "408" ? { results, TranCode: "291", Comment: "Invoice was not found" } : { results }));
+  let signature = cryptoSign("sha512", Buffer.from(`${header}.${payload}`), GATEWAY_KEY).toString("base64url");
+  if (forgeStatusSignature) signature = signature.slice(0, -4) + "AAAA";
+  return JSON.stringify({ header, payload, signature });
+}
+
 globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = String(input);
   if (!url.startsWith("https://ecg.test.upc.ua/")) return realFetch(input, init);
-  statusCalls.push({ url, body: new URLSearchParams(String(init?.body ?? "")) });
+  const raw = String(init?.body ?? "");
+  const isJson = raw.trimStart().startsWith("{");
+  let json: Record<string, string> | null = null;
+  if (isJson) {
+    const env = JSON.parse(raw) as { header: string; payload: string; signature: string };
+    json = JSON.parse(Buffer.from(env.payload, "base64url").toString("utf8"));
+    // The gateway checks OUR signature (RS256) with the merchant certificate.
+    assert.ok(
+      cryptoVerify("sha256", Buffer.from(`${env.header}.${env.payload}`), MERCHANT_PUBLIC, Buffer.from(env.signature, "base64url")),
+      "our status request is signed RS256 with the merchant key"
+    );
+  }
+  statusCalls.push({ url, body: new URLSearchParams(isJson ? "" : raw), json });
   const a = typeof statusAnswer === "function" ? statusAnswer() : statusAnswer;
   if (a instanceof Error) throw a;
-  return new Response(a, { status: 200, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+  const body = isJson ? jsonEnvelope(json!, a) : a;
+  return new Response(body, { status: 200, headers: { "Content-Type": isJson ? "application/json" : "text/html;charset=UTF-8" } });
 }) as typeof fetch;
 
 beforeEach(() => {
   statusAnswer = "TranCode=408\n";
+  forgeStatusSignature = false;
   statusCalls.length = 0;
 });
 
@@ -230,7 +279,8 @@ test("settings: sandbox defaults are the KBC test URLs + UPC's published test ce
   assert.equal(UPC_SANDBOX_GATEWAY_URL, "https://ecg.test.upc.ua/kbc/pay");
   assert.equal(UPC_SANDBOX_STATUS_URL, "https://ecg.test.upc.ua/kbc/service/01", "not the /go/ example address");
   assert.equal(s.settings!.gatewayCertSha256, UPC_TEST_GATEWAY_CERT_SHA256);
-  assert.deepEqual(s.settings!.gatewayAlgorithms, ["sha512", "sha1"]);
+  assert.deepEqual(s.settings!.gatewayAlgorithms, ["sha512"], "verified on a real KBC answer: RS512");
+  assert.equal(s.settings!.statusProtocol, "json", "signed, verified status answers by default");
 
   const prod = getUpcSettings("production", base);
   assert.equal(prod.settings, null);
@@ -329,17 +379,22 @@ test("NOTIFY 000 (signed): approve + forwardUrl; PAID; test order kept off the k
 
   const again = await quiet(() => handleUpcNotify(body(msg)));
   assert.equal(again.action, "approve");
-  assert.equal(again.reason, "already recorded");
+  assert.deepEqual([again.reason, again.replay], ["ok", true], "the stored answer, replayed");
   const after2 = await orderRow(r.orderNumber);
   assert.equal(after2.paidAt?.getTime(), row.paidAt?.getTime());
   assert.equal(after2.notificationAttempts, 0);
 });
 
-test("NOTIFY signed with UPC's documented SHA-1 is accepted while the sandbox default allows it", async () => {
+test("NOTIFY signed with SHA-1 is refused by default (KBC signs RS512) and accepted only when configured", async () => {
   const r = await staffCardOrder();
   const { sent } = await startAndSent(r.accessToken);
-  const out = await quiet(() => handleUpcNotify(body(gatewayMessage(sent, {}, { algorithm: "sha1" }))));
-  assert.equal(out.action, "approve", out.reason);
+  const sha1 = body(gatewayMessage(sent, {}, { algorithm: "sha1" }));
+  const refused = await quiet(() => handleUpcNotify(sha1));
+  assert.equal(refused.action, "reverse");
+  assert.equal(refused.reason, "bad signature");
+  assert.equal((await latestAttempt(r.orderNumber)).notifyAction, null, "a forged/unverified message stores nothing");
+  const ok = await quiet(() => handleUpcNotify(sha1, { ...process.env, UPC_GATEWAY_SIGNATURE_ALGS: "sha512,sha1" }));
+  assert.equal(ok.action, "approve", ok.reason);
 });
 
 test("NOTIFY refused (reverse) without effect: unsigned, forged, other key, other terminal, unknown OrderID", async () => {
@@ -429,7 +484,7 @@ test("pay again while the first attempt is open: re-posted only while UPC never 
   assert.ok(again.ok && again.reused);
   if (again.ok) assert.equal(again.redirect.postFields!.Signature, sent.Signature, "the same signed request, same OrderID");
   assert.equal(statusCalls[0].url, "https://ecg.test.upc.ua/kbc/service/01");
-  assert.deepEqual(Object.fromEntries(statusCalls[0].body), {
+  assert.deepEqual(statusCalls[0].json, {
     MerchantID: "1731096",
     TerminalID: "E7059096",
     OrderID: sent.OrderID,
@@ -495,4 +550,277 @@ test("browser return: a signed SUCCESS return only triggers a status query; unsi
   fail.Signature = signBase64(failureSignatureData(fail), GATEWAY_KEY, "sha512");
   const failed = await quiet(() => resolveUpcBrowserReturn("failure", body(fail)));
   assert.equal(failed.verified, true);
+});
+
+// ── NOTIFY: one stored decision per transaction ─────────────────────────
+
+test("repeat of an ACCEPTED transaction (same OrderID+XID) replays approve — even with altered fields it never reverses", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  const first = await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
+  assert.equal(first.action, "approve");
+  const paidAt = (await orderRow(r.orderNumber)).paidAt?.getTime();
+
+  const same = await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
+  assert.deepEqual([same.action, same.reason, same.replay], ["approve", "ok", true]);
+  assert.equal(same.body, first.body, "byte-identical answer");
+
+  // Correctly signed, same XID, but different data: still the stored answer.
+  const odd = await quiet(() => handleUpcNotify(body(gatewayMessage(sent, { TotalAmount: "1" }))));
+  assert.equal(odd.action, "approve", "a repeated callback never cancels the accepted payment");
+  const a = await latestAttempt(r.orderNumber);
+  assert.equal(a.status, "PAID");
+  assert.equal(a.notifyAction, "approve");
+  assert.equal(a.notifyXid, "26102918-123456");
+  assert.equal((await orderRow(r.orderNumber)).paidAt?.getTime(), paidAt, "nothing ran twice");
+});
+
+test("a DIFFERENT transaction (other XID) under an accepted OrderID: reverse for it, the first stays accepted", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
+  const second = await quiet(() => handleUpcNotify(body(gatewayMessage(sent, { XID: "26102918-999999" }))));
+  assert.equal(second.action, "reverse");
+  assert.equal(second.reason, "second transaction for this order");
+  assert.match(second.body, /^XID=26102918-999999$/m, "the answer names the second transaction");
+  const a = await latestAttempt(r.orderNumber);
+  assert.equal(a.status, "PAID");
+  assert.equal(a.notifyAction, "approve");
+  assert.equal(a.notifyXid, "26102918-123456");
+  assert.equal((await orderRow(r.orderNumber)).paymentAlert, "DUPLICATE_PAYMENT", "staff check the second one");
+  // The first transaction's own repeat is still approved.
+  assert.equal((await quiet(() => handleUpcNotify(body(gatewayMessage(sent))))).action, "approve");
+});
+
+test("a reversed second attempt: its repeats replay reverse; the paid attempt's repeats replay approve", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
+  const order = await orderRow(r.orderNumber);
+  const dupRef = `PP${r.orderNumber}-DUP00002`;
+  await db.paymentAttempt.create({
+    data: {
+      orderId: order.id,
+      reference: dupRef,
+      provider: "UPC",
+      environment: "sandbox",
+      amountMinor: 2090,
+      currency: "EUR",
+      status: "REDIRECTED",
+      redirectUrl: "https://ecg.test.upc.ua/kbc/pay",
+      redirectFormJson: JSON.stringify({ ...sent, OrderID: dupRef }),
+    },
+  });
+  const dupMsg = body(gatewayMessage({ ...sent, OrderID: dupRef }, { XID: "26102918-222222" }));
+  const d1 = await quiet(() => handleUpcNotify(dupMsg));
+  const d2 = await quiet(() => handleUpcNotify(dupMsg));
+  assert.deepEqual([d1.action, d2.action, d2.replay], ["reverse", "reverse", true]);
+  assert.equal((await quiet(() => handleUpcNotify(body(gatewayMessage(sent))))).action, "approve");
+  assert.equal(await db.paymentAttempt.count({ where: { orderId: order.id, status: "PAID" } }), 1);
+});
+
+test("five identical NOTIFYs at once: one decision, one payment, identical answers", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  const msg = body(gatewayMessage(sent));
+  const outs = await quiet(() => Promise.all(Array.from({ length: 5 }, () => handleUpcNotify(msg))));
+  assert.ok(outs.every((o) => o.action === "approve" && o.body === outs[0].body));
+  assert.equal(outs.filter((o) => !o.replay).length, 1, "exactly one first decision");
+  assert.equal((await latestAttempt(r.orderNumber)).status, "PAID");
+  assert.equal((await orderRow(r.orderNumber)).notificationAttempts, 0);
+});
+
+test("NOTIFY racing the status query (both 000): consistent — PAID and approve", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  const a = await latestAttempt(r.orderNumber);
+  statusAnswer = "TranCode=000\nApprovalCode=123456\nRrn=630218123456\n";
+  const [out] = await quiet(() => Promise.all([handleUpcNotify(body(gatewayMessage(sent))), syncAttempt(a.id)]));
+  assert.equal(out.action, "approve");
+  const after = await latestAttempt(r.orderNumber);
+  assert.equal(after.status, "PAID");
+  assert.equal(after.notifyAction, "approve");
+});
+
+test("NOTIFY (would reverse: cancelled order) racing a status query 000: never 'reverse' stored on a PAID attempt", async () => {
+  for (let i = 0; i < 4; i++) {
+    const r = await staffCardOrder();
+    const { sent } = await startAndSent(r.accessToken);
+    const a = await latestAttempt(r.orderNumber);
+    await db.order.update({ where: { orderNumber: r.orderNumber }, data: { status: "CANCELLED" } });
+    statusAnswer = "TranCode=000\n";
+    const notify = () => handleUpcNotify(body(gatewayMessage(sent)));
+    const sync = () => syncAttempt(a.id);
+    const [out] =
+      i % 2 === 0
+        ? await quiet(() => Promise.all([notify(), sync()]))
+        : await quiet(async () => {
+            const [s, n] = await Promise.all([sync(), notify()]);
+            return [n, s] as const;
+          });
+    const after = await latestAttempt(r.orderNumber);
+    if (after.status === "PAID") {
+      assert.equal(out.action, "approve", "money we recorded is not reversed");
+      assert.equal(after.notifyAction, "approve");
+      assert.equal((await orderRow(r.orderNumber)).paymentAlert, "PAID_AFTER_CANCEL", "staff refund it");
+    } else {
+      assert.equal(out.action, "reverse");
+      assert.equal(after.notifyAction, "reverse");
+    }
+    assert.equal((await orderRow(r.orderNumber)).releasedToKitchenAt, null);
+  }
+});
+
+test("a stored reverse cannot be turned into a payment by a later status query 000", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  await db.order.update({ where: { orderNumber: r.orderNumber }, data: { status: "CANCELLED" } });
+  assert.equal((await quiet(() => handleUpcNotify(body(gatewayMessage(sent))))).action, "reverse");
+  const a = await latestAttempt(r.orderNumber);
+  await db.paymentAttempt.update({ where: { id: a.id }, data: { status: "PENDING" } }); // even if reopened
+  statusAnswer = "TranCode=000\n";
+  await quiet(() => syncAttempt(a.id));
+  assert.notEqual((await latestAttempt(r.orderNumber)).status, "PAID");
+  assert.notEqual((await orderRow(r.orderNumber)).paymentStatus, "PAID");
+});
+
+test("crash after the decision is stored, before the answer: the retry gets the same answer and the effect is completed", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  const msg = body(gatewayMessage(sent));
+  await assert.rejects(
+    quiet(() =>
+      handleUpcNotify(msg, process.env, {
+        afterDecision: () => {
+          throw new Error("simulated crash");
+        },
+      })
+    ),
+    /simulated crash/
+  );
+  let a = await latestAttempt(r.orderNumber);
+  assert.equal(a.notifyAction, "approve", "the decision was stored first");
+  assert.notEqual(a.status, "PAID", "the crash happened before the effect");
+  const retry = await quiet(() => handleUpcNotify(msg));
+  assert.deepEqual([retry.action, retry.replay], ["approve", true]);
+  a = await latestAttempt(r.orderNumber);
+  assert.equal(a.status, "PAID", "the replay completed the idempotent effect");
+});
+
+// ── Verifying our answers with the bank (no customer on the site) ───────
+
+test("verification: approve confirmed by 000; reverse NOT confirmed (bank still 000) raises an alert", async () => {
+  const { verifyUpcDecisions } = await import("@/lib/payments/upc/verify");
+  const ok = await staffCardOrder();
+  const { sent: s1 } = await startAndSent(ok.accessToken);
+  await quiet(() => handleUpcNotify(body(gatewayMessage(s1))));
+  const rev = await staffCardOrder();
+  const { sent: s2 } = await startAndSent(rev.accessToken);
+  await db.order.update({ where: { orderNumber: rev.orderNumber }, data: { status: "CANCELLED" } });
+  await quiet(() => handleUpcNotify(body(gatewayMessage(s2))));
+
+  statusAnswer = "TranCode=000\nApprovalCode=123456\n";
+  await quiet(() => verifyUpcDecisions({ limit: 50, now: new Date(Date.now() + 3 * 60_000) }));
+  assert.ok((await latestAttempt(ok.orderNumber)).bankVerifiedAt, "approve verified");
+  assert.ok((await latestAttempt(rev.orderNumber)).bankVerifiedAt);
+  assert.equal((await orderRow(rev.orderNumber)).paymentAlert, "REVERSE_NOT_CONFIRMED", "a 'reverse' is not proof");
+});
+
+test("verification: approve but the bank says cancelled → APPROVE_NOT_CONFIRMED; reverse confirmed by 503", async () => {
+  const { verifyUpcDecisions } = await import("@/lib/payments/upc/verify");
+  const ok = await staffCardOrder();
+  const { sent: s1 } = await startAndSent(ok.accessToken);
+  await quiet(() => handleUpcNotify(body(gatewayMessage(s1))));
+  const rev = await staffCardOrder();
+  const { sent: s2 } = await startAndSent(rev.accessToken);
+  await db.order.update({ where: { orderNumber: rev.orderNumber }, data: { status: "CANCELLED" } });
+  await quiet(() => handleUpcNotify(body(gatewayMessage(s2))));
+
+  statusAnswer = "TranCode=503\n";
+  await quiet(() => verifyUpcDecisions({ limit: 50, now: new Date(Date.now() + 3 * 60_000) }));
+  assert.equal((await orderRow(ok.orderNumber)).paymentAlert, "APPROVE_NOT_CONFIRMED");
+  assert.ok((await latestAttempt(rev.orderNumber)).bankVerifiedAt, "the cancellation is confirmed");
+  assert.equal((await orderRow(rev.orderNumber)).paymentAlert, null);
+});
+
+test("verification retries are bounded: an unreachable bank ends in BANK_STATUS_UNVERIFIED after MAX checks", async () => {
+  const { verifyUpcDecisions, MAX_BANK_CHECKS, BANK_CHECK_SCHEDULE_MS } = await import("@/lib/payments/upc/verify");
+  await db.paymentAttempt.updateMany({ where: { bankVerifiedAt: null }, data: { bankVerifiedAt: new Date() } }); // isolate
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
+  statusAnswer = new Error("timeout");
+  const t0 = Date.now();
+  const last = BANK_CHECK_SCHEDULE_MS[BANK_CHECK_SCHEDULE_MS.length - 1];
+  for (const gap of [...BANK_CHECK_SCHEDULE_MS, last + 60_000, last + 120_000]) {
+    await quiet(() => verifyUpcDecisions({ limit: 50, now: new Date(t0 + gap + 1000) }));
+  }
+  const a = await latestAttempt(r.orderNumber);
+  assert.equal(a.bankCheckCount, MAX_BANK_CHECKS, "never more than the bounded number of checks");
+  assert.equal(a.bankVerifiedAt, null);
+  assert.equal((await orderRow(r.orderNumber)).paymentAlert, "BANK_STATUS_UNVERIFIED");
+});
+
+// ── Status query: verified answers only ─────────────────────────────────
+
+test("signed JSON status: a forged gateway signature is not an answer — nothing changes", async () => {
+  const r = await staffCardOrder();
+  await startAndSent(r.accessToken);
+  const a = await latestAttempt(r.orderNumber);
+  statusAnswer = "TranCode=000\n";
+  forgeStatusSignature = true;
+  await quiet(() => syncAttempt(a.id));
+  assert.equal((await latestAttempt(r.orderNumber)).status, "REDIRECTED");
+  assert.notEqual((await orderRow(r.orderNumber)).paymentStatus, "PAID");
+});
+
+test("text status fallback: the answer must echo our MerchantID/TerminalID/OrderID/Currency", async () => {
+  const { createUpcProvider } = await import("@/lib/payments/providers/upc");
+  const env = { ...process.env, UPC_STATUS_PROTOCOL: "text" } as NodeJS.ProcessEnv;
+  const provider = createUpcProvider(getEffectivePaymentConfig(env), env);
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  const q = {
+    reference: sent.OrderID,
+    providerPaymentId: sent.OrderID,
+    amountMinor: 2090,
+    currency: "EUR",
+    requestFields: sent,
+    createdAt: new Date(),
+  };
+  statusAnswer = "TranCode=000\n"; // no echo
+  await assert.rejects(provider.getStatus(q), /does not echo/);
+  statusAnswer = `TranCode=000\nMerchantID=1731096\nTerminalID=E7059096\nOrderID=${sent.OrderID}\nCurrency=975\n`;
+  await assert.rejects(provider.getStatus(q), /Currency/);
+  statusAnswer = `TranCode=000\nMerchantID=1731096\nTerminalID=E7059096\nOrderID=${sent.OrderID}\nCurrency=978\n`;
+  assert.equal((await provider.getStatus(q)).state, "PAID");
+});
+
+test("background job (no customer, no board): a closed-browser payment is settled by the minute timer's run", async () => {
+  const { runPaymentBackgroundOnce, startPaymentBackgroundJobs } = await import("@/lib/payments/background");
+  const r = await staffCardOrder();
+  await startAndSent(r.accessToken);
+  await db.paymentAttempt.updateMany({
+    where: { order: { orderNumber: r.orderNumber } },
+    data: { createdAt: new Date(Date.now() - 5 * 60_000) },
+  });
+  statusAnswer = "TranCode=000\n";
+  await quiet(() => runPaymentBackgroundOnce());
+  assert.equal((await orderRow(r.orderNumber)).paymentStatus, "PAID");
+  assert.equal(startPaymentBackgroundJobs({ PAYMENT_PROVIDER: "" } as unknown as NodeJS.ProcessEnv), false, "off without a provider");
+});
+
+test("a declined attempt's acknowledgement does not block a later successful authorisation of the SAME (latest) attempt", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  await quiet(() => handleUpcNotify(body(gatewayMessage(sent, { TranCode: "116", ApprovalCode: "", XID: "26102918-000001" }))));
+  assert.equal((await latestAttempt(r.orderNumber)).notifyTranCode, "116");
+  const ok = await quiet(() => handleUpcNotify(body(gatewayMessage(sent, { XID: "26102918-000002" }))));
+  assert.deepEqual([ok.action, ok.reason, ok.replay], ["approve", "ok", false]);
+  const a = await latestAttempt(r.orderNumber);
+  assert.deepEqual([a.status, a.notifyTranCode, a.notifyXid], ["PAID", "000", "26102918-000002"]);
+  // …and from now on that decision is final: the old decline replays nothing new.
+  const old = await quiet(() => handleUpcNotify(body(gatewayMessage(sent, { TranCode: "116", ApprovalCode: "", XID: "26102918-000001" }))));
+  assert.equal(old.action, "approve");
+  assert.equal((await latestAttempt(r.orderNumber)).status, "PAID");
 });

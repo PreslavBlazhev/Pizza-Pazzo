@@ -1,6 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { reconcileOpenPayments } from "@/lib/payments/reconcile";
+import { verifyUpcDecisions } from "@/lib/payments/upc/verify";
 import { clientIp, PAYMENT_RATE_LIMITS, rateLimit } from "@/lib/rate-limit";
 
 /**
@@ -40,5 +41,6 @@ export async function POST(request: NextRequest) {
   }
 
   const summary = await reconcileOpenPayments({ limit: 25 });
-  return NextResponse.json(summary, { headers: { "Cache-Control": "no-store" } });
+  const verify = await verifyUpcDecisions({ limit: 25 });
+  return NextResponse.json({ ...summary, verify }, { headers: { "Cache-Control": "no-store" } });
 }

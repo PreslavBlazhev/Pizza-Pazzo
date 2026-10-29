@@ -5,6 +5,7 @@ import { getPrintTemplates } from "@/lib/print-templates";
 import { getStoreStatus } from "@/lib/store-status";
 import { retryFailedNotifications } from "@/lib/payments/service";
 import { reconcileOpenPayments } from "@/lib/payments/reconcile";
+import { verifyUpcDecisions } from "@/lib/payments/upc/verify";
 import { getPaymentAttention } from "@/lib/payments/admin";
 import { drainEmailOutbox, emailJobsFor } from "@/lib/email/outbox";
 import { nextCutoffAfter, orderRetentionEnabled, retentionNow } from "@/lib/order-retention";
@@ -41,6 +42,9 @@ export async function GET() {
   );
   await reconcileOpenPayments({ limit: 3 }).catch((err) =>
     console.error("[payments] reconcile on poll failed:", (err as Error).message)
+  );
+  await verifyUpcDecisions({ limit: 3 }).catch((err) =>
+    console.error("[payments] UPC verification on poll failed:", (err as Error).message)
   );
 
   const [orders, activeOrders, printTemplates, storeStatus, paymentAttention] = await Promise.all([

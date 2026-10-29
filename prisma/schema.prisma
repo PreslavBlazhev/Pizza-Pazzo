@@ -373,9 +373,26 @@ model PaymentAttempt {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  /// UPC NOTIFY: our BINDING answer to the gateway, written once, before the
+  /// answer is sent, and replayed verbatim for every repeat of the same
+  /// transaction (same OrderID + XID). "approve" | "reverse"; null = none yet.
+  notifyAction    String?
+  notifyReason    String?
+  /// The XID and TranCode of the transaction that answer was about.
+  notifyXid       String?
+  notifyTranCode  String?
+  notifyDecidedAt DateTime?
+  /// Server-to-server status query confirmed the bank's final state matches
+  /// that answer (000 after approve of a payment; not 000 after reverse).
+  bankVerifiedAt  DateTime?
+  /// Status queries made to verify it — bounded (lib/payments/upc/verify.ts).
+  bankCheckCount  Int       @default(0)
+  bankCheckedAt   DateTime?
+
   @@index([orderId])
   @@index([providerPaymentId])
   @@index([status])
+  @@index([notifyAction, bankVerifiedAt])
 }
 
 /// Who did what to the money side of an order, and when — staff releasing a

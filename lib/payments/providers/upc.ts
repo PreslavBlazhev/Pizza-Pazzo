@@ -16,6 +16,7 @@
  * Card numbers never reach this server; masked PANs, if UPC sends them, are
  * dropped before anything is stored.
  */
+import { sign as rsaSign, verify as rsaVerify } from "node:crypto";
 import type { PaymentConfig } from "../config";
 import {
   PaymentProviderError,
@@ -128,49 +129,173 @@ export function safeUpcDetails(fields: UpcFields, source: string): Record<string
   };
 }
 
+async function postStatus(url: string, init: RequestInit): Promise<string> {
+  try {
+    const res = await fetch(url, {
+      ...init,
+      method: "POST",
+      signal: AbortSignal.timeout(STATUS_TIMEOUT_MS),
+      cache: "no-store",
+      redirect: "error",
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return (await res.text()).slice(0, 20_000);
+  } catch (err) {
+    throw new PaymentProviderError(`UPC status query failed: ${(err as Error).message}`);
+  }
+}
+
+/** What either status protocol found, before it is turned into our state. */
+interface StatusFinding {
+  /** "408" = no transaction under this OrderID (yet). */
+  tranCode: string;
+  amountMinor?: number;
+  currencyNumeric?: string;
+  details: Record<string, unknown>;
+}
+
+/**
+ * The SIGNED JSON status query (UPC "Transaction status query", JSON
+ * protocol) on the same URL: our request is signed RS256 with our key, the
+ * gateway's answer is signed RS512 with UPC's key and VERIFIED here with the
+ * pinned gateway certificate before anything is read from it. (Probe
+ * 29.10.2026 on ecg.test.upc.ua/kbc/service/01: answer header {"alg":"RS512"},
+ * the signature verifies with UPC's published test certificate, SHA-512.)
+ * An answer that does not verify is not an answer: it throws.
+ */
+async function jsonStatus(
+  settings: UpcSettings,
+  query: StatusQuery,
+  sent: Record<string, string>
+): Promise<StatusFinding> {
+  const b64u = (v: string) => Buffer.from(v).toString("base64url");
+  const header = b64u(JSON.stringify({ alg: "RS256" }));
+  const payload = b64u(
+    JSON.stringify({
+      MerchantID: settings.merchantId,
+      TerminalID: settings.terminalId,
+      OrderID: query.reference,
+      TotalAmount: sent.TotalAmount,
+      Currency: sent.Currency,
+      PurchaseTime: sent.PurchaseTime,
+    })
+  );
+  const signature = rsaSign("sha256", Buffer.from(`${header}.${payload}`), settings.privateKey).toString("base64url");
+  const text = await postStatus(settings.statusUrl, {
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ header, payload, signature }),
+  });
+
+  let envelope: { header?: string; payload?: string; signature?: string };
+  try {
+    envelope = JSON.parse(text);
+  } catch {
+    throw new PaymentProviderError("UPC status answer is not JSON");
+  }
+  if (!envelope.header || !envelope.payload || !envelope.signature) {
+    throw new PaymentProviderError("UPC status answer is not a signed envelope");
+  }
+  let alg = "";
+  try {
+    alg = String(JSON.parse(Buffer.from(envelope.header, "base64url").toString("utf8")).alg ?? "");
+  } catch {
+    /* falls through to the check below */
+  }
+  const hash = alg === "RS512" ? "sha512" : alg === "RS256" ? "sha256" : null;
+  if (!hash || !settings.gatewayAlgorithms.includes(hash)) {
+    throw new PaymentProviderError(`UPC status answer signed with an unaccepted algorithm "${alg}"`);
+  }
+  const ok = rsaVerify(
+    hash,
+    Buffer.from(`${envelope.header}.${envelope.payload}`),
+    settings.gatewayKey,
+    Buffer.from(envelope.signature, "base64url")
+  );
+  if (!ok) throw new PaymentProviderError("UPC status answer: signature does NOT verify");
+
+  let body: { TranCode?: string; Comment?: string; results?: Array<Record<string, unknown>> };
+  try {
+    body = JSON.parse(Buffer.from(envelope.payload, "base64url").toString("utf8"));
+  } catch {
+    throw new PaymentProviderError("UPC status answer: unreadable payload");
+  }
+  const results = Array.isArray(body.results) ? body.results : [];
+  const purchase = results.find((r) => String(r.operType ?? "").toUpperCase() === "PURCHASE") ?? results[0];
+  if (!purchase) {
+    // {"results":[],"TranCode":"291","Comment":"Invoice was not found"} —
+    // no transaction under this OrderID: the same meaning as 408.
+    return { tranCode: "408", details: { source: "status-json", gatewayCode: body.TranCode, comment: body.Comment } };
+  }
+  const tranCode = String(purchase.tranCode ?? purchase.actionCode ?? "").trim();
+  const amount = Number(purchase.amount);
+  return {
+    tranCode,
+    amountMinor: Number.isSafeInteger(amount) ? amount : undefined,
+    currencyNumeric: purchase.currency ? String(purchase.currency) : undefined,
+    details: {
+      source: "status-json",
+      tranCode,
+      rrn: purchase.rrn,
+      approvalCode: purchase.approvalCode,
+      operType: purchase.operType,
+      tranTime: purchase.tranTime,
+      // cardNumMasked is deliberately NOT kept.
+    },
+  };
+}
+
+/**
+ * The plain status query (form POST → "Key=Value" lines). Not signed by
+ * UPC — only TLS protects it — so the answer must echo exactly the
+ * MerchantID, TerminalID, OrderID and Currency we asked about.
+ */
+async function textStatus(
+  settings: UpcSettings,
+  query: StatusQuery,
+  sent: Record<string, string>
+): Promise<StatusFinding> {
+  const text = await postStatus(settings.statusUrl, {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      MerchantID: settings.merchantId,
+      TerminalID: settings.terminalId,
+      OrderID: query.reference,
+      Currency: sent.Currency,
+      TotalAmount: sent.TotalAmount,
+      PurchaseTime: sent.PurchaseTime,
+    }),
+  });
+  const answer = parseKeyValueText(text);
+  const tranCode = (answer.TranCode ?? "").trim();
+  for (const [k, expected] of [
+    ["MerchantID", settings.merchantId],
+    ["TerminalID", settings.terminalId],
+    ["OrderID", query.reference],
+    ["Currency", sent.Currency],
+  ] as const) {
+    if (answer[k] !== expected) throw new PaymentProviderError(`UPC status answer does not echo our ${k}`);
+  }
+  const amount = Number(answer.TotalAmount || sent.TotalAmount);
+  return {
+    tranCode,
+    amountMinor: Number.isSafeInteger(amount) ? amount : undefined,
+    currencyNumeric: answer.Currency,
+    details: safeUpcDetails({ ...answer, TranCode: tranCode }, "status-text"),
+  };
+}
+
 async function getStatus(settings: UpcSettings, query: StatusQuery): Promise<StatusResult> {
   const sent = query.requestFields;
   if (!sent?.PurchaseTime || !sent.Currency || !sent.TotalAmount) {
     // Without the original PurchaseTime the gateway cannot find the order.
     throw new PaymentProviderError("UPC status query needs the original request fields");
   }
-  const body = new URLSearchParams({
-    MerchantID: settings.merchantId,
-    TerminalID: settings.terminalId,
-    OrderID: query.reference,
-    Currency: sent.Currency,
-    TotalAmount: sent.TotalAmount,
-    PurchaseTime: sent.PurchaseTime,
-  });
-
-  let text: string;
-  try {
-    const res = await fetch(settings.statusUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-      signal: AbortSignal.timeout(STATUS_TIMEOUT_MS),
-      cache: "no-store",
-      redirect: "error",
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    text = (await res.text()).slice(0, 20_000);
-  } catch (err) {
-    throw new PaymentProviderError(`UPC status query failed: ${(err as Error).message}`);
-  }
-
-  const answer = parseKeyValueText(text);
-  const tranCode = (answer.TranCode ?? "").trim();
+  const found =
+    settings.statusProtocol === "json"
+      ? await jsonStatus(settings, query, sent)
+      : await textStatus(settings, query, sent);
+  const { tranCode } = found;
   if (!/^\d{3}$/.test(tranCode)) throw new PaymentProviderError("UPC status answer without a TranCode");
-  for (const [k, expected] of [
-    ["MerchantID", settings.merchantId],
-    ["TerminalID", settings.terminalId],
-    ["OrderID", query.reference],
-  ] as const) {
-    if (answer[k] && answer[k] !== expected) {
-      throw new PaymentProviderError(`UPC status answer is about another ${k}`);
-    }
-  }
 
   let state = outcomeForTranCode(tranCode) as StatusResult["state"];
   let failureReason: string | undefined = state === "PAID" || state === "PENDING" ? undefined : failureReasonFor(tranCode);
@@ -182,17 +307,15 @@ async function getStatus(settings: UpcSettings, query: StatusQuery): Promise<Sta
     failureReason = "SESSION_TIMEOUT";
   }
 
-  const currencyNumeric = answer.Currency || sent.Currency;
-  const amount = Number(answer.TotalAmount || sent.TotalAmount);
   return {
     state,
     rawStatus: tranCode,
-    // The query is keyed on our amount and currency; when the gateway echoes
-    // them, the echo is what we compare.
-    amountMinor: Number.isSafeInteger(amount) ? amount : undefined,
-    currency: alphaCurrency(currencyNumeric) ?? undefined,
+    // What the bank reports; when it does not say, the query itself was
+    // keyed on our amount and currency.
+    amountMinor: found.amountMinor ?? Number(sent.TotalAmount),
+    currency: alphaCurrency(found.currencyNumeric ?? sent.Currency) ?? undefined,
     failureReason,
-    safeDetails: safeUpcDetails({ ...answer, TranCode: tranCode }, "status-query"),
+    safeDetails: found.details,
   };
 }
 

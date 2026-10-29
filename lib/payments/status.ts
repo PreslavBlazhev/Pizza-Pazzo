@@ -86,6 +86,20 @@ export const PAYMENT_ALERTS = {
    * staff look the reference up in the bank's panel.
    */
   UNRESOLVED_PAYMENT: "UNRESOLVED_PAYMENT",
+  /**
+   * We answered UPC "reverse" for a successful authorisation, but the bank's
+   * status query still shows it as paid (TranCode 000). An answer is not
+   * proof of a cancellation: staff cancel/refund it in ОББ's portal.
+   */
+  REVERSE_NOT_CONFIRMED: "REVERSE_NOT_CONFIRMED",
+  /**
+   * We approved a payment from UPC's NOTIFY, but the bank's status query
+   * later shows it NOT completed (e.g. the gateway cancelled it after our
+   * answer was lost). The order's "paid" must be checked in the portal.
+   */
+  APPROVE_NOT_CONFIRMED: "APPROVE_NOT_CONFIRMED",
+  /** The bank's status could not be verified after the bounded retries. */
+  BANK_STATUS_UNVERIFIED: "BANK_STATUS_UNVERIFIED",
 } as const;
 export type PaymentAlert = (typeof PAYMENT_ALERTS)[keyof typeof PAYMENT_ALERTS];
 
@@ -100,6 +114,12 @@ export const PAYMENT_ALERT_LABELS_BG: Record<PaymentAlert, string> = {
     "Плащането е потвърдено след отказа на поръчката. Сумата трябва да се възстанови ръчно през банката.",
   UNRESOLVED_PAYMENT:
     "Банката дълго не дава окончателен отговор за плащането. Нищо не е решено автоматично — проверете референцията в административния панел на банката.",
+  REVERSE_NOT_CONFIRMED:
+    "Сайтът е отказал (reverse) успешно плащане, но банката още го показва като платено. Анулирайте/възстановете сумата в портала на ОББ (до 30 дни) и запишете възстановяването тук.",
+  APPROVE_NOT_CONFIRMED:
+    "Плащането беше прието от сайта, но банката не го показва като завършено. НЕ доставяйте като платено, преди да проверите трансакцията в портала на ОББ.",
+  BANK_STATUS_UNVERIFIED:
+    "Статусът при банката не можа да бъде потвърден след няколко автоматични проверки. Проверете трансакцията в портала на ОББ.",
 };
 
 export function paymentAlertLabel(alert: string | null): string | null {

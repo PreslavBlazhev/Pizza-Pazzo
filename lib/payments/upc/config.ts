@@ -21,9 +21,14 @@
  *   UPC_REQUEST_SIGNATURE_ALG   hash for OUR signature: sha512 (default, as the
  *                            current UPC docs) | sha256 | sha1
  *   UPC_GATEWAY_SIGNATURE_ALGS  hashes accepted on UPC's signature, in order.
- *                            Sandbox default "sha512,sha1" (UPC's docs show
- *                            both); production must pin it explicitly after the
- *                            sandbox showed which one the gateway uses.
+ *                            Sandbox default "sha512": the KBC test gateway signs
+ *                            RS512 with UPC's published test key (verified on a
+ *                            real answer, 29.10.2026); UPC's older PHP samples
+ *                            use SHA-1 — add "sha1" only if a real NOTIFY needs
+ *                            it. Production must pin it explicitly.
+ *   UPC_STATUS_PROTOCOL      json (default): the status answer is signed by UPC
+ *                            (RS512) and verified with the gateway key; text:
+ *                            the unsigned Key=Value variant, fallback only.
  *   UPC_SESSION_TTL_MINUTES  after this long an attempt the gateway never
  *                            registered (TranCode 408) counts as EXPIRED and a
  *                            new one may be opened. Default 20.
@@ -57,6 +62,8 @@ export interface UpcSettings {
   requestAlgorithm: UpcSignatureAlgorithm;
   gatewayAlgorithms: UpcSignatureAlgorithm[];
   sessionTtlMs: number;
+  /** json = answers signed by UPC and verified (default); text = unsigned fallback. */
+  statusProtocol: "json" | "text";
   /** SHA-256 of the gateway certificate in use — shown to staff, not secret. */
   gatewayCertSha256: string;
   /** True when the built-in UPC test certificate is used. */
@@ -159,7 +166,7 @@ export function getUpcSettings(
   if (!gatewayRaw && !sandbox) {
     problems.push("UPC_GATEWAY_SIGNATURE_ALGS трябва да е зададен изрично в продукция (пиннат след sandbox теста).");
   }
-  const gatewayList = (gatewayRaw || "sha512,sha1").split(",").map((s) => s.trim()).filter(Boolean);
+  const gatewayList = (gatewayRaw || "sha512").split(",").map((s) => s.trim()).filter(Boolean);
   const gatewayAlgorithms = gatewayList.filter(isUpcSignatureAlgorithm);
   if (gatewayAlgorithms.length === 0 || gatewayAlgorithms.length !== gatewayList.length) {
     problems.push(`UPC_GATEWAY_SIGNATURE_ALGS съдържа непознат алгоритъм: "${gatewayRaw}".`);
@@ -167,6 +174,12 @@ export function getUpcSettings(
 
   const ttlRaw = Number((env.UPC_SESSION_TTL_MINUTES ?? "").trim() || DEFAULT_TTL_MINUTES);
   const ttlMinutes = Number.isFinite(ttlRaw) && ttlRaw >= 5 && ttlRaw <= 180 ? ttlRaw : DEFAULT_TTL_MINUTES;
+
+  const protocolRaw = (env.UPC_STATUS_PROTOCOL ?? "").trim().toLowerCase() || "json";
+  if (protocolRaw !== "json" && protocolRaw !== "text") {
+    problems.push(`UPC_STATUS_PROTOCOL е непознат: "${protocolRaw}" (json | text).`);
+  }
+  const statusProtocol: "json" | "text" = protocolRaw === "text" ? "text" : "json";
 
   if (problems.length > 0 || !privateKey || !gatewayKey || !requestAlgorithm) {
     return { settings: null, problems };
@@ -183,6 +196,7 @@ export function getUpcSettings(
       requestAlgorithm,
       gatewayAlgorithms,
       sessionTtlMs: ttlMinutes * 60_000,
+      statusProtocol,
       gatewayCertSha256: sha256Fingerprint(gatewayPem),
       gatewayCertIsDefault: !explicitGatewayCert,
     },

@@ -19,6 +19,12 @@ export interface AdminPaymentAttempt {
   createdAt: string;
   lastCheckedAt: string | null;
   finalizedAt: string | null;
+  /** UPC: our stored NOTIFY answer and whether the bank's status confirmed it. */
+  notifyAction: string | null;
+  notifyReason: string | null;
+  notifyTranCode: string | null;
+  bankVerifiedAt: string | null;
+  bankCheckCount: number;
 }
 
 /** Every attempt of an order, newest first. No card data exists to leak. */
@@ -41,6 +47,11 @@ export async function getPaymentAttemptsForOrder(orderId: string): Promise<Admin
     createdAt: a.createdAt.toISOString(),
     lastCheckedAt: a.lastCheckedAt?.toISOString() ?? null,
     finalizedAt: a.finalizedAt?.toISOString() ?? null,
+    notifyAction: a.notifyAction,
+    notifyReason: a.notifyReason,
+    notifyTranCode: a.notifyTranCode,
+    bankVerifiedAt: a.bankVerifiedAt?.toISOString() ?? null,
+    bankCheckCount: a.bankCheckCount,
   }));
 }
 

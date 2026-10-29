@@ -673,10 +673,17 @@ export async function applyProviderStatus(attempt: AttemptRow, result: StatusRes
     }
 
     const won = await db.paymentAttempt.updateMany({
-      where: { id: attempt.id, status: { not: "PAID" } },
+      where: {
+        id: attempt.id,
+        status: { not: "PAID" },
+        // We already told UPC "reverse" for this transaction: a status query
+        // must not turn it into a payment. Whether the bank really cancelled
+        // it is checked by lib/payments/upc/verify.ts (alert if not).
+        OR: [{ notifyAction: null }, { notifyAction: "approve" }],
+      },
       data: { ...common, status: "PAID", failureReason: null, finalizedAt: now },
     });
-    if (won.count !== 1) return; // a concurrent check already finalised it
+    if (won.count !== 1) return; // a concurrent check already finalised it (or it was reversed)
 
     const looked = isRetryableAttempt(attempt.status); // it had looked failed
     const orderWon = await db.order.updateMany({
