@@ -147,8 +147,15 @@ async function postStatus(url: string, init: RequestInit): Promise<string> {
 
 /** What either status protocol found, before it is turned into our state. */
 interface StatusFinding {
-  /** "408" = no transaction under this OrderID (yet). */
+  /** The bank's code, verbatim (JSON "not found" keeps its own, e.g. "291"). */
   tranCode: string;
+  /**
+   * The gateway has no transaction under this OrderID (text: TranCode 408;
+   * JSON: empty results + "…not found"). NOT a final outcome: it never
+   * confirms a cancellation and never by itself frees the order for a new
+   * payment — see getStatus.
+   */
+  notFound: boolean;
   amountMinor?: number;
   currencyNumeric?: string;
   details: Record<string, unknown>;
@@ -222,14 +229,24 @@ async function jsonStatus(
   const results = Array.isArray(body.results) ? body.results : [];
   const purchase = results.find((r) => String(r.operType ?? "").toUpperCase() === "PURCHASE") ?? results[0];
   if (!purchase) {
-    // {"results":[],"TranCode":"291","Comment":"Invoice was not found"} —
-    // no transaction under this OrderID: the same meaning as 408.
-    return { tranCode: "408", details: { source: "status-json", gatewayCode: body.TranCode, comment: body.Comment } };
+    // e.g. {"results":[],"TranCode":"291","Comment":"Invoice was not found"}
+    // (real KBC answer, 29.10.2026). The bank's code and comment are kept as
+    // they are; only an explicit "not found" counts as not registered — any
+    // other empty answer is an unexplained error and stays unresolved.
+    const code = String(body.TranCode ?? "").trim();
+    const comment = String(body.Comment ?? "").slice(0, 200);
+    if (!code) throw new PaymentProviderError("UPC status answer without results and without a TranCode");
+    return {
+      tranCode: code,
+      notFound: /not\s+found/i.test(comment),
+      details: { source: "status-json", tranCode: code, comment, results: 0 },
+    };
   }
   const tranCode = String(purchase.tranCode ?? purchase.actionCode ?? "").trim();
   const amount = Number(purchase.amount);
   return {
     tranCode,
+    notFound: false,
     amountMinor: Number.isSafeInteger(amount) ? amount : undefined,
     currencyNumeric: purchase.currency ? String(purchase.currency) : undefined,
     details: {
@@ -278,6 +295,7 @@ async function textStatus(
   const amount = Number(answer.TotalAmount || sent.TotalAmount);
   return {
     tranCode,
+    notFound: tranCode === "408",
     amountMinor: Number.isSafeInteger(amount) ? amount : undefined,
     currencyNumeric: answer.Currency,
     details: safeUpcDetails({ ...answer, TranCode: tranCode }, "status-text"),
@@ -297,25 +315,26 @@ async function getStatus(settings: UpcSettings, query: StatusQuery): Promise<Sta
   const { tranCode } = found;
   if (!/^\d{3}$/.test(tranCode)) throw new PaymentProviderError("UPC status answer without a TranCode");
 
-  let state = outcomeForTranCode(tranCode) as StatusResult["state"];
-  let failureReason: string | undefined = state === "PAID" || state === "PENDING" ? undefined : failureReasonFor(tranCode);
-  if (tranCode === "408" && Date.now() - query.createdAt.getTime() > settings.sessionTtlMs) {
-    // Never registered at the gateway and the session lifetime is over. Any
-    // late payment of this OrderID would reach NOTIFY and be reversed (it
-    // is no longer the order's open attempt), so a new one may be opened.
-    state = "EXPIRED";
-    failureReason = "SESSION_TIMEOUT";
-  }
+  // "Not found" is NOT a result: the attempt stays open (the customer may
+  // still be on UPC's page, or a NOTIFY may be late). No timeout turns it
+  // into "expired" automatically — a person decides after the UNRESOLVED
+  // alert (lib/payments/reconcile.ts). Technical codes stay open the same way
+  // (outcomeForTranCode).
+  const state = (found.notFound ? "PENDING" : outcomeForTranCode(tranCode)) as StatusResult["state"];
+  const failureReason: string | undefined =
+    state === "PAID" || state === "PENDING" ? undefined : failureReasonFor(tranCode);
 
   return {
     state,
     rawStatus: tranCode,
+    notFound: found.notFound,
     // What the bank reports; when it does not say, the query itself was
     // keyed on our amount and currency.
     amountMinor: found.amountMinor ?? Number(sent.TotalAmount),
     currency: alphaCurrency(found.currencyNumeric ?? sent.Currency) ?? undefined,
     failureReason,
-    safeDetails: found.details,
+    // Stored with the attempt: the reuse rule and the admin read it.
+    safeDetails: { ...found.details, notFound: found.notFound },
   };
 }
 

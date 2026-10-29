@@ -23,7 +23,7 @@
  */
 import { randomBytes } from "node:crypto";
 import type { Prisma } from "@prisma/client";
-import { db } from "@/lib/db";
+import { db, type DbTransaction } from "@/lib/db";
 import { parseOrderItemExtras } from "@/lib/extras-rules";
 import { parseOfferJson } from "@/lib/pizza-math";
 import { sendNewOrderNotification } from "@/lib/email/resend";
@@ -103,6 +103,8 @@ export const MAX_NOTIFICATION_ATTEMPTS = 5;
 export const NOTIFICATION_RETRY_AFTER_MS = 60_000;
 
 type NewOrderSender = typeof sendNewOrderNotification;
+/** A released order with no e-mail attempt after this long was interrupted. */
+export const UNSENT_NOTIFICATION_GRACE_MS = 30_000;
 
 /**
  * Sends the restaurant's "new order" e-mail for a released order, and records
@@ -217,9 +219,20 @@ export async function retryFailedNotifications(send: NewOrderSender = sendNewOrd
     where: {
       releasedToKitchenAt: { not: null },
       notificationSentAt: null,
-      notificationStatus: { in: ["FAILED", "SENDING"] },
       notificationAttempts: { lt: MAX_NOTIFICATION_ATTEMPTS },
-      notificationClaimedAt: { lt: new Date(Date.now() - NOTIFICATION_RETRY_AFTER_MS) },
+      OR: [
+        {
+          notificationStatus: { in: ["FAILED", "SENDING"] },
+          notificationClaimedAt: { lt: new Date(Date.now() - NOTIFICATION_RETRY_AFTER_MS) },
+        },
+        {
+          // Released, but the e-mail was never even attempted: the process
+          // stopped between the PAID transaction and the send. The normal
+          // path sends within milliseconds, so after this grace it is ours.
+          notificationStatus: null,
+          releasedToKitchenAt: { lt: new Date(Date.now() - UNSENT_NOTIFICATION_GRACE_MS) },
+        },
+      ],
     },
     select: { id: true },
     take: 5,
@@ -496,7 +509,7 @@ export async function startCardPayment(
  * For providers with sessionReuse "unregistered-only" (UPC): before the
  * customer is sent to the bank again, the open attempt is asked about.
  *   paid            → ALREADY_PAID
- *   still open, the gateway has never registered it (TranCode 408)
+ *   still open, the gateway explicitly has no such payment ("not found")
  *                   → the same signed page again (same OrderID)
  *   still open otherwise (in progress, or the check failed)
  *                   → CHECKING: no second payment until the first is settled
@@ -512,8 +525,17 @@ async function checkOpenAttemptBeforeReuse(orderId: string): Promise<StartPaymen
   if (!after) return null;
   if (after.status === "PAID") return { ok: false, code: "ALREADY_PAID" };
   if (!isOpenAttempt(after.status)) return null;
-  const redirect = after.providerStatus === "408" ? redirectOf(after) : null;
+  const redirect = gatewayHasNoSuchPayment(after) ? redirectOf(after) : null;
   return redirect ? { ok: true, redirect, reused: true } : { ok: false, code: "CHECKING" };
+}
+
+/** The last status query said the gateway has no payment under this OrderID. */
+function gatewayHasNoSuchPayment(a: Pick<AttemptRow, "providerResponse">): boolean {
+  try {
+    return JSON.parse(a.providerResponse ?? "{}").notFound === true;
+  } catch {
+    return false;
+  }
 }
 
 /** The hosted page of the latest attempt if it can still be paid, else null. */
@@ -574,7 +596,12 @@ export async function syncAttempt(
 ): Promise<AttemptRow | null> {
   const attempt = await db.paymentAttempt.findUnique({ where: { id: attemptId } });
   if (!attempt) return null;
-  if (attempt.status === "PAID") return attempt; // final, nothing can change it
+  if (attempt.status === "PAID") {
+    // Final for the money; an order left unpaid by an interrupted older
+    // write is completed here (idempotent) instead of being skipped for ever.
+    await completePaidAttempt(attempt.id);
+    return db.paymentAttempt.findUnique({ where: { id: attempt.id } });
+  }
   // No provider id: either the provider never saw it, or its creation had an
   // unknown outcome — only the latter is worth a query (by our reference).
   if (!attempt.providerPaymentId && !isUnconfirmedCreation(attempt)) return attempt;
@@ -672,76 +699,33 @@ export async function applyProviderStatus(attempt: AttemptRow, result: StatusRes
       return;
     }
 
-    const won = await db.paymentAttempt.updateMany({
-      where: {
-        id: attempt.id,
-        status: { not: "PAID" },
-        // We already told UPC "reverse" for this transaction: a status query
-        // must not turn it into a payment. Whether the bank really cancelled
-        // it is checked by lib/payments/upc/verify.ts (alert if not).
-        OR: [{ notifyAction: null }, { notifyAction: "approve" }],
-      },
-      data: { ...common, status: "PAID", failureReason: null, finalizedAt: now },
-    });
-    if (won.count !== 1) return; // a concurrent check already finalised it (or it was reversed)
-
-    const looked = isRetryableAttempt(attempt.status); // it had looked failed
-    const orderWon = await db.order.updateMany({
-      where: { id: attempt.orderId, paymentStatus: { not: "PAID" } },
-      data: { paymentStatus: "PAID", paidAt: now },
-    });
-
-    const order = await db.order.findUnique({ where: { id: attempt.orderId } });
-    if (!order) return;
-
-    if (orderWon.count !== 1) {
-      // The order was already paid by ANOTHER attempt: real money twice.
-      console.error(`[payments] DUPLICATE PAYMENT on order #${order.orderNumber} (${attempt.reference})`);
-      await db.order.update({
-        where: { id: order.id },
-        data: { paymentAlert: PAYMENT_ALERTS.DUPLICATE_PAYMENT, paymentAlertAckAt: null, paymentAlertAckBy: null },
-      });
-      return;
-    }
-
-    if (order.status === "CANCELLED") {
-      console.error(`[payments] payment confirmed for CANCELLED order #${order.orderNumber}`);
-      await db.order.update({
-        where: { id: order.id },
-        data: { paymentAlert: PAYMENT_ALERTS.PAID_AFTER_CANCEL, paymentAlertAckAt: null, paymentAlertAckBy: null },
-      });
-      return; // never cook a cancelled order
-    }
-
-    if (looked || order.paymentAlert === PAYMENT_ALERTS.UNRESOLVED_PAYMENT) {
-      // Money that arrives after the customer saw "failed" (or after hours
-      // without an answer) is real, but the order may no longer be wanted —
-      // the customer may have ordered again, or left. It is PAID and kept
-      // visible to staff, never started automatically: a person decides
-      // (releaseHeldPaidOrder, or cancel + refund in the bank's panel).
-      await db.order.update({
-        where: { id: order.id },
-        data: {
-          paymentAlert: PAYMENT_ALERTS.LATE_CONFIRMATION,
-          paymentAlertAckAt: null,
-          paymentAlertAckBy: null,
+    // ONE transaction: the attempt becomes PAID, the order becomes PAID and
+    // what happens to the food is decided — all or nothing. A crash can no
+    // longer leave "attempt PAID, order unpaid" (which syncAttempt's early
+    // exit used to skip for ever) or "paid, but nobody decided about the
+    // kitchen". The only step after the commit is the restaurant e-mail, and
+    // that is recoverable: retryFailedNotifications picks up a released order
+    // whose e-mail was never attempted.
+    const decided = await db.$transaction(async (tx) => {
+      const won = await tx.paymentAttempt.updateMany({
+        where: {
+          id: attempt.id,
+          status: { not: "PAID" },
+          // We already told UPC "reverse" for this transaction: a status query
+          // must not turn it into a payment. Whether the bank really cancelled
+          // it is checked by lib/payments/upc/verify.ts (alert if not).
+          OR: [{ notifyAction: null }, { notifyAction: "approve" }],
         },
+        data: { ...common, status: "PAID", failureReason: null, finalizedAt: now },
       });
-      console.warn(
-        `[payments] ${attempt.reference} PAID late → order #${order.orderNumber} HELD for staff, not released`
-      );
-      return;
-    }
-
-    if (attempt.environment === "sandbox") {
-      // A bank TEST transaction (test cards, no money): the order is marked
-      // paid for the test record and goes nowhere — no kitchen, no alarm,
-      // no ticket, no e-mail. Only the simulator demo is shown on the board.
-      console.log(`[payments] ${attempt.reference} PAID (${attempt.environment}) → test order #${order.orderNumber} kept off the kitchen`);
-      return;
-    }
-    console.log(`[payments] ${attempt.reference} PAID → order #${order.orderNumber} released to the kitchen`);
-    await releaseToKitchenAndNotify(order.id);
+      if (won.count !== 1) return null; // a concurrent check already finalised it (or it was reversed)
+      await paymentTestHooks.insidePaidTransaction?.();
+      // It had looked failed (declined / expired) before the money arrived.
+      return finalizePaidOrder(tx, attempt, { lookedFailed: isRetryableAttempt(attempt.status), now });
+    });
+    if (!decided) return;
+    await paymentTestHooks.afterPaidCommit?.();
+    if (decided === "RELEASED") await notifyRestaurantOnce(attempt.orderId);
     return;
   }
 
@@ -774,6 +758,111 @@ export async function applyProviderStatus(attempt: AttemptRow, result: StatusRes
       data: { paymentStatus: orderPaymentStatusFor(next) },
     });
   }
+}
+
+/** Test seams: crash points around the PAID transaction. Never set in production. */
+export const paymentTestHooks: {
+  insidePaidTransaction?: () => void | Promise<void>;
+  afterPaidCommit?: () => void | Promise<void>;
+} = {};
+
+export type PaidOutcome = "RELEASED" | "HELD" | "TEST_KEPT_OFF" | "DUPLICATE" | "CANCELLED_ORDER" | "MISSING";
+
+/**
+ * Inside the PAID transaction: marks the order paid and decides, in the SAME
+ * transaction, what happens to it. Idempotent on the order side: an order
+ * that is already paid is never paid (or released) a second time.
+ */
+async function finalizePaidOrder(
+  tx: DbTransaction,
+  attempt: Pick<AttemptRow, "id" | "orderId" | "reference" | "environment">,
+  options: { lookedFailed: boolean; now: Date }
+): Promise<PaidOutcome> {
+  const { now } = options;
+  const order = await tx.order.findUnique({ where: { id: attempt.orderId } });
+  if (!order) return "MISSING";
+  const alert = (paymentAlert: string) => ({ paymentAlert, paymentAlertAckAt: null, paymentAlertAckBy: null });
+
+  if (order.paymentStatus === "PAID") {
+    const other = await tx.paymentAttempt.count({
+      where: { orderId: order.id, status: "PAID", id: { not: attempt.id } },
+    });
+    if (other > 0) {
+      // Already paid by ANOTHER attempt: real money twice.
+      console.error(`[payments] DUPLICATE PAYMENT on order #${order.orderNumber} (${attempt.reference})`);
+      await tx.order.update({ where: { id: order.id }, data: alert(PAYMENT_ALERTS.DUPLICATE_PAYMENT) });
+      return "DUPLICATE";
+    }
+    return "MISSING"; // paid by this very attempt already: nothing to do
+  }
+
+  const paid = { paymentStatus: "PAID", paidAt: now };
+  if (order.status === "CANCELLED") {
+    console.error(`[payments] payment confirmed for CANCELLED order #${order.orderNumber}`);
+    await tx.order.update({ where: { id: order.id }, data: { ...paid, ...alert(PAYMENT_ALERTS.PAID_AFTER_CANCEL) } });
+    return "CANCELLED_ORDER"; // never cook a cancelled order
+  }
+  if (options.lookedFailed || order.paymentAlert === PAYMENT_ALERTS.UNRESOLVED_PAYMENT) {
+    // Money that arrives after the customer saw "failed" (or after hours
+    // without an answer) is real, but the order may no longer be wanted —
+    // the customer may have ordered again, or left. It is PAID and kept
+    // visible to staff, never started automatically: a person decides
+    // (releaseHeldPaidOrder, or cancel + refund in the bank's panel).
+    await tx.order.update({ where: { id: order.id }, data: { ...paid, ...alert(PAYMENT_ALERTS.LATE_CONFIRMATION) } });
+    console.warn(`[payments] ${attempt.reference} PAID late → order #${order.orderNumber} HELD for staff, not released`);
+    return "HELD";
+  }
+  if (attempt.environment === "sandbox") {
+    // A bank TEST transaction (test cards, no money): the order is marked
+    // paid for the test record and goes nowhere — no kitchen, no alarm,
+    // no ticket, no e-mail. Only the simulator demo is shown on the board.
+    await tx.order.update({ where: { id: order.id }, data: paid });
+    console.log(`[payments] ${attempt.reference} PAID (sandbox) → test order #${order.orderNumber} kept off the kitchen`);
+    return "TEST_KEPT_OFF";
+  }
+  await tx.order.update({
+    where: { id: order.id },
+    data: { ...paid, ...(order.releasedToKitchenAt ? {} : { releasedToKitchenAt: now }) },
+  });
+  console.log(`[payments] ${attempt.reference} PAID → order #${order.orderNumber} released to the kitchen`);
+  return "RELEASED";
+}
+
+/**
+ * Repairs a PAID attempt whose order is not paid — rows written by the
+ * earlier, non-transactional code if it was interrupted between its two
+ * updates. The repair runs the same decision in one transaction and is
+ * conservative: a payment found this way is HELD for staff unless it was
+ * confirmed within the last 10 minutes.
+ */
+export async function completePaidAttempt(attemptId: string): Promise<PaidOutcome | null> {
+  const attempt = await db.paymentAttempt.findUnique({ where: { id: attemptId } });
+  if (!attempt || attempt.status !== "PAID") return null;
+  const order = await db.order.findUnique({ where: { id: attempt.orderId }, select: { paymentStatus: true } });
+  if (!order || order.paymentStatus === "PAID") return null;
+  const now = new Date();
+  const fresh = !!attempt.finalizedAt && now.getTime() - attempt.finalizedAt.getTime() < 10 * 60_000;
+  const outcome = await db.$transaction(async (tx) => {
+    // Re-checked inside the transaction: a concurrent repair may have won.
+    const again = await tx.order.findUnique({ where: { id: attempt.orderId }, select: { paymentStatus: true } });
+    if (!again || again.paymentStatus === "PAID") return null;
+    return finalizePaidOrder(tx, attempt, { lookedFailed: !fresh, now });
+  });
+  if (outcome) console.warn(`[payments] repaired PAID attempt ${attempt.reference} → ${outcome}`);
+  if (outcome === "RELEASED") await notifyRestaurantOnce(attempt.orderId);
+  return outcome;
+}
+
+/** Background sweep: PAID attempts whose order is still unpaid (see completePaidAttempt). */
+export async function repairPaidAttempts(limit = 10): Promise<number> {
+  const rows = await db.paymentAttempt.findMany({
+    where: { status: "PAID", order: { paymentStatus: { not: "PAID" } } },
+    select: { id: true },
+    take: limit,
+  });
+  let repaired = 0;
+  for (const r of rows) if (await completePaidAttempt(r.id)) repaired++;
+  return repaired;
 }
 
 /**

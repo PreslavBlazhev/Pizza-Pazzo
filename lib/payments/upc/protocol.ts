@@ -337,6 +337,16 @@ export function buildNotifyResponse(
 
 // ── TranCode → our state ───────────────────────────────────────────────────
 
+/** Codes that report a technical problem, not a decision about the payment. */
+export const TECHNICAL_TRAN_CODES = new Set(["290", "291", "403", "902", "909"]);
+
+/**
+ * The only documented FINAL results of a transaction that was cancelled after
+ * authorisation: 503 "cancelled by the store" (our reverse) and 504
+ * "cancelled by the gateway". Used to confirm a reverse — nothing else does.
+ */
+export const CONFIRMED_CANCELLATION_CODES = new Set(["503", "504"]);
+
 export type UpcOutcome = "PAID" | "PENDING" | "FAILED" | "CANCELLED" | "EXPIRED";
 
 /**
@@ -355,6 +365,10 @@ export function outcomeForTranCode(tranCode: string): UpcOutcome {
   const code = tranCode.trim();
   if (code === "000") return "PAID";
   if (code === "408" || code === "410" || code === "") return "PENDING";
+  // Technical / communication failures say nothing final about the money:
+  // the attempt stays open and is checked again (never "failed", never a
+  // reason to open a second payment).
+  if (TECHNICAL_TRAN_CODES.has(code)) return "PENDING";
   if (["501", "503", "504", "601"].includes(code)) return "CANCELLED";
   if (code === "502" || code === "411") return "EXPIRED";
   if (/^(1\d\d|2\d\d|40[1-7]|41[2-9]|42\d|43\d|45\d|7\d\d|9\d\d)$/.test(code)) return "FAILED";

@@ -29,9 +29,6 @@
  *   UPC_STATUS_PROTOCOL      json (default): the status answer is signed by UPC
  *                            (RS512) and verified with the gateway key; text:
  *                            the unsigned Key=Value variant, fallback only.
- *   UPC_SESSION_TTL_MINUTES  after this long an attempt the gateway never
- *                            registered (TranCode 408) counts as EXPIRED and a
- *                            new one may be opened. Default 20.
  *
  * Production URLs and certificates are never defaulted: they come with the
  * production MerchantID/TerminalID from ОББ.
@@ -50,7 +47,6 @@ import type { KeyObject } from "node:crypto";
 
 export const UPC_SANDBOX_GATEWAY_URL = "https://ecg.test.upc.ua/kbc/pay";
 export const UPC_SANDBOX_STATUS_URL = "https://ecg.test.upc.ua/kbc/service/01";
-const DEFAULT_TTL_MINUTES = 20;
 
 export interface UpcSettings {
   merchantId: string;
@@ -61,7 +57,6 @@ export interface UpcSettings {
   gatewayKey: KeyObject;
   requestAlgorithm: UpcSignatureAlgorithm;
   gatewayAlgorithms: UpcSignatureAlgorithm[];
-  sessionTtlMs: number;
   /** json = answers signed by UPC and verified (default); text = unsigned fallback. */
   statusProtocol: "json" | "text";
   /** SHA-256 of the gateway certificate in use — shown to staff, not secret. */
@@ -172,9 +167,6 @@ export function getUpcSettings(
     problems.push(`UPC_GATEWAY_SIGNATURE_ALGS съдържа непознат алгоритъм: "${gatewayRaw}".`);
   }
 
-  const ttlRaw = Number((env.UPC_SESSION_TTL_MINUTES ?? "").trim() || DEFAULT_TTL_MINUTES);
-  const ttlMinutes = Number.isFinite(ttlRaw) && ttlRaw >= 5 && ttlRaw <= 180 ? ttlRaw : DEFAULT_TTL_MINUTES;
-
   const protocolRaw = (env.UPC_STATUS_PROTOCOL ?? "").trim().toLowerCase() || "json";
   if (protocolRaw !== "json" && protocolRaw !== "text") {
     problems.push(`UPC_STATUS_PROTOCOL е непознат: "${protocolRaw}" (json | text).`);
@@ -195,7 +187,6 @@ export function getUpcSettings(
       gatewayKey,
       requestAlgorithm,
       gatewayAlgorithms,
-      sessionTtlMs: ttlMinutes * 60_000,
       statusProtocol,
       gatewayCertSha256: sha256Fingerprint(gatewayPem),
       gatewayCertIsDefault: !explicitGatewayCert,

@@ -337,7 +337,7 @@ export function OrderDetails({
                               {a.notifyTranCode === "000"
                                 ? a.bankVerifiedAt
                                   ? ` · потвърдено при банката ${formatDateTime(a.bankVerifiedAt)}`
-                                  : ` · проверка при банката: ${a.bankCheckCount} опит(а), чака`
+                                  : ` · проверка при банката: ${a.bankCheckCount} опит(а), чака${a.bankCheckResult ? ` (последно: ${a.bankCheckResult})` : ""}`
                                 : null}
                             </span>
                           ) : null}

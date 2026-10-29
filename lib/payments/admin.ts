@@ -25,6 +25,8 @@ export interface AdminPaymentAttempt {
   notifyTranCode: string | null;
   bankVerifiedAt: string | null;
   bankCheckCount: number;
+  /** The bank's last answer to the verification (code, not found, error). */
+  bankCheckResult: string | null;
 }
 
 /** Every attempt of an order, newest first. No card data exists to leak. */
@@ -52,6 +54,7 @@ export async function getPaymentAttemptsForOrder(orderId: string): Promise<Admin
     notifyTranCode: a.notifyTranCode,
     bankVerifiedAt: a.bankVerifiedAt?.toISOString() ?? null,
     bankCheckCount: a.bankCheckCount,
+    bankCheckResult: a.bankCheckResult,
   }));
 }
 

@@ -10,10 +10,11 @@
  *   approve + bank final ≠ 000  → APPROVE_NOT_CONFIRMED (e.g. our answer was
  *                                 lost and the gateway cancelled; the order
  *                                 must not be treated as paid unchecked)
- *   reverse + bank ≠ 000        → verified (the cancellation happened)
+ *   reverse + bank 503/504      → verified (the documented cancellation result)
  *   reverse + bank 000          → REVERSE_NOT_CONFIRMED (money is still
  *                                 taken: staff cancel/refund in the portal)
- *   no answer / 408 / errors    → retried with back-off, at most
+ *   no answer, "not found", a technical or unknown code
+ *                               → NOT a confirmation; retried with back-off, at most
  *                                 MAX_BANK_CHECKS times, then
  *                                 BANK_STATUS_UNVERIFIED for a person
  *
@@ -24,6 +25,7 @@ import { db } from "@/lib/db";
 import { getProviderForAttempt } from "../providers";
 import { UPC_PROVIDER_ID } from "../providers/upc";
 import { PAYMENT_ALERTS, type PaymentAlert } from "../status";
+import { CONFIRMED_CANCELLATION_CODES, outcomeForTranCode, TECHNICAL_TRAN_CODES } from "./protocol";
 
 /** The bank needs a moment to settle a cancellation; the first look waits. */
 export const FIRST_CHECK_AFTER_MS = 2 * 60_000;
@@ -85,6 +87,8 @@ export async function verifyUpcDecisions(
     const lastTry = a.bankCheckCount + 1 >= MAX_BANK_CHECKS;
 
     let code: string | null = null;
+    let notFound = false;
+    let failure: string | null = null;
     try {
       const status = await provider.getStatus({
         reference: a.reference,
@@ -95,9 +99,24 @@ export async function verifyUpcDecisions(
         createdAt: a.createdAt,
       });
       code = status.rawStatus;
+      notFound = status.notFound === true;
     } catch (err) {
-      console.warn(`[payments] UPC verify ${a.reference}: status query failed: ${(err as Error).message}`);
+      failure = (err as Error).message.slice(0, 200);
+      console.warn(`[payments] UPC verify ${a.reference}: status query failed: ${failure}`);
     }
+    // What the bank actually answered, kept for staff (no card data here).
+    await db.paymentAttempt.update({
+      where: { id: a.id },
+      data: {
+        bankCheckResult: JSON.stringify({
+          source: "verify",
+          check: a.bankCheckCount + 1,
+          bankCode: code,
+          notFound,
+          error: failure,
+        }).slice(0, 4000),
+      },
+    });
 
     const settle = async (kind: PaymentAlert | null) => {
       await db.paymentAttempt.update({ where: { id: a.id }, data: { bankVerifiedAt: now } });
@@ -110,16 +129,18 @@ export async function verifyUpcDecisions(
       }
     };
 
+    // Only a documented FINAL bank result settles anything. A failed query,
+    // "not found", a technical code (290/291/403/902/909) or an unknown code
+    // is not an answer: retried (bounded), then BANK_STATUS_UNVERIFIED.
     const known = code !== null && /^\d{3}$/.test(code);
-    const pendingLike = !known || code === "408" || code === "410";
-    if (a.notifyAction === "approve") {
+    const conclusive = known && !notFound && !TECHNICAL_TRAN_CODES.has(code!);
+    if (conclusive && a.notifyAction === "approve") {
       if (code === "000") await settle(null);
-      else if (!pendingLike) await settle(PAYMENT_ALERTS.APPROVE_NOT_CONFIRMED);
-    } else {
-      // A reversed transaction that no longer exists as a payment (408) is
-      // as good as cancelled: no money was taken.
+      else if (outcomeForTranCode(code!) !== "PENDING") await settle(PAYMENT_ALERTS.APPROVE_NOT_CONFIRMED);
+    } else if (conclusive) {
+      // A reverse is confirmed only by the bank's own cancellation result.
       if (code === "000") await settle(PAYMENT_ALERTS.REVERSE_NOT_CONFIRMED);
-      else if (known && code !== "410") await settle(null);
+      else if (CONFIRMED_CANCELLATION_CODES.has(code!)) await settle(null);
     }
     const after = await db.paymentAttempt.findUnique({ where: { id: a.id }, select: { bankVerifiedAt: true } });
     if (!after?.bankVerifiedAt && lastTry) {

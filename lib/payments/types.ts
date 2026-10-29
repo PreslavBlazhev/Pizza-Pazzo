@@ -66,6 +66,8 @@ export interface StatusResult {
   state: ProviderPaymentState;
   /** The provider's own code, verbatim (for the admin and the logs). */
   rawStatus: string;
+  /** The provider positively has no such payment (yet) — never a final outcome. */
+  notFound?: boolean;
   /** What the provider says was charged. Undefined = it did not say. */
   amountMinor?: number;
   currency?: string;

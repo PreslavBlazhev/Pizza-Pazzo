@@ -46,7 +46,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getEffectivePaymentConfig } from "../providers";
 import { UPC_PROVIDER_ID, safeUpcDetails, verifyUpcMessage } from "../providers/upc";
-import { applyProviderStatus } from "../service";
+import { applyProviderStatus, completePaidAttempt } from "../service";
 import { isOpenAttempt, isRetryableAttempt, PAYMENT_ALERTS } from "../status";
 import { getUpcSettings } from "./config";
 import {
@@ -158,7 +158,11 @@ async function applyEffect(attemptId: string, effect: Effect, fields: UpcFields,
   const details = { ...safeUpcDetails(fields, "notify"), signature };
 
   if (effect === "pay") {
-    if (attempt.status === "PAID") return;
+    // Already PAID: complete an order an interrupted write left unpaid (idempotent).
+    if (attempt.status === "PAID") {
+      await completePaidAttempt(attempt.id);
+      return;
+    }
     // The customer is on UPC's page right now, paying THIS (latest) attempt.
     // If our side had already given up on it (e.g. its session timed out
     // while the customer typed), it is the same session — opened again so
