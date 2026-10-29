@@ -62,6 +62,8 @@ type StatusAnswer = string | (() => string) | Error;
 let statusAnswer: StatusAnswer = "TranCode=408\n";
 /** Tamper switch: the JSON envelope's signature is broken. */
 let forgeStatusSignature = false;
+/** When set, the JSON gateway answers exactly this (signed) payload. */
+let statusPayload: Record<string, unknown> | null = null;
 const statusCalls: { url: string; body: URLSearchParams; json: Record<string, string> | null }[] = [];
 const realFetch = globalThis.fetch;
 
@@ -85,7 +87,7 @@ function jsonEnvelope(query: Record<string, string>, text: string): string {
         ];
   const b64u = (v: string) => Buffer.from(v).toString("base64url");
   const header = b64u(JSON.stringify({ alg: "RS512" }));
-  const payload = b64u(JSON.stringify(code === "408" ? { results, TranCode: "291", Comment: "Invoice was not found" } : { results }));
+  const payload = b64u(JSON.stringify(statusPayload ?? (code === "408" ? { results, TranCode: "291", Comment: "Invoice was not found" } : { results })));
   let signature = cryptoSign("sha512", Buffer.from(`${header}.${payload}`), GATEWAY_KEY).toString("base64url");
   if (forgeStatusSignature) signature = signature.slice(0, -4) + "AAAA";
   return JSON.stringify({ header, payload, signature });
@@ -116,6 +118,7 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 beforeEach(() => {
   statusAnswer = "TranCode=408\n";
   forgeStatusSignature = false;
+  statusPayload = null;
   statusCalls.length = 0;
 });
 
@@ -220,7 +223,8 @@ test("RSA signatures: verify with the right key/hash only; tampering fails; garb
 
 test("TranCode → state: only 000 is money; 408/unknown stay pending", () => {
   assert.equal(outcomeForTranCode("000"), "PAID");
-  for (const c of ["105", "116", "101", "111", "108", "130", "290", "291", "404", "405"]) assert.equal(outcomeForTranCode(c), "FAILED", c);
+  for (const c of ["105", "116", "101", "111", "108", "130", "404", "405"]) assert.equal(outcomeForTranCode(c), "FAILED", c);
+  for (const c of ["290", "291", "403", "902", "909"]) assert.equal(outcomeForTranCode(c), "PENDING", `technical ${c} is not a final result`);
   for (const c of ["501", "503", "504", "601"]) assert.equal(outcomeForTranCode(c), "CANCELLED", c);
   assert.equal(outcomeForTranCode("502"), "EXPIRED");
   for (const c of ["408", "410", "999x", ""]) assert.equal(outcomeForTranCode(c), "PENDING", c);
@@ -518,15 +522,19 @@ test("closed browser, NOTIFY never arrived: reconciliation's status query (000) 
   assert.equal(row.releasedToKitchenAt, null);
 });
 
-test("delayed NOTIFY after our session timeout: the same session is honoured (approve), not a second charge", async () => {
+test("long after the session: 'not found' does NOT expire the attempt or allow a new OrderID; a late NOTIFY is honoured", async () => {
   const r = await staffCardOrder();
   const { sent } = await startAndSent(r.accessToken);
   const attempt = await latestAttempt(r.orderNumber);
-  await db.paymentAttempt.update({ where: { id: attempt.id }, data: { createdAt: new Date(Date.now() - 30 * 60_000) } });
-  statusAnswer = "TranCode=408\n";
+  await db.paymentAttempt.update({ where: { id: attempt.id }, data: { createdAt: new Date(Date.now() - 3 * 60 * 60_000) } });
+  statusAnswer = "TranCode=408\n"; // JSON: {"results":[],"TranCode":"291","Comment":"Invoice was not found"}
   const synced = await quiet(() => syncAttempt(attempt.id));
-  assert.equal(synced?.status, "EXPIRED");
-  assert.equal(synced?.failureReason, "SESSION_TIMEOUT");
+  assert.equal(synced?.status, "PENDING", "still open — not EXPIRED");
+  assert.equal(synced?.providerStatus, "291", "the bank's own code is kept (not rewritten to 408)");
+  const again = await quiet(() => startCardPayment({ accessToken: r.accessToken, locale: "bg" }));
+  assert.ok(again.ok && again.reused, "the same OrderID may be re-posted (it was never registered)…");
+  if (again.ok) assert.equal(again.redirect.postFields!.OrderID, sent.OrderID, "…but no new payment attempt is opened");
+  assert.equal(await db.paymentAttempt.count({ where: { order: { orderNumber: r.orderNumber } } }), 1);
   const out = await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
   assert.equal(out.action, "approve", out.reason);
   assert.equal((await orderRow(r.orderNumber)).paymentStatus, "PAID");
@@ -823,4 +831,116 @@ test("a declined attempt's acknowledgement does not block a later successful aut
   const old = await quiet(() => handleUpcNotify(body(gatewayMessage(sent, { TranCode: "116", ApprovalCode: "", XID: "26102918-000001" }))));
   assert.equal(old.action, "approve");
   assert.equal((await latestAttempt(r.orderNumber)).status, "PAID");
+});
+
+// ── Problem: what counts as a confirmed bank cancellation ───────────────
+
+async function reversedAttempt() {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  await db.order.update({ where: { orderNumber: r.orderNumber }, data: { status: "CANCELLED" } });
+  const out = await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
+  assert.equal(out.action, "reverse");
+  return r;
+}
+
+test("reverse + 'not found' / technical code / unknown code / failed query: NEVER a confirmed cancellation", async () => {
+  const { verifyUpcDecisions } = await import("@/lib/payments/upc/verify");
+  const cases: Array<[string, () => void]> = [
+    ["not found (JSON 291 + 'Invoice was not found')", () => { statusAnswer = "TranCode=408\n"; }],
+    ["technical 291 on the transaction", () => { statusAnswer = "TranCode=291\n"; }],
+    ["technical 902", () => { statusAnswer = "TranCode=902\n"; }],
+    ["unknown 555", () => { statusAnswer = "TranCode=555\n"; }],
+    ["empty results with another error", () => { statusPayload = { results: [], TranCode: "909", Comment: "Internal error" }; }],
+    ["query failed", () => { statusAnswer = new Error("timeout"); }],
+  ];
+  for (const [name, arrange] of cases) {
+    await db.paymentAttempt.updateMany({ where: { bankVerifiedAt: null }, data: { bankVerifiedAt: new Date() } }); // isolate
+    const r = await reversedAttempt();
+    arrange();
+    await quiet(() => verifyUpcDecisions({ limit: 50, now: new Date(Date.now() + 3 * 60_000) }));
+    const a = await latestAttempt(r.orderNumber);
+    assert.equal(a.bankVerifiedAt, null, `${name}: not confirmed`);
+    assert.equal(a.bankCheckCount, 1, `${name}: counted as one bounded check`);
+    assert.ok(a.bankCheckResult, `${name}: the bank's actual answer is kept`);
+    assert.equal((await orderRow(r.orderNumber)).paymentAlert, null, `${name}: no false alarm yet`);
+    statusPayload = null;
+  }
+});
+
+test("the bank's actual answer is preserved: code, 'not found', error", async () => {
+  const { verifyUpcDecisions } = await import("@/lib/payments/upc/verify");
+  await db.paymentAttempt.updateMany({ where: { bankVerifiedAt: null }, data: { bankVerifiedAt: new Date() } });
+  const r = await reversedAttempt();
+  statusAnswer = "TranCode=408\n";
+  await quiet(() => verifyUpcDecisions({ limit: 50, now: new Date(Date.now() + 3 * 60_000) }));
+  assert.deepEqual(JSON.parse((await latestAttempt(r.orderNumber)).bankCheckResult!), {
+    source: "verify",
+    check: 1,
+    bankCode: "291",
+    notFound: true,
+    error: null,
+  });
+});
+
+test("reverse confirmed only by the documented final results 503 / 504", async () => {
+  const { verifyUpcDecisions } = await import("@/lib/payments/upc/verify");
+  for (const code of ["503", "504"]) {
+    await db.paymentAttempt.updateMany({ where: { bankVerifiedAt: null }, data: { bankVerifiedAt: new Date() } });
+    const r = await reversedAttempt();
+    statusAnswer = `TranCode=${code}\n`;
+    await quiet(() => verifyUpcDecisions({ limit: 50, now: new Date(Date.now() + 3 * 60_000) }));
+    assert.ok((await latestAttempt(r.orderNumber)).bankVerifiedAt, `${code} confirms the cancellation`);
+    assert.equal((await orderRow(r.orderNumber)).paymentAlert, null);
+  }
+  // Other final codes (a decline) are not a cancellation of OUR transaction either.
+  await db.paymentAttempt.updateMany({ where: { bankVerifiedAt: null }, data: { bankVerifiedAt: new Date() } });
+  const r = await reversedAttempt();
+  statusAnswer = "TranCode=105\n";
+  await quiet(() => verifyUpcDecisions({ limit: 50, now: new Date(Date.now() + 3 * 60_000) }));
+  assert.equal((await latestAttempt(r.orderNumber)).bankVerifiedAt, null, "105 does not confirm a reverse");
+});
+
+test("unconfirmed reverse: bounded re-checks, then an admin alert — never a silent 'confirmed'", async () => {
+  const { verifyUpcDecisions, MAX_BANK_CHECKS, BANK_CHECK_SCHEDULE_MS } = await import("@/lib/payments/upc/verify");
+  await db.paymentAttempt.updateMany({ where: { bankVerifiedAt: null }, data: { bankVerifiedAt: new Date() } });
+  const r = await reversedAttempt();
+  statusAnswer = "TranCode=408\n"; // "not found" for ever
+  const t0 = Date.now();
+  const last = BANK_CHECK_SCHEDULE_MS[BANK_CHECK_SCHEDULE_MS.length - 1];
+  for (const gap of [...BANK_CHECK_SCHEDULE_MS, last + 60_000, last + 120_000]) {
+    await quiet(() => verifyUpcDecisions({ limit: 50, now: new Date(t0 + gap + 1000) }));
+  }
+  const a = await latestAttempt(r.orderNumber);
+  assert.equal(a.bankCheckCount, MAX_BANK_CHECKS);
+  assert.equal(a.bankVerifiedAt, null);
+  assert.equal((await orderRow(r.orderNumber)).paymentAlert, "BANK_STATUS_UNVERIFIED");
+});
+
+test("approve + technical / not-found answers: retried, not alarmed as 'not confirmed'; a final decline is", async () => {
+  const { verifyUpcDecisions } = await import("@/lib/payments/upc/verify");
+  for (const answer of ["TranCode=291\n", "TranCode=408\n", "TranCode=902\n"]) {
+    await db.paymentAttempt.updateMany({ where: { bankVerifiedAt: null }, data: { bankVerifiedAt: new Date() } });
+    const r = await staffCardOrder();
+    const { sent } = await startAndSent(r.accessToken);
+    await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
+    statusAnswer = answer;
+    await quiet(() => verifyUpcDecisions({ limit: 50, now: new Date(Date.now() + 3 * 60_000) }));
+    assert.equal((await latestAttempt(r.orderNumber)).bankVerifiedAt, null, answer);
+    assert.equal((await orderRow(r.orderNumber)).paymentAlert, null, answer);
+  }
+});
+
+test("a technical code from the status query keeps the attempt open: no 'failed', no new payment (CHECKING)", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  statusAnswer = "TranCode=291\n";
+  const again = await quiet(() => startCardPayment({ accessToken: r.accessToken, locale: "bg" }));
+  assert.deepEqual(again, { ok: false, code: "CHECKING" });
+  const a = await latestAttempt(r.orderNumber);
+  assert.equal(a.status, "PENDING");
+  assert.equal(a.providerStatus, "291", "the bank's code is kept");
+  assert.equal(await db.paymentAttempt.count({ where: { order: { orderNumber: r.orderNumber } } }), 1);
+  assert.equal((await orderRow(r.orderNumber)).paymentStatus, "AWAITING_PAYMENT");
+  void sent;
 });

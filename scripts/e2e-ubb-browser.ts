@@ -122,15 +122,34 @@ async function main() {
       await ctx.close();
     }
 
-    // Merchant identity where the bank looks for it.
+    // Merchant identity where the bank looks for it. Since 91516bf
+    // (13.10.2026, owner) the contacts page has no "Търговец" card: the
+    // company data is in the site footer (on every page, /contacts included)
+    // and in the merchant block of the terms — the checks follow the page,
+    // they are not dropped.
     {
       const ctx = await browser.newContext({ viewport: VIEWPORTS.desktop });
       const page = await ctx.newPage();
       await page.goto(`${BASE}/contacts`);
       const main = await page.locator("main").innerText();
-      check(main.includes("203300275") && main.includes("BG203300275"), "contacts: ЕИК and ДДС № shown");
-      check(main.includes("152700478") && main.includes("101-7892/16.04.2015"), "contacts: BFSA registration shown");
-      check(main.includes("Димитър Константинов") && main.includes("Георги Кочев"), "contacts: seat and restaurant addresses kept apart");
+      const contactsFooter = await page.locator("footer").innerText();
+      check(
+        contactsFooter.includes("ЕИК 203300275") && contactsFooter.includes("ДДС № BG203300275"),
+        "contacts: ЕИК and ДДС № shown"
+      );
+      // Seat (Търговски регистър) in the footer, the restaurant in the page —
+      // and never mixed up: the seat is not offered as the restaurant address.
+      check(
+        contactsFooter.includes("Димитър Константинов") &&
+          main.includes("Георги Кочев") &&
+          !main.includes("Димитър Константинов"),
+        "contacts: seat and restaurant addresses kept apart"
+      );
+      await page.goto(`${BASE}/terms`);
+      const terms = await page.locator("main").innerText();
+      check(terms.includes("152700478") && terms.includes("101-7892/16.04.2015"), "terms: BFSA registration shown (merchant block)");
+      check(terms.includes("203300275") && terms.includes("BG203300275"), "terms: ЕИК and ДДС № in the merchant block");
+      await page.goto(`${BASE}/contacts`);
       const tel = await page.locator('a[href^="tel:"]').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
       const mail = await page.locator('a[href^="mailto:"]').count();
       // One public phone since 2026-10-12 (owner): 064 801 999.

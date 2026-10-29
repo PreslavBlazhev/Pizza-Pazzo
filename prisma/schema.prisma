@@ -388,6 +388,8 @@ model PaymentAttempt {
   /// Status queries made to verify it — bounded (lib/payments/upc/verify.ts).
   bankCheckCount  Int       @default(0)
   bankCheckedAt   DateTime?
+  /// The bank's last answer to that check: code, "not found", error (no card data).
+  bankCheckResult String?
 
   @@index([orderId])
   @@index([providerPaymentId])

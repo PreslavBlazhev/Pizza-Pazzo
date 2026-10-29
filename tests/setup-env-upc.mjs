@@ -27,7 +27,6 @@ process.env.UPC_PRIVATE_KEY = Buffer.from(
   merchant.privateKey.export({ type: "pkcs8", format: "pem" }).toString()
 ).toString("base64");
 process.env.UPC_GATEWAY_CERT = gateway.publicKey.export({ type: "spki", format: "pem" }).toString();
-process.env.UPC_SESSION_TTL_MINUTES = "20";
 
 // Test-only handles for the suites (never read by the application).
 process.env.TEST_UPC_MERCHANT_PUBLIC_KEY = merchant.publicKey.export({ type: "spki", format: "pem" }).toString();
