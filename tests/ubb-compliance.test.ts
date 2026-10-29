@@ -23,6 +23,7 @@ import {
   CONSENT_FIELDS,
 } from "@/lib/validators/checkout";
 import { LEGAL_VERSIONS } from "@/content/legal/versions";
+import { retentionNow } from "@/lib/order-retention";
 import { resolveDeliveryTown } from "@/lib/delivery-area";
 import { effectiveCardDemoMode, simulatorPageAllowed } from "@/lib/payments/demo";
 import { COMPANY, companyFor } from "@/content/legal/company";
@@ -80,7 +81,9 @@ test("UBB-16: only a real tick counts — 'off', '', 'false', 0 and 'yes' are re
 });
 
 test("UBB-16: a valid order records the accepted versions and the server time — nothing else", async () => {
-  const t0 = Date.now();
+  // The server stamps orders with the order clock (retentionNow), which the
+  // test setup moves 2 h back after 22:25 Sofia — compare on that clock.
+  const t0 = retentionNow().getTime();
   const r = await placeOrder(input(), deps);
   assert.ok(r.ok);
   const row = await db.order.findUniqueOrThrow({ where: { orderNumber: r.orderNumber } });
@@ -89,7 +92,7 @@ test("UBB-16: a valid order records the accepted versions and the server time �
   assert.equal(row.consentPrivacyVersion, LEGAL_VERSIONS.privacy);
   assert.ok(row.consentRecordedAt, "server time recorded");
   const at = row.consentRecordedAt!.getTime();
-  assert.ok(at >= t0 - 1000 && at <= Date.now() + 1000, "recorded now, by the server");
+  assert.ok(at >= t0 - 1000 && at <= retentionNow().getTime() + 1000, "recorded now, by the server");
 });
 
 test("UBB-16: a duplicate submission returns the first order, which carries the proof", async () => {
