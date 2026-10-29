@@ -1,5 +1,5 @@
 /**
- * Card-acceptance marks (Visa, Mastercard, Borica…) — SERVER ONLY.
+ * Card-acceptance marks (Visa, Mastercard…) — SERVER ONLY.
  *
  * UBB-14: the accepted card brands must be shown visibly, drawn from the
  * official artwork only. Two places, two rules:
@@ -65,13 +65,12 @@ function publishedMarkFiles(): ReadonlySet<string> {
  */
 export const FOOTER_SCHEME_IDS = ["visa", "mastercard"] as const satisfies readonly CardBrandId[];
 
-/**
- * BORICA's COMPANY logo ("БОРИКА Банкови услуги"), supplied by the owner for
- * the footer. It is not a card brand, so it lives under its own file name
- * (never picked up as the "borica" card mark in checkout) and is shown apart
- * from the card brands, without any acceptance claim.
+/*
+ * No BORICA logo (removed 29.10.2026): ОББ's virtual POS for this merchant is
+ * UPC e-Commerce Connect, not BORICA — a BORICA mark would name the wrong
+ * payment platform. Card scheme marks only (UPC "Requirements for the
+ * website": payment system logos).
  */
-const BORICA_COMPANY_FILE = "borica-company.png";
 
 function markFor(id: CardBrandId, files: ReadonlySet<string>): CardBrandMark | null {
   const file = ["svg", "png"].find((ext) => files.has(`${id}.${ext}`));
@@ -109,7 +108,3 @@ export function getFooterSchemeMarks(files: ReadonlySet<string> = publishedMarkF
   return FOOTER_SCHEME_IDS.map((id) => markFor(id, files)).filter((m): m is CardBrandMark => m !== null);
 }
 
-/** Public URL of BORICA's company logo, or null without the file. */
-export function getBoricaCompanyLogo(files: ReadonlySet<string> = publishedMarkFiles()): string | null {
-  return files.has(BORICA_COMPANY_FILE) ? `/payment-marks/${BORICA_COMPANY_FILE}` : null;
-}

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PaymentShell, PaymentHeading } from "@/components/payment/PaymentShell";
 import { PaymentStatusPoller } from "@/components/payment/PaymentStatusPoller";
-import { Link } from "@/i18n/navigation";
+import { PaymentTokenRecovery } from "@/components/payment/PaymentTokenRecovery";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -38,11 +38,9 @@ export default async function PaymentReturnPage({ params, searchParams }: PagePr
         {valid ? (
           <PaymentStatusPoller token={token} checkingLabel={t("pending.checking")} />
         ) : (
-          <p className="text-center">
-            <Link href="/" className="font-semibold text-brand underline">
-              {t("backToMenu")}
-            </Link>
-          </p>
+          // The bank's return could not be matched on the server: this tab
+          // knows which order it was paying.
+          <PaymentTokenRecovery backLabel={t("backToMenu")} />
         )}
       </div>
       {valid && (

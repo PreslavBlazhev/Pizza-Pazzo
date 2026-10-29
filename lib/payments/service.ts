@@ -282,7 +282,9 @@ export type StartPaymentResult =
         | "BUSY"
         | "PROVIDER_ERROR"
         /** A previous session's creation has an unknown outcome and is being checked. */
-        | "UNCONFIRMED";
+        | "UNCONFIRMED"
+        /** The previous payment is still in progress at the bank — wait for its outcome. */
+        | "CHECKING";
     };
 
 async function latestAttempt(orderId: string): Promise<AttemptRow | null> {
@@ -346,6 +348,11 @@ export async function startCardPayment(
   if (order.paymentMethod !== "CARD_ONLINE") return { ok: false, code: "NOT_CARD" };
   if (order.paymentStatus === "PAID") return { ok: false, code: "ALREADY_PAID" };
   if (order.status === "CANCELLED") return { ok: false, code: "ORDER_CANCELLED" };
+
+  // A gateway that refuses a re-posted OrderID (UPC): the open attempt is
+  // checked first, and re-opened only while the gateway never registered it.
+  const checked = await checkOpenAttemptBeforeReuse(order.id);
+  if (checked) return checked;
 
   const reuse = await reusableSession(order.id);
   if (reuse) return { ok: true, redirect: reuse, reused: true };
@@ -485,6 +492,30 @@ export async function startCardPayment(
   }
 }
 
+/**
+ * For providers with sessionReuse "unregistered-only" (UPC): before the
+ * customer is sent to the bank again, the open attempt is asked about.
+ *   paid            → ALREADY_PAID
+ *   still open, the gateway has never registered it (TranCode 408)
+ *                   → the same signed page again (same OrderID)
+ *   still open otherwise (in progress, or the check failed)
+ *                   → CHECKING: no second payment until the first is settled
+ *   final (declined, cancelled, expired) → null: a new attempt may start
+ */
+async function checkOpenAttemptBeforeReuse(orderId: string): Promise<StartPaymentResult | null> {
+  const latest = await latestAttempt(orderId);
+  if (!latest || !isOpenAttempt(latest.status) || !latest.redirectUrl) return null;
+  const owner = await getProviderForAttempt(latest.provider, process.env, latest.environment);
+  if (owner?.sessionReuse !== "unregistered-only") return null;
+
+  const after = await syncAttempt(latest.id, { minIntervalMs: 0 });
+  if (!after) return null;
+  if (after.status === "PAID") return { ok: false, code: "ALREADY_PAID" };
+  if (!isOpenAttempt(after.status)) return null;
+  const redirect = after.providerStatus === "408" ? redirectOf(after) : null;
+  return redirect ? { ok: true, redirect, reused: true } : { ok: false, code: "CHECKING" };
+}
+
 /** The hosted page of the latest attempt if it can still be paid, else null. */
 async function reusableSession(orderId: string): Promise<HostedRedirect | null> {
   const latest = await latestAttempt(orderId);
@@ -553,7 +584,7 @@ export async function syncAttempt(
     return attempt;
   }
 
-  const provider = await getProviderForAttempt(attempt.provider);
+  const provider = await getProviderForAttempt(attempt.provider, process.env, attempt.environment);
   if (!provider) {
     console.warn(`[payments] no provider available to verify ${attempt.reference} (${attempt.provider})`);
     return attempt;
@@ -566,6 +597,10 @@ export async function syncAttempt(
     result = await provider.getStatus({
       reference: attempt.reference,
       providerPaymentId: attempt.providerPaymentId,
+      amountMinor: attempt.amountMinor,
+      currency: attempt.currency,
+      requestFields: redirectOf(attempt)?.postFields ?? null,
+      createdAt: attempt.createdAt,
     });
   } catch (err) {
     // A timeout or an outage says nothing about the money. The attempt keeps
@@ -691,6 +726,13 @@ export async function applyProviderStatus(attempt: AttemptRow, result: StatusRes
       return;
     }
 
+    if (attempt.environment === "sandbox") {
+      // A bank TEST transaction (test cards, no money): the order is marked
+      // paid for the test record and goes nowhere — no kitchen, no alarm,
+      // no ticket, no e-mail. Only the simulator demo is shown on the board.
+      console.log(`[payments] ${attempt.reference} PAID (${attempt.environment}) → test order #${order.orderNumber} kept off the kitchen`);
+      return;
+    }
     console.log(`[payments] ${attempt.reference} PAID → order #${order.orderNumber} released to the kitchen`);
     await releaseToKitchenAndNotify(order.id);
     return;
@@ -763,6 +805,7 @@ export async function handleProviderCallback(
 ): Promise<CallbackOutcome> {
   const providerId = providerIdFromSlug(slug);
   const provider = providerId ? await getProviderForAttempt(providerId) : null;
+  // (The provider re-checks each attempt against its own environment in syncAttempt.)
   if (!providerId || !provider) return { status: 404, body: "unknown provider" };
 
   const ident = await provider.identifyCallback(request);

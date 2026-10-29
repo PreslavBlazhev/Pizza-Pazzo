@@ -78,6 +78,27 @@ services:
         sync: false
       - key: PAYMENT_CURRENCY
         sync: false
+      # ОББ's TEST terminal on the live site, staff only (docs/UBB-UPC-INTEGRATION.md §5):
+      # PAYMENT_PROVIDER=upc, PAYMENT_ENV=sandbox, PAYMENT_SANDBOX_AUDIENCE=staff.
+      - key: PAYMENT_SANDBOX_AUDIENCE
+        sync: false
+      - key: UPC_MERCHANT_ID
+        sync: false
+      - key: UPC_TERMINAL_ID
+        sync: false
+      # SECRET: our RSA private key (base64 of the PEM). Never in the repository.
+      - key: UPC_PRIVATE_KEY
+        sync: false
+      - key: UPC_MERCHANT_CERT
+        sync: false
+      - key: UPC_GATEWAY_CERT
+        sync: false
+      - key: UPC_GATEWAY_URL
+        sync: false
+      - key: UPC_STATUS_URL
+        sync: false
+      - key: UPC_GATEWAY_SIGNATURE_ALGS
+        sync: false
       # The scheduler's key for POST /api/maintenance/run (the 22:30 purge,
       # the customer e-mail outbox and retries). ≥ 32 random characters.
       - key: MAINTENANCE_SECRET

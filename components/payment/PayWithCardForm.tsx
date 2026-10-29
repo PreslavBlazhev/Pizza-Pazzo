@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { rememberPaymentToken } from "./PaymentTokenRecovery";
 
 /**
  * The form behind "Плати с карта". A plain POST to /api/payments/start, so it
@@ -38,6 +39,7 @@ export function PayWithCardForm({
           return;
         }
         setSubmitting(true);
+        rememberPaymentToken(token);
       }}
     >
       <input type="hidden" name="token" value={token} />

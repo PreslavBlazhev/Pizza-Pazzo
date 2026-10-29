@@ -13,9 +13,14 @@
  *
  *   simulator           only when APP_ENV is development or staging, plus
  *                       PAYMENT_SIMULATOR_SECRET — never in production
- *   PAYMENT_ENV=sandbox only when APP_ENV is development or staging — a bank
- *                       sandbox "pays" with test cards, and production must
- *                       never cook food for money that does not exist
+ *   PAYMENT_ENV=sandbox on development/staging — or on the LIVE site only
+ *                       with PAYMENT_SANDBOX_AUDIENCE=staff: ОББ's test
+ *                       terminal answers on pizzapazzo.bg's own response URLs,
+ *                       so the bank tests run there, but only signed-in staff
+ *                       see the card option, every such order is a TEST order
+ *                       and none of them is ever released to the kitchen
+ *                       (a sandbox "pays" with test cards — production must
+ *                       never cook food for money that does not exist)
  *   PAYMENT_ENV=production  only when APP_ENV=production, over HTTPS, with an
  *                       explicitly configured currency
  *
@@ -26,8 +31,8 @@ import { getAppBaseUrl, getAppEnv, type AppEnv } from "@/lib/app-env";
 
 export type PaymentEnvironment = "simulator" | "sandbox" | "production";
 
-/** Provider ids the registry knows. "bank" is the place for the real adapter. */
-export const PAYMENT_PROVIDER_IDS = ["simulator", "bank"] as const;
+/** Provider ids the registry knows. "upc" is ОББ's virtual POS (UPC e-Commerce Connect). */
+export const PAYMENT_PROVIDER_IDS = ["simulator", "upc"] as const;
 export type PaymentProviderId = (typeof PAYMENT_PROVIDER_IDS)[number];
 
 export interface PaymentConfig {
@@ -43,6 +48,11 @@ export interface PaymentConfig {
   baseUrl: string;
   /** Orders paid under this config are test orders (simulator / sandbox). */
   isTest: boolean;
+  /**
+   * Who may be offered card payment: everyone, or only signed-in staff (a
+   * bank sandbox on the live site — PAYMENT_SANDBOX_AUDIENCE=staff).
+   */
+  audience: "everyone" | "staff";
   simulatorSecret: string;
 }
 
@@ -75,13 +85,20 @@ export function getPaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentC
 
   // ── The environment rules. These are the reason a demo can never take a
   //    real order, and a real deployment can never take a fake payment.
-  if (environment === "simulator" || environment === "sandbox") {
-    if (appEnv === "production") {
+  const sandboxAudience = (env.PAYMENT_SANDBOX_AUDIENCE ?? "").trim().toLowerCase();
+  let audience: PaymentConfig["audience"] = "everyone";
+  if (environment === "simulator" && appEnv === "production") {
+    problems.push("Симулаторът е забранен при APP_ENV=production.");
+  }
+  if (environment === "sandbox" && appEnv === "production") {
+    if (sandboxAudience === "staff") audience = "staff";
+    else {
       problems.push(
-        `${environment === "simulator" ? "Симулаторът" : "Банков sandbox"} е забранен при APP_ENV=production.`
+        "Банков sandbox е забранен при APP_ENV=production, освен с PAYMENT_SANDBOX_AUDIENCE=staff (само за персонала, тестови поръчки)."
       );
     }
   }
+  if (environment === "sandbox" && sandboxAudience === "staff") audience = "staff";
   if (environment === "production" && appEnv !== "production") {
     problems.push("PAYMENT_ENV=production е позволен само при APP_ENV=production.");
   }
@@ -120,6 +137,7 @@ export function getPaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentC
     currency: currency || "EUR",
     baseUrl,
     isTest: environment !== "production",
+    audience,
     simulatorSecret,
   };
 }

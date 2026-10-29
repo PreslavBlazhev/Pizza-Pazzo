@@ -83,7 +83,7 @@ test("config: the simulator refuses to run without its signing secret", () => {
 test("config: a bank sandbox cannot run in production, bank production only in production", () => {
   const bank = {
     CARD_PAYMENTS_ENABLED: "true",
-    PAYMENT_PROVIDER: "bank",
+    PAYMENT_PROVIDER: "upc",
     PAYMENT_CURRENCY: "EUR",
     APP_BASE_URL: "https://pizza.example.test",
   } as unknown as NodeJS.ProcessEnv;
@@ -102,7 +102,7 @@ test("config: a bank sandbox cannot run in production, bank production only in p
 test("config: a real provider's currency is never assumed, and must be EUR", () => {
   const bank = {
     CARD_PAYMENTS_ENABLED: "true",
-    PAYMENT_PROVIDER: "bank",
+    PAYMENT_PROVIDER: "upc",
     PAYMENT_ENV: "production",
     APP_ENV: "production",
     APP_BASE_URL: "https://pizza.example.test",
@@ -118,17 +118,19 @@ test("config: HTTPS is required outside development", () => {
   assert.equal(c.enabled, false);
 });
 
-test("config: the bank adapter stays off until it is really implemented", () => {
+test("config: the UPC adapter stays off until its terminal and keys are configured", () => {
   const c = getEffectivePaymentConfig({
     CARD_PAYMENTS_ENABLED: "true",
-    PAYMENT_PROVIDER: "bank",
+    PAYMENT_PROVIDER: "upc",
     PAYMENT_ENV: "sandbox",
     PAYMENT_CURRENCY: "EUR",
     APP_ENV: "staging",
     APP_BASE_URL: "https://staging.example.test",
   } as unknown as NodeJS.ProcessEnv);
   assert.equal(c.enabled, false);
-  assert.ok(c.problems.some((p) => p.includes("не е реализиран")));
+  for (const name of ["UPC_MERCHANT_ID", "UPC_TERMINAL_ID", "UPC_PRIVATE_KEY"]) {
+    assert.ok(c.problems.some((p) => p.includes(name)), name);
+  }
 });
 
 test("base URL: one variable, normalised, NEXT_PUBLIC_SITE_URL as fallback", () => {

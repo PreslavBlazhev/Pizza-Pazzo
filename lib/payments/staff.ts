@@ -54,6 +54,9 @@ export async function releaseHeldPaidOrder(orderId: string, actor: StaffActor): 
       paymentStatus: "PAID",
       releasedToKitchenAt: null,
       status: { not: "CANCELLED" },
+      // Paid with test cards in the bank's sandbox: there is no money, so
+      // there is nothing to cook.
+      paymentAttempts: { none: { environment: "sandbox" } },
     },
     data: { releasedToKitchenAt: now, paymentAlertAckAt: now, paymentAlertAckBy: actor.email },
   });
@@ -62,6 +65,7 @@ export async function releaseHeldPaidOrder(orderId: string, actor: StaffActor): 
     if (!o) return { ok: false, error: "Поръчката не е намерена." };
     if (o.releasedToKitchenAt) return { ok: false, error: "Поръчката вече е в кухнята." };
     if (o.status === "CANCELLED") return { ok: false, error: "Поръчката е отказана — не се пуска към кухнята." };
+    if (o.isTest) return { ok: false, error: "Тестова поръчка от банковата тестова среда — не се приготвя." };
     return { ok: false, error: "Плащането не е потвърдено от банката — поръчката не може да се пусне." };
   }
   await audit(orderId, "RELEASE_HELD_PAID_ORDER", actor, {});

@@ -8,7 +8,7 @@
 import { db } from "@/lib/db";
 import { getOrderByAccessToken } from "@/lib/orders";
 import type { Order } from "@/types/order";
-import { getProviderForAttempt } from "./providers";
+import { getProviderForAttempt, getProviderForNewPayment } from "./providers";
 import { customerPaymentState, refreshOrderPayment, type CustomerPaymentState } from "./service";
 import { isOpenAttempt } from "./status";
 
@@ -23,6 +23,8 @@ export interface CustomerPaymentView {
   providerName: { bg: string; en: string };
   /** Simulator / sandbox — the page says so in capitals. */
   isTest: boolean;
+  /** Which test notice the pages show (payment.testMode…), or null for a real order. */
+  testNoticeKey: "testMode" | "testModeSandbox" | null;
 }
 
 /**
@@ -48,10 +50,16 @@ export async function getCustomerPaymentView(
   const latest = await db.paymentAttempt.findFirst({
     where: { orderId: order.id },
     orderBy: { createdAt: "desc" },
-    select: { status: true, provider: true, redirectUrl: true },
+    select: { status: true, provider: true, redirectUrl: true, environment: true },
   });
 
-  const provider = latest ? await getProviderForAttempt(latest.provider) : null;
+  // Before the first "Pay" there is no attempt yet: name the provider this
+  // order WOULD be paid with, so the page never says "simulator" for a bank.
+  const upcoming = latest || order.paymentMethod !== "CARD_ONLINE" ? null : await getProviderForNewPayment(order);
+  const provider = latest
+    ? await getProviderForAttempt(latest.provider, process.env, latest.environment)
+    : (upcoming?.provider ?? null);
+  const environment = latest?.environment ?? upcoming?.provider.environment ?? null;
 
   return {
     order,
@@ -69,5 +77,6 @@ export async function getCustomerPaymentView(
         ? { bg: "тестов симулатор (без реални пари)", en: "test simulator (no real money)" }
         : { bg: "банката", en: "the bank" }),
     isTest: order.isTest,
+    testNoticeKey: !order.isTest ? null : environment === "sandbox" ? "testModeSandbox" : "testMode",
   };
 }

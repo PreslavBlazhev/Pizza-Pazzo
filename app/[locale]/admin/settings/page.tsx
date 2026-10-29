@@ -79,10 +79,24 @@ export default async function AdminSettingsPage() {
           <dd className="font-mono">{payments.currency}</dd>
           <dt className="text-pizza-muted">Публичен адрес</dt>
           <dd className="break-all font-mono">{payments.baseUrl || "—"}</dd>
-          <dt className="text-pizza-muted">Return URL за банката</dt>
-          <dd className="break-all font-mono">{payments.returnUrl ?? "—"}</dd>
-          <dt className="text-pizza-muted">Callback URL за банката</dt>
-          <dd className="break-all font-mono">{payments.callbackUrl ?? "—"}</dd>
+          {payments.upcPortalUrls ? (
+            <>
+              {/* Exactly what goes into ОББ's portal: Terminals → MerchantID → TerminalID. */}
+              <dt className="text-pizza-muted">SUCCESS_URL (портал на ОББ)</dt>
+              <dd className="break-all font-mono">{payments.upcPortalUrls.success}</dd>
+              <dt className="text-pizza-muted">FAILURE_URL (портал на ОББ)</dt>
+              <dd className="break-all font-mono">{payments.upcPortalUrls.failure}</dd>
+              <dt className="text-pizza-muted">NOTIFY_URL (портал на ОББ)</dt>
+              <dd className="break-all font-mono">{payments.upcPortalUrls.notify}</dd>
+            </>
+          ) : (
+            <>
+              <dt className="text-pizza-muted">Return URL за банката</dt>
+              <dd className="break-all font-mono">{payments.returnUrl ?? "—"}</dd>
+              <dt className="text-pizza-muted">Callback URL за банката</dt>
+              <dd className="break-all font-mono">{payments.callbackUrl ?? "—"}</dd>
+            </>
+          )}
         </dl>
         {payments.problems.length > 0 && (
           <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-red-700">

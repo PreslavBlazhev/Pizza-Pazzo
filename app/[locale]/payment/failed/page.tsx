@@ -52,7 +52,7 @@ export default async function PaymentFailedPage({ params, searchParams }: PagePr
     : "FAILED";
 
   return (
-    <PaymentShell testNotice={view!.isTest ? t("testMode") : null}>
+    <PaymentShell testNotice={view!.testNoticeKey ? t(view!.testNoticeKey) : null}>
       <PaymentHeading
         icon="!"
         tone="error"

@@ -8,7 +8,7 @@
  * footer must say so, and nothing may claim cards are accepted.
  *
  *   E2E_BASE_URL=https://pizzapazzo.bg npm run e2e:footer-marks
- *   E2E_EXPECT_MARKS=visa,mastercard,borica-company   (default)
+ *   E2E_EXPECT_MARKS=visa,mastercard   (default; BORICA was removed 29.10.2026 — the POS is UPC)
  *   E2E_SHOTS=<folder for screenshots>
  *
  * Read-only: opens public pages, creates nothing.
@@ -19,8 +19,8 @@ import path from "node:path";
 
 const BASE = (process.env.E2E_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const SHOTS = process.env.E2E_SHOTS ?? path.join(process.env.TEMP ?? ".", "pp-footer-shots");
-const LABELS: Record<string, string> = { visa: "Visa", mastercard: "Mastercard", "borica-company": "BORICA company logo" };
-const EXPECT = (process.env.E2E_EXPECT_MARKS ?? "visa,mastercard,borica-company")
+const LABELS: Record<string, string> = { visa: "Visa", mastercard: "Mastercard" };
+const EXPECT = (process.env.E2E_EXPECT_MARKS ?? "visa,mastercard")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
@@ -81,12 +81,11 @@ async function main() {
               check(m.h >= 20 && m.w >= 20, `${LABELS[id]} visibly sized`, `${m.w.toFixed(0)}×${m.h.toFixed(0)}`);
               check(await page.locator(`footer img[data-mark="${id}"]`).isVisible(), `${LABELS[id]} visible`);
               check(m.alt.length > 2, `${LABELS[id]} has alt text`, m.alt);
-              check(
-                id === "borica-company" ? !m.inBrandList : m.inBrandList,
-                id === "borica-company" ? "BORICA logo is NOT listed as a card brand" : `${LABELS[id]} is in the card-brand list`
-              );
+              check(m.inBrandList, `${LABELS[id]} is in the card-brand list`);
             }
           }
+          // The POS is UPC e-Commerce Connect: no BORICA mark (removed 29.10.2026).
+          check(!marks.some((x) => /borica/i.test(`${x.mark} ${x.src}`)), "no BORICA logo in the footer");
           const text = await footer.innerText();
           check(
             locale === "bg" ? text.includes("все още не е активно") : text.includes("not active yet"),

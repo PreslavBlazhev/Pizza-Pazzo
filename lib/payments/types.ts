@@ -10,7 +10,10 @@
  * The contract every adapter must honour:
  *   - Card data never passes through here. The customer types the card only
  *     on the provider's hosted page.
- *   - `getStatus` is a server-to-server call and is the ONLY source of truth
+ *   - (UPC exception: its NOTIFY is signed by the gateway and binding — we
+ *     answer approve/reverse — so it is verified and decided in
+ *     lib/payments/upc/notify.ts and applied through applyProviderStatus.)
+ *   - `getStatus` is a server-to-server call and is the source of truth
  *     for "paid". Callbacks and return URLs merely tell us to ask.
  *   - `getStatus` reports the amount and currency the provider actually
  *     confirmed, so the service can compare them with what was charged.
@@ -51,6 +54,12 @@ export interface CreateSessionResult {
 export interface StatusQuery {
   reference: string;
   providerPaymentId: string | null;
+  /** What this attempt asked for — gateways like UPC look a payment up by it. */
+  amountMinor: number;
+  currency: string;
+  /** The exact signed fields that were posted to the hosted page, if any. */
+  requestFields: Record<string, string> | null;
+  createdAt: Date;
 }
 
 export interface StatusResult {
@@ -88,6 +97,15 @@ export interface PaymentProvider {
   /** Name customers see on the review screen, e.g. "тестов симулатор". */
   readonly displayName: { bg: string; en: string };
   readonly environment: PaymentEnvironment;
+  /**
+   * May an OPEN attempt's hosted page be opened again?
+   *   "always"            (default) the same session is simply re-opened;
+   *   "unregistered-only" only while the provider has not registered the
+   *                       order yet (UPC refuses a re-posted, registered
+   *                       OrderID with code 412). Otherwise the attempt is
+   *                       checked first and the customer waits for its outcome.
+   */
+  readonly sessionReuse?: "always" | "unregistered-only";
   createSession(input: CreateSessionInput): Promise<CreateSessionResult>;
   getStatus(query: StatusQuery): Promise<StatusResult>;
   identifyCallback(request: CallbackRequest): Promise<CallbackIdentification>;

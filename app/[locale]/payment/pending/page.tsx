@@ -45,7 +45,7 @@ export default async function PaymentPendingPage({ params, searchParams }: PageP
   const settings = await getRestaurantSettings();
 
   return (
-    <PaymentShell testNotice={view!.isTest ? t("testMode") : null}>
+    <PaymentShell testNotice={view!.testNoticeKey ? t(view!.testNoticeKey) : null}>
       <PaymentHeading icon="⏳" title={t("pending.title")} subtitle={t("pending.subtitle")} />
       <p className="mt-4 text-center text-sm font-semibold text-pizza-muted">
         {t("orderNumber", { number: view!.order.orderNumber })}

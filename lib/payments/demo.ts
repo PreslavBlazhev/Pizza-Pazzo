@@ -120,6 +120,8 @@ export function demoSimulatorConfig(env: NodeJS.ProcessEnv = process.env): Payme
     currency: "EUR",
     baseUrl,
     isTest: true,
+    // Who sees the demo is decided by the demo switch (demoAllowsViewer).
+    audience: "everyone",
     simulatorSecret,
   };
 }

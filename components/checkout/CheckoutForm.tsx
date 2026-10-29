@@ -56,6 +56,8 @@ interface Props {
   cardAvailable?: boolean;
   /** The card option is the live-site DEMO (simulator, no real money). */
   cardIsDemo?: boolean;
+  /** The card option is ОББ's TEST terminal (bank sandbox, staff only, no real money). */
+  cardIsSandbox?: boolean;
   /** Approved card marks — empty until real card payment is live. */
   cardMarks?: CardBrandMark[];
 }
@@ -155,6 +157,7 @@ export function CheckoutForm({
   defaults,
   cardAvailable = false,
   cardIsDemo = false,
+  cardIsSandbox = false,
   cardMarks = [],
 }: Props) {
   const t = useTranslations("checkout");
@@ -609,11 +612,15 @@ export function CheckoutForm({
                 checked={paymentMethod === "card_online"}
                 onSelect={setPaymentMethod}
                 icon="💳"
-                title={cardIsDemo ? t("paymentCardDemo") : t("paymentCard")}
+                title={
+                  cardIsDemo ? t("paymentCardDemo") : cardIsSandbox ? t("paymentCardSandbox") : t("paymentCard")
+                }
                 hint={
                   cardIsDemo
                     ? t("paymentCardDemoHint")
-                    : t("paymentCardHint", { amount: formatEurPrice(totals.total) })
+                    : cardIsSandbox
+                      ? t("paymentCardSandboxHint")
+                      : t("paymentCardHint", { amount: formatEurPrice(totals.total) })
                 }
               />
             ) : null}
@@ -744,7 +751,9 @@ export function CheckoutForm({
             : paymentMethod === "card_online"
               ? cardIsDemo
                 ? t("submitCardDemo")
-                : t("submitCard")
+                : cardIsSandbox
+                  ? t("submitCardSandbox")
+                  : t("submitCard")
               : t("submit")}
         </button>
         <p className="text-center text-xs text-pizza-muted">

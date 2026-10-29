@@ -67,6 +67,9 @@ export async function getPaymentAttention(): Promise<PaymentAttentionItem[]> {
           paymentStatus: "PAID",
           releasedToKitchenAt: null,
           status: { not: "CANCELLED" },
+          // A bank-sandbox test order is paid with test cards and is never
+          // meant for the kitchen — nothing for the shift to decide.
+          paymentAttempts: { none: { environment: "sandbox" } },
         },
       ],
     },
@@ -152,17 +155,31 @@ export interface PaymentStatusSummary {
   baseUrl: string;
   returnUrl: string | null;
   callbackUrl: string | null;
+  /**
+   * For ОББ's UPC terminal: the three addresses to enter in the bank's
+   * portal (Terminals → MerchantID → TerminalID). Null for other providers.
+   */
+  upcPortalUrls: { success: string; failure: string; notify: string } | null;
   /** The live-site card demo switch (Admin → Settings). */
   demoMode: CardDemoMode;
   /** Why the demo cannot run even when switched on (missing address/secret). */
   demoProblems: string[];
 }
 
+/** SUCCESS_URL / FAILURE_URL / NOTIFY_URL for ОББ's portal, from the public base URL. */
+export function upcPortalUrls(baseUrl: string): { success: string; failure: string; notify: string } {
+  return {
+    success: `${baseUrl}/api/payments/upc/success`,
+    failure: `${baseUrl}/api/payments/upc/failure`,
+    notify: `${baseUrl}/api/payments/upc/notify`,
+  };
+}
+
 export async function getPaymentStatusSummary(): Promise<PaymentStatusSummary> {
   const c = getEffectivePaymentConfig();
   const demoMode = await getCardDemoMode();
   const demo = demoSimulatorConfig();
-  const slug = c.providerId === "simulator" ? "simulator" : c.providerId ? "bank" : null;
+  const slug = c.providerId === "simulator" ? "simulator" : c.providerId ? "upc" : null;
   return {
     enabled: c.enabled,
     problems: c.problems,
@@ -172,7 +189,8 @@ export async function getPaymentStatusSummary(): Promise<PaymentStatusSummary> {
     currency: c.currency,
     baseUrl: c.baseUrl,
     returnUrl: c.baseUrl ? `${c.baseUrl}/api/payments/return` : null,
-    callbackUrl: c.baseUrl && slug ? `${c.baseUrl}/api/payments/callback/${slug}` : null,
+    callbackUrl: c.baseUrl && slug === "simulator" ? `${c.baseUrl}/api/payments/callback/${slug}` : null,
+    upcPortalUrls: c.baseUrl && c.providerId === "upc" ? upcPortalUrls(c.baseUrl) : null,
     demoMode,
     demoProblems: demo.problems,
   };

@@ -48,7 +48,7 @@ export default async function PaymentSuccessPage({ params, searchParams }: PageP
   const held = !order.releasedToKitchenAt;
 
   return (
-    <PaymentShell testNotice={view!.isTest ? t("testMode") : null}>
+    <PaymentShell testNotice={view!.testNoticeKey ? t(view!.testNoticeKey) : null}>
       <PaymentSettled token={token} />
       <PaymentHeading icon="✓" tone="success" title={t("success.title")} subtitle={t(held ? "success.subtitleHeld" : "success.subtitle")} />
 

@@ -33,6 +33,14 @@ export const RECONCILE_MIN_AGE_MS = 60_000;
 export const UNRESOLVED_AFTER_MS = 2 * 60 * 60 * 1000;
 /** Older than this, an attempt is left to staff and the bank panel. */
 export const RECONCILE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+/**
+ * An attempt WE declared expired (the gateway had not registered it within
+ * the session lifetime — UPC's SESSION_TIMEOUT) is still re-checked for this
+ * long: if the customer paid that very page anyway and the NOTIFY never got
+ * through, the money is found and handed to a person (LATE_CONFIRMATION).
+ */
+export const EXPIRED_RECHECK_MS = 24 * 60 * 60 * 1000;
+const SESSION_TIMEOUT = "SESSION_TIMEOUT";
 
 /** How long to wait between two checks of one attempt, by its age. */
 export function reconcileBackoffMs(ageMs: number): number {
@@ -58,11 +66,18 @@ export async function reconcileOpenPayments(
 
   const candidates = await db.paymentAttempt.findMany({
     where: {
-      status: { in: [...OPEN_ATTEMPT_STATUSES] },
-      createdAt: {
-        lt: new Date(now.getTime() - RECONCILE_MIN_AGE_MS),
-        gt: new Date(now.getTime() - RECONCILE_MAX_AGE_MS),
-      },
+      createdAt: { lt: new Date(now.getTime() - RECONCILE_MIN_AGE_MS) },
+      OR: [
+        {
+          status: { in: [...OPEN_ATTEMPT_STATUSES] },
+          createdAt: { gt: new Date(now.getTime() - RECONCILE_MAX_AGE_MS) },
+        },
+        {
+          status: "EXPIRED",
+          failureReason: SESSION_TIMEOUT,
+          createdAt: { gt: new Date(now.getTime() - EXPIRED_RECHECK_MS) },
+        },
+      ],
     },
     // Never-checked first, then the longest-unchecked.
     orderBy: [{ lastCheckedAt: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }],
@@ -83,6 +98,7 @@ export async function reconcileOpenPayments(
       console.warn(`[payments] reconcile ${a.reference} failed: ${(err as Error).message}`);
       continue;
     }
+    if (!isOpenAttempt(a.status)) continue; // an expired one re-checked: nothing more to do
     if (after && !isOpenAttempt(after.status)) {
       summary.settled++;
       continue;

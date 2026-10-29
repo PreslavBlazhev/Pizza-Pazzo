@@ -520,7 +520,10 @@
       "EXTRAS_OUTDATED": "Your basket has add-ons that are no longer offered (e.g. “Meat add-on”). Please choose the exact ingredients again."
     },
     "deliveryFreeMinimum": "Delivery is free; the minimum order is {amount}.",
-    "checkingPrevious": "Checking your previous order attempt…"
+    "checkingPrevious": "Checking your previous order attempt…",
+    "paymentCardSandbox": "Card payment — bank TEST environment (staff only)",
+    "paymentCardSandboxHint": "UBB's test terminal (UPC eCommerce Connect): official test cards only, no real money. The order is a test order and is NOT prepared, delivered or announced.",
+    "submitCardSandbox": "Send a test order and pay in the test environment"
   },
   "orderSuccess": {
     "metaTitle": "Order placed",
@@ -846,7 +849,8 @@
       "ALREADY_PAID": "This order has already been paid.",
       "ORDER_CANCELLED": "This order was cancelled.",
       "UNCONFIRMED": "The previous attempt to open the payment page got no clear answer from the bank. We are checking it before starting a new payment — please do not pay another way until the check is done. Try again in a minute.",
-      "RATE_LIMITED": "Too many attempts in a short time. Please wait a minute and try again."
+      "RATE_LIMITED": "Too many attempts in a short time. Please wait a minute and try again.",
+      "CHECKING": "We're checking your payment — the previous attempt has not finished at the bank yet. Please don't pay again; this page will show the result as soon as the bank answers."
     },
     "success": {
       "metaTitle": "Order paid",
@@ -892,8 +896,9 @@
     },
     "acceptedCards": "We accept card payments",
     "cardSchemes": "Card brands",
-    "boricaLogoAlt": "BORICA – Banking Services logo",
-    "cardNotActiveYet": "Online card payment is not active yet — orders are currently paid in cash on delivery."
+    "cardNotActiveYet": "Online card payment is not active yet — orders are currently paid in cash on delivery.",
+    "testModeSandbox": "TEST MODE — the payment goes through the bank's test environment (UPC/UBB), test cards only, no real money. This order will not be prepared.",
+    "merchantLine": "Merchant: {legalName}, UIC {uic}, {address}, Bulgaria"
   },
   "callNow": {
     "button": "Call now",

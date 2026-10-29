@@ -6,6 +6,7 @@ import { FormAlert } from "@/components/ui/FormAlert";
 import { PaymentShell, PaymentHeading } from "@/components/payment/PaymentShell";
 import { PaymentOrderSummary } from "@/components/payment/PaymentOrderSummary";
 import { PayWithCardForm } from "@/components/payment/PayWithCardForm";
+import { MerchantIdentity } from "@/components/payment/MerchantIdentity";
 import { getCustomerPaymentView } from "@/lib/payments/customer";
 import { formatEurPrice } from "@/lib/format-price";
 import type { Locale } from "@/i18n/routing";
@@ -41,6 +42,7 @@ const ERROR_CODES = [
   "ALREADY_PAID",
   "ORDER_CANCELLED",
   "UNCONFIRMED",
+  "CHECKING",
   "RATE_LIMITED",
 ] as const;
 type ErrorCode = (typeof ERROR_CODES)[number];
@@ -74,7 +76,7 @@ export default async function PayPage({ params, searchParams }: PageProps) {
   }
 
   return (
-    <PaymentShell testNotice={view.isTest ? t("testMode") : null}>
+    <PaymentShell testNotice={view.testNoticeKey ? t(view.testNoticeKey) : null}>
       <p className="text-sm font-semibold text-pizza-muted">
         {t("orderNumber", { number: order.orderNumber })}
       </p>
@@ -120,6 +122,7 @@ export default async function PayPage({ params, searchParams }: PageProps) {
           busyLabel={t("review.paying")}
         />
         <p className="text-center text-xs text-pizza-muted">🔒 {t("review.kitchenNotice")}</p>
+        <MerchantIdentity locale={locale} />
         <p className="text-center text-sm">
           <Link href="/checkout" className="text-pizza-muted underline hover:text-brand">
             {t("review.changeOrder")}

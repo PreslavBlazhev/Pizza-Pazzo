@@ -342,9 +342,11 @@ async function main() {
       check(offerName.test(await page.locator("aside").first().innerText()), "the offer is named in this language");
 
       await page.getByRole("button", { name: locale === "en" ? /^Increase the quantity/ : /^Увеличи количеството/ }).click();
-      await page.waitForFunction(() => !document.querySelector('[data-testid="cart-discount"]'));
-      check((await money("cart-total")) === "29.13", "3 pizzas: normal prices, 29.13 €");
-      check(await page.locator('[data-testid="pizza-math-hint"]').isVisible(), "the hint says when the offer applies");
+      // Final rule (owner, 17.10.2026): with 3 pizzas the best pair keeps
+      // its package price and the third pizza is at its regular price.
+      await page.waitForFunction(() => /26.58/.test(document.querySelector('[data-testid="cart-total"]')?.textContent ?? ""));
+      check((await money("cart-total")) === "26.58", "3 pizzas: one pair at 16.87 € + one at 9.71 € = 26.58 €");
+      check((await money("cart-discount")) === "2.55", "3 pizzas: the pair's saving stays");
 
       await page.getByRole("button", { name: locale === "en" ? /^Reduce the quantity/ : /^Намали количеството/ }).click();
       await page.locator('[data-testid="cart-discount"]').waitFor();
