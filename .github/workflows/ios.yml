@@ -1,0 +1,156 @@
+# Builds and tests the iOS app (ios-app/) on a GitHub-hosted Mac.
+#
+# No signing, no Apple account, no secrets: the device build is unsigned
+# (CODE_SIGNING_ALLOWED=NO); it proves the code compiles for a real iPhone
+# and is also published as an unsigned .ipa for Sideloadly; the tests run on an iPhone 11 Pro simulator against the live site,
+# read-only (no order, login or account is ever submitted).
+name: iOS app
+
+on:
+  push:
+    branches: [feat/ios-app]
+    paths: ["ios-app/**", ".github/workflows/ios.yml"]
+  pull_request:
+    paths: ["ios-app/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: ios-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes available
+
+      - name: Lint the plists
+        run: plutil -lint Config/Info.plist PizzaPazzo/PrivacyInfo.xcprivacy
+
+      - name: Build for a real iPhone (arm64, Release, unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project PizzaPazzo.xcodeproj -scheme PizzaPazzo \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/dd-device" \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/build-device.log" | grep -E "error:|warning:|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" "$RUNNER_TEMP/build-device.log"
+          APP="$RUNNER_TEMP/dd-device/Build/Products/Release-iphoneos/PizzaPazzo.app"
+          echo "--- built Info.plist (selected keys)"
+          plutil -p "$APP/Info.plist" | grep -E "CFBundleDisplayName|CFBundleIdentifier|CFBundleShortVersionString|CFBundleVersion|MinimumOSVersion|PPStartURL|PPSiteHosts|UILaunchScreen|UIUserInterfaceStyle" || true
+          lipo -info "$APP/PizzaPazzo"
+          ls "$APP" | grep -E "Assets.car|PrivacyInfo"
+
+      # The same unsigned build, zipped as an .ipa for installing from Windows
+      # with Sideloadly, which signs it with the user's own free Apple Account
+      # on their PC (ios-app/README.md, "Инсталиране от Windows"). Nothing is
+      # signed here and no Apple account is involved.
+      - name: Package an unsigned .ipa (for Sideloadly)
+        run: |
+          APP="$RUNNER_TEMP/dd-device/Build/Products/Release-iphoneos/PizzaPazzo.app"
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Info.plist")
+          BUILD=$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Info.plist")
+          STAGE="$RUNNER_TEMP/ipa-stage"
+          rm -rf "$STAGE" && mkdir -p "$STAGE/Payload" "$GITHUB_WORKSPACE/ipa"
+          cp -R "$APP" "$STAGE/Payload/"
+          test ! -e "$STAGE/Payload/PizzaPazzo.app/embedded.mobileprovision"
+          IPA="$GITHUB_WORKSPACE/ipa/PizzaPazzo-$VERSION-$BUILD-unsigned.ipa"
+          (cd "$STAGE" && zip -qry "$IPA" Payload)
+          unzip -l "$IPA" | grep -E "Payload/PizzaPazzo.app/(PizzaPazzo|Info.plist)$"
+          ls -lh "$IPA"
+          shasum -a 256 "$IPA" | tee "$IPA.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PizzaPazzo-ipa-unsigned
+          path: ipa/
+          retention-days: 30
+
+      - name: Create an iPhone 11 Pro simulator
+        id: sim
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes available -j | /usr/bin/python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x["platform"]=="iOS"]; print(r[-1]["identifier"])')
+          echo "runtime: $RUNTIME"
+          UDID=$(xcrun simctl create "PP iPhone 11 Pro" com.apple.CoreSimulator.SimDeviceType.iPhone-11-Pro "$RUNTIME")
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Unit tests + UI tests on the simulator
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project PizzaPazzo.xcodeproj -scheme PizzaPazzo \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/dd-sim" \
+            -resultBundlePath "$GITHUB_WORKSPACE/results/tests.xcresult" \
+            -skip-testing:PizzaPazzoUITests/PizzaPazzoUITests/test06ErrorScreenAndRetry \
+            2>&1 | tee "$RUNNER_TEMP/test.log" | grep -E "error:|Test Case|Executed|TEST (SUCCEEDED|FAILED)|skipped" || true
+          grep -q "TEST SUCCEEDED" "$RUNNER_TEMP/test.log"
+
+      - name: Error screen and retry (site made unreachable, then restored)
+        if: success() || failure()
+        run: |
+          set -o pipefail
+          SIG="$RUNNER_TEMP/pp-signal"; mkdir -p "$SIG"
+          flush() { sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder || true; }
+          sudo cp /etc/hosts /etc/hosts.pp-backup
+          printf '127.0.0.1 pizzapazzo.bg\n::1 pizzapazzo.bg\n' | sudo tee -a /etc/hosts
+          flush
+          (
+            for i in $(seq 1 600); do [ -f "$SIG/error-shown" ] && break; sleep 1; done
+            sudo cp /etc/hosts.pp-backup /etc/hosts; flush; sleep 5
+            touch "$SIG/network-restored"
+          ) &
+          TEST_RUNNER_PP_SIGNAL_DIR="$SIG" xcodebuild test \
+            -project PizzaPazzo.xcodeproj -scheme PizzaPazzo \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/dd-sim" \
+            -resultBundlePath "$GITHUB_WORKSPACE/results/offline.xcresult" \
+            -only-testing:PizzaPazzoUITests/PizzaPazzoUITests/test06ErrorScreenAndRetry \
+            2>&1 | tee "$RUNNER_TEMP/offline.log" | grep -E "error:|Test Case|Executed|TEST (SUCCEEDED|FAILED)" || true
+          sudo cp /etc/hosts.pp-backup /etc/hosts; flush
+          grep -q "TEST SUCCEEDED" "$RUNNER_TEMP/offline.log"
+
+      - name: Collect crash reports and the app's log
+        if: always()
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/results/diagnostics"
+          find ~/Library/Logs/DiagnosticReports -name '*PizzaPazzo*' -exec cp {} "$GITHUB_WORKSPACE/results/diagnostics/" \; 2>/dev/null || true
+          xcrun simctl spawn "${{ steps.sim.outputs.udid }}" log show --last 60m --style compact \
+            --predicate 'process == "PizzaPazzo" AND (subsystem == "bg.pizzapazzo.app" OR messageType == error OR messageType == fault OR eventMessage CONTAINS[c] "crash" OR eventMessage CONTAINS[c] "fatal")' \
+            > "$GITHUB_WORKSPACE/results/diagnostics/app-log.txt" 2>&1 || true
+          ls -la "$GITHUB_WORKSPACE/results/diagnostics"
+
+      - name: Export screenshots from the test results
+        if: always()
+        run: |
+          for r in "$GITHUB_WORKSPACE"/results/*.xcresult; do
+            [ -d "$r" ] || continue
+            out="$GITHUB_WORKSPACE/results/screenshots/$(basename "$r" .xcresult)"
+            mkdir -p "$out"
+            xcrun xcresulttool export attachments --path "$r" --output-path "$out" || true
+          done
+          cp "$RUNNER_TEMP"/*.log "$GITHUB_WORKSPACE/results/" 2>/dev/null || true
+          find "$GITHUB_WORKSPACE/results/screenshots" -type f | head -40
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-results
+          path: results/
+          retention-days: 14
