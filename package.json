@@ -57,7 +57,7 @@
     "autoprefixer": "10.4.20",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
-    "next": "16.4.0",
+    "next": "16.4.3",
     "next-intl": "4.14.9",
     "postcss": "8.5.30",
     "prisma": "^5.22.0",
@@ -72,7 +72,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "16.4.3",
     "playwright-core": "^1.63.0",
     "tsx": "^4.23.15"
   }
