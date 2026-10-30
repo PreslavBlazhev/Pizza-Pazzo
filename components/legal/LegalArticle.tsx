@@ -9,7 +9,7 @@ import {
 import { groupWorkingHours, telHref, workingHoursRowLabel } from "@/lib/working-hours";
 import { DELIVERY_AREA, deliveryTownsLabel } from "@/lib/delivery-area";
 import { formatEurPrice } from "@/lib/format-price";
-import { getEffectivePaymentConfig } from "@/lib/payments/providers";
+import { isCardPaymentLive } from "@/lib/payments/card-marks";
 import {
   pickL,
   type LegalBlock,
@@ -275,9 +275,10 @@ async function DynamicBlock({
     }
 
     case "paymentMethods": {
-      // The REAL provider only — the staff-only demo is not a payment method
-      // offered to customers and is never described as one.
-      const cardLive = getEffectivePaymentConfig().enabled && !getEffectivePaymentConfig().isTest;
+      // The REAL provider, offered to the public, only — the staff-only demo,
+      // sandbox and production pilot are not payment methods offered to
+      // customers and are never described as one.
+      const cardLive = isCardPaymentLive();
       return (
         <ul className={`${box} space-y-2`}>
           <li>

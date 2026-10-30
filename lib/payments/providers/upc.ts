@@ -308,6 +308,16 @@ async function getStatus(settings: UpcSettings, query: StatusQuery): Promise<Sta
     // Without the original PurchaseTime the gateway cannot find the order.
     throw new PaymentProviderError("UPC status query needs the original request fields");
   }
+  if (
+    (sent.MerchantID && sent.MerchantID !== settings.merchantId) ||
+    (sent.TerminalID && sent.TerminalID !== settings.terminalId)
+  ) {
+    // Started on another terminal (e.g. the test one before the switch to
+    // production): this terminal's key and gateway cannot answer for it.
+    throw new PaymentProviderError(
+      `UPC attempt belongs to terminal ${sent.MerchantID}/${sent.TerminalID}, not the configured one`
+    );
+  }
   const found =
     settings.statusProtocol === "json"
       ? await jsonStatus(settings, query, sent)

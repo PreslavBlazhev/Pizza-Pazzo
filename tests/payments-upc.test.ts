@@ -41,6 +41,14 @@ import {
 } from "@/lib/payments/upc/protocol";
 import { getPendingOrders } from "@/lib/orders";
 import { ALL_CONSENTS, CONTACT, STANDARD_ITEMS, STANDARD_TOTAL_MINOR, deps, key, quiet } from "./helpers";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { getPaymentConfig } from "@/lib/payments/config";
+import { isCardPaymentLive } from "@/lib/payments/card-marks";
+import { createUpcProvider } from "@/lib/payments/providers/upc";
+import { UPC_PRODUCTION_GATEWAY_CERT, UPC_PRODUCTION_GATEWAY_CERT_SHA256, UPC_TEST_GATEWAY_CERT } from "@/lib/payments/upc/certs";
 
 const GATEWAY_KEY = createPrivateKey(process.env.TEST_UPC_GATEWAY_PRIVATE_KEY!);
 const MERCHANT_PUBLIC = createPublicKey(process.env.TEST_UPC_MERCHANT_PUBLIC_KEY!);
@@ -943,4 +951,129 @@ test("a technical code from the status query keeps the attempt open: no 'failed'
   assert.equal(await db.paymentAttempt.count({ where: { order: { orderNumber: r.orderNumber } } }), 1);
   assert.equal((await orderRow(r.orderNumber)).paymentStatus, "AWAITING_PAYMENT");
   void sent;
+});
+
+// ── Production readiness (ОББ production terminal, 30.10.2026) ─────────────
+
+/** A throwaway RSA key + self-signed X.509 with CN=<cn>, like <MerchantID>.crt (test only). */
+function merchantKeyAndCert(cn: string): { key: string; cert: string } {
+  const dir = mkdtempSync(join(tmpdir(), "upc-cert-"));
+  try {
+    execFileSync("openssl", [
+      "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-sha512", "-days", "2",
+      "-subj", `/C=BG/O=TEST/CN=${cn}`,
+      "-keyout", join(dir, "k.pem"), "-out", join(dir, "c.crt"),
+    ], { stdio: "ignore" });
+    return { key: readFileSync(join(dir, "k.pem"), "utf8"), cert: readFileSync(join(dir, "c.crt"), "utf8") };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const PROD_MERCHANT = merchantKeyAndCert("7331057");
+
+/** The production settings as prepared for Render (docs/UBB-UPC-PRODUCTION.md), with a throwaway key. */
+function productionEnv(overrides: Record<string, string> = {}): NodeJS.ProcessEnv {
+  const env: Record<string, string | undefined> = {
+    ...process.env,
+    PAYMENT_ENV: "production",
+    PAYMENT_SANDBOX_AUDIENCE: "",
+    PAYMENT_PRODUCTION_AUDIENCE: "staff",
+    UPC_MERCHANT_ID: "7331057",
+    UPC_TERMINAL_ID: "E0901028",
+    UPC_PRIVATE_KEY: Buffer.from(PROD_MERCHANT.key).toString("base64"),
+    UPC_MERCHANT_CERT: PROD_MERCHANT.cert,
+    UPC_GATEWAY_URL: "https://secure.kbcbank.bg/kbc/pay",
+    UPC_STATUS_URL: "https://secure.kbcbank.bg/kbc/service/01",
+    UPC_GATEWAY_CERT: UPC_PRODUCTION_GATEWAY_CERT,
+    UPC_GATEWAY_SIGNATURE_ALGS: "sha512",
+    ...overrides,
+  };
+  return env as NodeJS.ProcessEnv;
+}
+
+test("production: the prepared Render settings are complete; the published UPC production certificate is pinned", () => {
+  const c = getEffectivePaymentConfig(productionEnv());
+  assert.deepEqual(c.problems, []);
+  assert.equal(c.enabled, true);
+  assert.equal(c.environment, "production");
+  assert.equal(c.isTest, false, "production orders are real");
+  const s = getUpcSettings("production", productionEnv());
+  assert.equal(s.settings!.gatewayCertSha256, UPC_PRODUCTION_GATEWAY_CERT_SHA256);
+  assert.equal(s.settings!.gatewayCertIsDefault, false, "production never defaults its certificate");
+});
+
+test("production: PAYMENT_SANDBOX_AUDIENCE never restricts it; its own PAYMENT_PRODUCTION_AUDIENCE is required", () => {
+  const leftover = getPaymentConfig(productionEnv({ PAYMENT_SANDBOX_AUDIENCE: "staff", PAYMENT_PRODUCTION_AUDIENCE: "" }));
+  assert.equal(leftover.enabled, false);
+  assert.ok(leftover.problems.some((p) => p.includes("PAYMENT_SANDBOX_AUDIENCE")));
+  assert.ok(leftover.problems.some((p) => p.includes("PAYMENT_PRODUCTION_AUDIENCE")));
+  const missing = getPaymentConfig(productionEnv({ PAYMENT_PRODUCTION_AUDIENCE: "" }));
+  assert.equal(missing.enabled, false, "no implicit public launch");
+  assert.equal(getPaymentConfig(productionEnv({ PAYMENT_PRODUCTION_AUDIENCE: "all" })).enabled, false);
+  assert.equal(getPaymentConfig(productionEnv()).audience, "staff");
+  assert.equal(getPaymentConfig(productionEnv({ PAYMENT_PRODUCTION_AUDIENCE: "everyone" })).audience, "everyone");
+});
+
+test("production staff pilot: only staff are offered the card; nothing public says cards are accepted", async () => {
+  const saved = { ...process.env };
+  try {
+    Object.assign(process.env, productionEnv());
+    assert.equal((await resolveCheckoutPayment(null)).available, false);
+    assert.equal((await resolveCheckoutPayment("CUSTOMER")).available, false);
+    const staff = await resolveCheckoutPayment("STAFF");
+    assert.equal(staff.available, true);
+    assert.equal(staff.sandbox, false, "real money, not a test");
+    const guest = await placeOrder(
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS },
+      deps
+    );
+    assert.deepEqual(guest, { ok: false, error: "CARD_UNAVAILABLE" });
+    assert.equal(isCardPaymentLive(), false, "footer marks / legal text stay 'not accepted' during the pilot");
+    assert.equal(isCardPaymentLive(productionEnv({ PAYMENT_PRODUCTION_AUDIENCE: "everyone" })), true);
+  } finally {
+    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
+    Object.assign(process.env, saved);
+  }
+});
+
+test("no mixing: test certificate in production, production certificate in the sandbox, test key for the production MID", () => {
+  const testCert = getUpcSettings("production", productionEnv({ UPC_GATEWAY_CERT: UPC_TEST_GATEWAY_CERT }));
+  assert.equal(testCert.settings, null);
+  assert.ok(testCert.problems.some((p) => p.includes("тестовият сертификат")));
+
+  const sandboxProd = getUpcSettings("sandbox", { ...process.env, UPC_GATEWAY_CERT: UPC_PRODUCTION_GATEWAY_CERT });
+  assert.equal(sandboxProd.settings, null);
+  assert.ok(sandboxProd.problems.some((p) => p.includes("продукционният сертификат")));
+
+  const testMerchant = merchantKeyAndCert("1731096");
+  const wrongKey = getUpcSettings(
+    "production",
+    productionEnv({ UPC_PRIVATE_KEY: testMerchant.key, UPC_MERCHANT_CERT: testMerchant.cert })
+  );
+  assert.ok(wrongKey.problems.some((p) => p.includes("1731096") && p.includes("7331057")), wrongKey.problems.join(" | "));
+
+  const noCert = getUpcSettings("production", productionEnv({ UPC_MERCHANT_CERT: "" }));
+  assert.ok(noCert.problems.some((p) => p.includes("UPC_MERCHANT_CERT е задължителен")));
+
+  const mixedHosts = getUpcSettings("production", productionEnv({ UPC_STATUS_URL: "https://secure.upc.ua/go/service/01" }));
+  assert.ok(mixedHosts.problems.some((p) => p.includes("различни сървъри")));
+});
+
+test("no mixing: an attempt started on the test terminal is never queried with the production terminal", async () => {
+  const env = productionEnv();
+  const provider = createUpcProvider(getEffectivePaymentConfig(env), env);
+  const before = statusCalls.length;
+  await assert.rejects(
+    provider.getStatus({
+      reference: "PP-OLD-SANDBOX",
+      providerPaymentId: null,
+      amountMinor: 100,
+      currency: "EUR",
+      requestFields: { MerchantID: "1731096", TerminalID: "E7059096", PurchaseTime: "261030120000", Currency: "978", TotalAmount: "100" },
+      createdAt: new Date(),
+    }),
+    /belongs to terminal 1731096\/E7059096/
+  );
+  assert.equal(statusCalls.length, before, "nothing was sent to any gateway");
 });

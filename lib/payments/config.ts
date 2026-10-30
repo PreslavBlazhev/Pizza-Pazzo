@@ -22,7 +22,16 @@
  *                       (a sandbox "pays" with test cards — production must
  *                       never cook food for money that does not exist)
  *   PAYMENT_ENV=production  only when APP_ENV=production, over HTTPS, with an
- *                       explicitly configured currency
+ *                       explicitly configured currency, and with an explicit
+ *                       PAYMENT_PRODUCTION_AUDIENCE:
+ *                         staff     — REAL payments, but only signed-in staff
+ *                                     see the card option (the controlled
+ *                                     first real payment); the public site
+ *                                     still says cards are not accepted
+ *                         everyone  — the public launch
+ *                       PAYMENT_SANDBOX_AUDIENCE never applies to production
+ *                       and must be removed when switching (a leftover
+ *                       sandbox setting means a half-switched environment)
  *
  * Turning card payments off again is `CARD_PAYMENTS_ENABLED=false` and a
  * restart; orders already paid stay paid and keep going through the kitchen.
@@ -50,7 +59,8 @@ export interface PaymentConfig {
   isTest: boolean;
   /**
    * Who may be offered card payment: everyone, or only signed-in staff (a
-   * bank sandbox on the live site — PAYMENT_SANDBOX_AUDIENCE=staff).
+   * bank sandbox on the live site — PAYMENT_SANDBOX_AUDIENCE=staff — or the
+   * staff-only production pilot — PAYMENT_PRODUCTION_AUDIENCE=staff).
    */
   audience: "everyone" | "staff";
   simulatorSecret: string;
@@ -101,6 +111,22 @@ export function getPaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentC
   if (environment === "sandbox" && sandboxAudience === "staff") audience = "staff";
   if (environment === "production" && appEnv !== "production") {
     problems.push("PAYMENT_ENV=production е позволен само при APP_ENV=production.");
+  }
+  if (environment === "production") {
+    // Its own switch: the sandbox's staff-only setting must never be what
+    // keeps real payments away from the public.
+    if (sandboxAudience) {
+      problems.push(
+        "PAYMENT_SANDBOX_AUDIENCE е от тестовата среда — при PAYMENT_ENV=production го премахнете и задайте PAYMENT_PRODUCTION_AUDIENCE."
+      );
+    }
+    const productionAudience = (env.PAYMENT_PRODUCTION_AUDIENCE ?? "").trim().toLowerCase();
+    if (productionAudience === "staff") audience = "staff";
+    else if (productionAudience !== "everyone") {
+      problems.push(
+        'PAYMENT_PRODUCTION_AUDIENCE трябва да е "staff" (реални плащания само от персонала) или "everyone" (публично включване).'
+      );
+    }
   }
 
   const simulatorSecret = (env.PAYMENT_SIMULATOR_SECRET ?? "").trim();

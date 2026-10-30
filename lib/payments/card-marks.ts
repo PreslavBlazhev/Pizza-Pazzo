@@ -77,10 +77,14 @@ function markFor(id: CardBrandId, files: ReadonlySet<string>): CardBrandMark | n
   return file ? { id, label: BRANDS[id], src: `/payment-marks/${id}.${file}` } : null;
 }
 
-/** Real (production, non-test) card payment is switched on. */
+/**
+ * Real (production, non-test) card payment is switched on FOR THE PUBLIC.
+ * The staff-only production pilot is not: customers are not offered cards
+ * yet, so nothing public may say they are accepted.
+ */
 export function isCardPaymentLive(env: NodeJS.ProcessEnv = process.env): boolean {
   const config = getEffectivePaymentConfig(env);
-  return config.enabled && !config.isTest && config.environment === "production";
+  return config.enabled && !config.isTest && config.environment === "production" && config.audience === "everyone";
 }
 
 export function getCardBrandMarks(env: NodeJS.ProcessEnv = process.env): CardBrandMark[] {

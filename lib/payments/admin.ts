@@ -4,6 +4,8 @@
 import { db } from "@/lib/db";
 import { getEffectivePaymentConfig } from "./providers";
 import { demoSimulatorConfig, getCardDemoMode, type CardDemoMode } from "./demo";
+import { OPEN_ATTEMPT_STATUSES } from "./status";
+import { UPC_PROVIDER_ID } from "./providers/upc";
 
 export interface AdminPaymentAttempt {
   id: string;
@@ -178,6 +180,15 @@ export interface PaymentStatusSummary {
   demoMode: CardDemoMode;
   /** Why the demo cannot run even when switched on (missing address/secret). */
   demoProblems: string[];
+  /**
+   * Unfinished ОББ (UPC) attempts per environment ("sandbox" / "production").
+   * Read before switching the terminal from test to production: an open
+   * attempt of the OTHER environment is never checked against the new
+   * terminal, so a person settles it first.
+   */
+  openUpcAttempts: Record<string, number>;
+  /** Who is offered the card option: everyone, or only signed-in staff. */
+  audience: "everyone" | "staff";
 }
 
 /** SUCCESS_URL / FAILURE_URL / NOTIFY_URL for ОББ's portal, from the public base URL. */
@@ -194,6 +205,11 @@ export async function getPaymentStatusSummary(): Promise<PaymentStatusSummary> {
   const demoMode = await getCardDemoMode();
   const demo = demoSimulatorConfig();
   const slug = c.providerId === "simulator" ? "simulator" : c.providerId ? "upc" : null;
+  const open = await db.paymentAttempt.groupBy({
+    by: ["environment"],
+    where: { provider: UPC_PROVIDER_ID, status: { in: [...OPEN_ATTEMPT_STATUSES] } },
+    _count: { _all: true },
+  });
   return {
     enabled: c.enabled,
     problems: c.problems,
@@ -207,5 +223,7 @@ export async function getPaymentStatusSummary(): Promise<PaymentStatusSummary> {
     upcPortalUrls: c.baseUrl && c.providerId === "upc" ? upcPortalUrls(c.baseUrl) : null,
     demoMode,
     demoProblems: demo.problems,
+    openUpcAttempts: Object.fromEntries(open.map((g) => [g.environment, g._count._all])),
+    audience: c.audience,
   };
 }

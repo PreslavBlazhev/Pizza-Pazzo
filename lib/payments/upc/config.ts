@@ -7,11 +7,16 @@
  *   UPC_TERMINAL_ID          TerminalID from ОББ (test: E7059096)
  *   UPC_PRIVATE_KEY          OUR RSA private key (PEM, or the PEM base64 on one
  *                            line) — signs every payment request. SECRET.
- *   UPC_MERCHANT_CERT        optional: our public certificate (the 1731096.crt
- *                            sent to ОББ). If set, it must match the key.
+ *   UPC_MERCHANT_CERT        our public certificate (the <MerchantID>.crt sent
+ *                            to ОББ): optional in the sandbox, REQUIRED in
+ *                            production. It must match the key, and its CN must
+ *                            be UPC_MERCHANT_ID — so a test key can never sign
+ *                            for the production terminal (or the other way).
  *   UPC_GATEWAY_CERT         UPC's public certificate that verifies NOTIFY and
  *                            browser returns. Sandbox default: UPC's published
- *                            test certificate (./certs.ts). Production: required.
+ *                            test certificate (./certs.ts). Production: required,
+ *                            and never the test certificate (UPC's published
+ *                            production one is in ./certs.ts for comparison).
  *   UPC_GATEWAY_URL          hosted payment page. Sandbox default:
  *                            https://ecg.test.upc.ua/kbc/pay (ОББ e-mail 29.10.2026)
  *   UPC_STATUS_URL           transaction status query. Sandbox default:
@@ -31,11 +36,14 @@
  *                            the unsigned Key=Value variant, fallback only.
  *
  * Production URLs and certificates are never defaulted: they come with the
- * production MerchantID/TerminalID from ОББ.
+ * production MerchantID/TerminalID from ОББ. For ОББ (KBC) they are
+ * https://secure.kbcbank.bg/kbc/pay and …/kbc/service/01 (UPC "Endpoints" →
+ * BULGARIA; the gateway address also in ОББ's e-mail of 30.10.2026). The
+ * gateway and the status query must be on the same host — one environment.
  */
 import { createHash, createPublicKey, X509Certificate } from "node:crypto";
 import type { PaymentEnvironment } from "../config";
-import { UPC_TEST_GATEWAY_CERT } from "./certs";
+import { UPC_PRODUCTION_GATEWAY_CERT, UPC_TEST_GATEWAY_CERT } from "./certs";
 import {
   decodePem,
   isUpcSignatureAlgorithm,
@@ -81,6 +89,26 @@ function httpsUrl(raw: string, name: string, problems: string[]): string {
   }
 }
 
+/** Same RSA public key (the certificates are only containers — keys are pinned). */
+function sameKey(a: KeyObject, pem: string): boolean {
+  try {
+    const der = (k: KeyObject) => k.export({ type: "spki", format: "der" });
+    return der(a).equals(der(loadPublicKey(pem)));
+  } catch {
+    return false;
+  }
+}
+
+/** The CN of an X.509 certificate ("" if it has none), or null for a bare public key. */
+function certificateCommonName(pem: string): string | null {
+  try {
+    const subject = new X509Certificate(pem).subject;
+    return /^CN=(.*)$/m.exec(subject)?.[1]?.trim() ?? "";
+  } catch {
+    return null;
+  }
+}
+
 function sha256Fingerprint(pem: string): string {
   try {
     return new X509Certificate(pem).fingerprint256;
@@ -114,6 +142,9 @@ export function getUpcSettings(
   if (sandbox && gatewayUrl && !/ecg\.test\.upc\.ua/i.test(gatewayUrl)) {
     problems.push("PAYMENT_ENV=sandbox, а UPC_GATEWAY_URL не е тестовият gateway — смесена конфигурация.");
   }
+  if (gatewayUrl && statusUrl && new URL(gatewayUrl).host !== new URL(statusUrl).host) {
+    problems.push("UPC_GATEWAY_URL и UPC_STATUS_URL са на различни сървъри — смесена тестова/продукционна конфигурация.");
+  }
 
   let privateKey: KeyObject | null = null;
   const privatePem = decodePem(env.UPC_PRIVATE_KEY);
@@ -130,6 +161,19 @@ export function getUpcSettings(
   }
 
   const merchantCertPem = decodePem(env.UPC_MERCHANT_CERT);
+  if (!merchantCertPem && !sandbox) {
+    problems.push("UPC_MERCHANT_CERT е задължителен в продукция (сертификатът, изпратен на ОББ — доказва, че ключът е за този MerchantID).");
+  }
+  if (merchantCertPem) {
+    const cn = certificateCommonName(merchantCertPem);
+    if (cn === null) {
+      if (!sandbox) problems.push("UPC_MERCHANT_CERT трябва да е X.509 сертификат (.crt), не само публичен ключ.");
+    } else if (cn !== merchantId) {
+      problems.push(
+        `UPC_MERCHANT_CERT е издаден за „${cn}“, а UPC_MERCHANT_ID е ${merchantId} — смесени тестови/продукционни ключове.`
+      );
+    }
+  }
   if (merchantCertPem && privateKey) {
     try {
       const fromCert = loadPublicKey(merchantCertPem).export({ type: "spki", format: "der" });
@@ -150,6 +194,14 @@ export function getUpcSettings(
       gatewayKey = loadPublicKey(gatewayPem);
     } catch {
       problems.push("UPC_GATEWAY_CERT не е валиден сертификат/публичен ключ.");
+    }
+    if (gatewayKey && !sandbox && sameKey(gatewayKey, UPC_TEST_GATEWAY_CERT)) {
+      problems.push("UPC_GATEWAY_CERT е тестовият сертификат на UPC — в продукция е нужен продукционният.");
+      gatewayKey = null;
+    }
+    if (gatewayKey && sandbox && sameKey(gatewayKey, UPC_PRODUCTION_GATEWAY_CERT)) {
+      problems.push("PAYMENT_ENV=sandbox, а UPC_GATEWAY_CERT е продукционният сертификат на UPC — смесена конфигурация.");
+      gatewayKey = null;
     }
   }
 

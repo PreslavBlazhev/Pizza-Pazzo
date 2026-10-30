@@ -82,6 +82,10 @@ services:
       # PAYMENT_PROVIDER=upc, PAYMENT_ENV=sandbox, PAYMENT_SANDBOX_AUDIENCE=staff.
       - key: PAYMENT_SANDBOX_AUDIENCE
         sync: false
+      # ОББ's PRODUCTION terminal (docs/UBB-UPC-PRODUCTION.md): staff = real
+      # payments offered to signed-in staff only (pilot); everyone = public launch.
+      - key: PAYMENT_PRODUCTION_AUDIENCE
+        sync: false
       - key: UPC_MERCHANT_ID
         sync: false
       - key: UPC_TERMINAL_ID

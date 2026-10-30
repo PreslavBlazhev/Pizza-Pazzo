@@ -75,6 +75,16 @@ export default async function AdminSettingsPage() {
             {payments.provider ?? "—"}
             {payments.environment ? ` / ${payments.environment}` : ""}
           </dd>
+          <dt className="text-pizza-muted">Кой вижда картата</dt>
+          <dd>{payments.audience === "staff" ? "само влезлия персонал" : "всички клиенти"}</dd>
+          <dt className="text-pizza-muted">Незавършени опити (ОББ)</dt>
+          <dd className="font-mono">
+            {Object.keys(payments.openUpcAttempts).length === 0
+              ? "няма"
+              : Object.entries(payments.openUpcAttempts)
+                  .map(([environment, count]) => `${environment}: ${count}`)
+                  .join(", ")}
+          </dd>
           <dt className="text-pizza-muted">Валута</dt>
           <dd className="font-mono">{payments.currency}</dd>
           <dt className="text-pizza-muted">Публичен адрес</dt>
@@ -108,6 +118,12 @@ export default async function AdminSettingsPage() {
         {payments.environment && payments.environment !== "production" && (
           <p className="mt-3 text-sm font-semibold text-fuchsia-800">
             Тестов режим: поръчките, платени така, са тестови и не са реални пари.
+          </p>
+        )}
+        {payments.environment === "production" && payments.audience === "staff" && (
+          <p className="mt-3 text-sm font-semibold text-amber-800">
+            Пилот: РЕАЛНИ плащания, но картата се предлага само на влязъл персонал. Публично сайтът
+            още казва, че карти не се приемат.
           </p>
         )}
 
