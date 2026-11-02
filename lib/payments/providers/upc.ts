@@ -41,6 +41,7 @@ import {
   parseKeyValueText,
   requestSignatureData,
   signBase64,
+  UPC_SIGNATURE_ALGORITHMS,
   verifyGatewayMessage,
   type UpcFields,
   type UpcSignatureAlgorithm,
@@ -370,6 +371,24 @@ export function verifyUpcMessage(
     return { ok: false, reason: "other terminal" };
   }
   return { ok: true, ...verified };
+}
+
+/**
+ * For the log only, after a signature was refused: names the hash or form that
+ * would have verified, and the posted field NAMES (never values). It never
+ * makes a message acceptable; the configured algorithms alone decide that.
+ */
+export function upcSignatureDiagnostic(
+  settings: Pick<UpcSettings, "gatewayKey">,
+  fields: UpcFields,
+  rawBody: string
+): string {
+  const other = verifyGatewayMessage(fields, settings.gatewayKey, UPC_SIGNATURE_ALGORITHMS, { allowFailureForm: true });
+  const names = [...new Set(new URLSearchParams(rawBody).keys())].join(",").slice(0, 400);
+  const finding = other
+    ? `the signature verifies only with the unaccepted ${other.algorithm} (${other.form} form)`
+    : "no known hash or form verifies with the configured certificate";
+  return `; diagnostic: ${finding}; posted fields: ${names}`;
 }
 
 async function identifyCallback(settings: UpcSettings, request: CallbackRequest): Promise<CallbackIdentification> {

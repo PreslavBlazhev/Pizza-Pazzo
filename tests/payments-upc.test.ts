@@ -409,6 +409,27 @@ test("NOTIFY signed with SHA-1 is refused by default (KBC signs RS512) and accep
   assert.equal(ok.action, "approve", ok.reason);
 });
 
+test("a refused signature stays refused; the log names the hash that would verify, and field names only", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  const lines: string[] = [];
+  const realWarn = console.warn;
+  console.warn = (...a: unknown[]) => void lines.push(a.join(" "));
+  try {
+    const out = await handleUpcNotify(body(gatewayMessage(sent, { ProxyPan: "499999******0011" }, { algorithm: "sha1" })));
+    assert.equal(out.action, "reverse");
+    assert.equal(out.reason, "bad signature", "the bank's answer carries no diagnostic");
+    assert.ok(!out.body.includes("diagnostic"));
+  } finally {
+    console.warn = realWarn;
+  }
+  const line = lines.find((l) => l.includes("UPC notify")) ?? "";
+  assert.match(line, /unaccepted sha1/);
+  assert.match(line, /posted fields: .*ProxyPan/);
+  assert.ok(!line.includes("499999"), "values are never logged");
+  assert.equal((await latestAttempt(r.orderNumber)).notifyAction, null);
+});
+
 test("NOTIFY refused (reverse) without effect: unsigned, forged, other key, other terminal, unknown OrderID", async () => {
   const r = await staffCardOrder();
   const { sent } = await startAndSent(r.accessToken);

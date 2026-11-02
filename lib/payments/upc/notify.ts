@@ -45,7 +45,7 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getEffectivePaymentConfig } from "../providers";
-import { UPC_PROVIDER_ID, safeUpcDetails, verifyUpcMessage } from "../providers/upc";
+import { UPC_PROVIDER_ID, safeUpcDetails, upcSignatureDiagnostic, verifyUpcMessage } from "../providers/upc";
 import { applyProviderStatus, completePaidAttempt } from "../service";
 import { isOpenAttempt, isRetryableAttempt, PAYMENT_ALERTS } from "../status";
 import { getUpcSettings } from "./config";
@@ -238,7 +238,11 @@ export async function handleUpcNotify(
   if (config.providerId !== "upc" || !settings) return log(answer(fields, "reverse", "not configured", null));
 
   const verified = verifyUpcMessage(settings, fields);
-  if (!verified.ok) return log(answer(fields, "reverse", verified.reason, null));
+  if (!verified.ok) {
+    // The refusal stands. The extra log text only says WHY, for the operator.
+    const diagnostic = verified.reason === "bad signature" ? upcSignatureDiagnostic(settings, fields, bodyText) : "";
+    return log(answer(fields, "reverse", verified.reason, null), diagnostic);
+  }
 
   const found = await db.paymentAttempt.findUnique({ where: { reference: fields.OrderID } });
   if (!found || found.provider !== UPC_PROVIDER_ID || found.environment !== config.environment) {
