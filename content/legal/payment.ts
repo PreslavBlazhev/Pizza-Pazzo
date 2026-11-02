@@ -75,8 +75,14 @@ export const paymentDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Не запазваме карти, не правим повтарящи се или абонаментни плащания и не предлагаме плащане с Apple Pay, Google Pay или чрез линк за плащане.",
-            en: "We do not save cards, make recurring or subscription payments, or offer Apple Pay, Google Pay or pay-by-link.",
+            bg: "Не запазваме карти, не правим повтарящи се или абонаментни плащания и не предлагаме плащане чрез линк.",
+            en: "We do not save cards, make recurring or subscription payments, or offer pay-by-link.",
+          },
+        },
+        {
+          p: {
+            bg: "Сайтът няма собствени бутони за дигитални портфейли. Какви начини за плащане вижда клиентът на защитената страница, включително портфейл като Google Pay или Apple Pay, определят банката и устройството му.",
+            en: "The site has no digital-wallet buttons of its own. What a customer can use on the secure payment page, including a wallet such as Google Pay or Apple Pay, depends on the bank and on their device.",
           },
         },
       ],

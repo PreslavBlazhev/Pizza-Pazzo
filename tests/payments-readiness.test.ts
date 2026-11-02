@@ -453,7 +453,7 @@ test("rate limiter: allows the limit, blocks the rest, opens again after the win
 
 // ── Nothing claims wallets the bank has not enabled ─────────────────────
 
-test("no Google Pay / Apple Pay button, logo or claim anywhere in the site until it is confirmed", () => {
+test("no Google Pay / Apple Pay button or logo of our own, and no claim beyond the bank's page", () => {
   const WALLET = /\bapple[\s-]?pay\b|\bgoogle[\s-]?pay\b|\bgpay\b|PaymentRequest\(|pay\.google\.com|apple-developer-merchantid/i;
   const roots = ["app", "components", "messages", "content", "public"];
   const hits: string[] = [];
@@ -464,12 +464,13 @@ test("no Google Pay / Apple Pay button, logo or claim anywhere in the site until
       else if (/\.(tsx?|json|svg|md|txt)$/.test(name)) {
         const text = readFileSync(p, "utf8");
         if (!WALLET.test(text)) continue;
-        // The one allowed mention: the payment terms saying they are NOT offered.
-        const negation =
+        // The one allowed mention: the payment terms saying the site has no
+        // wallet buttons and that the bank's page and the device decide.
+        const bankDecides =
           p === join("content", "legal", "payment.ts") &&
-          /не предлагаме[^"]*Apple Pay, Google Pay/.test(text) &&
-          /do not[^"]*offer Apple Pay, Google Pay/.test(text);
-        if (!negation) hits.push(p);
+          /няма собствени бутони[^"]*определят банката/.test(text) &&
+          /no digital-wallet buttons[^"]*depends on the bank/.test(text);
+        if (!bankDecides) hits.push(p);
       } else if (/apple-?pay|\bgpay\b|google-?pay/i.test(name)) hits.push(p);
     }
   };

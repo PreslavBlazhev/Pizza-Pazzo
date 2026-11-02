@@ -86,6 +86,9 @@ services:
       # payments offered to signed-in staff only (pilot); everyone = public launch.
       - key: PAYMENT_PRODUCTION_AUDIENCE
         sync: false
+      # Comma-separated marks shown beside the card option after the public launch.
+      - key: CARD_BRAND_MARKS
+        sync: false
       - key: UPC_MERCHANT_ID
         sync: false
       - key: UPC_TERMINAL_ID

@@ -17,7 +17,9 @@ export const LEGAL_VERSIONS = {
   refunds: "2026-10-12",
   privacy: "2026-10-12",
   delivery: "2026-10-12",
-  payment: "2026-10-12",
+  // 2026-11-02: UBB's hosted page itself may offer digital wallets on the
+  // production terminal, so "we do not offer them" was no longer true.
+  payment: "2026-11-02",
   cookies: "2026-10-12",
 } as const;
 

@@ -246,12 +246,18 @@ async function jsonStatus(
   const amount = Number(purchase.amount);
   return {
     tranCode,
-    notFound: false,
+    // {"results":[{"tranCode":"408","comment":"Transaction was not found",…}]}:
+    // the real production answer for an order whose page was opened but never
+    // paid (secure.kbcbank.bg, 02.11.2026). The same signed request re-opens
+    // the page (checked on the gateway), so it must not read as "registered,
+    // wait" — that would leave a customer who left the page unable to retry.
+    notFound: tranCode === "408",
     amountMinor: Number.isSafeInteger(amount) ? amount : undefined,
     currencyNumeric: purchase.currency ? String(purchase.currency) : undefined,
     details: {
       source: "status-json",
       tranCode,
+      comment: String(purchase.comment ?? "").slice(0, 200),
       rrn: purchase.rrn,
       approvalCode: purchase.approvalCode,
       operType: purchase.operType,

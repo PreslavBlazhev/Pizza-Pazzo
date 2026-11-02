@@ -548,6 +548,39 @@ test("long after the session: 'not found' does NOT expire the attempt or allow a
   assert.equal((await orderRow(r.orderNumber)).paymentStatus, "PAID");
 });
 
+test("page opened, customer left without paying (production's real 408 in results): stays open, can retry, a late NOTIFY still counts", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  const attempt = await latestAttempt(r.orderNumber);
+  // Exactly what secure.kbcbank.bg answered on 02.11.2026.
+  statusPayload = {
+    results: [{ tranCode: "408", comment: "Transaction was not found", amount: Number(sent.TotalAmount), currency: sent.Currency }],
+  };
+  statusAnswer = "TranCode=000\n"; // ignored by the JSON path while statusPayload is set
+
+  const synced = await quiet(() => syncAttempt(attempt.id));
+  assert.equal(synced?.status, "PENDING", "not a decline, not paid, not expired");
+  assert.equal(synced?.providerStatus, "408");
+  assert.equal((await orderRow(r.orderNumber)).paymentStatus === "PAID", false);
+
+  const again = await quiet(() => startCardPayment({ accessToken: r.accessToken, locale: "bg" }));
+  assert.ok(again.ok && again.reused, "the customer may return to the bank's page");
+  if (again.ok) assert.equal(again.redirect.postFields!.OrderID, sent.OrderID, "same OrderID, no second attempt");
+  assert.equal(await db.paymentAttempt.count({ where: { order: { orderNumber: r.orderNumber } } }), 1);
+
+  const out = await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
+  assert.equal(out.action, "approve", out.reason);
+  assert.equal((await orderRow(r.orderNumber)).paymentStatus, "PAID");
+});
+
+test("CARD_PAYMENTS_ENABLED: only the word true switches cards on — 'false', '0', 'yes' and empty keep them off", () => {
+  for (const off of ["false", "FALSE", " false ", "0", "yes", ""]) {
+    const c = getPaymentConfig(productionEnv({ CARD_PAYMENTS_ENABLED: off }));
+    assert.equal(c.enabled, false, JSON.stringify(off));
+  }
+  assert.equal(getPaymentConfig(productionEnv({ CARD_PAYMENTS_ENABLED: " TRUE " })).enabled, true);
+});
+
 test("browser return: a signed SUCCESS return only triggers a status query; unsigned goes to the neutral page", async () => {
   const r = await staffCardOrder();
   const { sent } = await startAndSent(r.accessToken);
