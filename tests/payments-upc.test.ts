@@ -1091,6 +1091,53 @@ test("production staff pilot: only staff are offered the card; nothing public sa
   }
 });
 
+test("production public launch (everyone): guest and customer get the card; the guest's order opens a signed production page for the stored total", async () => {
+  const saved = { ...process.env };
+  try {
+    Object.assign(process.env, productionEnv({ PAYMENT_PRODUCTION_AUDIENCE: "everyone", PAYMENT_CURRENCY: "EUR" }));
+    for (const role of [null, "CUSTOMER", "STAFF", "ADMIN"]) {
+      const r = await resolveCheckoutPayment(role);
+      assert.equal(r.available, true, `card offered to ${role ?? "guest"}`);
+      assert.equal(r.sandbox, false);
+    }
+    assert.equal(isCardPaymentLive(), true, "footer marks / legal text say cards are accepted");
+
+    const guest = await placeOrder(
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS },
+      deps
+    );
+    assert.equal(guest.ok, true, JSON.stringify(guest));
+    if (!guest.ok) return;
+    const order = await db.order.findUniqueOrThrow({ where: { accessToken: guest.accessToken } });
+    assert.equal(order.isTest, false, "a public production order is a real order");
+    assert.equal(order.userId, null);
+
+    const start = await startCardPayment({ accessToken: guest.accessToken!, locale: "bg" });
+    assert.equal(start.ok, true, JSON.stringify(start));
+    if (!start.ok) return;
+    assert.equal(start.redirect.url, "https://secure.kbcbank.bg/kbc/pay");
+    const f = start.redirect.postFields!;
+    assert.equal(f.MerchantID, "7331057");
+    assert.equal(f.TerminalID, "E0901028");
+    assert.equal(f.Currency, "978");
+    assert.equal(f.TotalAmount, String(STANDARD_TOTAL_MINOR), "amount from the stored order, never from the browser");
+    const signed = `${f.MerchantID};${f.TerminalID};${f.PurchaseTime};${f.OrderID};${f.Currency};${f.TotalAmount};;`;
+    assert.ok(
+      cryptoVerify("sha512", Buffer.from(signed), createPublicKey(PROD_MERCHANT.cert), Buffer.from(f.Signature, "base64")),
+      "signed with the production merchant key"
+    );
+    const attempt = await db.paymentAttempt.findFirstOrThrow({ where: { orderId: order.id } });
+    assert.equal(attempt.environment, "production");
+
+    // Not paid until the bank says so: only a verified NOTIFY / status answer flips it.
+    const still = await db.order.findUniqueOrThrow({ where: { id: order.id } });
+    assert.notEqual(still.paymentStatus, "PAID");
+  } finally {
+    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
+    Object.assign(process.env, saved);
+  }
+});
+
 test("no mixing: test certificate in production, production certificate in the sandbox, test key for the production MID", () => {
   const testCert = getUpcSettings("production", productionEnv({ UPC_GATEWAY_CERT: UPC_TEST_GATEWAY_CERT }));
   assert.equal(testCert.settings, null);

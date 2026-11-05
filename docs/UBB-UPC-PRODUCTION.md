@@ -129,3 +129,26 @@
 | „Обратно към търговеца“ | `href="pizzapazzo.bg"` без `https://`, води към страница на банката. Нужна е поправка на адреса на терминала |
 
 Не може да се провери без портала или реална трансакция: регистрираните SUCCESS/FAILURE/NOTIFY адреси и алгоритъмът на подписа на продукционния NOTIFY. Ако подписът се различава, NOTIFY получава `reverse` и плащането се анулира — парите не се губят, а логът показва причината.
+
+## 8. Проверка 05.11.2026 — „картата се вижда само от администратори“, Apple Pay
+
+**Причина за „само администратори“ (установена, не е бъг в кода).** Render е в пилотния режим от §5, стъпка 2: `PAYMENT_PRODUCTION_AUDIENCE=staff`. `resolveCheckoutPayment()` (`lib/payments/providers/index.ts`) предлага картата само на STAFF/ADMIN, а `placeOrder` отказва картова поръчка от гост/клиент със същото правило. Живи доказателства: Админ → Настройки показва „Кой вижда картата: само влезлия персонал“; `GET https://pizzapazzo.bg/checkout` без бисквитки съдържа `"cardAvailable":false`, а влязъл админ вижда „Плащане онлайн с карта“. Никъде няма списък с позволени потребители или друга проверка по роля — `/api/payments/start`, връщането и NOTIFY работят с токена на поръчката и подписа на банката, независимо от ролята.
+
+**Стъпка 3 (успешна реална трансакция) НЕ е минала.** Продукционни опити: #1047 (отказана), #1049, #1052 — всички с отворена страница без плащане (TranCode 408), сума 10,23 €. Затова подписът на продукционния NOTIFY остава недоказан (ако се различава → `reverse`, сумата се анулира, логът казва кой hash би минал).
+
+**Поправката = стъпка 4** (`PAYMENT_PRODUCTION_AUDIENCE=everyone`, `CARD_BRAND_MARKS=visa,mastercard`, **Save, rebuild, and deploy**). Кодът е готов и покрит с тест „production public launch (everyone)“ в `tests/payments-upc.test.ts`: гост, клиент, служител и админ получават картата; поръчка от гост е реална (`isTest=false`) и отваря подписана заявка към `secure.kbcbank.bg/kbc/pay` за MID 7331057/TID E0901028, валута 978 и сумата от записаната поръчка, подписана със SHA-512 с продукционния ключ; поръчката не е платена преди потвърждение от банката.
+
+**Apple Pay / Google Pay — показват се от страницата на UPC/ОББ, не от нашия сайт.** Проба 05.11 (подписана заявка 1,00 €, OrderID `PPCHKAP…`, без карта):
+- Google Pay: `googlePay.js` + `gPay.js`, `gateway: upcua`, `profile: PRODUCTION`. Показва се и в Safari на iPhone — затова на iPhone се вижда само Google Pay.
+- Apple Pay: `applePay.js`, Apple merchant ID **`merchant.ua.upc.ec`** (на UPC, не наш), `countryCode: "UA"`, `currencyCode: "EUR"`, `supportedNetworks: masterCard, visa`, `merchantCapabilities: supports3DS`. Бутонът се показва **само** ако `window.ApplePaySession` съществува и `ApplePaySession.canMakePaymentsWithActiveCard("merchant.ua.upc.ec")` върне `true`. Иначе бутонът остава скрит, а формата за карта работи.
+- `https://secure.kbcbank.bg/.well-known/apple-developer-merchantid-domain-association.txt` → 200 (5768 B): банката е публикувала файла за домейн-верификация. Дали `secure.kbcbank.bg` е реално свързан с `merchant.ua.upc.ec` при Apple, отвън не може да се провери.
+- Домейн-верификация за `pizzapazzo.bg` **не е нужна**: Apple Pay се изпълнява на домейна на банката.
+
+`canMakePaymentsWithActiveCard` е `false`, когато: в Apple Wallet няма активна Visa/Mastercard, позволена за този търговец; в Safari е изключено „Check for Apple Pay“ (Settings → Apps → Safari); merchant ID-то на UPC не е валидно за домейна на банката; или страницата е в WKWebView, в който приложението вмъква скриптове.
+
+**Наше ограничение — iOS приложението.** То зарежда страницата на банката в собствения си WKWebView, който вмъква `PrintBridge.userScript` (`ios-app/PizzaPazzo/Web/PrintBridge.swift`). WebKit изключва Apple Pay в WKWebView с вмъкнати скриптове. Ако плащането е отворено от приложението, Apple Pay няма да се покаже, независимо от банката. В Safari това не важи.
+
+**За да се докаже причината за Apple Pay** (нужен е реален iPhone; на Windows не може): Safari (не приложението) → Settings → Safari → „Check for Apple Pay“ включено; карта в Wallet. Отворете плащането и в Safari Web Inspector (Mac → Develop → iPhone) изпълнете на страницата на банката `ApplePaySession.canMakePayments()` и `await ApplePaySession.canMakePaymentsWithActiveCard("merchant.ua.upc.ec")`:
+- `canMakePayments()` е `true`, а втората проверка е `false` при карта в Wallet → проблемът е в конфигурацията на UPC/ОББ (merchant ID/домейн/активиране за E0901028). Въпрос към pos_support@ubb.bg. Попитайте и за `countryCode: "UA"`.
+- И двете са `true`, но бутон няма → също въпрос към ОББ/UPC.
+- Бутонът се показва → Apple Pay работи. Остава тестово плащане с малка сума само с изрично разрешение на собственика.
