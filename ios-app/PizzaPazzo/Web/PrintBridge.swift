@@ -88,6 +88,24 @@ final class WeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
 @MainActor
 enum WebViewFactory {
 
+    /// The print bridge: the window.print user script and its message handler.
+    static func attachPrintBridge(_ printBridge: PrintBridge, to controller: WKUserContentController) {
+        detachPrintBridge(from: controller)
+        controller.addUserScript(PrintBridge.userScript)
+        controller.add(WeakScriptMessageHandler(printBridge), name: PrintBridge.handlerName)
+    }
+
+    /// Removes the bridge for a card payment at the bank. WebKit turns Apple
+    /// Pay off in a web view that injects user scripts into the page, and the
+    /// bank's hosted page offers Apple Pay only where it is allowed — so while
+    /// the customer is at the bank, the web view injects nothing. The bank
+    /// page needs no bridge; it is put back when the web view returns to the
+    /// site (WebViewModel.endPayment). Only scripts this app adds exist.
+    static func detachPrintBridge(from controller: WKUserContentController) {
+        controller.removeAllUserScripts()
+        controller.removeScriptMessageHandler(forName: PrintBridge.handlerName)
+    }
+
     static func makeWebView(printBridge: PrintBridge) -> WKWebView {
         let configuration = WKWebViewConfiguration()
 
@@ -109,8 +127,7 @@ enum WebViewFactory {
         configuration.applicationNameForUserAgent = "Mobile/15E148 PizzaPazzoiOS/\(version)"
 
         let contentController = WKUserContentController()
-        contentController.addUserScript(PrintBridge.userScript)
-        contentController.add(WeakScriptMessageHandler(printBridge), name: PrintBridge.handlerName)
+        attachPrintBridge(printBridge, to: contentController)
         configuration.userContentController = contentController
 
         let webView = WKWebView(frame: .zero, configuration: configuration)

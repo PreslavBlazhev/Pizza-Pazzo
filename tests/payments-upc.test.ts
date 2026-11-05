@@ -402,8 +402,9 @@ test("NOTIFY signed with SHA-1 is refused by default (KBC signs RS512) and accep
   const { sent } = await startAndSent(r.accessToken);
   const sha1 = body(gatewayMessage(sent, {}, { algorithm: "sha1" }));
   const refused = await quiet(() => handleUpcNotify(sha1));
-  assert.equal(refused.action, "reverse");
+  assert.equal(refused.action, "none", "an unverified message never gets a reverse");
   assert.equal(refused.reason, "bad signature");
+  assert.doesNotMatch(refused.body, /Response\.action/);
   assert.equal((await latestAttempt(r.orderNumber)).notifyAction, null, "a forged/unverified message stores nothing");
   const ok = await quiet(() => handleUpcNotify(sha1, { ...process.env, UPC_GATEWAY_SIGNATURE_ALGS: "sha512,sha1" }));
   assert.equal(ok.action, "approve", ok.reason);
@@ -417,7 +418,7 @@ test("a refused signature stays refused; the log names the hash that would verif
   console.warn = (...a: unknown[]) => void lines.push(a.join(" "));
   try {
     const out = await handleUpcNotify(body(gatewayMessage(sent, { ProxyPan: "499999******0011" }, { algorithm: "sha1" })));
-    assert.equal(out.action, "reverse");
+    assert.equal(out.action, "none");
     assert.equal(out.reason, "bad signature", "the bank's answer carries no diagnostic");
     assert.ok(!out.body.includes("diagnostic"));
   } finally {
@@ -430,22 +431,24 @@ test("a refused signature stays refused; the log names the hash that would verif
   assert.equal((await latestAttempt(r.orderNumber)).notifyAction, null);
 });
 
-test("NOTIFY refused (reverse) without effect: unsigned, forged, other key, other terminal, unknown OrderID", async () => {
+test("NOTIFY without effect: unverifiable ones get NO decision (never reverse); a verified unknown OrderID is reversed", async () => {
   const r = await staffCardOrder();
   const { sent } = await startAndSent(r.accessToken);
   const forger = generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey;
-  const cases: [string, UpcFields][] = [
+  const unverifiable: [string, UpcFields][] = [
     ["unsigned", gatewayMessage(sent, {}, { sign: false })],
     ["forged amount", { ...gatewayMessage(sent), TotalAmount: "1" }],
     ["other key", gatewayMessage(sent, {}, { signWith: forger })],
     ["other terminal", gatewayMessage(sent, { TerminalID: "E0000001" })],
-    ["unknown order", gatewayMessage(sent, { OrderID: "PP999999-FFFFFFFF" })],
   ];
-  for (const [name, f] of cases) {
+  for (const [name, f] of unverifiable) {
     const out = await quiet(() => handleUpcNotify(body(f)));
-    assert.equal(out.action, "reverse", name);
-    assert.match(out.body, /^Response\.action=reverse$/m, name);
+    assert.equal(out.action, "none", name);
+    assert.doesNotMatch(out.body, /Response\.action/, name);
   }
+  const unknown = await quiet(() => handleUpcNotify(body(gatewayMessage(sent, { OrderID: "PP999999-FFFFFFFF" }))));
+  assert.equal(unknown.action, "reverse", "signed by UPC for our terminal, but no such order: the bank is asked to cancel");
+  assert.match(unknown.body, /^Response\.action=reverse$/m);
   assert.equal((await orderRow(r.orderNumber)).paymentStatus, "AWAITING_PAYMENT");
   assert.equal((await latestAttempt(r.orderNumber)).status, "REDIRECTED", "the real attempt is untouched");
 });
@@ -567,6 +570,102 @@ test("long after the session: 'not found' does NOT expire the attempt or allow a
   const out = await quiet(() => handleUpcNotify(body(gatewayMessage(sent))));
   assert.equal(out.action, "approve", out.reason);
   assert.equal((await orderRow(r.orderNumber)).paymentStatus, "PAID");
+});
+
+async function ageOrder(orderNumber: number, minutes: number) {
+  const at = new Date(Date.now() - minutes * 60_000);
+  await db.order.update({ where: { orderNumber }, data: { createdAt: at } });
+  await db.paymentAttempt.updateMany({ where: { order: { orderNumber } }, data: { createdAt: at, lastCheckedAt: null } });
+}
+
+test("abandoned payment: after 60 min of a FRESH 'not found' the attempt expires and the unpaid order is cancelled (not before)", async () => {
+  const r = await staffCardOrder();
+  await startAndSent(r.accessToken);
+  await ageOrder(r.orderNumber, 30);
+  statusAnswer = "TranCode=408\n";
+  await quiet(() => reconcileOpenPayments({ limit: 50 }));
+  assert.ok(["REDIRECTED", "PENDING"].includes((await latestAttempt(r.orderNumber)).status), "30 min: the customer may still be paying");
+  assert.equal((await orderRow(r.orderNumber)).status, "PENDING");
+
+  await ageOrder(r.orderNumber, 61);
+  await db.order.update({ where: { orderNumber: r.orderNumber }, data: { paymentAlert: "UNRESOLVED_PAYMENT" } });
+  const calls = statusCalls.length;
+  const summary = await quiet(() => reconcileOpenPayments({ limit: 50 }));
+  assert.ok(statusCalls.length > calls, "decided on a status query made now");
+  assert.ok(summary.abandoned >= 1);
+  const a = await latestAttempt(r.orderNumber);
+  assert.equal(a.status, "EXPIRED");
+  assert.equal(a.failureReason, "SESSION_TIMEOUT");
+  const row = await orderRow(r.orderNumber);
+  assert.equal(row.status, "CANCELLED");
+  assert.equal(row.paymentStatus, "EXPIRED");
+  assert.equal(row.paymentAlert, null, "no endless warning");
+  assert.equal(row.releasedToKitchenAt, null);
+  assert.deepEqual(await quiet(() => startCardPayment({ accessToken: r.accessToken, locale: "bg" })), { ok: false, code: "ORDER_CANCELLED" });
+});
+
+test("abandoned is never decided on a technical answer or a failed query — those stay open and are flagged", async () => {
+  for (const answer of ["TranCode=291\n", new Error("timeout")] as const) {
+    const r = await staffCardOrder();
+    await startAndSent(r.accessToken);
+    await ageOrder(r.orderNumber, 61);
+    statusAnswer = answer;
+    await quiet(() => reconcileOpenPayments({ limit: 50 }));
+    assert.notEqual((await latestAttempt(r.orderNumber)).status, "EXPIRED", String(answer));
+    assert.equal((await orderRow(r.orderNumber)).status, "PENDING", String(answer));
+  }
+});
+
+test("late payment on an abandoned (cancelled) order: NOTIFY → reverse once, replay → same answer; without NOTIFY → held for staff, never cooked", async () => {
+  const r = await staffCardOrder();
+  const { sent } = await startAndSent(r.accessToken);
+  await ageOrder(r.orderNumber, 61);
+  statusAnswer = "TranCode=408\n";
+  await quiet(() => reconcileOpenPayments({ limit: 50 }));
+  assert.equal((await orderRow(r.orderNumber)).status, "CANCELLED");
+  const late = body(gatewayMessage(sent));
+  const first = await quiet(() => handleUpcNotify(late));
+  assert.equal(first.action, "reverse");
+  assert.equal(first.reason, "order cancelled");
+  const replay = await quiet(() => handleUpcNotify(late));
+  assert.deepEqual([replay.action, replay.replay], ["reverse", true]);
+  statusAnswer = "TranCode=000\nApprovalCode=1\nXID=26102918-123456\n";
+  { const id = (await latestAttempt(r.orderNumber)).id; await quiet(() => syncAttempt(id, { minIntervalMs: 0 })); }
+  const row = await orderRow(r.orderNumber);
+  assert.notEqual(row.paymentStatus, "PAID", "a stored reverse is never turned into a payment");
+  assert.equal(row.releasedToKitchenAt, null);
+
+  // The same, but the NOTIFY never arrived: the expired attempt's re-check finds the money.
+  const r2 = await staffCardOrder();
+  await startAndSent(r2.accessToken);
+  await ageOrder(r2.orderNumber, 61);
+  statusAnswer = "TranCode=408\n";
+  await quiet(() => reconcileOpenPayments({ limit: 50 }));
+  statusAnswer = "TranCode=000\nApprovalCode=1\nXID=X2\n";
+  await db.paymentAttempt.updateMany({ where: { order: { orderNumber: r2.orderNumber } }, data: { lastCheckedAt: null } });
+  await quiet(() => reconcileOpenPayments({ limit: 50 }));
+  const row2 = await orderRow(r2.orderNumber);
+  assert.equal(row2.paymentStatus, "PAID");
+  assert.equal(row2.paymentAlert, "PAID_AFTER_CANCEL", "staff refunds it in the bank portal");
+  assert.equal(row2.releasedToKitchenAt, null);
+  assert.equal(await db.paymentAttempt.count({ where: { order: { orderNumber: r2.orderNumber }, status: "PAID" } }), 1);
+});
+
+test("declined / page closed (601) and not retried for 60 min: the unpaid order is cancelled; a fresh failure is left for a retry", async () => {
+  const r = await staffCardOrder();
+  await startAndSent(r.accessToken);
+  statusAnswer = "TranCode=601\n";
+  { const id = (await latestAttempt(r.orderNumber)).id; await quiet(() => syncAttempt(id, { minIntervalMs: 0 })); }
+  assert.ok(["FAILED", "CANCELLED"].includes((await latestAttempt(r.orderNumber)).status), "601 is final: no money");
+  await quiet(() => reconcileOpenPayments({ limit: 50 }));
+  assert.equal((await orderRow(r.orderNumber)).status, "PENDING", "just failed: the customer may try again");
+  const old = new Date(Date.now() - 61 * 60_000);
+  await db.order.update({ where: { orderNumber: r.orderNumber }, data: { createdAt: old } });
+  await db.paymentAttempt.updateMany({ where: { order: { orderNumber: r.orderNumber } }, data: { finalizedAt: old } });
+  await quiet(() => reconcileOpenPayments({ limit: 50 }));
+  const row = await orderRow(r.orderNumber);
+  assert.equal(row.status, "CANCELLED");
+  assert.equal(row.releasedToKitchenAt, null);
 });
 
 test("page opened, customer left without paying (production's real 408 in results): stays open, can retry, a late NOTIFY still counts", async () => {

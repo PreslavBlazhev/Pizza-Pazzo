@@ -9,6 +9,8 @@ import { handleUpcNotify } from "@/lib/payments/upc/notify";
  * The answer is the plain-text "Parameter=Value" lines UPC's protocol
  * prescribes, with Response.action=approve|reverse — always HTTP 200, because
  * the decision is in the body; any other status counts as a failed NOTIFY.
+ * A message that cannot be verified gets NO decision: HTTP 503, no
+ * Response.action (lib/payments/upc/notify.ts).
  */
 export const dynamic = "force-dynamic";
 
@@ -18,7 +20,8 @@ export async function POST(request: Request) {
   const body = (await request.text().catch(() => "")).slice(0, 20_000);
   try {
     const outcome = await handleUpcNotify(body);
-    return new Response(outcome.body, { status: 200, headers: HEADERS });
+    // An unverifiable message gets no decision: a failed NOTIFY, not "reverse".
+    return new Response(outcome.body, { status: outcome.action === "none" ? 503 : 200, headers: HEADERS });
   } catch (err) {
     // A database outage, say. Not a 200: UPC must not read silence as an
     // answer — its portal setting decides what happens to the transaction.

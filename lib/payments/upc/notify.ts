@@ -27,8 +27,10 @@
  *   reverse  first decision otherwise for a successful authorisation — a
  *            second payment for a paid order, a superseded attempt, a
  *            cancelled order, mismatched data — so the bank is asked to
- *            cancel it instead of a person refunding it later. Forged or
- *            foreign messages are answered "reverse" and change nothing.
+ *            cancel it instead of a person refunding it later.
+ *   (none)   a message whose signature does not verify, or for another
+ *            terminal: NO decision at all (HTTP 503 = failed NOTIFY), never a
+ *            "reverse" based on a message we could not verify.
  *
  * A second, DIFFERENT transaction (another XID) under an OrderID that
  * already has a decision is answered on its own (a successful one: reverse)
@@ -62,9 +64,13 @@ import {
 type AttemptRow = Prisma.PaymentAttemptGetPayload<Record<string, never>>;
 
 export interface NotifyOutcome {
-  /** The exact text/plain body UPC reads. */
+  /** The exact text/plain body UPC reads (no Response.action when "none"). */
   body: string;
-  action: UpcNotifyAction;
+  /**
+   * "none": the message could not be verified (or is for another terminal),
+   * so it gets NO decision — the route answers HTTP 503, a failed NOTIFY.
+   */
+  action: UpcNotifyAction | "none";
   /** Short machine reason, for the log and the tests. */
   reason: string;
   /** True when this answer replays a stored decision. */
@@ -85,6 +91,11 @@ function answer(
   replay = false
 ): NotifyOutcome {
   return { body: buildNotifyResponse(fields, action, reason, forwardUrl), action, reason, replay };
+}
+
+/** No approve/reverse: an unverifiable message moves no money either way. */
+function noDecision(reason: string): NotifyOutcome {
+  return { body: "not verified\n", action: "none", reason, replay: false };
 }
 
 /** Our own copy of what the attempt signed and posted. */
@@ -235,13 +246,21 @@ export async function handleUpcNotify(
   // switched off: a customer already on UPC's page must still be answered.
   const config = getEffectivePaymentConfig({ ...env, CARD_PAYMENTS_ENABLED: "true" });
   const { settings } = getUpcSettings(config.environment, env);
-  if (config.providerId !== "upc" || !settings) return log(answer(fields, "reverse", "not configured", null));
+  // NO DECISION on a message we cannot verify. Answering "reverse" would be
+  // a financial instruction based on an unverified message: if our own
+  // verification were misconfigured (certificate, hash), every genuine payment
+  // would be cancelled by us. Instead the NOTIFY fails (HTTP 503, no
+  // Response.action): a forger learns nothing and changes nothing, and a
+  // genuine payment is settled by the signed status query (verified
+  // separately) — paid, or closed as abandoned. What UPC does with a failed
+  // NOTIFY is the terminal's portal setting "cancel after failed notify".
+  if (config.providerId !== "upc" || !settings) return log(noDecision("not configured"));
 
   const verified = verifyUpcMessage(settings, fields);
   if (!verified.ok) {
     // The refusal stands. The extra log text only says WHY, for the operator.
     const diagnostic = verified.reason === "bad signature" ? upcSignatureDiagnostic(settings, fields, bodyText) : "";
-    return log(answer(fields, "reverse", verified.reason, null), diagnostic);
+    return log(noDecision(verified.reason), diagnostic);
   }
 
   const found = await db.paymentAttempt.findUnique({ where: { reference: fields.OrderID } });

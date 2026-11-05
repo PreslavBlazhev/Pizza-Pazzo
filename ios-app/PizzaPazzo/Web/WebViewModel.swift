@@ -214,11 +214,16 @@ final class WebViewModel: NSObject, ObservableObject {
     private func startPayment(_ session: PaymentFlow.Session) {
         payment = session
         paymentStore.save(session)
+        // Before the bank's document is created: nothing is injected into it,
+        // so its Apple Pay button is not disabled by WebKit (see
+        // WebViewFactory.detachPrintBridge). UNTESTED on a device.
+        WebViewFactory.detachPrintBridge(from: webView.configuration.userContentController)
     }
 
     private func endPayment() {
         payment = nil
         paymentStore.clear()
+        WebViewFactory.attachPrintBridge(printBridge, to: webView.configuration.userContentController)
     }
 
     /// Also recognises a payment from the page that actually started loading —
@@ -226,6 +231,12 @@ final class WebViewModel: NSObject, ObservableObject {
     /// soon as the web view is back on the site.
     private func trackPayment(_ next: URL?) {
         let nextString = next?.absoluteString
+        // Also a session that lapsed at the bank: back on the site, the print
+        // bridge must come back.
+        if payment != nil, activePayment == nil, origins.isAllowed(nextString) {
+            endPayment()
+            return
+        }
         if activePayment != nil {
             if origins.isAllowed(nextString) { endPayment() }
             return
