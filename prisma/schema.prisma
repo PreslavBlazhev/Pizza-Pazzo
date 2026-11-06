@@ -148,6 +148,10 @@ model RestaurantSettings {
   /// staff/admins see the card option) | EVERYONE. Demo orders are always
   /// test orders ("ТЕСТ — НЕ ПРИГОТВЯЙ"). See lib/payments/demo.ts.
   cardDemoMode String @default("OFF")
+  /// Who is offered REAL card payment (the bank's production terminal),
+  /// switched from Admin → Settings: "staff" | "everyone"; null = follow the
+  /// server's PAYMENT_PRODUCTION_AUDIENCE. See lib/payments/production-audience.ts.
+  cardProductionAudience String?
 
   manuallyOpen  Boolean   @default(false)
   openUntil     DateTime?

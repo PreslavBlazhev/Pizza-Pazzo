@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { RestaurantSettingsForm } from "@/components/admin/RestaurantSettingsForm";
 import { getRestaurantSettings } from "@/lib/restaurant-settings";
-import { getPaymentStatusSummary } from "@/lib/payments/admin";
+import { getPaymentStatusSummary, type PaymentStatusSummary } from "@/lib/payments/admin";
 import { CardDemoModeForm } from "@/components/admin/CardDemoModeForm";
+import { CardAudienceForm } from "@/components/admin/CardAudienceForm";
 
 export const metadata: Metadata = { title: "Настройки" };
 
@@ -22,6 +23,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminSettingsPage() {
   const settings = await getRestaurantSettings();
   const payments = await getPaymentStatusSummary();
+  /** The production terminal is configured and valid (real money). */
+  const realBank = payments.enabled && payments.environment === "production";
 
   return (
     <div>
@@ -50,33 +53,63 @@ export default async function AdminSettingsPage() {
         </Link>
       </section>
 
-      {/* The REAL provider is configured through environment variables on the
-          server (docs/online-card-payments.md) and shown read-only here. The
-          one switch on this page is the card DEMO (simulator, no real money),
-          which the owner turns on to test the flow on the live site. */}
+      {/* Card payments. The REAL bank (ОББ's UPC terminal) is configured on the
+          server (terminal, keys, currency — docs/UBB-UPC-PRODUCTION.md); WHO is
+          offered it is the switch below, stored in the database and stronger
+          than the server's PAYMENT_PRODUCTION_AUDIENCE. The DEMO simulator is a
+          separate, staff-only tool and is kept apart from it. */}
       <section className="mt-6 rounded-2xl border border-pizza-cream-dark bg-white p-5">
         <h2 className="font-display text-lg font-semibold text-pizza-ink">
-          Онлайн плащане с карта
+          {realBank ? "Реални плащания чрез ОББ" : "Онлайн плащане с карта"}
         </h2>
         <p
           className={`mt-2 inline-block rounded-full px-3 py-1 text-sm font-bold ${
-            payments.enabled ? "bg-green-100 text-green-800" : "bg-neutral-100 text-neutral-700"
+            payments.publicLive
+              ? "bg-green-100 text-green-800"
+              : realBank
+                ? "bg-amber-100 text-amber-900"
+                : "bg-neutral-100 text-neutral-700"
           }`}
         >
-          {payments.enabled
-            ? "Истински доставчик: включен"
-            : "Истинска банка: не е настроена (виж демото по-долу)"}
+          {payments.publicLive
+            ? "Активно: всички клиенти могат да платят с карта"
+            : realBank
+              ? "Активно само за влезлия персонал (клиентите не виждат картата)"
+              : payments.enabled
+                ? "Тестова банкова среда — не са реални пари"
+                : "Реалната банка не е настроена на сървъра"}
         </p>
-        <dl className="mt-3 grid gap-1 text-sm sm:grid-cols-[12rem_1fr]">
-          <dt className="text-pizza-muted">Среда на сайта (APP_ENV)</dt>
-          <dd className="font-mono">{payments.appEnv}</dd>
-          <dt className="text-pizza-muted">Доставчик</dt>
+
+        {payments.environment === "production" && (
+          <CardAudienceForm publicCard={payments.audience === "everyone"} bankReady={realBank} />
+        )}
+
+        <dl className="mt-4 grid gap-1 text-sm sm:grid-cols-[12rem_1fr]">
+          <dt className="text-pizza-muted">Кой вижда картата</dt>
+          <dd>
+            {!payments.enabled
+              ? "никой"
+              : payments.audience === "staff"
+                ? "само влезлия персонал"
+                : "всички клиенти (гости и регистрирани)"}
+            {payments.environment === "production" && (
+              <span className="text-pizza-muted">
+                {" — "}
+                {payments.audienceSource === "admin"
+                  ? "от настройката тук"
+                  : `от сървъра (PAYMENT_PRODUCTION_AUDIENCE=${payments.envAudience ?? "—"})`}
+                {payments.audienceSource === "admin" && payments.envAudience
+                  ? `; стойността на сървъра (${payments.envAudience}) вече не се ползва`
+                  : ""}
+              </span>
+            )}
+          </dd>
+          <dt className="text-pizza-muted">Доставчик / среда</dt>
           <dd className="font-mono">
             {payments.provider ?? "—"}
             {payments.environment ? ` / ${payments.environment}` : ""}
+            <span className="font-sans text-pizza-muted"> (APP_ENV={payments.appEnv})</span>
           </dd>
-          <dt className="text-pizza-muted">Кой вижда картата</dt>
-          <dd>{payments.audience === "staff" ? "само влезлия персонал" : "всички клиенти"}</dd>
           <dt className="text-pizza-muted">Незавършени опити (ОББ)</dt>
           <dd className="font-mono">
             {Object.keys(payments.openUpcAttempts).length === 0
@@ -120,32 +153,53 @@ export default async function AdminSettingsPage() {
             Тестов режим: поръчките, платени така, са тестови и не са реални пари.
           </p>
         )}
-        {payments.environment === "production" && payments.audience === "staff" && (
-          <p className="mt-3 text-sm font-semibold text-amber-800">
-            Пилот: РЕАЛНИ плащания, но картата се предлага само на влязъл персонал. Публично сайтът
-            още казва, че карти не се приемат.
-          </p>
+        {/* The demo simulator: staff-only on the live site (production reads a
+            stored EVERYONE as STAFF), never instead of a configured bank. */}
+        {realBank ? (
+          <details className="mt-5 border-t border-pizza-cream-dark pt-4">
+            <summary className="cursor-pointer text-sm font-semibold text-pizza-muted">
+              Демо симулатор (без реални пари) — не се ползва, докато реалната банка е активна
+            </summary>
+            <DemoControls payments={payments} showTestCards={false} />
+          </details>
+        ) : (
+          <div className="mt-5 border-t border-pizza-cream-dark pt-4">
+            <DemoControls payments={payments} showTestCards />
+          </div>
         )}
-
-        <div className="mt-5 border-t border-pizza-cream-dark pt-4">
-          <CardDemoModeForm
-            mode={payments.demoMode}
-            publicAllowed={payments.appEnv !== "production"}
-          />
-          {payments.demoMode !== "OFF" && payments.demoProblems.length > 0 && (
-            <ul className="mt-2 list-disc pl-5 text-sm text-red-700">
-              {payments.demoProblems.map((p) => (
-                <li key={p}>{p}</li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-2 text-xs text-pizza-muted">
-            Тестови карти: 4242 4242 4242 4242 (успех), 4000 0000 0000 9995 (отказ). Демо
-            поръчките са маркирани „ТЕСТ — НЕ ПРИГОТВЯЙ“, не са реални пари и не пращат имейли.
-            Щом има настроена истинска банка, тя е с предимство пред демото.
-          </p>
-        </div>
       </section>
     </div>
+  );
+}
+
+function DemoControls({
+  payments,
+  showTestCards,
+}: {
+  payments: PaymentStatusSummary;
+  showTestCards: boolean;
+}) {
+  return (
+    <>
+      <CardDemoModeForm mode={payments.demoMode} publicAllowed={payments.appEnv !== "production"} />
+      {payments.demoMode !== "OFF" && payments.demoProblems.length > 0 && (
+        <ul className="mt-2 list-disc pl-5 text-sm text-red-700">
+          {payments.demoProblems.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
+      )}
+      {showTestCards ? (
+        <p className="mt-2 text-xs text-pizza-muted">
+          Тестови карти: 4242 4242 4242 4242 (успех), 4000 0000 0000 9995 (отказ). Демо
+          поръчките са маркирани „ТЕСТ — НЕ ПРИГОТВЯЙ“, не са реални пари и не пращат имейли.
+          Щом има настроена истинска банка, тя е с предимство пред демото.
+        </p>
+      ) : (
+        <p className="mt-2 text-xs text-pizza-muted">
+          Реалната банка е с предимство: докато е активна, демото не се показва в checkout.
+        </p>
+      )}
+    </>
   );
 }

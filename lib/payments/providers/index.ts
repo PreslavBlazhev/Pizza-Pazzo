@@ -9,15 +9,19 @@
  *      simulator on the live site, for the audience the owner chose.
  * A configured real provider always wins; the demo never replaces a bank.
  */
-import { getPaymentConfig, type PaymentConfig } from "../config";
+import { getPaymentConfig, type PaymentConfig, type PaymentConfigOverrides } from "../config";
+import { getStoredProductionAudience } from "../production-audience";
 import type { PaymentProvider } from "../types";
 import { demoAllowsViewer, demoSimulatorConfig, getCardDemoMode, isStaffRole } from "../demo";
 import { createSimulatorProvider, SIMULATOR_PROVIDER_ID } from "./simulator";
 import { createUpcProvider, upcConfigProblems, UPC_PROVIDER_ID } from "./upc";
 
 /** Environment config plus the chosen adapter's own requirements. */
-export function getEffectivePaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentConfig {
-  const config = getPaymentConfig(env);
+export function getEffectivePaymentConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  overrides: PaymentConfigOverrides = {}
+): PaymentConfig {
+  const config = getPaymentConfig(env, overrides);
   if (config.providerId === "upc") {
     const extra = upcConfigProblems(config, env);
     if (extra.length > 0) {
@@ -25,6 +29,19 @@ export function getEffectivePaymentConfig(env: NodeJS.ProcessEnv = process.env):
     }
   }
   return config;
+}
+
+/**
+ * The effective configuration WITH the audience chosen in Admin → Settings
+ * (lib/payments/production-audience.ts). Everything that decides who is
+ * offered the card — checkout, placeOrder, the public "cards accepted" text,
+ * the admin summary — reads this one.
+ */
+export async function loadPaymentConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  options: { fresh?: boolean } = {}
+): Promise<PaymentConfig> {
+  return getEffectivePaymentConfig(env, { productionAudience: await getStoredProductionAudience(options) });
 }
 
 function providerFor(config: PaymentConfig, env: NodeJS.ProcessEnv = process.env): PaymentProvider {
@@ -47,9 +64,10 @@ export interface CheckoutPaymentSetup {
  * the same answer in both places.
  */
 export async function resolveCheckoutPayment(role: string | null | undefined): Promise<CheckoutPaymentSetup> {
-  const env = getEffectivePaymentConfig();
+  // Fresh: the order is accepted exactly as the admin switch says right now.
+  const env = await loadPaymentConfig(process.env, { fresh: true });
   if (env.enabled) {
-    // A bank sandbox on the live site is for staff only.
+    // A bank sandbox on the live site, or the production pilot, is staff only.
     if (env.audience === "staff" && !isStaffRole(role)) {
       return { available: false, demo: false, sandbox: false, config: env };
     }

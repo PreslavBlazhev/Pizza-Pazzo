@@ -9,7 +9,7 @@ import {
 import { groupWorkingHours, telHref, workingHoursRowLabel } from "@/lib/working-hours";
 import { DELIVERY_AREA, deliveryTownsLabel } from "@/lib/delivery-area";
 import { formatEurPrice } from "@/lib/format-price";
-import { isCardPaymentLive } from "@/lib/payments/card-marks";
+import { isCardPaymentLiveNow } from "@/lib/payments/card-marks";
 import {
   pickL,
   type LegalBlock,
@@ -278,7 +278,7 @@ async function DynamicBlock({
       // The REAL provider, offered to the public, only — the staff-only demo,
       // sandbox and production pilot are not payment methods offered to
       // customers and are never described as one.
-      const cardLive = isCardPaymentLive();
+      const cardLive = await isCardPaymentLiveNow();
       return (
         <ul className={`${box} space-y-2`}>
           <li>

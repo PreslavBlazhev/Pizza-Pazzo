@@ -6,7 +6,7 @@ import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { getSessionUser } from "@/lib/auth";
 import { resolveCheckoutPayment } from "@/lib/payments/providers";
 import { MerchantIdentity } from "@/components/payment/MerchantIdentity";
-import { getCardBrandMarks } from "@/lib/payments/card-marks";
+import { getCardBrandMarksNow } from "@/lib/payments/card-marks";
 import type { Locale } from "@/i18n/routing";
 
 interface PageProps {
@@ -45,7 +45,7 @@ export default async function CheckoutPage({ params }: PageProps) {
           cardAvailable={payment.available}
           cardIsDemo={payment.demo}
           cardIsSandbox={payment.sandbox}
-          cardMarks={payment.demo || payment.sandbox ? [] : getCardBrandMarks()}
+          cardMarks={payment.demo || payment.sandbox ? [] : await getCardBrandMarksNow()}
         />
         <MerchantIdentity locale={locale} className="mt-6" />
       </main>

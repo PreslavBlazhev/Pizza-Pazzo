@@ -9,7 +9,8 @@
  *   1. real card payments are enabled (a production provider — never the
  *      simulator, the staff demo or a sandbox);
  *   2. CARD_BRAND_MARKS lists the brand (comma-separated ids, set from what
- *      the merchant contract / bank confirms, e.g. "visa,mastercard,borica");
+ *      the merchant contract / bank confirms, e.g. "visa,mastercard") — when
+ *      unset, the footer schemes (Visa, Mastercard; ОББ request form);
  *   3. the official artwork file exists at public/payment-marks/<id>.svg or
  *      .png.
  *
@@ -26,7 +27,8 @@
  */
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { getEffectivePaymentConfig } from "@/lib/payments/providers";
+import { getEffectivePaymentConfig, loadPaymentConfig } from "@/lib/payments/providers";
+import type { PaymentConfig } from "@/lib/payments/config";
 
 /** Known brands and their accessible names. */
 const BRANDS = {
@@ -82,16 +84,41 @@ function markFor(id: CardBrandId, files: ReadonlySet<string>): CardBrandMark | n
  * The staff-only production pilot is not: customers are not offered cards
  * yet, so nothing public may say they are accepted.
  */
-export function isCardPaymentLive(env: NodeJS.ProcessEnv = process.env): boolean {
-  const config = getEffectivePaymentConfig(env);
+export function isLiveConfig(config: PaymentConfig): boolean {
   return config.enabled && !config.isTest && config.environment === "production" && config.audience === "everyone";
 }
 
-export function getCardBrandMarks(env: NodeJS.ProcessEnv = process.env): CardBrandMark[] {
-  if (!isCardPaymentLive(env)) return [];
+/** From the environment alone (no Admin → Settings switch) — tests and scripts. */
+export function isCardPaymentLive(env: NodeJS.ProcessEnv = process.env): boolean {
+  return isLiveConfig(getEffectivePaymentConfig(env));
+}
 
-  const wanted = (env.CARD_BRAND_MARKS ?? "")
-    .split(",")
+/**
+ * What the site says publicly: the environment WITH the audience chosen in
+ * Admin → Settings. The footer, the legal pages and checkout read this.
+ */
+export async function isCardPaymentLiveNow(env: NodeJS.ProcessEnv = process.env): Promise<boolean> {
+  return isLiveConfig(await loadPaymentConfig(env));
+}
+
+export function getCardBrandMarks(env: NodeJS.ProcessEnv = process.env): CardBrandMark[] {
+  return brandMarks(isCardPaymentLive(env), env);
+}
+
+/** Checkout marks with the Admin → Settings audience applied. */
+export async function getCardBrandMarksNow(env: NodeJS.ProcessEnv = process.env): Promise<CardBrandMark[]> {
+  return brandMarks(await isCardPaymentLiveNow(env), env);
+}
+
+/**
+ * CARD_BRAND_MARKS when set; otherwise the footer's schemes (Visa and
+ * Mastercard — the ones named in ОББ's virtual-POS request form).
+ */
+function brandMarks(live: boolean, env: NodeJS.ProcessEnv): CardBrandMark[] {
+  if (!live) return [];
+
+  const listed = (env.CARD_BRAND_MARKS ?? "").trim();
+  const wanted = (listed ? listed.split(",") : [...FOOTER_SCHEME_IDS] as string[])
     .map((s) => s.trim().toLowerCase())
     .filter((s): s is CardBrandId => s in BRANDS);
 

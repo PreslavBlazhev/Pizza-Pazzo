@@ -287,7 +287,7 @@ test("UBB-14: footer shows the card brands from their files, independent of the 
 
 test("UBB-14: while card payment is off the footer never claims cards are accepted", () => {
   const footer = readFileSync(join(process.cwd(), "components", "layout", "Footer.tsx"), "utf8");
-  assert.match(footer, /isCardPaymentLive\(\) \?[\s\S]*payment\.acceptedCards[\s\S]*payment\.cardSchemes[\s\S]*payment\.cardNotActiveYet/);
+  assert.match(footer, /\(await isCardPaymentLiveNow\(\)\) \?[\s\S]*payment\.acceptedCards[\s\S]*payment\.cardSchemes[\s\S]*payment\.cardNotActiveYet/);
   for (const locale of ["bg", "en"]) {
     const m = JSON.parse(readFileSync(join(process.cwd(), "messages", `${locale}.json`), "utf8")).payment;
     assert.ok(m.cardSchemes && m.cardNotActiveYet, locale);

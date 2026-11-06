@@ -63,13 +63,36 @@ export interface PaymentConfig {
    * staff-only production pilot — PAYMENT_PRODUCTION_AUDIENCE=staff).
    */
   audience: "everyone" | "staff";
+  /**
+   * Where the production audience came from: the Admin → Settings switch
+   * ("admin", which wins) or PAYMENT_PRODUCTION_AUDIENCE ("env").
+   */
+  audienceSource: "admin" | "env";
   simulatorSecret: string;
 }
 
 /** Minimum length for the simulator's callback-signing secret. */
 const MIN_SECRET_LENGTH = 16;
 
-export function getPaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentConfig {
+export type ProductionAudience = "staff" | "everyone";
+
+export function isProductionAudience(v: unknown): v is ProductionAudience {
+  return v === "staff" || v === "everyone";
+}
+
+export interface PaymentConfigOverrides {
+  /**
+   * The audience stored in Admin → Settings (lib/payments/production-audience.ts).
+   * When set it REPLACES PAYMENT_PRODUCTION_AUDIENCE — one setting decides,
+   * never two that disagree. Applies to the production terminal only.
+   */
+  productionAudience?: ProductionAudience | null;
+}
+
+export function getPaymentConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  overrides: PaymentConfigOverrides = {}
+): PaymentConfig {
   const problems: string[] = [];
   const appEnv = getAppEnv(env);
   const baseUrl = getAppBaseUrl(env);
@@ -97,6 +120,7 @@ export function getPaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentC
   //    real order, and a real deployment can never take a fake payment.
   const sandboxAudience = (env.PAYMENT_SANDBOX_AUDIENCE ?? "").trim().toLowerCase();
   let audience: PaymentConfig["audience"] = "everyone";
+  let audienceSource: PaymentConfig["audienceSource"] = "env";
   if (environment === "simulator" && appEnv === "production") {
     problems.push("Симулаторът е забранен при APP_ENV=production.");
   }
@@ -120,7 +144,11 @@ export function getPaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentC
         "PAYMENT_SANDBOX_AUDIENCE е от тестовата среда — при PAYMENT_ENV=production го премахнете и задайте PAYMENT_PRODUCTION_AUDIENCE."
       );
     }
-    const productionAudience = (env.PAYMENT_PRODUCTION_AUDIENCE ?? "").trim().toLowerCase();
+    const stored = overrides.productionAudience;
+    const productionAudience = isProductionAudience(stored)
+      ? stored
+      : (env.PAYMENT_PRODUCTION_AUDIENCE ?? "").trim().toLowerCase();
+    audienceSource = isProductionAudience(stored) ? "admin" : "env";
     if (productionAudience === "staff") audience = "staff";
     else if (productionAudience !== "everyone") {
       problems.push(
@@ -164,6 +192,7 @@ export function getPaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentC
     baseUrl,
     isTest: environment !== "production",
     audience,
+    audienceSource,
     simulatorSecret,
   };
 }

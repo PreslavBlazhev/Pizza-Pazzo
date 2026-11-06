@@ -46,7 +46,9 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { getPaymentConfig } from "@/lib/payments/config";
-import { isCardPaymentLive } from "@/lib/payments/card-marks";
+import { getCardBrandMarksNow, isCardPaymentLive, isCardPaymentLiveNow } from "@/lib/payments/card-marks";
+import { getStoredProductionAudience, setStoredProductionAudience } from "@/lib/payments/production-audience";
+import { getPaymentStatusSummary } from "@/lib/payments/admin";
 import { createUpcProvider } from "@/lib/payments/providers/upc";
 import { UPC_PRODUCTION_GATEWAY_CERT, UPC_PRODUCTION_GATEWAY_CERT_SHA256, UPC_TEST_GATEWAY_CERT } from "@/lib/payments/upc/certs";
 
@@ -1276,4 +1278,91 @@ test("no mixing: an attempt started on the test terminal is never queried with t
     /belongs to terminal 1731096\/E7059096/
   );
   assert.equal(statusCalls.length, before, "nothing was sent to any gateway");
+});
+
+// ── Admin → Settings: "Реално плащане с карта — достъпно за всички клиенти" ──
+
+test("admin audience switch: the stored value decides who is offered real card payment, over PAYMENT_PRODUCTION_AUDIENCE", async () => {
+  const saved = { ...process.env };
+  try {
+    // The server still says "staff" (Render), the admin turned it on for everyone.
+    Object.assign(process.env, productionEnv({ PAYMENT_PRODUCTION_AUDIENCE: "staff" }));
+    assert.equal(await getStoredProductionAudience({ fresh: true }), null, "never set → the env applies");
+    assert.equal((await resolveCheckoutPayment(null)).available, false);
+
+    await setStoredProductionAudience("everyone");
+    assert.equal(await getStoredProductionAudience({ fresh: true }), "everyone", "persisted in the database");
+    for (const role of [null, "CUSTOMER", "STAFF", "ADMIN"]) {
+      const r = await resolveCheckoutPayment(role);
+      assert.equal(r.available, true, `card offered to ${role ?? "guest"}`);
+      assert.equal(r.demo, false, "the real bank, never the demo simulator");
+      assert.equal(r.sandbox, false);
+      assert.equal(r.config.environment, "production");
+      assert.equal(r.config.isTest, false);
+    }
+    assert.equal(await isCardPaymentLiveNow(), true, "footer / legal text say cards are accepted");
+    assert.equal(isCardPaymentLive(), false, "the env alone still says staff — the admin value is what wins");
+    assert.deepEqual(
+      (await getCardBrandMarksNow({ ...process.env, CARD_BRAND_MARKS: "" })).map((m) => m.id),
+      ["visa", "mastercard"],
+      "checkout marks default to the footer schemes when CARD_BRAND_MARKS is unset"
+    );
+    const summary = await getPaymentStatusSummary();
+    assert.equal(summary.audience, "everyone");
+    assert.equal(summary.audienceSource, "admin");
+    assert.equal(summary.storedAudience, "everyone");
+    assert.equal(summary.envAudience, "staff");
+    assert.equal(summary.publicLive, true);
+
+    // A guest's real order goes to the production page, unpaid until the bank says so.
+    const guest = await placeOrder(
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS },
+      deps
+    );
+    assert.equal(guest.ok, true, JSON.stringify(guest));
+    if (guest.ok) {
+      const order = await db.order.findUniqueOrThrow({ where: { accessToken: guest.accessToken } });
+      assert.equal(order.isTest, false);
+      assert.notEqual(order.paymentStatus, "PAID");
+    }
+
+    // And back: off → staff only, even though the env would say everyone.
+    Object.assign(process.env, productionEnv({ PAYMENT_PRODUCTION_AUDIENCE: "everyone" }));
+    await setStoredProductionAudience("staff");
+    assert.equal((await resolveCheckoutPayment(null)).available, false);
+    assert.equal((await resolveCheckoutPayment("CUSTOMER")).available, false);
+    assert.equal((await resolveCheckoutPayment("STAFF")).available, true);
+    assert.equal(await isCardPaymentLiveNow(), false);
+    const refused = await placeOrder(
+      { contact: CONTACT, itemsJson: STANDARD_ITEMS, paymentMethod: "card_online", checkoutKey: key(), userId: null, consents: ALL_CONSENTS },
+      deps
+    );
+    assert.deepEqual(refused, { ok: false, error: "CARD_UNAVAILABLE" });
+  } finally {
+    await setStoredProductionAudience(null);
+    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
+    Object.assign(process.env, saved);
+  }
+});
+
+test("admin audience switch: no effect without a valid production terminal; never opens the sandbox or the demo to the public", async () => {
+  try {
+    await setStoredProductionAudience("everyone");
+    // This suite's own environment: ОББ's TEST terminal, staff only.
+    assert.equal(getEffectivePaymentConfig().environment, "sandbox");
+    assert.equal((await resolveCheckoutPayment(null)).available, false, "the sandbox stays staff-only");
+    assert.equal(await isCardPaymentLiveNow(), false);
+
+    const saved = { ...process.env };
+    try {
+      Object.assign(process.env, productionEnv({ UPC_PRIVATE_KEY: "" }));
+      assert.equal((await resolveCheckoutPayment(null)).available, false, "a broken terminal offers nothing");
+      assert.equal(await isCardPaymentLiveNow(), false);
+    } finally {
+      for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
+      Object.assign(process.env, saved);
+    }
+  } finally {
+    await setStoredProductionAudience(null);
+  }
 });

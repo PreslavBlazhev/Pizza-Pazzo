@@ -2,7 +2,8 @@
  * Payment data for the admin — SERVER ONLY, read-only.
  */
 import { db } from "@/lib/db";
-import { getEffectivePaymentConfig } from "./providers";
+import { loadPaymentConfig } from "./providers";
+import { getStoredProductionAudience } from "./production-audience";
 import { demoSimulatorConfig, getCardDemoMode, type CardDemoMode } from "./demo";
 import { OPEN_ATTEMPT_STATUSES } from "./status";
 import { UPC_PROVIDER_ID } from "./providers/upc";
@@ -189,6 +190,14 @@ export interface PaymentStatusSummary {
   openUpcAttempts: Record<string, number>;
   /** Who is offered the card option: everyone, or only signed-in staff. */
   audience: "everyone" | "staff";
+  /** Where that came from: the Admin → Settings switch, or the server env. */
+  audienceSource: "admin" | "env";
+  /** The Admin → Settings value (null = never set, the env applies). */
+  storedAudience: "everyone" | "staff" | null;
+  /** PAYMENT_PRODUCTION_AUDIENCE as the server has it (for the record only). */
+  envAudience: string | null;
+  /** Real bank payment enabled AND offered to every visitor. */
+  publicLive: boolean;
 }
 
 /** SUCCESS_URL / FAILURE_URL / NOTIFY_URL for ОББ's portal, from the public base URL. */
@@ -201,7 +210,8 @@ export function upcPortalUrls(baseUrl: string): { success: string; failure: stri
 }
 
 export async function getPaymentStatusSummary(): Promise<PaymentStatusSummary> {
-  const c = getEffectivePaymentConfig();
+  const c = await loadPaymentConfig(process.env, { fresh: true });
+  const storedAudience = await getStoredProductionAudience({ fresh: true });
   const demoMode = await getCardDemoMode();
   const demo = demoSimulatorConfig();
   const slug = c.providerId === "simulator" ? "simulator" : c.providerId ? "upc" : null;
@@ -225,5 +235,9 @@ export async function getPaymentStatusSummary(): Promise<PaymentStatusSummary> {
     demoProblems: demo.problems,
     openUpcAttempts: Object.fromEntries(open.map((g) => [g.environment, g._count._all])),
     audience: c.audience,
+    audienceSource: c.audienceSource,
+    storedAudience,
+    envAudience: (process.env.PAYMENT_PRODUCTION_AUDIENCE ?? "").trim() || null,
+    publicLive: c.enabled && !c.isTest && c.environment === "production" && c.audience === "everyone",
   };
 }

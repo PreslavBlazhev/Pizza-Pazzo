@@ -231,3 +231,25 @@
 **Пробата е реална поръчка.** Ако не искате доставка, откажете поръчката от админа и възстановете 10,23 € от портала на ОББ. Сайтът не прави възстановяване сам.
 
 **Отказан и отменен сценарий:** в продукция няма тестови карти. Отказ може да се види с карта без наличност или при грешен 3-D Secure код, по ваш избор. Отмяна: бутонът „Отказ“/затваряне на страницата на банката. След 60 мин без плащане поръчката се отказва автоматично (§9.3). Тези сценарии са покрити с автоматичните тестове и с реалния sandbox тест от 30.10.
+
+## 12. Who is offered real card payment — Admin → Settings (06.11.2026)
+
+The audience is now a switch in **Admin → Настройки → „Реални плащания чрез ОББ“**:
+the checkbox **„Реално плащане с карта — достъпно за всички клиенти“** (on =
+everyone, off = signed-in staff only). It is stored in the database
+(`RestaurantSettings.cardProductionAudience`, migration
+`20261106120000_card_production_audience`) and **replaces**
+`PAYMENT_PRODUCTION_AUDIENCE` when set — the admin page shows which source
+applies and the server value that is no longer used. It survives restarts and
+redeploys, needs no rebuild (the footer and legal pages refresh through the
+settings cache tag) and changes only WHO is offered the card: terminal, keys,
+currency and every check of the bank's confirmations stay on the server, and
+without a valid production terminal no one is offered the card. The demo
+simulator stays separate and staff-only in production.
+
+`CARD_BRAND_MARKS` unset now means the footer schemes (Visa, Mastercard) next
+to the card option at checkout.
+
+Code: `lib/payments/production-audience.ts`, `loadPaymentConfig()` in
+`lib/payments/providers/index.ts`, `app/actions/admin-card-audience.ts`,
+`components/admin/CardAudienceForm.tsx`.

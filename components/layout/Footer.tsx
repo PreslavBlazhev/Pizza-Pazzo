@@ -5,7 +5,7 @@ import { CallNowButton } from "./CallNow";
 import { NAV_LINKS } from "./nav-links";
 import { SITE } from "@/lib/constants";
 import { companyFor } from "@/content/legal/company";
-import { getFooterSchemeMarks, isCardPaymentLive } from "@/lib/payments/card-marks";
+import { getFooterSchemeMarks, isCardPaymentLiveNow } from "@/lib/payments/card-marks";
 import { CardBrandMarks } from "@/components/payment/CardBrandMarks";
 import {
   getRestaurantSettings,
@@ -144,7 +144,7 @@ export async function Footer() {
           {/* Card-scheme logos, asked for by ОББ before the integration (UBB-14).
               Shown from the official files whether or not card payment is
               live — but only claimed as accepted once it really is. */}
-          {isCardPaymentLive() ? (
+          {(await isCardPaymentLiveNow()) ? (
             <CardBrandMarks marks={getFooterSchemeMarks()} label={t("payment.acceptedCards")} />
           ) : (
             <CardBrandMarks
