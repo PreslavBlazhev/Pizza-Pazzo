@@ -253,3 +253,107 @@ to the card option at checkout.
 Code: `lib/payments/production-audience.ts`, `loadPaymentConfig()` in
 `lib/payments/providers/index.ts`, `app/actions/admin-card-audience.ts`,
 `components/admin/CardAudienceForm.tsx`.
+
+## 13. Apple Pay missing on ОББ's page — diagnosis (06.11.2026)
+
+Reported: real iPhone, Safari (not the app), active card in Wallet; ОББ's page
+for **PP1056-2E85C35A** (10.23 EUR) shows Google Pay only. ОББ says both are active.
+
+**Our request — not the cause.** `POST https://secure.kbcbank.bg/kbc/pay`,
+MerchantID 7331057, TerminalID E0901028, Currency 978, TotalAmount in cents,
+OrderID, PurchaseTime, PurchaseDesc, locale, Signature (RS512)
+(`lib/payments/providers/upc.ts` buildUpcPaymentForm). UPC's hosted page has
+no request parameter that selects payment methods (UPC docs, Checkout by Apple
+Pay: "no need to perform any additional technical actions on the part of the
+merchant"); the page for our terminal does contain the Apple Pay block.
+
+**What hides the button (the bank's page, `/kbc/jscript/applePay.js?v=3.71`).**
+`.applePay {display:none}`; the inline script calls
+`new UPCApplePay("merchant.ua.upc.ec", {countryCode:"UA", currencyCode:"EUR", supportedNetworks:["masterCard","visa"], merchantCapabilities:["supports3DS"], …})`,
+whose constructor runs `ApplePaySession.canMakePaymentsWithActiveCard("merchant.ua.upc.ec")`
+and shows the button only on `true`. No `else`, no `.catch`, no logging — a
+`false` or a rejection leaves the button hidden silently.
+This is the AVAILABILITY check. Merchant validation (`onvalidatemerchant` →
+POST `/kbc/enter/<session>` `action=applePayVerification` → Apple session;
+failure = `alert("Undefined error. Try later.")`) only runs after a tap, so it
+is not reached when the button never shows. `countryCode` is used only by
+`new ApplePaySession(…)` after the tap — not by the availability check.
+
+**What that check depends on.** WebKit
+(`Source/WebKit/Shared/ApplePay/cocoa/WebPaymentCoordinatorProxyCocoa.mm`,
+`platformCanMakePaymentsWithActiveCard`) passes the merchant identifier AND
+the page's domain to PassKit:
+`PKCanMakePaymentsWithMerchantIdentifierDomainAndSourceApplication(merchantIdentifier, domainName, …)`,
+which asks Apple's servers. So the answer is about the pair
+`merchant.ua.upc.ec` + `secure.kbcbank.bg`, besides the phone and its cards.
+
+**The finding.** `https://secure.kbcbank.bg/.well-known/apple-developer-merchantid-domain-association.txt`
+(200, 5768 bytes, checked 06.11.2026 14:26 UTC) is a PKCS#7 signed by Apple
+whose content is
+`{"teamId":"DY28LAW573","domain":"cardpayment.rbinternational.com","dateCreated":"2026-10-23,06:13:27","version":1}` —
+byte-identical (sha256 9f855e6de4e66b66…) to the file served by
+`cardpayment.rbinternational.com`. The same Apple team (DY28LAW573 = UPC: its
+`secure.upc.ua` file says `"domain":"secure.upc.ua"`, `ecg.test.upc.ua` says
+`"domain":"ecg.test.upc.ua"`) issues one file PER DOMAIN; a file for
+`secure.kbcbank.bg` would name `secure.kbcbank.bg`. The bank's domain
+therefore cannot (re)verify with Apple under UPC's merchant ID with this file.
+TLS of secure.kbcbank.bg: Google Trust Services WE1, 15.09.2026 – 14.12.2026
+(Apple ties domain verification to the TLS certificate and re-checks around renewal).
+
+**Status: strong evidence, not final proof.** Missing, and who has it:
+1. UPC (Apple Developer account of team DY28LAW573, merchant ID
+   merchant.ua.upc.ec → Merchant Domains): is `secure.kbcbank.bg` listed and
+   VERIFIED? Only UPC can see it.
+2. The phone's own answer: iPhone → Settings → Apps → Safari → Advanced →
+   Web Inspector ON; Mac Safari → Develop → [iPhone] → the bank page; in the
+   console:
+   `await ApplePaySession.canMakePayments()` and
+   `await ApplePaySession.canMakePaymentsWithActiveCard("merchant.ua.upc.ec")`.
+   Expected if this is the cause: `true` / `false`. Needs a Mac (the owner).
+
+Nothing in our code, request or configuration changes this; countryCode,
+merchant ID and certificates are UPC's and are NOT changed by us.
+
+### Inquiry text (NOT sent) — to pos_support@ubb.bg, please forward to UPC (ec@upc.ua)
+
+Тема: Apple Pay не се показва на платежната страница — терминал E0901028 (MID 7331057), pizzapazzo.bg
+
+Здравейте,
+
+На платежната страница https://secure.kbcbank.bg/kbc/pay за нашия терминал
+Apple Pay не се показва, въпреки че е потвърдено като активно. Google Pay се
+показва нормално.
+
+Данни:
+- Търговец: pizzapazzo.bg; MerchantID 7331057; TerminalID E0901028; валута 978 (EUR)
+- Сесия: OrderID PP1056-2E85C35A, 10.23 EUR, 06.11.2026 (час — по логовете ви за този OrderID)
+- Възпроизвеждане без плащане: OrderID PPCHKAPmw52jic6, 1.00 EUR, 06.11.2026 14:27:26 UTC,
+  сесия /kbc/pay/963e968a/812e29eaa1ef493caf8d36cf34c5f19e/
+- Устройство: iPhone, Safari (не вградено приложение), активна карта в Apple Wallet
+
+Какво виждаме в страницата: бутонът е скрит (`.applePay {display:none}`) и се
+показва само ако `ApplePaySession.canMakePaymentsWithActiveCard("merchant.ua.upc.ec")`
+върне true (applePay.js?v=3.71). Safari прави тази проверка за двойката
+merchant ID + домейн на страницата (secure.kbcbank.bg) чрез сървърите на Apple.
+
+Файлът https://secure.kbcbank.bg/.well-known/apple-developer-merchantid-domain-association.txt
+(5768 байта) е подписан от Apple за друг домейн:
+{"teamId":"DY28LAW573","domain":"cardpayment.rbinternational.com","dateCreated":"2026-10-23,06:13:27","version":1}
+— идентичен с файла на cardpayment.rbinternational.com. За сравнение secure.upc.ua
+връща файл с "domain":"secure.upc.ua".
+
+Моля, проверете и ни отговорете конкретно:
+1. Регистриран и потвърден (Verified) ли е домейнът secure.kbcbank.bg към
+   merchant ID merchant.ua.upc.ec в Apple Developer акаунта на UPC (team DY28LAW573)?
+   Ако не е, или потвърждението е изтекло — моля, публикувайте на
+   secure.kbcbank.bg верния файл за този домейн и го потвърдете отново.
+2. Какъв е резултатът от проверката на Apple Pay в логовете ви за сесия
+   PP1056-2E85C35A (ако страницата регистрира такъв) и има ли грешки при
+   applePayVerification за терминал E0901028.
+3. Има ли друга настройка на терминал E0901028, която спира Apple Pay в тази сесия.
+
+Не сме променяли и няма да променяме countryCode, merchant идентификатора или
+сертификатите — те са от страницата на UPC.
+
+Поздрави,
+Pizza Pazzo — pizzapazzo.bg
