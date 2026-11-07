@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { FormAlert } from "@/components/ui/FormAlert";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
-import { useStoreClosed } from "@/components/store/StoreStatusProvider";
+import { useClosedNotice } from "@/components/store/StoreStatusProvider";
 import { useUnavailableProducts } from "@/components/cart/useUnavailableProducts";
 import { armCheckoutTrace, traceStage } from "@/lib/checkout/trace";
 import {
@@ -171,7 +171,7 @@ export function CheckoutForm({
   const items = useCartStore((s) => s.items);
   const totalsFn = useCartStore((s) => s.totals);
   const clear = useCartStore((s) => s.clear);
-  const storeClosed = useStoreClosed();
+  const { ensureOpen, recheckAndNotify } = useClosedNotice();
   const unavailable = useUnavailableProducts(items);
 
   /**
@@ -344,7 +344,13 @@ export function CheckoutForm({
     );
     if (empty.length === 0) {
       setMissing([]);
-      void submitOrder(new FormData(event.currentTarget));
+      const data = new FormData(event.currentTarget);
+      // Closed (asked fresh — the page may have been opened before closing
+      // time): show the closed notice and send nothing. The server refuses a
+      // closed-shop order on its own as well (createOrder).
+      void ensureOpen().then((open) => {
+        if (open) void submitOrder(data);
+      });
       return;
     }
     traceStage("invalid", traceLocale);
@@ -366,6 +372,8 @@ export function CheckoutForm({
       const result = await createOrder(null, data);
       traceStage(result.ok ? "ok" : "refused", traceLocale);
       setState(result);
+      // Closed between the check above and the server: show the notice too.
+      if (!result.ok) void recheckAndNotify();
     } catch {
       traceStage("failed", traceLocale);
       // The request may have reached the server before failing. Ask with the
@@ -737,7 +745,6 @@ export function CheckoutForm({
             isPending ||
             checkingPrevious ||
             !checkoutKey ||
-            storeClosed ||
             belowMinimum ||
             unavailableLines.length > 0 ||
             outdatedLines.length > 0

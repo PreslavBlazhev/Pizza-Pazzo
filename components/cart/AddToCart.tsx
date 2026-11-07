@@ -11,7 +11,7 @@ import type {
 } from "@/types/cart";
 import { MAX_LINE_QUANTITY, useCartStore } from "@/store/cart-store";
 import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
-import { useStoreClosed } from "@/components/store/StoreStatusProvider";
+import { useClosedNotice } from "@/components/store/StoreStatusProvider";
 import { EXTRAS_LIMITS, isRetiredExtraKey, parseVariantSize } from "@/lib/extras-rules";
 import { formatEurPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
@@ -78,11 +78,11 @@ export function AddToCart({
 }) {
   const t = useTranslations("product");
   const tExtras = useTranslations("extras");
-  const tStore = useTranslations("store");
   const router = useRouter();
   const addProduct = useCartStore((s) => s.addProduct);
   const replaceItem = useCartStore((s) => s.replaceItem);
-  const storeClosed = useStoreClosed();
+  const { ensureOpen } = useClosedNotice();
+  const addingRef = useRef(false);
 
   const variants = product.variants ?? [];
   const hasVariants = variants.length > 0;
@@ -239,8 +239,21 @@ export function AddToCart({
     });
   }
 
-  function handleAdd() {
-    if (invalidSelection || storeClosed) return;
+  async function handleAdd() {
+    if (invalidSelection) return;
+    // Closed (asked fresh, so a page opened before closing time counts too):
+    // the notice opens and NOTHING is added. The button stays pressable so the
+    // customer always learns why.
+    // Editing a line already in the basket is not adding — that stays allowed.
+    if (!editing) {
+      if (addingRef.current) return; // a second tap while the check is running
+      addingRef.current = true;
+      try {
+        if (!(await ensureOpen())) return;
+      } finally {
+        addingRef.current = false;
+      }
+    }
     // Build the cart selections in option render order (deterministic); the
     // display block is UI preview only — the checkout serializer drops it.
     const list: CartExtraSelection[] = [];
@@ -394,21 +407,19 @@ export function AddToCart({
 
         <button
           type="button"
-          onClick={handleAdd}
-          disabled={invalidSelection || storeClosed}
+          onClick={() => void handleAdd()}
+          disabled={invalidSelection}
           className={cn(
             "flex-1 rounded-full px-6 py-3.5 text-sm font-semibold text-white shadow-soft transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 sm:flex-none sm:px-10",
             justAdded ? "bg-pizza-green" : "bg-brand hover:bg-brand-dark",
-            (invalidSelection || storeClosed) && "cursor-not-allowed opacity-60 hover:bg-brand"
+            invalidSelection && "cursor-not-allowed opacity-60 hover:bg-brand"
           )}
         >
-          {storeClosed
-            ? tStore("closedShort")
-            : justAdded
-              ? t("added")
-              : editing
-                ? t("saveChanges")
-                : `🛒 ${t("addToCart")}`}
+          {justAdded
+            ? t("added")
+            : editing
+              ? t("saveChanges")
+              : `🛒 ${t("addToCart")}`}
         </button>
 
         <div className="flex items-end gap-2" data-testid="product-total">

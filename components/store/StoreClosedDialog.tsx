@@ -3,25 +3,26 @@
 import { useEffect, useId, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "@/i18n/navigation";
-import { useStoreClosedMessage, useStoreStatus } from "./StoreStatusProvider";
+import { useClosedNotice, useStoreClosedMessage, useStoreStatus } from "./StoreStatusProvider";
 
 /**
- * The notice a visitor meets when the restaurant is not taking orders.
+ * The notice a visitor meets when they try to ORDER while the restaurant is
+ * not taking orders.
  *
- * Deliberately NOT dismissible — no close button, no Escape, no click-outside,
- * and the page behind it cannot be scrolled. The owner asked for it this way:
- * the point is to stop people trying to order, and a notice that can be waved
- * away gets waved away. The trade-off, accepted knowingly, is that the menu is
- * unreadable while the shop is closed.
+ * It is never shown on page load: the site and the menu stay freely
+ * browsable. It opens only when "Добави в количката" or the way to checkout is
+ * used while the shop is closed (see useClosedNotice().ensureOpen), and
+ * "Продължи с разглеждането на менюто" closes it without a reload, leaving the
+ * visitor exactly where they were. The next attempt shows it again.
  *
- * It appears as soon as the status arrives (one fetch on mount) and clears
- * itself the moment the shop reopens — including when a timed closure runs
- * out, since the provider re-checks at the deadline.
+ * It clears itself the moment the shop reopens — including when a timed
+ * closure runs out, since the provider re-checks at the deadline.
  */
 export function StoreClosedDialog() {
   const t = useTranslations("store");
   const status = useStoreStatus();
   const message = useStoreClosedMessage();
+  const { noticeOpen, hideNotice } = useClosedNotice();
   const pathname = usePathname();
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -29,11 +30,11 @@ export function StoreClosedDialog() {
   // Never inside /admin: this is the customer's notice, and the staff who just
   // closed the shop must still be able to work — including to reopen it.
   const visible =
-    status !== null && !status.isOpen && !pathname.startsWith("/admin");
+    noticeOpen && status !== null && !status.isOpen && !pathname.startsWith("/admin");
 
-  // Freeze the page behind the overlay, and put focus on the panel so a
-  // keyboard or screen-reader user lands on the message rather than on links
-  // they cannot see.
+  // Freeze the page behind the overlay (the scroll position is kept), and put
+  // focus on the panel so a keyboard or screen-reader user lands on the
+  // message. On close, focus goes back to the button that was pressed.
   useEffect(() => {
     if (!visible) return;
 
@@ -43,15 +44,23 @@ export function StoreClosedDialog() {
     const root = document.documentElement;
     const previousRoot = root.style.overflow;
     const previousBody = document.body.style.overflow;
+    const previousFocus = document.activeElement as HTMLElement | null;
     root.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
     panelRef.current?.focus();
 
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") hideNotice();
+    };
+    document.addEventListener("keydown", onKey);
+
     return () => {
+      document.removeEventListener("keydown", onKey);
       root.style.overflow = previousRoot;
       document.body.style.overflow = previousBody;
+      previousFocus?.focus?.({ preventScroll: true });
     };
-  }, [visible]);
+  }, [visible, hideNotice]);
 
   if (!visible) return null;
 
@@ -81,6 +90,15 @@ export function StoreClosedDialog() {
         )}
 
         <p className="mt-4 text-sm text-pizza-muted">{t("ordersPaused")}</p>
+
+        <button
+          type="button"
+          onClick={hideNotice}
+          data-testid="store-closed-continue"
+          className="mt-6 w-full rounded-full bg-pizza-green px-6 py-3.5 font-semibold text-white shadow-soft transition hover:bg-pizza-green-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-pizza-green/40 focus-visible:ring-offset-2"
+        >
+          {t("continueBrowsing")}
+        </button>
       </div>
     </div>
   );

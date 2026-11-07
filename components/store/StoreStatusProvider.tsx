@@ -29,6 +29,32 @@ import type { StoreStatus } from "@/types/store-status";
 
 const StoreStatusContext = createContext<StoreStatus | null>(null);
 
+/**
+ * The closed notice is shown ON DEMAND only — when someone tries to add to the
+ * basket or to finish an order while the shop is closed — never on page load,
+ * so the menu stays freely browsable.
+ */
+interface ClosedNoticeApi {
+  noticeOpen: boolean;
+  hideNotice: () => void;
+  /**
+   * Asks the server right now whether orders are accepted (a tab opened
+   * before closing time must not rely on a stale answer). Closed → shows the
+   * notice and returns false. Unknown (network error) counts as open, like
+   * everywhere else here — the server refuses the order anyway.
+   */
+  ensureOpen: () => Promise<boolean>;
+  /** Shows the notice if a fresh check says the shop is closed. */
+  recheckAndNotify: () => Promise<void>;
+}
+
+const ClosedNoticeContext = createContext<ClosedNoticeApi>({
+  noticeOpen: false,
+  hideNotice: () => {},
+  ensureOpen: async () => true,
+  recheckAndNotify: async () => {},
+});
+
 /** Background refresh while the tab is in the foreground. */
 const REFRESH_INTERVAL_MS = 60_000;
 
@@ -37,17 +63,47 @@ const REOPEN_BUFFER_MS = 2_000;
 
 export function StoreStatusProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<StoreStatus | null>(null);
+  const [noticeOpen, setNoticeOpen] = useState(false);
   const timeoutRef = useRef<number | null>(null);
+  const statusRef = useRef<StoreStatus | null>(null);
 
-  const refresh = useCallback(async () => {
+  /** Fetches the status; returns it, or the last known one if the request fails. */
+  const refresh = useCallback(async (): Promise<StoreStatus | null> => {
     try {
       const res = await fetch("/api/store-status", { cache: "no-store" });
-      if (!res.ok) return;
-      setStatus((await res.json()) as StoreStatus);
+      if (!res.ok) return statusRef.current;
+      const next = (await res.json()) as StoreStatus;
+      statusRef.current = next;
+      setStatus(next);
+      return next;
     } catch {
       // Keep whatever we last knew; the next tick tries again.
+      return statusRef.current;
     }
   }, []);
+
+  const ensureOpen = useCallback(async () => {
+    // Known closed: answer at once, and refresh in the background so a reopen
+    // is noticed on the next try.
+    if (statusRef.current && !statusRef.current.isOpen) {
+      setNoticeOpen(true);
+      void refresh();
+      return false;
+    }
+    const fresh = await refresh();
+    if (fresh && !fresh.isOpen) {
+      setNoticeOpen(true);
+      return false;
+    }
+    return true;
+  }, [refresh]);
+
+  const recheckAndNotify = useCallback(async () => {
+    const fresh = await refresh();
+    if (fresh && !fresh.isOpen) setNoticeOpen(true);
+  }, [refresh]);
+
+  const hideNotice = useCallback(() => setNoticeOpen(false), []);
 
   useEffect(() => {
     void refresh();
@@ -94,8 +150,17 @@ export function StoreStatusProvider({ children }: { children: React.ReactNode })
   }, [status, refresh]);
 
   return (
-    <StoreStatusContext.Provider value={status}>{children}</StoreStatusContext.Provider>
+    <StoreStatusContext.Provider value={status}>
+      <ClosedNoticeContext.Provider value={{ noticeOpen, hideNotice, ensureOpen, recheckAndNotify }}>
+        {children}
+      </ClosedNoticeContext.Provider>
+    </StoreStatusContext.Provider>
   );
+}
+
+/** Show/hide the closed notice; check, fresh, before adding or ordering. */
+export function useClosedNotice(): ClosedNoticeApi {
+  return useContext(ClosedNoticeContext);
 }
 
 /** The current status, or null while it is still unknown. */

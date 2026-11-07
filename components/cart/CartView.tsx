@@ -1,10 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useCartStore, useCartHydrated } from "@/store/cart-store";
 import { StoreClosedBanner } from "@/components/store/StoreClosedBanner";
-import { useStoreClosed } from "@/components/store/StoreStatusProvider";
+import { useClosedNotice, useStoreClosed } from "@/components/store/StoreStatusProvider";
 import { CartItem } from "./CartItem";
 import { CartSummary } from "./CartSummary";
 import { MinimumOrderNotice } from "./MinimumOrderNotice";
@@ -21,6 +21,8 @@ export function CartView() {
   const totalsFn = useCartStore((s) => s.totals);
   const clear = useCartStore((s) => s.clear);
   const storeClosed = useStoreClosed();
+  const { ensureOpen } = useClosedNotice();
+  const router = useRouter();
   const unavailable = useUnavailableProducts(items);
 
   // Until the persisted cart is read, render a stable placeholder so the server
@@ -52,7 +54,9 @@ export function CartView() {
   // way forward stays closed until it is removed.
   // The same for a topping on its own or a retired "Месна добавка" choice.
   const hasLineIssue = items.some((i) => cartLineIssue(i, unavailable) !== null);
-  const blocked = storeClosed || belowMinimum || hasLineIssue;
+  // Closed is NOT in here: that button stays pressable and answers with the
+  // closed notice (asked fresh, so a page opened before closing time counts).
+  const blocked = belowMinimum || hasLineIssue;
 
   return (
     <div className="mx-auto grid max-w-4xl gap-8 lg:grid-cols-[1fr_20rem]">
@@ -77,9 +81,8 @@ export function CartView() {
 
         <StoreClosedBanner className="mt-6" />
 
-        {/* Closed: the cart is kept (nothing is thrown away) but the way
-            forward is a dead button rather than a link into a checkout that
-            would only be refused on submit. */}
+        {/* Closed: the cart is kept (nothing is thrown away); pressing the
+            button shows the closed notice instead of opening the checkout. */}
         {blocked ? (
           <span
             aria-disabled
@@ -90,7 +93,17 @@ export function CartView() {
         ) : (
           <Link
             href="/checkout"
-            className="mt-6 block rounded-full bg-brand px-6 py-3.5 text-center font-semibold text-white shadow-soft transition hover:bg-brand-dark"
+            onClick={(event) => {
+              event.preventDefault();
+              void ensureOpen().then((open) => {
+                if (open) router.push("/checkout");
+              });
+            }}
+            className={
+              storeClosed
+                ? "mt-6 block rounded-full bg-pizza-cream-dark px-6 py-3.5 text-center font-semibold text-pizza-muted"
+                : "mt-6 block rounded-full bg-brand px-6 py-3.5 text-center font-semibold text-white shadow-soft transition hover:bg-brand-dark"
+            }
           >
             {t("checkout")}
           </Link>

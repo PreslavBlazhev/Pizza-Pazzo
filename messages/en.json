@@ -432,7 +432,8 @@
     "closedCutoffDate": "We take no more orders for today after 22:30. Ordering opens again on {date} from {time}.",
     "closedCutoffUnknown": "We take no more orders for today after 22:30.",
     "ordersPaused": "Online ordering is paused right now.",
-    "closedShort": "Closed"
+    "closedShort": "Closed",
+    "continueBrowsing": "Continue browsing the menu"
   },
   "checkout": {
     "title": "Checkout",
