@@ -101,6 +101,26 @@ class JavascriptBridge(
         }
     }
 
+    /**
+     * Prints several tickets of one order — a JSON array of order objects —
+     * as ONE job (see [EscPosPrinterService.printOrders]). The result event
+     * carries the first part's orderId.
+     */
+    @JavascriptInterface
+    fun printOrders(bundleJson: String?) {
+        if (!staffAreaAllowed()) return
+        val orderId = try {
+            org.json.JSONArray(bundleJson ?: "").optJSONObject(0)?.optString("orderId", "") ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+        scope.launch {
+            val result = printerService.printOrders(bundleJson ?: "")
+            rememberError(result)
+            dispatchPrintResult(orderId, result)
+        }
+    }
+
     @JavascriptInterface
     fun printTestPage() {
         if (!staffAreaAllowed()) return

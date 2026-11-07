@@ -29,6 +29,12 @@ class EscPosPrinterService(
         ) : TransportProvision()
     }
 
+    companion object {
+        /** Blank lines between the parts of a combined print (kitchen → delivery). */
+        const val GAP_LINES = 5
+        const val MAX_BUNDLE_PARTS = 4
+    }
+
     private val printMutex = Mutex()
 
     @Volatile
@@ -60,6 +66,45 @@ class EscPosPrinterService(
             autoCut = order.layout.autoCut ?: settings.autoCut,
         )
         return print(buildOrderBytes(order, effective), effective)
+    }
+
+    /**
+     * Prints several tickets of one order as ONE job — the site's "Принтиране"
+     * button sends the kitchen ticket followed by the delivery ticket. Every
+     * part keeps its own layout untouched; the only differences from printing
+     * them separately are that there is no feed/cut between the parts and
+     * exactly [GAP_LINES] blank lines (base line height) separate them. The
+     * feed / cut after the whole job are the LAST part's settings.
+     *
+     * [bundleJson] is a JSON array of the same order objects [printOrder] takes.
+     */
+    suspend fun printOrders(bundleJson: String): PrintResult {
+        val orders = parseBundle(bundleJson).getOrElse { e ->
+            return fail(
+                PrintResult.Failure(
+                    PrintResult.Reason.INVALID_ORDER,
+                    e.message ?: "Невалидна поръчка.",
+                )
+            )
+        }
+        val settings = settingsProvider()
+        val last = orders.last()
+        val effective = settings.copy(
+            feedLinesAfter = last.layout.feedLinesAfter ?: settings.feedLinesAfter,
+            autoCut = last.layout.autoCut ?: settings.autoCut,
+        )
+        return print(buildBundleBytes(orders, effective), effective)
+    }
+
+    private fun parseBundle(bundleJson: String): Result<List<PrintableOrder>> = runCatching {
+        require(bundleJson.toByteArray(Charsets.UTF_8).size <= PrintableOrder.MAX_JSON_BYTES * MAX_BUNDLE_PARTS) {
+            "Поръчката е твърде голяма."
+        }
+        val arr = org.json.JSONArray(bundleJson)
+        require(arr.length() in 1..MAX_BUNDLE_PARTS) { "Невалидна поръчка." }
+        (0 until arr.length()).map { i ->
+            PrintableOrder.fromJson(arr.getJSONObject(i).toString()).getOrThrow()
+        }
     }
 
     suspend fun printTestPage(): PrintResult {
@@ -211,10 +256,35 @@ class EscPosPrinterService(
         return out.toByteArray()
     }
 
+    internal fun buildBundleBytes(orders: List<PrintableOrder>, settings: PrinterSettings): ByteArray {
+        val job = java.io.ByteArrayOutputStream()
+        orders.forEachIndexed { index, order ->
+            val lines = ReceiptFormatter.format(order, settings)
+            if (index < orders.lastIndex) {
+                job.write(renderLines(lines, settings, finish = false))
+                // renderLines has reset size/bold/alignment, so this is the base line height.
+                job.write(EscPos(settings).feed(GAP_LINES).bytes())
+            } else {
+                job.write(renderLines(lines, settings))
+            }
+        }
+        val bytes = job.toByteArray()
+        val copies = orders.maxOf { it.layout.copies }.coerceIn(1, 5)
+        if (copies == 1) return bytes
+        val out = java.io.ByteArrayOutputStream()
+        repeat(copies) { out.write(bytes) }
+        return out.toByteArray()
+    }
+
     internal fun buildTestPageBytes(settings: PrinterSettings): ByteArray =
         renderLines(ReceiptFormatter.formatTestPage(settings), settings)
 
-    private fun renderLines(lines: List<ReceiptFormatter.Line>, settings: PrinterSettings): ByteArray {
+    /** [finish] = false leaves out the feed + cut, for a part followed by another. */
+    private fun renderLines(
+        lines: List<ReceiptFormatter.Line>,
+        settings: PrinterSettings,
+        finish: Boolean = true,
+    ): ByteArray {
         val esc = EscPos(settings).initialize()
         var bold = false
         var scale = 1
@@ -246,8 +316,10 @@ class EscPosPrinterService(
         if (bold) esc.bold(false)
         if (scale != 1) esc.size(1)
         if (align != "left") esc.alignLeft()
-        esc.feed(settings.feedLinesAfter)
-        if (settings.autoCut) esc.cut()
+        if (finish) {
+            esc.feed(settings.feedLinesAfter)
+            if (settings.autoCut) esc.cut()
+        }
         return esc.bytes()
     }
 }

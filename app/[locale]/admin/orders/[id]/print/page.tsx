@@ -13,16 +13,61 @@ interface PageProps {
 
 export const dynamic = "force-dynamic";
 
+/** Blank lines between the kitchen and the delivery part of the combined ticket. */
+const GAP_LINES = 5;
+
 /**
- * Browser print page for one order. `?t=kitchen|delivery` picks the template;
- * an unknown value falls back to the kitchen slip rather than erroring.
+ * Browser print page for one order. `?t=all` prints the combined ticket — the
+ * kitchen slip, 5 blank lines, the delivery slip — in ONE print dialog;
+ * `?t=kitchen|delivery` a single template; an unknown value falls back to the
+ * kitchen slip rather than erroring.
  *
  * The layout — what prints, at what point size, where — comes entirely from
- * /admin/settings/print, so this page has no hardcoded formatting left.
+ * /admin/settings/print, so this page has no hardcoded formatting left. The
+ * combined ticket renders the two existing tickets unchanged, one after the
+ * other.
  */
 export default async function PrintOrderPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const { t, reprint } = await searchParams;
+  const isReprint = reprint === "1";
+
+  if (t?.toLowerCase() === "all") {
+    const [order, kitchen, delivery] = await Promise.all([
+      getOrderById(id),
+      getPrintTemplate("KITCHEN"),
+      getPrintTemplate("DELIVERY"),
+    ]);
+    if (!order) notFound();
+
+    return (
+      <div className="p-4">
+        <div className="no-print mb-4 space-y-3">
+          <p className="text-sm text-pizza-muted">
+            Бележки <strong>Кухня + Доставка</strong> за поръчка #{order.orderNumber}.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <PrintNowButton />
+            <Link
+              href="/admin/settings/print"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-pizza-muted underline underline-offset-4 transition hover:text-pizza-ink"
+            >
+              Настройки на печата
+            </Link>
+          </div>
+        </div>
+
+        <PrintTicket order={order} template={kitchen} isReprint={isReprint} />
+        {/* 5 empty lines at the kitchen ticket's own line height. */}
+        <div aria-hidden className="font-mono" style={{ lineHeight: kitchen.lineHeight }}>
+          {Array.from({ length: GAP_LINES }, (_, i) => (
+            <div key={i}>{" "}</div>
+          ))}
+        </div>
+        <PrintTicket order={order} template={delivery} isReprint={isReprint} />
+      </div>
+    );
+  }
 
   const templateId = printTemplateIdFromParam(t);
   const [order, template] = await Promise.all([getOrderById(id), getPrintTemplate(templateId)]);
@@ -54,7 +99,7 @@ export default async function PrintOrderPage({ params, searchParams }: PageProps
         </div>
       </div>
 
-      <PrintTicket order={order} template={template} isReprint={reprint === "1"} />
+      <PrintTicket order={order} template={template} isReprint={isReprint} />
     </div>
   );
 }

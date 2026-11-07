@@ -3,36 +3,41 @@
 import { useEffect, useRef, useState } from "react";
 import {
   isAndroidPrinterAvailable,
+  isCombinedPrintAvailable,
+  requestCombinedPrintJson,
   requestPrintJson,
   PRINT_RESULT_EVENT,
   type PrintResultDetail,
   type PrintState,
 } from "@/lib/android-printer";
 import type { OrderWithItems } from "@/types/order";
-import { printTemplateLabel, type PrintTemplateData, type PrintTemplateId } from "@/types/print";
+import { PRINT_TEMPLATE_IDS, type PrintTemplateData } from "@/types/print";
 
 /** If the app never reports back (e.g. it was killed mid-job), unlock the UI. */
 const RESULT_TIMEOUT_MS = 45_000;
 
 /**
- * Prints one ticket for an order.
+ * ONE "Принтиране" button per order: one print of one long ticket — the
+ * kitchen ticket, 5 blank lines, then the delivery ticket, each in its own
+ * unchanged layout from /admin/settings/print.
  *
- * Inside the Pizza Pazzo Android app it drives the Bluetooth thermal
- * printer; in an ordinary browser it links to the print page instead, so the
- * owner is never left without a way to get the ticket out. Both paths use the
- * same template from /admin/settings/print.
+ * Inside the Pizza Pazzo Android app it drives the Bluetooth thermal printer
+ * as a single job (`printOrders`); the jobs are built by the SERVER
+ * (…/printable) exactly as before. An older app build without `printOrders`
+ * gets the two tickets one after the other instead, so printing never breaks
+ * before the app is updated. In an ordinary browser it opens the combined print
+ * page (one print dialog).
  *
  * Printing is never automatic — it starts only on tap, and repeat prints are
  * explicit re-taps marked as reprints on the ticket.
  */
-export function PrintOrderButton({
+export function PrintOrderButtons({
   order,
-  templateId,
+  templates,
   compact = false,
 }: {
   order: OrderWithItems;
-  /** Which layout; the server resolves it and builds the job (…/printable). */
-  templateId: PrintTemplateId;
+  templates: PrintTemplateData[];
   compact?: boolean;
 }) {
   // Bridge detection must happen after mount: during SSR (and the first client
@@ -42,12 +47,26 @@ export function PrintOrderButton({
   const [message, setMessage] = useState<string | null>(null);
   const [printedOnce, setPrintedOnce] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Older app only: jobs still to send after the current one succeeds. */
+  const queueRef = useRef<string[]>([]);
 
-  const ticketLabel = printTemplateLabel(templateId);
+  // Kitchen first, delivery second — regardless of how the list arrived.
+  const templateIds = [...templates]
+    .map((t) => t.id)
+    .sort((a, b) => PRINT_TEMPLATE_IDS.indexOf(a) - PRINT_TEMPLATE_IDS.indexOf(b));
 
   useEffect(() => {
     setAvailable(isAndroidPrinterAvailable());
   }, []);
+
+  const armTimeout = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      queueRef.current = [];
+      setState("ERROR");
+      setMessage("Няма отговор от принтера. Опитайте отново.");
+    }, RESULT_TIMEOUT_MS);
+  };
 
   useEffect(() => {
     const onResult = (event: Event) => {
@@ -55,10 +74,16 @@ export function PrintOrderButton({
       if (!detail || detail.orderId !== order.id) return;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (detail.success) {
+        const next = queueRef.current.shift();
+        if (next && requestPrintJson(next)) {
+          armTimeout();
+          return;
+        }
         setState("SUCCESS");
         setPrintedOnce(true);
         setMessage(detail.message || "Принтирано успешно");
       } else {
+        queueRef.current = [];
         setState("ERROR");
         setMessage(detail.message || "Принтирането неуспешно");
       }
@@ -72,20 +97,20 @@ export function PrintOrderButton({
 
   if (available === null) return null;
 
-  // Plain browser: open the print page for this template.
+  const buttonClass = `rounded-2xl font-extrabold uppercase tracking-wide text-white shadow-md transition disabled:opacity-60 ${
+    compact ? "px-6 py-3 text-xl" : "w-full px-8 py-4 text-2xl sm:w-auto"
+  }`;
+
+  // Plain browser: open the combined print page (one print dialog).
   if (!available) {
     return (
       <a
-        href={`/admin/orders/${order.id}/print?t=${templateId.toLowerCase()}`}
+        href={`/admin/orders/${order.id}/print?t=all`}
         target="_blank"
         rel="noopener noreferrer"
-        className={
-          compact
-            ? "inline-block rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100"
-            : "inline-block rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-100"
-        }
+        className={`inline-block bg-pizza-ink hover:bg-neutral-700 ${buttonClass}`}
       >
-        🖨 Бележка: {ticketLabel}
+        🖨 Принтиране
       </a>
     );
   }
@@ -96,51 +121,54 @@ export function PrintOrderButton({
     if (busy) return; // double-tap guard (the app has its own lock as well)
     setState("CONNECTING");
     setMessage("Свързване с принтера…");
-    // The job is built by the SERVER from the order as it is now: an order
+    // The jobs are built by the SERVER from the order as it is now: an order
     // that does not exist is refused there and nothing is printed.
-    let json: string | null = null;
+    let jsons: string[] | null = null;
     try {
-      const res = await fetch(
-        `/api/admin/orders/${encodeURIComponent(order.id)}/printable?t=${templateId.toLowerCase()}${
-          printedOnce ? "&reprint=1" : ""
-        }`,
-        { cache: "no-store" }
+      jsons = await Promise.all(
+        templateIds.map(async (id) => {
+          const res = await fetch(
+            `/api/admin/orders/${encodeURIComponent(order.id)}/printable?t=${id.toLowerCase()}${
+              printedOnce ? "&reprint=1" : ""
+            }`,
+            { cache: "no-store" }
+          );
+          if (res.status === 404) throw new Error("not_found");
+          if (!res.ok) throw new Error(String(res.status));
+          const json = ((await res.json()) as { json?: string }).json;
+          if (!json) throw new Error("empty");
+          return json;
+        })
       );
-      if (res.status === 404) {
-        setState("ERROR");
-        setMessage("Поръчката не е намерена.");
-        return;
-      }
-      if (!res.ok) throw new Error(String(res.status));
-      json = ((await res.json()) as { json?: string }).json ?? null;
-    } catch {
-      json = null;
-    }
-    if (!json) {
+    } catch (error) {
       setState("ERROR");
-      setMessage("Няма връзка със сървъра — опитайте отново.");
+      setMessage(
+        error instanceof Error && error.message === "not_found"
+          ? "Поръчката не е намерена."
+          : "Няма връзка със сървъра — опитайте отново."
+      );
       return;
     }
-    const sent = requestPrintJson(json);
+    let sent: boolean;
+    if (isCombinedPrintAvailable()) {
+      queueRef.current = [];
+      sent = requestCombinedPrintJson(jsons);
+    } else {
+      const [first, ...rest] = jsons;
+      queueRef.current = rest;
+      sent = requestPrintJson(first);
+    }
     if (!sent) {
+      queueRef.current = [];
       setState("ERROR");
       setMessage("Принтерът не е достъпен.");
       return;
     }
     setState("PRINTING");
-    timeoutRef.current = setTimeout(() => {
-      setState("ERROR");
-      setMessage("Няма отговор от принтера. Опитайте отново.");
-    }, RESULT_TIMEOUT_MS);
+    armTimeout();
   };
 
-  const label = busy
-    ? "Свързване…"
-    : state === "ERROR"
-      ? `ОПИТАЙ ОТНОВО (${ticketLabel})`
-      : printedOnce
-        ? `ПРИНТИРАЙ ОТНОВО: ${ticketLabel.toUpperCase()}`
-        : `🖨 ${ticketLabel.toUpperCase()}`;
+  const label = busy ? "Принтиране…" : "🖨 Принтиране";
 
   return (
     <div className="space-y-1.5">
@@ -148,9 +176,7 @@ export function PrintOrderButton({
         type="button"
         disabled={busy}
         onClick={() => void handlePrint()}
-        className={`rounded-2xl font-extrabold text-white shadow-md transition disabled:opacity-60 ${
-          compact ? "px-4 py-2 text-sm" : "w-full px-6 py-3.5 text-lg sm:w-auto"
-        } ${state === "ERROR" ? "bg-red-600 hover:bg-red-700" : "bg-pizza-ink hover:bg-neutral-700"}`}
+        className={`${buttonClass} ${state === "ERROR" ? "bg-red-600 hover:bg-red-700" : "bg-pizza-ink hover:bg-neutral-700"}`}
       >
         {label}
       </button>
@@ -165,30 +191,6 @@ export function PrintOrderButton({
           ✕ Принтирането неуспешно{message ? `: ${message}` : ""}
         </p>
       )}
-    </div>
-  );
-}
-
-/** Both tickets side by side — the kitchen slip and the delivery slip. */
-export function PrintOrderButtons({
-  order,
-  templates,
-  compact = false,
-}: {
-  order: OrderWithItems;
-  templates: PrintTemplateData[];
-  compact?: boolean;
-}) {
-  return (
-    <div className="flex flex-wrap items-start gap-2">
-      {templates.map((template) => (
-        <PrintOrderButton
-          key={template.id}
-          order={order}
-          templateId={template.id}
-          compact={compact}
-        />
-      ))}
     </div>
   );
 }

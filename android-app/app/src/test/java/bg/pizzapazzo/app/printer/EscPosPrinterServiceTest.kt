@@ -175,4 +175,50 @@ class EscPosPrinterServiceTest {
         assertEquals(2, successes + rejected)
         assertTrue(successes >= 1)
     }
+
+    private fun ticketJson(templateId: String, header: String) = """
+        {
+          "orderId": "152",
+          "orderNumber": "152",
+          "total": 25.50,
+          "currency": "EUR",
+          "items": [ { "name": "Маргарита", "quantity": 2, "totalPrice": 21.00 } ],
+          "print": { "templateId": "$templateId", "name": "$templateId", "headerText": "$header",
+                     "feedLinesAfter": 4, "autoCut": true, "copies": 1 }
+        }
+    """.trimIndent()
+
+    @Test
+    fun `combined print is kitchen without feed or cut, 5 blank lines, then delivery`() = runTest {
+        val kitchen = ticketJson("KITCHEN", "K")
+        val delivery = ticketJson("DELIVERY", "D")
+
+        val single = MockPrinterTransport()
+        val svc = service(single)
+        assertTrue(svc.printOrder(kitchen).isSuccess)
+        val kitchenBytes = single.allBytes()
+        single.written.clear()
+        assertTrue(svc.printOrder(delivery).isSuccess)
+        val deliveryBytes = single.allBytes()
+
+        val combined = MockPrinterTransport()
+        val result = service(combined).printOrders("[$kitchen,$delivery]")
+        assertTrue(result.isSuccess)
+        assertEquals(1, combined.written.size) // one job, one write
+
+        // Kitchen ends with ESC d 4 + GS V 66 0 (7 bytes) — only those are replaced.
+        val tail = kitchenBytes.takeLast(7).map { it.toInt() and 0xFF }
+        assertEquals(listOf(0x1B, 0x64, 4, 0x1D, 0x56, 0x42, 0x00), tail)
+        val expected = kitchenBytes.copyOfRange(0, kitchenBytes.size - 7) +
+            byteArrayOf(0x1B, 0x64, 5) + deliveryBytes
+        assertTrue(expected.contentEquals(combined.allBytes()))
+    }
+
+    @Test
+    fun `combined print rejects a non-array payload`() = runTest {
+        val transport = MockPrinterTransport()
+        val result = service(transport).printOrders(validOrderJson)
+        assertEquals(PrintResult.Reason.INVALID_ORDER, (result as PrintResult.Failure).reason)
+        assertTrue(transport.written.isEmpty())
+    }
 }

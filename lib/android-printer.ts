@@ -37,6 +37,8 @@ interface AndroidPrinterBridge {
   getPrinterStatus(): string;
   openPrinterSettings(): void;
   printOrder(orderJson: string): void;
+  /** App builds with combined printing: JSON array of order objects → ONE job. */
+  printOrders?(bundleJson: string): void;
   printTestPage(): void;
   disconnectPrinter(): void;
 }
@@ -228,6 +230,22 @@ export function openAndroidPrinterSettings(): boolean {
 export function requestPrintJson(orderJson: string): boolean {
   if (!isAndroidPrinterAvailable()) return false;
   window.AndroidPrinter!.printOrder(orderJson);
+  return true;
+}
+
+/** True when the installed app can print several tickets as one job. */
+export function isCombinedPrintAvailable(): boolean {
+  return isAndroidPrinterAvailable() && typeof window.AndroidPrinter!.printOrders === "function";
+}
+
+/**
+ * Sends server-built jobs (kitchen, then delivery) as ONE print: each part in
+ * its own unchanged layout, 5 blank lines between, no cut between. Needs an
+ * app build with `printOrders`; returns false otherwise.
+ */
+export function requestCombinedPrintJson(orderJsons: string[]): boolean {
+  if (!isCombinedPrintAvailable()) return false;
+  window.AndroidPrinter!.printOrders!(`[${orderJsons.join(",")}]`);
   return true;
 }
 
