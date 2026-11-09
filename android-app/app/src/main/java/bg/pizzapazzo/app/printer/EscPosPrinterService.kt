@@ -19,6 +19,11 @@ class EscPosPrinterService(
     /** Returns a transport for the configured printer, or a failure. */
     private val transportFactory: (PrinterSettings) -> TransportProvision,
     private val onState: (PrinterConnectionState) -> Unit = {},
+    /**
+     * The logo raster for the configured paper width (res/raw, see
+     * [ReceiptLogo]). Null — or a throw — prints the header text instead.
+     */
+    private val logoProvider: (PrinterSettings) -> ReceiptLogo? = { null },
 ) {
 
     sealed class TransportProvision {
@@ -279,6 +284,11 @@ class EscPosPrinterService(
     internal fun buildTestPageBytes(settings: PrinterSettings): ByteArray =
         renderLines(ReceiptFormatter.formatTestPage(settings), settings)
 
+    /** The logo centred for this paper, or null (→ the header prints as text). */
+    private fun logoFor(settings: PrinterSettings): ReceiptLogo? =
+        runCatching { logoProvider(settings) }.getOrNull()
+            ?.centredOn(ReceiptLogo.paperDotsFor(settings.paperWidth))
+
     /** [finish] = false leaves out the feed + cut, for a part followed by another. */
     private fun renderLines(
         lines: List<ReceiptFormatter.Line>,
@@ -289,7 +299,31 @@ class EscPosPrinterService(
         var bold = false
         var scale = 1
         var align = "left"
-        for (line in lines) {
+        val logo = if (lines.any { it.logo }) logoFor(settings) else null
+        var i = 0
+        while (i < lines.size) {
+            val line = lines[i++]
+            if (line.logo && logo != null) {
+                // ONE image for the whole run of header lines, whose text is
+                // dropped — the logo and "PIZZA PAZZO" never print together.
+                while (i < lines.size && lines[i].logo) i++
+                // Centring is baked into the raster (left padding), so print
+                // it from the left margin at normal size.
+                if (align != "left") {
+                    esc.alignLeft()
+                    align = "left"
+                }
+                if (bold) {
+                    esc.bold(false)
+                    bold = false
+                }
+                if (scale != 1) {
+                    esc.size(1)
+                    scale = 1
+                }
+                esc.rasterImage(logo)
+                continue
+            }
             val lineAlign = when {
                 line.center -> "center"
                 line.right -> "right"

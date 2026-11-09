@@ -1,6 +1,8 @@
 import type { Order } from "@/types/order";
-import { buildTicket, type TicketLine } from "@/lib/printer/ticket-template";
+import { buildTicket } from "@/lib/printer/ticket-template";
+import { printLogoWidthMm } from "@/lib/printer/ticket-logo";
 import type { PrintTemplateData } from "@/types/print";
+import { TicketLines } from "@/components/admin/TicketLines";
 
 /**
  * Renders a ticket for the BROWSER print path, honouring the template's real
@@ -15,33 +17,10 @@ import type { PrintTemplateData } from "@/types/print";
  *
  * `right` values (prices) are laid out as a flex row instead of space padding:
  * with mixed font sizes, monospace column counting no longer lines up.
+ *
+ * The header prints as the black-and-white logo (TicketLines), sized for the
+ * paper width; the header text only appears if the image cannot load.
  */
-
-const ALIGN_CLASS = {
-  left: "justify-start text-left",
-  center: "justify-center text-center",
-  right: "justify-end text-right",
-} as const;
-
-function TicketRow({ line }: { line: TicketLine }) {
-  if (line.divider) {
-    return <div aria-hidden className="my-1 border-t border-dashed border-black" />;
-  }
-
-  return (
-    <div
-      className={`flex gap-2 ${ALIGN_CLASS[line.align]}`}
-      style={{
-        fontSize: `${line.fontPt}pt`,
-        fontWeight: line.bold ? 700 : 400,
-      }}
-    >
-      <span className="whitespace-pre-wrap break-words">{line.text}</span>
-      {line.right && <span className="ml-auto whitespace-nowrap">{line.right}</span>}
-    </div>
-  );
-}
-
 export function PrintTicket({
   order,
   template,
@@ -62,9 +41,10 @@ export function PrintTicket({
         lineHeight: template.lineHeight,
       }}
     >
-      {lines.map((line, index) => (
-        <TicketRow key={`${line.section}-${index}`} line={line} />
-      ))}
+      <TicketLines
+        lines={lines}
+        logoWidth={`${printLogoWidthMm(template.paperWidthMm, template.marginMm)}mm`}
+      />
     </div>
   );
 }

@@ -41,7 +41,7 @@ export default async function PrintOrderPage({ params, searchParams }: PageProps
     if (!order) notFound();
 
     return (
-      <div className="p-4">
+      <div className="p-4 print:p-0">
         <div className="no-print mb-4 space-y-3">
           <p className="text-sm text-pizza-muted">
             Бележки <strong>Кухня + Доставка</strong> за поръчка #{order.orderNumber}.
@@ -76,7 +76,7 @@ export default async function PrintOrderPage({ params, searchParams }: PageProps
   const other = templateId === "KITCHEN" ? "DELIVERY" : "KITCHEN";
 
   return (
-    <div className="p-4">
+    <div className="p-4 print:p-0">
       <div className="no-print mb-4 space-y-3">
         <p className="text-sm text-pizza-muted">
           Бележка <strong>{printTemplateLabel(templateId)}</strong> за поръчка #

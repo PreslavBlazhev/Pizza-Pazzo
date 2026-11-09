@@ -8,6 +8,8 @@ import {
 import { FormAlert } from "@/components/ui/FormAlert";
 import { buildTicket, toTicketText } from "@/lib/printer/ticket-template";
 import { SAMPLE_PRINT_ORDER } from "@/lib/printer/sample-order";
+import { printLogoWidthFraction, printLogoWidthMm } from "@/lib/printer/ticket-logo";
+import { TicketLines, TicketLogo } from "@/components/admin/TicketLines";
 import {
   MAX_PRINT_FONT_PT,
   MAX_PRINT_SCALE,
@@ -128,7 +130,16 @@ export function PrintTemplateForm({ template }: { template: PrintTemplateData })
     () => buildTicket(SAMPLE_PRINT_ORDER, draft, { isReprint: false }),
     [draft]
   );
-  const thermalText = useMemo(() => toTicketText(lines, draft), [lines, draft]);
+  // The thermal printer prints the logo as an image above the text lines; the
+  // header text is only its fallback, so it is split off here the same way.
+  const thermalText = useMemo(
+    () => toTicketText(lines.filter((l) => !l.logo), draft),
+    [lines, draft]
+  );
+  const thermalHeaderText = useMemo(
+    () => toTicketText(lines.filter((l) => l.logo), draft),
+    [lines, draft]
+  );
 
   const visibleCount = PRINT_SECTIONS.filter((s) => draft.sections[s.id].visible).length;
 
@@ -252,6 +263,9 @@ export function PrintTemplateForm({ template }: { template: PrintTemplateData })
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-pizza-ink">
                 Заглавен текст
+                <span className="ml-1 font-normal text-pizza-muted">
+                  (само ако логото не се зареди)
+                </span>
               </span>
               <input
                 type="text"
@@ -546,41 +560,24 @@ export function PrintTemplateForm({ template }: { template: PrintTemplateData })
                   lineHeight: draft.lineHeight,
                 }}
               >
-                {lines.map((line, i) =>
-                  line.divider ? (
-                    <div
-                      key={i}
-                      aria-hidden
-                      className="my-1 border-t border-dashed border-black"
-                    />
-                  ) : (
-                    <div
-                      key={i}
-                      className={cn(
-                        "flex gap-2",
-                        line.align === "center"
-                          ? "justify-center text-center"
-                          : line.align === "right"
-                            ? "justify-end text-right"
-                            : "justify-start text-left"
-                      )}
-                      style={{
-                        fontSize: `${line.fontPt}pt`,
-                        fontWeight: line.bold ? 700 : 400,
-                      }}
-                    >
-                      <span className="whitespace-pre-wrap break-words">{line.text}</span>
-                      {line.right && (
-                        <span className="ml-auto whitespace-nowrap">{line.right}</span>
-                      )}
-                    </div>
-                  )
-                )}
+                <TicketLines
+                  lines={lines}
+                  logoWidth={`${printLogoWidthMm(draft.paperWidthMm, draft.marginMm)}mm`}
+                />
               </div>
             ) : (
-              <pre className="whitespace-pre text-[11px] leading-tight text-black">
-                {thermalText}
-              </pre>
+              <div
+                className="mx-auto font-mono text-[11px] leading-tight text-black"
+                style={{ width: `${draft.charsPerLine}ch` }}
+              >
+                {thermalHeaderText && (
+                  <TicketLogo
+                    width={`${printLogoWidthFraction(draft.paperWidthMm) * 100}%`}
+                    fallback={<pre className="whitespace-pre">{thermalHeaderText}</pre>}
+                  />
+                )}
+                <pre className="whitespace-pre">{thermalText}</pre>
+              </div>
             )}
           </div>
 

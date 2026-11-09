@@ -82,7 +82,7 @@ export interface PrintSectionDefinition {
  * to the default below, so no migration is needed for a new section.
  */
 export const PRINT_SECTIONS = [
-  { id: "header", label: "Заглавие", hint: "Името на ресторанта най-отгоре.", controls: FULL_CONTROLS },
+  { id: "header", label: "Лого", hint: "Логото на Pizza Pazzo най-отгоре. Заглавният текст се печата само ако логото не може да се зареди.", controls: FULL_CONTROLS },
   { id: "ticketType", label: "Вид бележка", hint: "„КУХНЯ“ или „ДОСТАВКА“ под заглавието.", controls: FULL_CONTROLS },
   { id: "orderNumber", label: "Номер на поръчка", hint: "„ПОРЪЧКА #1042“.", controls: FULL_CONTROLS },
   { id: "reprint", label: "Повторен печат", hint: "Предупреждението при второ принтиране.", controls: FULL_CONTROLS },

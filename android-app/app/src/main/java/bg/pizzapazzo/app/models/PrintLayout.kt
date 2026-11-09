@@ -25,6 +25,12 @@ data class PrintLayout(
     val autoCut: Boolean? = null,
     val copies: Int = 1,
     val headerText: String = "PIZZA PAZZO",
+    /**
+     * Print the logo (res/raw/receipt_logo_*.bin) instead of [headerText],
+     * which then only prints if the logo cannot be loaded. On by default, so
+     * a job without the key gets the logo too.
+     */
+    val headerLogo: Boolean = true,
     val footerText: String = "",
     val sections: Map<String, SectionStyle> = emptyMap(),
 ) {
@@ -88,6 +94,7 @@ data class PrintLayout(
                     autoCut = if (root.has("autoCut")) root.optBoolean("autoCut", true) else null,
                     copies = root.optInt("copies", 1).coerceIn(1, 5),
                     headerText = root.optString("headerText", "PIZZA PAZZO"),
+                    headerLogo = root.optBoolean("headerLogo", true),
                     footerText = root.optString("footerText", ""),
                     sections = sections,
                 )

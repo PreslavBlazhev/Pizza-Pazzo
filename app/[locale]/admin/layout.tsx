@@ -37,12 +37,20 @@ export default async function AdminLayout({
     // Mounted once here, it also guarantees a single poller and a single siren.
     <ShiftProvider>
       <ExpiryRefresh />
-      <div className="flex min-h-screen flex-col lg:flex-row bg-pizza-cream">
-        <AdminSidebar sessionUser={sessionUser} storeStatus={storeStatus} />
+      {/* Printing (tickets from /admin/orders/:id/print) gets the page content
+          only — no menu, offset or cream background on the paper roll. */}
+      <div className="flex min-h-screen flex-col lg:flex-row bg-pizza-cream print:block print:min-h-0 print:bg-white">
+        <div className="contents print:hidden">
+          <AdminSidebar sessionUser={sessionUser} storeStatus={storeStatus} />
+        </div>
         {/* Room at the bottom for the alarm bar, which is fixed over the page. */}
-        <div className="flex-1 overflow-x-auto p-4 pb-32 sm:p-8 sm:pb-32">{children}</div>
+        <div className="flex-1 overflow-x-auto p-4 pb-32 sm:p-8 sm:pb-32 print:overflow-visible print:p-0">
+          {children}
+        </div>
       </div>
-      <ShiftAlarmBar />
+      <div className="contents print:hidden">
+        <ShiftAlarmBar />
+      </div>
     </ShiftProvider>
   );
 }

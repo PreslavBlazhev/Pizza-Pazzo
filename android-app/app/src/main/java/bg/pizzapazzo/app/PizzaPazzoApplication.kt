@@ -4,6 +4,9 @@ import android.app.Application
 import android.webkit.WebView
 import bg.pizzapazzo.app.bluetooth.BluetoothPrinterManager
 import bg.pizzapazzo.app.printer.EscPosPrinterService
+import bg.pizzapazzo.app.printer.PaperWidth
+import bg.pizzapazzo.app.printer.ReceiptLogo
+import java.util.concurrent.ConcurrentHashMap
 import bg.pizzapazzo.app.settings.PrinterPreferences
 
 /**
@@ -38,6 +41,26 @@ class PizzaPazzoApplication : Application() {
         printerService = EscPosPrinterService(
             settingsProvider = { preferences.toSettings() },
             transportFactory = { settings -> printerManager.provideTransport(settings) },
+            logoProvider = { settings -> receiptLogo(settings.paperWidth) },
         )
+    }
+
+    private val logoCache = ConcurrentHashMap<PaperWidth, ReceiptLogo>()
+
+    /**
+     * The bundled logo raster for a paper width, read once and cached. Any
+     * failure returns null, and the receipt prints the header text instead.
+     */
+    private fun receiptLogo(paper: PaperWidth): ReceiptLogo? {
+        logoCache[paper]?.let { return it }
+        val res = when (paper) {
+            PaperWidth.MM58 -> R.raw.receipt_logo_288
+            PaperWidth.MM80 -> R.raw.receipt_logo_384
+        }
+        val logo = runCatching {
+            resources.openRawResource(res).use { ReceiptLogo.parse(it.readBytes()) }
+        }.getOrNull() ?: return null
+        logoCache[paper] = logo
+        return logo
     }
 }

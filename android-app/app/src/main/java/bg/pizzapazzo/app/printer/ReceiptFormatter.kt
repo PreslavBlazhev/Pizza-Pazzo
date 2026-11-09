@@ -27,6 +27,12 @@ object ReceiptFormatter {
         val scale: Int = 1,
         val center: Boolean = false,
         val right: Boolean = false,
+        /**
+         * Header text the LOGO replaces. The renderer prints the logo image
+         * once in place of a run of these lines and drops their text; only
+         * when no logo is available does the text print (the fallback).
+         */
+        val logo: Boolean = false,
     ) {
         /** Kept so existing callers/tests that think in "double size" still work. */
         val big: Boolean get() = scale >= 2
@@ -97,9 +103,13 @@ object ReceiptFormatter {
             out += Line("-".repeat(w))
         }
 
-        // ── Header ──
+        // ── Header: the logo, with the header text as its fallback ──
+        val headerStart = out.size
         push("header", layout.headerText.ifBlank { "PIZZA PAZZO" },
             fallback = PrintLayout.SectionStyle(bold = true, align = "center"))
+        if (layout.headerLogo) {
+            for (i in headerStart until out.size) out[i] = out[i].copy(logo = true)
+        }
         push("ticketType", layout.name.ifBlank { null },
             fallback = PrintLayout.SectionStyle(bold = true, scale = 2, align = "center"))
         push("orderNumber", "ПОРЪЧКА #${order.orderNumber}",
@@ -207,7 +217,9 @@ object ReceiptFormatter {
         val w = settings.charsPerLine.coerceAtLeast(20)
         val divider = Line("-".repeat(w))
         return listOf(
-            Line("PIZZA PAZZO", bold = true, center = true),
+            // The logo prints here too, so the test page shows whether the
+            // printer handles the raster image before a real order does.
+            Line("PIZZA PAZZO", bold = true, center = true, logo = true),
             Line("ТЕСТОВА СТРАНИЦА", bold = true, scale = 2, center = true),
             divider,
             Line("АБВГДЕЖЗИЙКЛМНОПРСТУФХ"),

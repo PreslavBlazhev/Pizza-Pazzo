@@ -94,6 +94,10 @@ function buildPrintBlock(template: PrintTemplateData) {
     autoCut: template.autoCut,
     copies: template.copies,
     headerText: template.headerText,
+    // The app prints the logo bundled in the APK (res/raw/receipt_logo_*.bin,
+    // made by scripts/generate-print-logo.mjs) in place of the header text,
+    // which it keeps only as the fallback. Older builds ignore the key.
+    headerLogo: true,
     footerText: template.footerText,
     sections: Object.fromEntries(
       PRINT_SECTIONS.map((section) => {

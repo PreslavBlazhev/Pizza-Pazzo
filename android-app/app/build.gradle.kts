@@ -48,8 +48,8 @@ android {
         // 1.1.1: staging build type + password prompt for the staging site.
         // 1.1.0: online card payments (bank page + 3-D Secure inside the app,
         // resume after the app was killed), configurable site hosts.
-        versionCode = 6
-        versionName = "1.2.0"
+        versionCode = 7
+        versionName = "1.3.0"
 
         buildConfigField("String", "START_URL", "\"$siteStartUrl\"")
         buildConfigField("String", "SITE_HOSTS", "\"$siteHosts\"")

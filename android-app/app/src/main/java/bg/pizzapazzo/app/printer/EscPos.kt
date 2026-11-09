@@ -65,7 +65,35 @@ class EscPos(private val settings: PrinterSettings) {
         buf.write(0x0A)
     }
 
+    /**
+     * GS v 0 — print a raster bit image (normal density). Sent in bands of at
+     * most [RASTER_BAND_ROWS] rows: one huge command overflows the receive
+     * buffer of some cheap Bluetooth printers, and consecutive bands print
+     * without a visible seam. The image is not affected by `GS !` size or bold;
+     * callers set the alignment they want first.
+     */
+    fun rasterImage(logo: ReceiptLogo): EscPos = apply {
+        var row = 0
+        while (row < logo.rows) {
+            val band = minOf(RASTER_BAND_ROWS, logo.rows - row)
+            raw(
+                0x1D, 0x76, 0x30, 0x00,
+                logo.bytesPerRow and 0xFF, (logo.bytesPerRow shr 8) and 0xFF,
+                band and 0xFF, (band shr 8) and 0xFF,
+            )
+            buf.write(logo.data, row * logo.bytesPerRow, band * logo.bytesPerRow)
+            row += band
+        }
+        // ESC J n — feed n dots: ~1 mm of air between the logo and the next line.
+        raw(0x1B, 0x4A, LOGO_GAP_DOTS)
+    }
+
     fun bytes(): ByteArray = buf.toByteArray()
+
+    companion object {
+        const val RASTER_BAND_ROWS = 64
+        const val LOGO_GAP_DOTS = 8
+    }
 
     private fun encode(text: String): ByteArray {
         val encoder = charset.newEncoder()

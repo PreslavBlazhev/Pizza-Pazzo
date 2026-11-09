@@ -43,7 +43,17 @@ export interface TicketLine {
   scale: number;
   /** True for the `-----` separators, so the renderer can stretch them. */
   divider?: boolean;
+  /**
+   * Header lines that the LOGO replaces (lib/printer/ticket-logo.ts). A
+   * renderer that can show the image prints it ONCE in place of the whole run
+   * of `logo` lines and drops their text; when the image cannot load it prints
+   * the text instead. Text-only renderers (`toTicketText`) print the text.
+   */
+  logo?: boolean;
 }
+
+/** Fallback header text when the logo cannot load and none is configured. */
+export const DEFAULT_HEADER_TEXT = "PIZZA PAZZO";
 
 const DIVIDER_SECTION: PrintSectionId = "header";
 
@@ -184,8 +194,10 @@ export function buildTicket(
     });
   };
 
-  // ── Header ──
-  push("header", template.headerText);
+  // ── Header: the logo, with the header text as its fallback ──
+  const headerStart = lines.length;
+  push("header", template.headerText.trim() || DEFAULT_HEADER_TEXT);
+  for (let i = headerStart; i < lines.length; i++) lines[i].logo = true;
   push("ticketType", template.name);
   push("orderNumber", `ПОРЪЧКА #${order.orderNumber}`);
   if (order.isTest) {

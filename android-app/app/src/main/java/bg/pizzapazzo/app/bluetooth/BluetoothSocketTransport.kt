@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothSocket
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import bg.pizzapazzo.app.printer.PrinterTransport
@@ -32,6 +33,10 @@ class BluetoothSocketTransport(
     companion object {
         /** Standard Serial Port Profile UUID — what ESC/POS printers expose. */
         val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+
+        /** Large jobs (the logo raster) are written in paced chunks of this size. */
+        private const val CHUNK_BYTES = 1024
+        private const val CHUNK_PAUSE_MS = 15L
     }
 
     private var socket: BluetoothSocket? = null
@@ -70,7 +75,21 @@ class BluetoothSocketTransport(
 
     override suspend fun write(bytes: ByteArray) = withContext(Dispatchers.IO) {
         val out = output ?: throw IOException("Not connected")
-        out.write(bytes)
+        // A receipt with the logo raster is tens of kilobytes. Many cheap
+        // Bluetooth printers have a small receive buffer and silently drop
+        // bytes when flooded, so a large job goes out in paced chunks.
+        if (bytes.size <= CHUNK_BYTES) {
+            out.write(bytes)
+        } else {
+            var offset = 0
+            while (offset < bytes.size) {
+                val n = minOf(CHUNK_BYTES, bytes.size - offset)
+                out.write(bytes, offset, n)
+                out.flush()
+                offset += n
+                if (offset < bytes.size) delay(CHUNK_PAUSE_MS)
+            }
+        }
         out.flush()
     }
 
