@@ -899,7 +899,16 @@
     "cardSchemes": "Card brands",
     "cardNotActiveYet": "Online card payment is not active yet — orders are currently paid in cash on delivery.",
     "testModeSandbox": "TEST MODE — the payment goes through the bank's test environment (UPC/UBB), test cards only, no real money. This order will not be prepared.",
-    "merchantLine": "Merchant: {legalName}, UIC {uic}, {address}, Bulgaria"
+    "merchantLine": "Merchant: {legalName}, UIC {uic}, {address}, Bulgaria",
+    "wallet": {
+      "separator": "or pay by card",
+      "processing": "Processing your payment… Please keep this page open.",
+      "cancelled": "The payment was interrupted. Nothing was charged — you can try again.",
+      "declined": "The bank did not accept the payment. Nothing was charged — try again or pay by card.",
+      "unavailable": "The wallet payment did not go through. Nothing was charged — try again or pay by card.",
+      "tooMany": "Too many wallet attempts for this order. Pay by card or try again later.",
+      "invalid": "The wallet data was not accepted. Try again or pay by card."
+    }
   },
   "callNow": {
     "button": "Call now",

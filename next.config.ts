@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
     // `npm run type-check` still checks them with the full tsconfig.json.
     tsconfigPath: "tsconfig.build.json",
   },
+  async rewrites() {
+    return [
+      {
+        // Apple Pay domain verification (content from APPLE_PAY_DOMAIN_ASSOCIATION).
+        source: "/.well-known/apple-developer-merchantid-domain-association",
+        destination: "/api/payments/wallet/apple-domain-association",
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

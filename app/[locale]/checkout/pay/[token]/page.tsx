@@ -7,6 +7,11 @@ import { PaymentShell, PaymentHeading } from "@/components/payment/PaymentShell"
 import { PaymentOrderSummary } from "@/components/payment/PaymentOrderSummary";
 import { PayWithCardForm } from "@/components/payment/PayWithCardForm";
 import { MerchantIdentity } from "@/components/payment/MerchantIdentity";
+import { WalletButtons } from "@/components/payment/WalletButtons";
+import { getStoreStatus } from "@/lib/store-status";
+import { toMinorUnits } from "@/lib/payments/money";
+import { walletClientConfig } from "@/lib/payments/wallets/config";
+import { resolveWalletOffer } from "@/lib/payments/wallets/service";
 import { getCustomerPaymentView } from "@/lib/payments/customer";
 import { formatEurPrice } from "@/lib/format-price";
 import type { Locale } from "@/i18n/routing";
@@ -17,6 +22,8 @@ import type { Locale } from "@/i18n/routing";
  * Shows the order exactly as the server stored and priced it, the payment
  * method and the amount, and one action: "Плати с карта". Card details are
  * NOT asked for here — the button leads to the provider's hosted page.
+ * Where ОББ/UPC and the device allow it, the wallet buttons come
+ * first (lib/payments/wallets); the card button always stays.
  */
 interface PageProps {
   params: Promise<{ locale: Locale; token: string }>;
@@ -60,6 +67,16 @@ export default async function PayPage({ params, searchParams }: PageProps) {
   const { order } = view;
   const errorCode = (ERROR_CODES as readonly string[]).includes(error ?? "")
     ? (error as ErrorCode)
+    : null;
+
+  // Wallets: a real UPC order, an open kitchen, and a configured wallet.
+  const walletOffer =
+    view.state !== "ORDER_CANCELLED" && (await getStoreStatus()).isOpen ? resolveWalletOffer(order) : null;
+  const wallets = walletOffer
+    ? walletClientConfig(walletOffer.wallets, {
+        amountMinor: toMinorUnits(order.totalEur),
+        currency: walletOffer.config.currency,
+      })
     : null;
 
   if (view.state === "ORDER_CANCELLED") {
@@ -115,6 +132,25 @@ export default async function PayPage({ params, searchParams }: PageProps) {
       )}
 
       <div className="mt-6 space-y-3">
+        {wallets && (
+          <WalletButtons
+            token={token}
+            locale={locale}
+            config={wallets}
+            labels={{
+              separator: t("wallet.separator"),
+              processing: t("wallet.processing"),
+              cancelled: t("wallet.cancelled"),
+              declined: t("wallet.declined"),
+              unavailable: t("wallet.unavailable"),
+              errors: {
+                ...Object.fromEntries(ERROR_CODES.map((c) => [c, t(`errors.${c}`)])),
+                TOO_MANY_ATTEMPTS: t("wallet.tooMany"),
+                INVALID_WALLET_DATA: t("wallet.invalid"),
+              },
+            }}
+          />
+        )}
         <PayWithCardForm
           token={token}
           locale={locale}

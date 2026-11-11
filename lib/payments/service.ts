@@ -43,7 +43,7 @@ import { isPaymentMethod, isPaymentStatus } from "@/types/order";
 type AttemptRow = Prisma.PaymentAttemptGetPayload<Record<string, never>>;
 
 /** How long "Pay" holds the per-order lock while it talks to the provider. */
-const PAYMENT_LOCK_MS = 30_000;
+export const PAYMENT_LOCK_MS = 30_000;
 /** A CREATED attempt with no hosted page this old is a crashed creation. */
 const STALE_CREATION_MS = 60_000;
 /** Snapshots of provider answers are for diagnosis, not archives. */
@@ -300,7 +300,7 @@ export type StartPaymentResult =
         | "CHECKING";
     };
 
-async function latestAttempt(orderId: string): Promise<AttemptRow | null> {
+export async function latestAttempt(orderId: string): Promise<AttemptRow | null> {
   return db.paymentAttempt.findFirst({ where: { orderId }, orderBy: { createdAt: "desc" } });
 }
 
@@ -530,7 +530,7 @@ async function checkOpenAttemptBeforeReuse(orderId: string): Promise<StartPaymen
 }
 
 /** The last status query said the gateway has no payment under this OrderID. */
-function gatewayHasNoSuchPayment(a: Pick<AttemptRow, "providerResponse">): boolean {
+export function gatewayHasNoSuchPayment(a: Pick<AttemptRow, "providerResponse">): boolean {
   try {
     return JSON.parse(a.providerResponse ?? "{}").notFound === true;
   } catch {
