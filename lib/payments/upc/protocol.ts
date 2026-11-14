@@ -404,8 +404,15 @@ export function buildNotifyResponse(
 
 // ── TranCode → our state ───────────────────────────────────────────────────
 
-/** Codes that report a technical problem, not a decision about the payment. */
-export const TECHNICAL_TRAN_CODES = new Set(["290", "291", "403", "902", "909"]);
+/**
+ * Codes that report a technical problem or an unfinished transaction, not a
+ * decision about the payment. 999 is UPC's "transaction in progress …
+ * (intermediate status, you must send a request for payment status before
+ * the final status)" — Response codes TranCode page; it used to fall under
+ * the 9xx "failed" pattern, which could have opened a second payment while
+ * the first was still running.
+ */
+export const TECHNICAL_TRAN_CODES = new Set(["290", "291", "403", "902", "909", "999"]);
 
 /**
  * The only documented FINAL results of a transaction that was cancelled after
@@ -449,7 +456,7 @@ export function failureReasonFor(tranCode: string): string {
   if (code === "404") return "AUTHENTICATION_FAILED";
   if (["101", "111"].includes(code)) return "CARD_DATA";
   if (["105", "108", "130", "131", "701"].includes(code)) return "DECLINED_BY_ISSUER";
-  if (["290", "291", "403", "902", "909"].includes(code)) return "TECHNICAL";
+  if (["290", "291", "403", "902", "909", "999"].includes(code)) return "TECHNICAL";
   if (["501", "601"].includes(code)) return "CANCELLED_BY_CUSTOMER";
   if (code === "503") return "CANCELLED_BY_MERCHANT";
   if (["401", "402", "405", "407", "411", "412", "430"].includes(code)) return "GATEWAY_REJECTED";

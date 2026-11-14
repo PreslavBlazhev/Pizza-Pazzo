@@ -1,33 +1,86 @@
 /**
  * Google Pay / Apple Pay through UPC payByWallet — settings, protocol, flow.
  *
- * Runs with tests/setup-env-upc.mjs (ОББ's TEST terminal, staff only, per-run
- * keys). UPC is played here: the status query through a stubbed fetch (signed
- * with the stand-in gateway key), payByWallet through the `send` seam.
+ * ОББ: wallet payments exist only in PRODUCTION. So this suite runs the UPC
+ * adapter with ОББ's production identifiers (MerchantID 7331057, terminal
+ * E0901028, secure.kbcbank.bg) but THROWAWAY keys made per run, and plays the
+ * bank itself: the status query through a stubbed fetch (signed with the
+ * stand-in gateway key), payByWallet through the `send` seam.
  *
- * ⚠️ Proves OUR side only. No wallet token here is real and no request
- * leaves this process; the bank-side checks are in docs/UBB-UPC-WALLETS.md.
+ * ⚠️ MOCKS ONLY. No wallet token here is real, no request leaves this process
+ * and nothing here is a bank test payment — UPC's answers are modelled on its
+ * documentation (Samples / TranCode pages). The real check is a controlled
+ * production payment, see docs/UBB-UPC-WALLETS.md.
  *
  * Run: npm run test:upc
  */
 import { test, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createPrivateKey, createPublicKey, sign as cryptoSign, verify as cryptoVerify } from "node:crypto";
 import { db } from "@/lib/db";
 import { placeOrder } from "@/lib/checkout/place-order";
 import { startCardPayment } from "@/lib/payments/service";
 import { getEffectivePaymentConfig } from "@/lib/payments/providers";
-import { getWalletSettings, walletClientConfig } from "@/lib/payments/wallets/config";
-import { MAX_WALLET_SUBMISSIONS, payWithWallet, resolveWalletOffer, type WalletSender } from "@/lib/payments/wallets/service";
+import { getWalletSettings, UBB_PAY_BY_WALLET_URL, walletClientConfig } from "@/lib/payments/wallets/config";
+import { MAX_WALLET_SUBMISSIONS, WALLET_SETTLE_MS, payWithWallet, resolveWalletOffer, type WalletSender } from "@/lib/payments/wallets/service";
 import { isAppleValidationUrl, requestAppleMerchantSession } from "@/lib/payments/wallets/apple-session";
 import { buildWalletRequest, normalizeWalletData, parseWalletAnswer } from "@/lib/payments/upc/wallet";
 import type { PaymentConfig } from "@/lib/payments/config";
 import { ALL_CONSENTS, CONTACT, STANDARD_ITEMS, STANDARD_TOTAL_MINOR, deps, key } from "./helpers";
 
+const MID = "7331057";
+const TID = "E0901028";
+const STATUS_URL = "https://secure.kbcbank.bg/kbc/service/01";
+
+/** A throwaway key + self-signed certificate with CN=<MerchantID> (test only). */
+function merchantKeyAndCert(cn: string): { key: string; cert: string } {
+  const dir = mkdtempSync(join(tmpdir(), "upc-wallet-cert-"));
+  try {
+    execFileSync("openssl", [
+      "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-sha512", "-days", "2",
+      "-subj", `/C=BG/O=TEST/CN=${cn}`,
+      "-keyout", join(dir, "k.pem"), "-out", join(dir, "c.crt"),
+    ], { stdio: "ignore" });
+    return { key: readFileSync(join(dir, "k.pem"), "utf8"), cert: readFileSync(join(dir, "c.crt"), "utf8") };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+const MERCHANT = merchantKeyAndCert(MID);
+const MERCHANT_KEY = createPrivateKey(MERCHANT.key);
+const MERCHANT_PUBLIC = createPublicKey(MERCHANT_KEY);
 const GATEWAY_KEY = createPrivateKey(process.env.TEST_UPC_GATEWAY_PRIVATE_KEY!);
 const GATEWAY_PUBLIC = createPublicKey(GATEWAY_KEY);
-const MERCHANT_PUBLIC = createPublicKey(process.env.TEST_UPC_MERCHANT_PUBLIC_KEY!);
-const WALLET_URL = "https://ecg.test.upc.ua/kbc/payByWallet";
+
+/** Production as prepared for Render (docs/UBB-UPC-PRODUCTION.md), throwaway keys. */
+const PRODUCTION_ENV: Record<string, string> = {
+  PAYMENT_ENV: "production",
+  PAYMENT_SANDBOX_AUDIENCE: "",
+  PAYMENT_PRODUCTION_AUDIENCE: "staff",
+  UPC_MERCHANT_ID: MID,
+  UPC_TERMINAL_ID: TID,
+  UPC_PRIVATE_KEY: Buffer.from(MERCHANT.key).toString("base64"),
+  UPC_MERCHANT_CERT: MERCHANT.cert,
+  UPC_GATEWAY_URL: "https://secure.kbcbank.bg/kbc/pay",
+  UPC_STATUS_URL: STATUS_URL,
+  UPC_GATEWAY_CERT: process.env.UPC_GATEWAY_CERT!, // the stand-in gateway key
+  UPC_GATEWAY_SIGNATURE_ALGS: "sha512",
+};
+const WALLET_ENV: Record<string, string> = {
+  GOOGLE_PAY_ENABLED: "true",
+  GOOGLE_PAY_MERCHANT_ID: "BCR2DN4TEST0000",
+};
+const applyEnv = () => {
+  for (const [k, v] of Object.entries({ ...PRODUCTION_ENV, ...WALLET_ENV })) process.env[k] = v;
+  for (const k of ["UPC_WALLET_URL", "GOOGLE_PAY_ENVIRONMENT", "GOOGLE_PAY_AUTH_METHODS", "GOOGLE_PAY_GATEWAY_MERCHANT_ID", "APPLE_PAY_ENABLED"]) {
+    delete process.env[k];
+  }
+};
+applyEnv();
 
 /** A Google Pay token of the documented shape; MARKER must never show up in a log. */
 const MARKER = "SECRET-TOKEN-MARKER-7f3a";
@@ -43,13 +96,6 @@ const APPLE_TOKEN = JSON.stringify({
   transactionIdentifier: "6044F628",
 });
 
-const WALLET_ENV: Record<string, string> = {
-  UPC_WALLET_URL: WALLET_URL,
-  GOOGLE_PAY_ENABLED: "true",
-  GOOGLE_PAY_GATEWAY_MERCHANT_ID: "POS-TEST-1",
-};
-for (const [k, v] of Object.entries(WALLET_ENV)) process.env[k] = v;
-
 after(async () => {
   await db.$disconnect();
 });
@@ -63,7 +109,7 @@ const realFetch = globalThis.fetch;
 
 globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = String(input);
-  if (!url.startsWith("https://ecg.test.upc.ua/kbc/service/01")) return realFetch(input, init);
+  if (!url.startsWith(STATUS_URL)) return realFetch(input, init);
   if (statusCode instanceof Error) throw statusCode;
   const env = JSON.parse(String(init?.body)) as { header: string; payload: string; signature: string };
   const q = JSON.parse(Buffer.from(env.payload, "base64url").toString("utf8")) as Record<string, string>;
@@ -84,10 +130,13 @@ const walletCalls: { url: string; payload: Record<string, unknown>; header: stri
 /** The text payByWallet answers; a function may also flip the status query. */
 let walletAnswer: (() => string) | Error = () => signedAnswer("000");
 
-function signedAnswer(code: string, key = GATEWAY_KEY): string {
+/** A signed answer shaped like UPC's documented JSON answer (Samples page). */
+function signedAnswer(code: string, key = GATEWAY_KEY, extra: Record<string, unknown> = {}): string {
   const b64u = (v: string) => Buffer.from(v).toString("base64url");
   const header = b64u(JSON.stringify({ alg: "RS512" }));
-  const payload = b64u(JSON.stringify({ TranCode: code }));
+  const payload = b64u(
+    JSON.stringify({ MerchantID: MID, TerminalID: TID, ApprovalCode: "", Rrn: "", HostCode: code, TranCode: code, Comment: "", ...extra })
+  );
   const signature = cryptoSign("sha512", Buffer.from(`${header}.${payload}`), key).toString("base64url");
   return JSON.stringify({ header, payload, signature });
 }
@@ -116,8 +165,7 @@ beforeEach(() => {
     statusCode = "000"; // the bank authorised it: the status query now finds it
     return signedAnswer("000");
   };
-  for (const [k, v] of Object.entries(WALLET_ENV)) process.env[k] = v;
-  delete process.env.APPLE_PAY_ENABLED;
+  applyEnv();
 });
 
 async function staffCardOrder() {
@@ -163,78 +211,109 @@ const fakeConfig = (environment: "sandbox" | "production"): PaymentConfig => ({
   audienceSource: "env",
   simulatorSecret: "",
 });
+const env = (extra: Record<string, string> = {}) => ({ ...process.env, ...PRODUCTION_ENV, ...WALLET_ENV, ...extra });
 
-test("settings: no wallet without UPC_WALLET_URL, nothing defaulted; test/production hosts never mix", () => {
-  const sandbox = getEffectivePaymentConfig();
-  const base = { ...process.env, ...WALLET_ENV };
-  const none = getWalletSettings(sandbox, { ...base, UPC_WALLET_URL: "" });
-  assert.equal(none.google, null);
-  assert.match(none.problems.join(" "), /UPC_WALLET_URL не е зададен/);
-
-  assert.ok(getWalletSettings(sandbox, base).google, "the test terminal + test wallet URL");
-  for (const url of ["https://secure.kbcbank.bg/kbc/payByWallet", "https://secure.upc.ua/go/payByWallet", "http://ecg.test.upc.ua/kbc/payByWallet"]) {
-    const s = getWalletSettings(sandbox, { ...base, UPC_WALLET_URL: url });
-    assert.equal(s.google, null, url);
-  }
-  const prod = getWalletSettings(fakeConfig("production"), { ...base, UPC_WALLET_URL: WALLET_URL });
-  assert.equal(prod.google, null, "production never pays through the test gateway");
-
-  // Off unless switched on; never through the simulator/demo.
-  assert.equal(getWalletSettings(sandbox, { ...base, GOOGLE_PAY_ENABLED: "" }).google, null);
-  assert.equal(getWalletSettings({ ...sandbox, providerId: "simulator" }, base).google, null);
-  assert.equal(getWalletSettings({ ...sandbox, enabled: false }, base).google, null);
+test("settings: the production config is complete; ОББ's payByWallet URL by default; gatewayMerchantId = MerchantID", () => {
+  const config = getEffectivePaymentConfig(env());
+  assert.deepEqual(config.problems, []);
+  assert.equal(config.environment, "production");
+  const s = getWalletSettings(config, env());
+  assert.deepEqual(s.problems, []);
+  assert.equal(s.walletUrl, "https://secure.kbcbank.bg/kbc/payByWallet");
+  assert.equal(UBB_PAY_BY_WALLET_URL, "https://secure.kbcbank.bg/kbc/payByWallet");
+  assert.equal(s.google?.gatewayMerchantId, MID, "ОББ: gatewayMerchantId = merchant id");
+  assert.equal(s.google?.merchantId, "BCR2DN4TEST0000", "Google's own id stays separate");
+  assert.equal(s.google?.environment, "PRODUCTION");
+  assert.deepEqual(s.google?.authMethods, ["CRYPTOGRAM_3DS"]);
 });
 
-test("settings: Google Pay — pos_id required, Google merchantId required in PRODUCTION only, environment follows PAYMENT_ENV", () => {
-  const base = { ...process.env, ...WALLET_ENV };
-  const sandbox = getWalletSettings(getEffectivePaymentConfig(), base);
-  assert.equal(sandbox.google?.environment, "TEST");
-  assert.equal(sandbox.google?.merchantId, "");
-  assert.deepEqual(sandbox.google?.authMethods, ["PAN_ONLY", "CRYPTOGRAM_3DS"], "UPC's documented auth methods");
-  assert.equal(getWalletSettings(getEffectivePaymentConfig(), { ...base, GOOGLE_PAY_GATEWAY_MERCHANT_ID: "" }).google, null);
-  assert.equal(getWalletSettings(getEffectivePaymentConfig(), { ...base, GOOGLE_PAY_AUTH_METHODS: "PAN_ONLY,FOO" }).google, null);
-  assert.deepEqual(
-    getWalletSettings(getEffectivePaymentConfig(), { ...base, GOOGLE_PAY_AUTH_METHODS: "CRYPTOGRAM_3DS" }).google?.authMethods,
-    ["CRYPTOGRAM_3DS"]
-  );
+test("settings: no wallet in sandbox (ОББ: production only), none through the simulator, off unless switched on", () => {
+  const sandbox = getWalletSettings(fakeConfig("sandbox"), env());
+  assert.equal(sandbox.google, null);
+  assert.match(sandbox.problems.join(" "), /само в продукционна среда/);
+  const config = getEffectivePaymentConfig(env());
+  assert.equal(getWalletSettings({ ...config, providerId: "simulator" }, env()).google, null);
+  assert.equal(getWalletSettings({ ...config, enabled: false }, env()).google, null);
+  assert.equal(getWalletSettings(config, env({ GOOGLE_PAY_ENABLED: "" })).google, null);
+  assert.equal(getWalletSettings(config, env({ GOOGLE_PAY_ENABLED: "false" })).google, null);
+});
 
-  const prodEnv = { ...base, UPC_WALLET_URL: "https://secure.kbcbank.bg/kbc/payByWallet" };
-  const prod = getWalletSettings(fakeConfig("production"), prodEnv);
-  assert.equal(prod.google, null);
-  assert.match(prod.problems.join(" "), /GOOGLE_PAY_MERCHANT_ID.*задължителен в продукция/);
-  const prodOk = getWalletSettings(fakeConfig("production"), { ...prodEnv, GOOGLE_PAY_MERCHANT_ID: "BCR2DN4TEST" });
-  assert.equal(prodOk.google?.environment, "PRODUCTION");
+test("settings: the wallet URL must be HTTPS on the gateway's own host, never UPC's test host", () => {
+  const config = getEffectivePaymentConfig(env());
+  for (const url of [
+    "https://ecg.test.upc.ua/kbc/payByWallet",
+    "https://secure.upc.ua/go/payByWallet",
+    "http://secure.kbcbank.bg/kbc/payByWallet",
+    "https://secure.kbcbank.bg.evil.example/kbc/payByWallet",
+    "https://user@secure.kbcbank.bg/kbc/payByWallet",
+  ]) {
+    assert.equal(getWalletSettings(config, env({ UPC_WALLET_URL: url })).google, null, url);
+  }
+  assert.ok(getWalletSettings(config, env({ UPC_WALLET_URL: "https://secure.kbcbank.bg/kbc/payByWallet" })).google);
+});
+
+test("settings: Google Pay — Google merchantId required for PRODUCTION; PAN_ONLY refused (3-D Secure redirect undocumented); stale pos_id refused", () => {
+  const config = getEffectivePaymentConfig(env());
+  const noId = getWalletSettings(config, env({ GOOGLE_PAY_MERCHANT_ID: "" }));
+  assert.equal(noId.google, null);
+  assert.match(noId.problems.join(" "), /GOOGLE_PAY_MERCHANT_ID.*PRODUCTION/);
+  const pan = getWalletSettings(config, env({ GOOGLE_PAY_AUTH_METHODS: "PAN_ONLY,CRYPTOGRAM_3DS" }));
+  assert.equal(pan.google, null);
+  assert.match(pan.problems.join(" "), /PAN_ONLY/);
+  assert.equal(getWalletSettings(config, env({ GOOGLE_PAY_AUTH_METHODS: "FOO" })).google, null);
+  const stale = getWalletSettings(config, env({ GOOGLE_PAY_GATEWAY_MERCHANT_ID: "POS-1" }));
+  assert.equal(stale.google, null);
+  assert.ok(getWalletSettings(config, env({ GOOGLE_PAY_GATEWAY_MERCHANT_ID: MID })).google, "the same id is harmless");
+  assert.equal(getWalletSettings(config, env({ GOOGLE_PAY_ENVIRONMENT: "SANDBOX" })).google, null);
+  const preview = getWalletSettings(config, env({ GOOGLE_PAY_ENVIRONMENT: "TEST", GOOGLE_PAY_MERCHANT_ID: "" }));
+  assert.equal(preview.google?.environment, "TEST", "TEST needs no Google merchant id");
 });
 
 test("settings: Apple Pay needs its merchant id, Merchant Identity cert + key; otherwise it is hidden", () => {
-  const base = { ...process.env, ...WALLET_ENV, APPLE_PAY_ENABLED: "true" };
-  const s = getWalletSettings(getEffectivePaymentConfig(), base);
+  const config = getEffectivePaymentConfig(env());
+  const s = getWalletSettings(config, env({ APPLE_PAY_ENABLED: "true" }));
   assert.equal(s.apple, null);
   assert.ok(s.google, "Google Pay is not affected by a half-configured Apple Pay");
   const text = s.problems.join(" ");
   for (const v of ["APPLE_PAY_MERCHANT_ID", "APPLE_PAY_MERCHANT_IDENTITY_CERT", "APPLE_PAY_MERCHANT_IDENTITY_KEY"]) assert.match(text, new RegExp(v));
-  const junk = getWalletSettings(getEffectivePaymentConfig(), {
-    ...base,
+  const junk = getWalletSettings(config, env({
+    APPLE_PAY_ENABLED: "true",
     APPLE_PAY_MERCHANT_ID: "merchant.bg.pizzapazzo",
     APPLE_PAY_MERCHANT_IDENTITY_CERT: "-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----",
     APPLE_PAY_MERCHANT_IDENTITY_KEY: "-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----",
-  });
+  }));
   assert.equal(junk.apple, null);
   assert.match(junk.problems.join(" "), /не е валиден/);
+  // A matching (throwaway) identity certificate + key: Apple Pay is configured.
+  const identity = merchantKeyAndCert("merchant.bg.pizzapazzo");
+  const ok = getWalletSettings(config, env({
+    APPLE_PAY_ENABLED: "true",
+    APPLE_PAY_MERCHANT_ID: "merchant.bg.pizzapazzo",
+    APPLE_PAY_MERCHANT_IDENTITY_CERT: identity.cert,
+    APPLE_PAY_MERCHANT_IDENTITY_KEY: Buffer.from(identity.key).toString("base64"),
+  }));
+  assert.equal(ok.apple?.domain, "pizzapazzo.bg");
+  assert.equal(ok.apple?.countryCode, "BG");
 });
 
-test("client config: gateway 'upcua', the pos_id, VISA/MASTERCARD, the SERVER amount — no secrets", () => {
-  const c = walletClientConfig(getWalletSettings(getEffectivePaymentConfig(), { ...process.env, ...WALLET_ENV }), {
-    amountMinor: 2090,
-    currency: "EUR",
-  })!;
+test("client config: gateway 'upcua', gatewayMerchantId = MerchantID, VISA/MASTERCARD, CRYPTOGRAM_3DS, the SERVER amount — no secrets", () => {
+  const s = getWalletSettings(getEffectivePaymentConfig(env()), env());
+  const c = walletClientConfig(s, { amountMinor: 2090, currency: "EUR" })!;
   assert.equal(c.amount, "20.90");
   assert.equal(c.countryCode, "BG");
+  assert.equal(c.google?.environment, "PRODUCTION");
   assert.equal(c.google?.gateway, "upcua");
-  assert.equal(c.google?.gatewayMerchantId, "POS-TEST-1");
+  assert.equal(c.google?.gatewayMerchantId, MID);
+  assert.equal(c.google?.merchantId, "BCR2DN4TEST0000");
   assert.deepEqual(c.google?.networks, ["MASTERCARD", "VISA"]);
+  assert.deepEqual(c.google?.authMethods, ["CRYPTOGRAM_3DS"]);
   assert.equal(c.apple, null);
   assert.doesNotMatch(JSON.stringify(c), /PRIVATE KEY|BEGIN/);
+
+  // The Google TEST preview is drawn for staff only.
+  const preview = getWalletSettings(getEffectivePaymentConfig(env()), env({ GOOGLE_PAY_ENVIRONMENT: "TEST" }));
+  assert.equal(walletClientConfig(preview, { amountMinor: 2090, currency: "EUR" }), null);
+  assert.equal(walletClientConfig(preview, { amountMinor: 2090, currency: "EUR", viewerIsStaff: true })?.google?.environment, "TEST");
 });
 
 // ── Protocol ─────────────────────────────────────────────────────────────
@@ -242,8 +321,8 @@ test("client config: gateway 'upcua', the pos_id, VISA/MASTERCARD, the SERVER am
 test("payByWallet request: RS256 envelope, UPC's payload fields, numbers as in UPC's example, WalletData verbatim", () => {
   const body = buildWalletRequest(
     {
-      merchantId: "1731096",
-      terminalId: "E7059096",
+      merchantId: MID,
+      terminalId: TID,
       orderId: "PP1001-0A1B2C3D",
       purchaseTime: "261111120000",
       amountMinor: 2090,
@@ -252,15 +331,15 @@ test("payByWallet request: RS256 envelope, UPC's payload fields, numbers as in U
       walletData: GOOGLE_TOKEN,
       description: "Pizza Pazzo — поръчка 1001",
     },
-    createPrivateKey(Buffer.from(process.env.UPC_PRIVATE_KEY!, "base64").toString())
+    MERCHANT_KEY
   );
   const env = JSON.parse(body);
   assert.deepEqual(Object.keys(env), ["header", "payload", "signature"]);
   assert.deepEqual(JSON.parse(Buffer.from(env.header, "base64url").toString()), { alg: "RS256" });
   assert.ok(cryptoVerify("sha256", Buffer.from(`${env.header}.${env.payload}`), MERCHANT_PUBLIC, Buffer.from(env.signature, "base64url")));
   assert.deepEqual(JSON.parse(Buffer.from(env.payload, "base64url").toString()), {
-    MerchantID: "1731096",
-    TerminalID: "E7059096",
+    MerchantID: MID,
+    TerminalID: TID,
     OrderID: "PP1001-0A1B2C3D",
     TotalAmount: 2090,
     Currency: 978,
@@ -281,15 +360,29 @@ test("wallet data: only the documented token shapes are accepted", () => {
   }
 });
 
-test("wallet answer: signed = UPC's; forged/unsigned = hint only; 'ERROR=…' as the KBC test endpoint really answers", () => {
+test("wallet answer: signed = UPC's; forged/foreign/unsigned never trusted; ERROR text; 3-D Secure recognised, never followed", () => {
   const algs = ["sha512"] as const;
-  assert.deepEqual(parseWalletAnswer(signedAnswer("000"), GATEWAY_PUBLIC, algs), { kind: "signed", tranCode: "000" });
-  const notUpc = createPrivateKey(Buffer.from(process.env.UPC_PRIVATE_KEY!, "base64").toString());
-  assert.deepEqual(parseWalletAnswer(signedAnswer("000", notUpc), GATEWAY_PUBLIC, algs), { kind: "unreadable" }, "forged");
-  // Probe 11.11.2026: an empty POST to ecg.test.upc.ua/kbc/payByWallet.
+  const id = { merchantId: MID, terminalId: TID, orderId: "PP1001-0A1B2C3D" };
+  assert.deepEqual(parseWalletAnswer(signedAnswer("000"), GATEWAY_PUBLIC, algs, id), { kind: "signed", tranCode: "000" });
+  assert.deepEqual(parseWalletAnswer(signedAnswer("116"), GATEWAY_PUBLIC, algs, id), { kind: "signed", tranCode: "116" });
+  assert.deepEqual(parseWalletAnswer(signedAnswer("999"), GATEWAY_PUBLIC, algs, id), { kind: "signed", tranCode: "999" });
+  assert.deepEqual(parseWalletAnswer(signedAnswer("000", MERCHANT_KEY), GATEWAY_PUBLIC, algs, id), { kind: "unreadable" }, "forged");
+  assert.deepEqual(
+    parseWalletAnswer(signedAnswer("000", GATEWAY_KEY, { OrderID: "PP9999-FFFFFFFF" }), GATEWAY_PUBLIC, algs, id),
+    { kind: "unreadable" },
+    "a signed answer for another order is not ours"
+  );
+  assert.deepEqual(
+    parseWalletAnswer(signedAnswer("000", GATEWAY_KEY, { TerminalID: "E7059096" }), GATEWAY_PUBLIC, algs, id),
+    { kind: "unreadable" },
+    "nor one from the test terminal"
+  );
+  // An empty POST to ecg.test.upc.ua/kbc/payByWallet answered exactly this (probe 11.11.2026).
   assert.deepEqual(parseWalletAnswer("ERROR=Undefined error", GATEWAY_PUBLIC, algs), { kind: "error", error: "Undefined error" });
   assert.deepEqual(parseWalletAnswer("TranCode=105\n", GATEWAY_PUBLIC, algs), { kind: "unsigned", tranCode: "105" });
-  assert.deepEqual(parseWalletAnswer("<html>3-D Secure…</html>", GATEWAY_PUBLIC, algs), { kind: "unreadable" });
+  assert.deepEqual(parseWalletAnswer("<html><form action='https://acs.example'>3-D Secure</form></html>", GATEWAY_PUBLIC, algs), { kind: "action" });
+  assert.deepEqual(parseWalletAnswer(JSON.stringify({ acsUrl: "https://acs.example", PaReq: "x" }), GATEWAY_PUBLIC, algs), { kind: "action" });
+  assert.deepEqual(parseWalletAnswer("garbage", GATEWAY_PUBLIC, algs), { kind: "unreadable" });
 });
 
 test("Apple merchant validation: only Apple's gateway hosts; the documented body; the session passed through", async () => {
@@ -328,7 +421,7 @@ test("Apple merchant validation: only Apple's gateway hosts; the documented body
 
 // ── Flow ─────────────────────────────────────────────────────────────────
 
-test("Google Pay paid: the attempt's own OrderID/PurchaseTime, the stored amount; PAID only after the signed status query; test order kept off the kitchen", async () => {
+test("Google Pay paid: the attempt's own OrderID/PurchaseTime, the stored amount; PAID only after the signed status query; to the kitchen once", async () => {
   const o = await staffCardOrder();
   const { result, logs } = await captureLogs(() => pay(o.accessToken));
   assert.deepEqual(result, { ok: true, state: "PAID" });
@@ -336,7 +429,10 @@ test("Google Pay paid: the attempt's own OrderID/PurchaseTime, the stored amount
   const [a] = await attempts(o.orderNumber);
   const sent = JSON.parse(a.redirectFormJson!) as Record<string, string>;
   const p = walletCalls[0].payload;
-  assert.equal(walletCalls[0].url, WALLET_URL);
+  assert.equal(walletCalls[0].url, "https://secure.kbcbank.bg/kbc/payByWallet");
+  assert.equal(walletCalls[0].header, JSON.stringify({ alg: "RS256" }));
+  assert.equal(p.MerchantID, MID);
+  assert.equal(p.TerminalID, TID);
   assert.equal(p.OrderID, a.reference);
   assert.equal(p.PurchaseTime, sent.PurchaseTime);
   assert.equal(p.TotalAmount, STANDARD_TOTAL_MINOR);
@@ -348,7 +444,9 @@ test("Google Pay paid: the attempt's own OrderID/PurchaseTime, the stored amount
   assert.equal(a.walletSubmissions, 1);
   const order = await db.order.findUniqueOrThrow({ where: { orderNumber: o.orderNumber } });
   assert.equal(order.paymentStatus, "PAID");
-  assert.equal(order.releasedToKitchenAt, null, "a sandbox payment never reaches the kitchen");
+  assert.equal(order.isTest, false);
+  assert.ok(order.releasedToKitchenAt, "a confirmed real payment releases the order");
+  const released = order.releasedToKitchenAt!.getTime();
   assert.doesNotMatch(logs, new RegExp(MARKER), "the wallet token is never logged");
   assert.doesNotMatch(a.providerResponse ?? "", new RegExp(MARKER), "nor stored");
 
@@ -356,6 +454,8 @@ test("Google Pay paid: the attempt's own OrderID/PurchaseTime, the stored amount
   const again = await pay(o.accessToken);
   assert.deepEqual(again, { ok: false, code: "ALREADY_PAID" });
   assert.equal(walletCalls.length, 1);
+  const later = await db.order.findUniqueOrThrow({ where: { orderNumber: o.orderNumber } });
+  assert.equal(later.releasedToKitchenAt!.getTime(), released, "released once, not again");
 });
 
 test("a wallet answer that says 000 is NOT a payment: without the bank's status (408) the attempt stays pending", async () => {
@@ -364,10 +464,32 @@ test("a wallet answer that says 000 is NOT a payment: without the bank's status 
   assert.deepEqual(await pay(o.accessToken), { ok: true, state: "PENDING" });
   const [a] = await attempts(o.orderNumber);
   assert.notEqual(a.status, "PAID");
+  // A second tap right away is held: UPC may still be booking the first one.
+  assert.deepEqual(await pay(o.accessToken), { ok: false, code: "CHECKING" });
+  assert.equal(walletCalls.length, 1, "nothing re-sent while the first answer is unclear");
   // An unsigned "000" is no better.
+  const o2 = await staffCardOrder();
   walletAnswer = () => "TranCode=000\n";
+  assert.deepEqual(await pay(o2.accessToken), { ok: true, state: "PENDING" });
+  assert.equal((await db.order.findUniqueOrThrow({ where: { orderNumber: o2.orderNumber } })).paymentStatus === "PAID", false);
+});
+
+test("settle window: after an unclear answer no new wallet data for WALLET_SETTLE_MS, even if the status says 408; then the SAME OrderID", async () => {
+  const o = await staffCardOrder();
+  walletAnswer = new Error("The operation was aborted due to timeout");
   assert.deepEqual(await pay(o.accessToken), { ok: true, state: "PENDING" });
-  assert.equal((await db.order.findUniqueOrThrow({ where: { orderNumber: o.orderNumber } })).paymentStatus === "PAID", false);
+  assert.deepEqual(await pay(o.accessToken), { ok: false, code: "CHECKING" });
+  assert.equal(walletCalls.length, 1);
+  // The window has passed and the bank still has nothing under this OrderID.
+  const [a] = await attempts(o.orderNumber);
+  await db.paymentAttempt.update({ where: { id: a.id }, data: { walletSubmittedAt: new Date(Date.now() - WALLET_SETTLE_MS - 1_000) } });
+  walletAnswer = () => {
+    statusCode = "000";
+    return signedAnswer("000");
+  };
+  assert.deepEqual(await pay(o.accessToken), { ok: true, state: "PAID" });
+  assert.deepEqual(walletCalls.map((c) => c.payload.OrderID), [a.reference, a.reference], "never a second OrderID");
+  assert.equal((await attempts(o.orderNumber)).length, 1);
 });
 
 test("status says PAID but for another amount: never paid, AMOUNT_MISMATCH for staff", async () => {
@@ -484,10 +606,55 @@ test("refusals before any bank call: bad token data, wallet switched off, Apple 
   assert.equal(walletCalls.length, MAX_WALLET_SUBMISSIONS);
 });
 
-test("a cash order, a cancelled order and a demo (isTest≠terminal) order are never offered a wallet", async () => {
+test("a cancelled order and a test (isTest) order are never offered a wallet", async () => {
   const o = await staffCardOrder();
   await db.order.update({ where: { orderNumber: o.orderNumber }, data: { status: "CANCELLED" } });
   assert.deepEqual(await pay(o.accessToken), { ok: false, code: "ORDER_CANCELLED" });
-  assert.equal(resolveWalletOffer({ isTest: false }), null, "the sandbox terminal never pays a real order");
-  assert.ok(resolveWalletOffer({ isTest: true }));
+  assert.ok(resolveWalletOffer({ isTest: false }));
+  assert.equal(resolveWalletOffer({ isTest: true }), null, "a test order never reaches the production terminal");
+  assert.equal(walletCalls.length, 0);
+});
+
+test("Google Pay TEST preview: refused before anything is created; nothing reaches the bank", async () => {
+  process.env.GOOGLE_PAY_ENVIRONMENT = "TEST";
+  const o = await staffCardOrder();
+  assert.deepEqual(await pay(o.accessToken), { ok: false, code: "PREVIEW_ONLY" });
+  assert.equal(walletCalls.length, 0);
+  assert.equal((await attempts(o.orderNumber)).length, 0);
+});
+
+test("3-D Secure / redirect answer: never followed, PENDING; a later status 000 settles it without a second charge", async () => {
+  const o = await staffCardOrder();
+  walletAnswer = () => "<html><form action='https://acs.example/3ds'></form></html>";
+  const { result, logs } = await captureLogs(() => pay(o.accessToken));
+  assert.deepEqual(result, { ok: true, state: "PENDING" });
+  assert.match(logs, /3-D Secure\/redirect step/);
+  assert.doesNotMatch(logs, new RegExp(MARKER));
+  statusCode = "000";
+  assert.deepEqual(await startCardPayment({ accessToken: o.accessToken, locale: "bg" }), { ok: false, code: "ALREADY_PAID" });
+  assert.equal(walletCalls.length, 1);
+  assert.equal((await attempts(o.orderNumber)).length, 1);
+});
+
+test("999 'in progress': PENDING, and a retry is held while the bank still processes it", async () => {
+  const o = await staffCardOrder();
+  walletAnswer = () => {
+    statusCode = "999";
+    return signedAnswer("999");
+  };
+  assert.deepEqual(await pay(o.accessToken), { ok: true, state: "PENDING" });
+  assert.deepEqual(await pay(o.accessToken), { ok: false, code: "CHECKING" });
+  assert.equal(walletCalls.length, 1);
+});
+
+test("a signed decline UPC registered (116): FAILED, never PAID, nothing to the kitchen", async () => {
+  const o = await staffCardOrder();
+  walletAnswer = () => {
+    statusCode = "116";
+    return signedAnswer("116");
+  };
+  assert.deepEqual(await pay(o.accessToken), { ok: true, state: "FAILED" });
+  const order = await db.order.findUniqueOrThrow({ where: { orderNumber: o.orderNumber } });
+  assert.notEqual(order.paymentStatus, "PAID");
+  assert.equal(order.releasedToKitchenAt, null);
 });

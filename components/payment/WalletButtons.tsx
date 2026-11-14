@@ -15,6 +15,10 @@ import type { WalletClientConfig } from "@/lib/payments/wallets/config";
  *     stored amount whatever the browser sends.
  *   - The encrypted wallet data goes to /api/payments/wallet and nowhere else;
  *     nothing here logs it.
+ *   - Nothing here decides that the order is paid: the SERVER's answer (from
+ *     the bank's signed status) chooses the next page. Closing the sheet is
+ *     "cancelled"; an unclear answer after the data was sent goes to the
+ *     pending page — never "nothing was charged".
  */
 
 const GOOGLE_PAY_JS = "https://pay.google.com/gp/p/js/pay.js";
@@ -85,6 +89,8 @@ export interface WalletLabels {
   cancelled: string;
   declined: string;
   unavailable: string;
+  /** The data may have reached the bank but the answer is unclear. */
+  unknown: string;
   /** Messages for the server's error codes; missing ones fall back to `unavailable`. */
   errors: Record<string, string>;
 }
@@ -138,8 +144,18 @@ export function WalletButtons({
         return { paid: false, next: null };
       }
       if (data.state) return { paid: data.state === "PAID", next: data.next ?? pending };
-      setMessage(labels.errors[data.error ?? ""] ?? labels.unavailable);
-      return { paid: false, next: null };
+      // A known refusal: the server stopped BEFORE anything reached the bank.
+      const known = data.error ? labels.errors[data.error] : undefined;
+      if (known) {
+        setMessage(known);
+        // An earlier payment is still being checked: the pending page follows it.
+        const checking = data.error === "CHECKING" || data.error === "UNCONFIRMED";
+        return { paid: false, next: checking ? pending : null };
+      }
+      // Anything else (a proxy error page, a crash after the bank call): the
+      // money state is unknown — the pending page asks the bank.
+      setMessage(labels.unknown);
+      return { paid: false, next: pending };
     },
     [token, locale, labels]
   );
@@ -269,7 +285,10 @@ export function WalletButtons({
       });
     };
     session.oncancel = () => {
-      if (!authorized) setMessage(labels.cancelled);
+      // After authorisation the data is already on its way to the bank: the
+      // buttons stay locked until the server's answer chooses the next page.
+      if (authorized) return;
+      setMessage(labels.cancelled);
       setWorking(false);
     };
     setWorking(true);

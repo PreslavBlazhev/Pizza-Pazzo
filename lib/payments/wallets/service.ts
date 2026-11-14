@@ -17,6 +17,13 @@
  *                           with the amount check and the kitchen gate of
  *                           every other payment (applyProviderStatus)
  *
+ * No Notify: ОББ — "Notify не се използва в този случай. Всички отговори на
+ * UPC търговецът получава през API." So the payByWallet answer and the
+ * status query (here, on the pending page and in the background reconcile)
+ * are the only sources; a closed sheet, a client-side "success" or a return
+ * to the site never count. A NOTIFY that arrives anyway goes through the
+ * normal verified handler and changes nothing here.
+ *
  * The wallet token is passed through to UPC and dropped: never stored, never
  * logged, never echoed.
  */
@@ -38,12 +45,24 @@ import { getUpcSettings, type UpcSettings } from "../upc/config";
 import { alphaCurrency, outcomeForTranCode } from "../upc/protocol";
 import { buildWalletRequest, normalizeWalletData, parseWalletAnswer, type WalletAnswer } from "../upc/wallet";
 import type { PaymentConfig } from "../config";
-import { getWalletSettings, walletEnabled, type WalletSettings, type WalletType } from "./config";
+import { getWalletSettings, isGooglePayPreview, walletEnabled, type WalletSettings, type WalletType } from "./config";
 
 /** Apple Pay closes its sheet 30 s after authorisation; the status query follows this call. */
 const WALLET_TIMEOUT_MS = 12_000;
 /** Wallet submissions on one attempt (declined tokens, retries) before a fresh start is required. */
 export const MAX_WALLET_SUBMISSIONS = 5;
+/**
+ * After a submission whose outcome is unclear (timeout, 999, a 000 the status
+ * query does not show yet, a 3-D Secure request, garbage), the same attempt
+ * takes no new wallet data for this long, even when a status query says
+ * "not found": UPC may still be authorising the first one. UPC's "Timeouts
+ * handling" page (DOCEN 49974584): after a timeout the status query may say
+ * "transaction not found" while it is still being processed — repeat the
+ * check "at some longer interval (for example, 1 hour)". So one hour, the
+ * same as the reconcile's expiry of an unpaid attempt. A CONFIRMED refusal
+ * (an explicit ERROR / decline + "not found", DECLINED below) clears it.
+ */
+export const WALLET_SETTLE_MS = 60 * 60_000;
 
 export interface WalletOffer {
   config: PaymentConfig;
@@ -101,7 +120,7 @@ export type WalletPaymentResult =
        */
       state: "PAID" | "FAILED" | "DECLINED" | "PENDING";
     }
-  | { ok: false; code: StartFailure | "INVALID_WALLET_DATA" | "TOO_MANY_ATTEMPTS" };
+  | { ok: false; code: StartFailure | "INVALID_WALLET_DATA" | "TOO_MANY_ATTEMPTS" | "PREVIEW_ONLY" };
 
 const DECLINE_OUTCOMES = new Set(["FAILED", "CANCELLED", "EXPIRED"]);
 
@@ -120,6 +139,9 @@ export async function payWithWallet(
   if (order.status === "CANCELLED") return { ok: false, code: "ORDER_CANCELLED" };
   const offer = resolveWalletOffer(order, env);
   if (!offer || !walletEnabled(offer.wallets, input.wallet)) return { ok: false, code: "DISABLED" };
+  // Google's TEST environment hands out dummy tokens: a preview for Google's
+  // review, never a payment — nothing is created and nothing reaches the bank.
+  if (input.wallet === "GOOGLE_PAY" && isGooglePayPreview(offer.wallets)) return { ok: false, code: "PREVIEW_ONLY" };
 
   // The attempt this payment belongs to — exactly what "Плати с карта" would
   // open. Every "is there already a payment?" rule runs in there.
@@ -172,6 +194,9 @@ export async function payWithWallet(
       return { ok: false, code: "PROVIDER_ERROR" };
     }
     if (attempt.walletSubmissions >= MAX_WALLET_SUBMISSIONS) return { ok: false, code: "TOO_MANY_ATTEMPTS" };
+    if (attempt.walletSubmittedAt && now.getTime() - attempt.walletSubmittedAt.getTime() < WALLET_SETTLE_MS) {
+      return { ok: false, code: "CHECKING" };
+    }
 
     let body: string;
     try {
@@ -206,7 +231,11 @@ export async function payWithWallet(
     try {
       const res = await (deps.send ?? sendToUpc)(offer.wallets.walletUrl, body);
       httpStatus = res.status;
-      answer = parseWalletAnswer(res.text, offer.upc.gatewayKey, offer.upc.gatewayAlgorithms);
+      answer = parseWalletAnswer(res.text, offer.upc.gatewayKey, offer.upc.gatewayAlgorithms, {
+        merchantId: offer.upc.merchantId,
+        terminalId: offer.upc.terminalId,
+        orderId: attempt.reference,
+      });
     } catch (err) {
       // Timeout / dropped connection: UPC may have charged. The status query decides.
       console.warn(`[payments] ${attempt.reference} ${input.wallet} → payByWallet: no answer (${(err as Error).name})`);
@@ -214,7 +243,8 @@ export async function payWithWallet(
     console.log(
       `[payments] ${attempt.reference} ${input.wallet} → payByWallet: HTTP ${httpStatus || "-"} ${answer.kind}` +
         (answer.tranCode ? ` TranCode ${answer.tranCode}` : "") +
-        (answer.error ? ` (${answer.error})` : "")
+        (answer.error ? ` (${answer.error})` : "") +
+        (answer.kind === "action" ? " — asks for a 3-D Secure/redirect step (undocumented for payByWallet, not followed)" : "")
     );
     // What UPC said, for staff — codes only. Written before the status query,
     // so a "not found" read afterwards is from a query made AFTER this call.
@@ -244,10 +274,18 @@ export async function payWithWallet(
   // Still open. UPC refused the request (an ERROR, or a signed decline) AND a
   // fresh status query finds no transaction under this OrderID: nothing was
   // taken, and the same identity may be paid again (wallet or card page).
+  // Everything else — a signed 000 the status query does not show yet, 999
+  // "in progress", a timeout, a 3-D Secure request, garbage — is PENDING: the
+  // pending page and the background reconcile keep asking the bank; no new
+  // charge is ever started automatically.
   const refused =
     answer.kind === "error" ||
     (answer.kind === "signed" && !!answer.tranCode && DECLINE_OUTCOMES.has(outcomeForTranCode(answer.tranCode)));
-  if (refused && gatewayHasNoSuchPayment(after)) return { ok: true, state: "DECLINED" };
+  if (refused && gatewayHasNoSuchPayment(after)) {
+    // Confirmed: nothing under this OrderID — the customer may try again now.
+    await db.paymentAttempt.updateMany({ where: { id: attemptId, status: after.status }, data: { walletSubmittedAt: null } });
+    return { ok: true, state: "DECLINED" };
+  }
   return { ok: true, state: "PENDING" };
 }
 

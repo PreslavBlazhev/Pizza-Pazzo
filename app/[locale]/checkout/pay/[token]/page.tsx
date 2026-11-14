@@ -12,6 +12,8 @@ import { getStoreStatus } from "@/lib/store-status";
 import { toMinorUnits } from "@/lib/payments/money";
 import { walletClientConfig } from "@/lib/payments/wallets/config";
 import { resolveWalletOffer } from "@/lib/payments/wallets/service";
+import { readSession } from "@/lib/auth/session";
+import { isStaffRole } from "@/lib/payments/demo";
 import { getCustomerPaymentView } from "@/lib/payments/customer";
 import { formatEurPrice } from "@/lib/format-price";
 import type { Locale } from "@/i18n/routing";
@@ -76,6 +78,8 @@ export default async function PayPage({ params, searchParams }: PageProps) {
     ? walletClientConfig(walletOffer.wallets, {
         amountMinor: toMinorUnits(order.totalEur),
         currency: walletOffer.config.currency,
+        // A wallet TEST preview (never charged) is drawn for staff only.
+        viewerIsStaff: isStaffRole((await readSession())?.role),
       })
     : null;
 
@@ -143,10 +147,12 @@ export default async function PayPage({ params, searchParams }: PageProps) {
               cancelled: t("wallet.cancelled"),
               declined: t("wallet.declined"),
               unavailable: t("wallet.unavailable"),
+              unknown: t("wallet.unknown"),
               errors: {
                 ...Object.fromEntries(ERROR_CODES.map((c) => [c, t(`errors.${c}`)])),
                 TOO_MANY_ATTEMPTS: t("wallet.tooMany"),
                 INVALID_WALLET_DATA: t("wallet.invalid"),
+                PREVIEW_ONLY: t("wallet.previewOnly"),
               },
             }}
           />

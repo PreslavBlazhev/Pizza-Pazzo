@@ -907,7 +907,9 @@
       "declined": "The bank did not accept the payment. Nothing was charged — try again or pay by card.",
       "unavailable": "The wallet payment did not go through. Nothing was charged — try again or pay by card.",
       "tooMany": "Too many wallet attempts for this order. Pay by card or try again later.",
-      "invalid": "The wallet data was not accepted. Try again or pay by card."
+      "invalid": "The wallet data was not accepted. Try again or pay by card.",
+      "unknown": "We did not get a clear answer about the payment. Please do not pay again — we are checking with the bank.",
+      "previewOnly": "Wallet test mode (staff preview) — no payment was made and nothing was sent to the bank."
     }
   },
   "callNow": {
