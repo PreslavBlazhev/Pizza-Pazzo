@@ -4,6 +4,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
 }
 
 // Release signing lives outside the repo: android-kitchen-app/keystore.properties
@@ -53,6 +54,9 @@ android {
 
         buildConfigField("String", "START_URL", "\"$siteStartUrl\"")
         buildConfigField("String", "SITE_HOSTS", "\"$siteHosts\"")
+        // Google Analytics for Firebase — still off until the user consents,
+        // see analytics/AppAnalytics.kt. The staging test app never reports.
+        buildConfigField("boolean", "ANALYTICS_ENABLED", "true")
     }
 
     signingConfigs {
@@ -88,6 +92,9 @@ android {
             buildConfigField("boolean", "ALLOW_DEV_ORIGINS", "false")
             buildConfigField("String", "START_URL", "\"$stagingUrl\"")
             buildConfigField("String", "SITE_HOSTS", "\"$stagingHost\"")
+            // Demo orders must never reach the real GA4 property, and this
+            // package (…app.staging) is not registered in Firebase anyway.
+            buildConfigField("boolean", "ANALYTICS_ENABLED", "false")
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("debug")
         }
@@ -137,6 +144,13 @@ android {
     }
 }
 
+// google-services.json knows only bg.pizzapazzo.app, so the staging package
+// would fail the build here. Staging never reports (ANALYTICS_ENABLED=false
+// above) and never touches Firebase, so it simply gets no Firebase resources.
+tasks.matching { it.name == "processStagingGoogleServices" }.configureEach {
+    enabled = false
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
@@ -151,6 +165,11 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+
+    // Google Analytics 4 through Firebase. The BoM pins one tested set of
+    // Firebase versions; Analytics is the only Firebase product used.
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation("com.google.firebase:firebase-analytics")
 
     // Unit tests run on the JVM: android.jar's org.json is a stub there, so the
     // real org.json artifact is pulled in for tests only.

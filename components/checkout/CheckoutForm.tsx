@@ -24,6 +24,7 @@ import {
   useCartStore,
 } from "@/store/cart-store";
 import { formatEurPrice } from "@/lib/format-price";
+import { beginCheckoutParams, trackAppEvent } from "@/lib/app-analytics";
 import {
   deliveryTownsLabel,
   DELIVERY_AREA,
@@ -435,6 +436,16 @@ export function CheckoutForm({
       query: { n: String(state.orderNumber), ...(state.receipt ? { r: state.receipt } : {}) },
     });
   }, [state, clear, router, locale]);
+
+  // Android app only, with consent: the basket as checkout opens, once per
+  // visit to this page (not again when a refused attempt re-renders it).
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (!hydrated || checkoutTracked.current || items.length === 0) return;
+    checkoutTracked.current = true;
+    const params = beginCheckoutParams(items);
+    if (params) trackAppEvent("begin_checkout", params);
+  }, [hydrated, items]);
 
   if (!hydrated) {
     return <div className="h-64 animate-pulse rounded-3xl bg-pizza-cream-dark/40" />;

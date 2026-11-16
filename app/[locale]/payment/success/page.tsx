@@ -4,6 +4,8 @@ import { Link, redirect } from "@/i18n/navigation";
 import { PaymentShell, PaymentHeading } from "@/components/payment/PaymentShell";
 import { PaymentOrderSummary } from "@/components/payment/PaymentOrderSummary";
 import { PaymentSettled } from "@/components/payment/PaymentSettled";
+import { TrackAppPurchase } from "@/components/analytics/AppAnalytics";
+import { purchaseParams } from "@/lib/app-analytics";
 import { getCustomerPaymentView } from "@/lib/payments/customer";
 import { getRestaurantSettings } from "@/lib/restaurant-settings";
 import { formatEurPrice } from "@/lib/format-price";
@@ -50,6 +52,9 @@ export default async function PaymentSuccessPage({ params, searchParams }: PageP
   return (
     <PaymentShell testNotice={view!.isTest ? t("testMode") : null}>
       <PaymentSettled token={token} />
+      {/* Android app only, with consent; null while the paid order is held
+          for staff (not a sale yet) or for a test payment. */}
+      <TrackAppPurchase params={purchaseParams(order)} />
       <PaymentHeading icon="✓" tone="success" title={t("success.title")} subtitle={t(held ? "success.subtitleHeld" : "success.subtitle")} />
 
       <div className="mt-5 flex flex-wrap justify-center gap-2">

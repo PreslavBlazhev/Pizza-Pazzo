@@ -18,6 +18,20 @@
         android:name="android.permission.BLUETOOTH_ADMIN"
         android:maxSdkVersion="30" />
 
+    <!-- Firebase Analytics merges these in for advertising: the advertising id
+         and the Privacy Sandbox ad-services APIs. The app shows no ads and
+         never collects the id (google_analytics_adid_collection_enabled
+         below), so the permissions are removed outright. -->
+    <uses-permission
+        android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION"
+        tools:node="remove" />
+
     <uses-feature
         android:name="android.hardware.bluetooth"
         android:required="false" />
@@ -40,6 +54,37 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="false"
         android:theme="@style/Theme.PizzaPazzo">
+
+        <!-- Google Analytics for Firebase starts OFF, with every Consent Mode
+             signal denied: nothing — not even first_open — is sent until the
+             user allows it in the consent dialog (analytics/AppAnalytics.kt
+             switches it on at runtime, and back off on withdrawal). Advertising
+             signals stay denied for good. Screen views come from the site's
+             routes (analytics/ScreenNames.kt), not from the one activity. -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_analytics_storage"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_storage"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_user_data"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_personalization_signals"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_ssaid_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_automatic_screen_reporting_enabled"
+            android:value="false" />
 
         <activity
             android:name=".MainActivity"

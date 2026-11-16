@@ -15,7 +15,8 @@ export const LEGAL_VERSIONS = {
   // delivery also gained the 10 € minimum order for delivery.
   terms: "2026-10-12",
   refunds: "2026-10-12",
-  privacy: "2026-10-12",
+  // 2026-10-14: Google Analytics for Firebase in the Android app (consent-only).
+  privacy: "2026-10-14",
   delivery: "2026-10-12",
   payment: "2026-10-12",
   cookies: "2026-10-12",

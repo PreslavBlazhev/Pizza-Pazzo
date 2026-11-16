@@ -6,6 +6,8 @@ import { Footer } from "@/components/layout/Footer";
 import { ProductDetails } from "@/components/menu/ProductDetails";
 import { findProduct, getCategoryById, getExtrasForProduct } from "@/lib/menu-data";
 import { type Locale } from "@/i18n/routing";
+import { TrackAppEvent } from "@/components/analytics/AppAnalytics";
+import { viewItemParams } from "@/lib/app-analytics";
 
 interface PageProps {
   params: Promise<{ id: string; locale: Locale }>;
@@ -45,6 +47,8 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
     <>
       <Header />
       <main className="container py-10 sm:py-14">
+        {/* Android app only, with consent. Default size, as the page opens. */}
+        <TrackAppEvent name="view_item" params={viewItemParams(product, product.variants?.[0])} />
         <ProductDetails
           product={product}
           category={category}

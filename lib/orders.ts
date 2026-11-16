@@ -207,6 +207,12 @@ export async function getOrderById(id: string): Promise<Order | null> {
   return row ? mapOrder(row) : null;
 }
 
+/** A single order with its items by its public number, or null. */
+export async function getOrderByNumber(orderNumber: number): Promise<Order | null> {
+  const row = await db.order.findUnique({ where: { orderNumber }, include: { items: true } });
+  return row ? mapOrder(row) : null;
+}
+
 /** The current status of an order, narrowed. Null when the order is missing. */
 export async function getOrderStatus(id: string): Promise<OrderStatus | null> {
   const row = await db.order.findUnique({ where: { id }, select: { status: true } });

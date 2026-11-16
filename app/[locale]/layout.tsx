@@ -8,6 +8,7 @@ import { SITE, SITE_URL } from "@/lib/constants";
 import { StoreClosedDialog } from "@/components/store/StoreClosedDialog";
 import { StoreStatusProvider } from "@/components/store/StoreStatusProvider";
 import { PendingPaymentNotice } from "@/components/payment/PendingPaymentNotice";
+import { AppAnalyticsSignals } from "@/components/analytics/AppAnalytics";
 import { getRestaurantJsonLd } from "@/lib/seo/structured-data";
 import { routing, type Locale } from "@/i18n/routing";
 
@@ -137,6 +138,7 @@ export default async function LocaleLayout({
             {children}
             <StoreClosedDialog />
             <PendingPaymentNotice />
+            <AppAnalyticsSignals />
           </StoreStatusProvider>
         </NextIntlClientProvider>
       </body>

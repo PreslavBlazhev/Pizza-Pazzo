@@ -10,6 +10,7 @@ import { getSessionUser } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { setSessionCookie, clearSessionCookie } from "@/lib/auth/session";
 import { anonymiseOrdersOfUser } from "@/lib/privacy";
+import { signalAppAuthEvent } from "@/lib/app-analytics-signal";
 import { canAccessAdmin, isUserRole, type ActionResult } from "@/types/auth";
 import {
   addressSchema,
@@ -80,6 +81,7 @@ export async function registerUser(
     return { ok: false, error: te("generic") };
   }
 
+  await signalAppAuthEvent(formData, "sign_up");
   revalidatePath("/", "layout");
   redirect({ href: "/profile", locale });
 }
@@ -117,6 +119,7 @@ export async function loginUser(
 
   const role = isUserRole(user.role) ? user.role : "CUSTOMER";
   await setSessionCookie({ sub: user.id, email: user.email, role });
+  await signalAppAuthEvent(formData, "login");
 
   revalidatePath("/", "layout");
 

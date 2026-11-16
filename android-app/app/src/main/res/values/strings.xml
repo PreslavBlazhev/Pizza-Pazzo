@@ -16,6 +16,15 @@
     <string name="auth_ok">Вход</string>
     <string name="auth_cancel">Отказ</string>
 
+    <!-- Usage statistics consent (Google Analytics for Firebase) -->
+    <string name="analytics_consent_title">Статистика за употреба</string>
+    <string name="analytics_consent_message">Разрешавате ли Pizza Pazzo да събира статистика как се използва приложението — кои страници и продукти се разглеждат, кога се започва и завършва поръчка и на каква стойност? Използваме Google Analytics за Firebase; данните се свързват със случаен идентификатор на инсталацията. Не изпращаме име, имейл, телефон или адрес, нито рекламен идентификатор.\n\nИзборът не влияе на поръчването. Можете да го промените по всяко време от страницата „Поверителност на приложението“.</string>
+    <string name="analytics_consent_allow">Разрешавам</string>
+    <string name="analytics_consent_deny">Не разрешавам</string>
+    <string name="analytics_consent_current_granted">В момента: разрешено.</string>
+    <string name="analytics_consent_current_denied">В момента: не е разрешено.</string>
+    <string name="settings_analytics">Статистика за употреба</string>
+
     <!-- Settings screen -->
     <string name="settings_title">Настройки на принтера</string>
     <string name="settings_printer_section">Bluetooth принтер</string>

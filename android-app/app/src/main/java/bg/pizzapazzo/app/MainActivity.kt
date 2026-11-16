@@ -23,8 +23,12 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import bg.pizzapazzo.app.analytics.AppAnalytics
+import bg.pizzapazzo.app.analytics.ConsentDialog
+import bg.pizzapazzo.app.analytics.ScreenNames
 import bg.pizzapazzo.app.databinding.ActivityMainBinding
 import bg.pizzapazzo.app.settings.SettingsActivity
+import bg.pizzapazzo.app.webview.AnalyticsBridge
 import bg.pizzapazzo.app.webview.JavascriptBridge
 import bg.pizzapazzo.app.webview.PaymentFlow
 import bg.pizzapazzo.app.webview.PaymentSessionHost
@@ -59,6 +63,12 @@ class MainActivity : AppCompatActivity(), PaymentSessionHost {
 
     /** A card payment in progress at the bank (see [PaymentFlow]). */
     private var payment: PaymentFlow.Session? = null
+
+    private lateinit var analyticsBridge: AnalyticsBridge
+    private var consentDialog: androidx.appcompat.app.AlertDialog? = null
+
+    /** The page last reported as a screen_view (see [reportScreen]). */
+    private var lastScreenKey: String? = null
 
     override val activePayment: PaymentFlow.Session?
         get() = payment?.takeUnless { it.isExpired(System.currentTimeMillis()) }
@@ -139,6 +149,8 @@ class MainActivity : AppCompatActivity(), PaymentSessionHost {
             app.preferences.clearPaymentSession()
             loadStartPage()
         }
+
+        askForAnalyticsConsentIfUndecided()
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -180,6 +192,7 @@ class MainActivity : AppCompatActivity(), PaymentSessionHost {
             onRendererGone = { rebuildAfterRendererCrash() },
             onHttpAuthRequest = { host, handler -> askForSitePassword(host, handler) },
             onNavigated = { url -> onNavigated(url) },
+            onPageVisited = { url -> reportScreen(url) },
         )
         webView.webViewClient = webViewClient
 
@@ -228,6 +241,54 @@ class MainActivity : AppCompatActivity(), PaymentSessionHost {
             ),
             JavascriptBridge.JS_NAME,
         )
+
+        // window.AndroidAnalytics — the site's shop events, forwarded to GA4
+        // only with the user's consent. See AnalyticsBridge.
+        analyticsBridge = AnalyticsBridge(
+            webView = webView,
+            webViewClient = webViewClient,
+            analytics = app.analytics,
+            openConsentDialog = ::showAnalyticsConsentDialog,
+        )
+        webView.addJavascriptInterface(analyticsBridge, AnalyticsBridge.JS_NAME)
+    }
+
+    // ── Usage statistics (Google Analytics for Firebase) ────────────────────
+
+    /**
+     * Asked once, on the first start, before anything is collected. Both
+     * answers are one tap; the dialog cannot be dismissed without one, and
+     * until it is answered nothing is sent. The same dialog is how the
+     * decision is changed later — from the site's app-privacy page, or the
+     * settings screen.
+     */
+    private fun askForAnalyticsConsentIfUndecided() {
+        if (app.analytics.isSupported && app.analytics.consent == AppAnalytics.Consent.UNKNOWN) {
+            showAnalyticsConsentDialog()
+        }
+    }
+
+    private fun showAnalyticsConsentDialog() {
+        if (isFinishing || consentDialog?.isShowing == true) return
+        consentDialog = ConsentDialog.show(this, app.analytics, ::onAnalyticsDecided)
+    }
+
+    private fun onAnalyticsDecided(granted: Boolean) {
+        lastScreenKey = null
+        if (granted) reportScreen(webViewClient.lastCommittedUrl)
+        analyticsBridge.dispatchConsentChanged()
+    }
+
+    /**
+     * One `screen_view` per page the customer actually reached. Route
+     * changes inside the same page (a filter rewriting the query string) and
+     * the three callbacks the WebView fires for one load collapse into one.
+     */
+    private fun reportScreen(url: String?) {
+        val screen = ScreenNames.forUrl(url) ?: return
+        if (screen.key == lastScreenKey) return
+        lastScreenKey = screen.key
+        app.analytics.logScreen(screen)
     }
 
     /**
@@ -520,6 +581,9 @@ class MainActivity : AppCompatActivity(), PaymentSessionHost {
     }
 
     override fun onDestroy() {
+        // An undecided first-run dialog is simply asked again by the next
+        // activity; dismissing it here only avoids a leaked window.
+        consentDialog?.dismiss()
         if (!webViewDestroyed) binding.webView.destroy()
         super.onDestroy()
     }

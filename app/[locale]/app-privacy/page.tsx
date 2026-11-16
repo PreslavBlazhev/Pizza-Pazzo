@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PageHero } from "@/components/ui/PageHero";
 import { LegalArticle } from "@/components/legal/LegalArticle";
 import { appPrivacyDoc } from "@/content/legal/appPrivacy";
+import { AppAnalyticsConsentButton } from "@/components/analytics/AppAnalytics";
 import { routing, type Locale } from "@/i18n/routing";
 
 /**
@@ -45,6 +46,8 @@ export default function AppPrivacyPage({ params }: PageProps) {
       <main>
         <PageHero eyebrow={t("eyebrow")} title={t("appPrivacy")} />
         <div className="container pb-24 pt-10">
+          {/* Inside the app only: where analytics consent is changed. */}
+          <AppAnalyticsConsentButton />
           <LegalArticle doc={appPrivacyDoc} locale={locale} />
         </div>
       </main>

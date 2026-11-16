@@ -6,6 +6,7 @@ import { loginUser } from "@/app/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/ui/FormAlert";
 import { PasswordField } from "./PasswordField";
+import { AppAnalyticsFormField } from "@/components/analytics/AppAnalytics";
 import type { ActionResult } from "@/types/auth";
 
 /**
@@ -27,6 +28,7 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
       {state?.error && <FormAlert tone="error">{state.error}</FormAlert>}
 
       {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
+      <AppAnalyticsFormField />
 
       <Input
         label={t("fields.email")}
