@@ -107,6 +107,10 @@ export const privacyDoc: LegalDoc = {
               en: "Google — only if you press “Show the map” on the Contacts page; the map then loads from a Google server, which receives your IP address and may set its own cookies.",
             },
             {
+              bg: "Google (Google Analytics за Firebase) — само в Android приложението и само ако сте го разрешили там: статистика за разгледаните страници и продукти и за поръчките (номер, артикули, сума), свързана със случаен идентификатор на инсталацията, без име, имейл, телефон или адрес (обработващ; основание — съгласие, чл. 6, ал. 1, б. „а“ ОРЗД, оттегляемо по всяко време). Сайтът в браузър не използва аналитика. Подробности — в Политиката за поверителност на приложението.",
+              en: "Google (Google Analytics for Firebase) — only in the Android app and only if you allowed it there: statistics on the pages and products viewed and on orders (number, items, amount), linked to a random installation identifier, without name, email, phone or address (processor; basis — consent, Art. 6(1)(a) GDPR, which you may withdraw at any time). The website in a browser uses no analytics. Details are in the app's privacy policy.",
+            },
+            {
               bg: "Счетоводител и държавни органи — когато закон го изисква.",
               en: "Our accountant and public authorities — where the law requires it.",
             },

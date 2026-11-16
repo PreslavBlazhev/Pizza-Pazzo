@@ -48,6 +48,12 @@ class SiteWebViewClient(
      * back should still be handled here.
      */
     private val onNavigated: (url: String?) -> Unit,
+    /**
+     * A page the WebView actually committed to its history — the one moment
+     * a page "was seen". Unlike [onNavigated] it fires once per page, never
+     * for a reload, and never for a URL that redirected away before loading.
+     */
+    private val onPageVisited: (url: String?) -> Unit = {},
 ) : WebViewClient() {
 
     /**
@@ -148,6 +154,7 @@ class SiteWebViewClient(
         // The only hook that fires for a client-side route change, which is how
         // the site moves between /menu and /admin most of the time.
         onNavigated(url)
+        if (!isReload) onPageVisited(url)
     }
 
     override fun onPageFinished(view: WebView, url: String?) {

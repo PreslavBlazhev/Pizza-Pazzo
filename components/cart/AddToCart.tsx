@@ -15,6 +15,7 @@ import { useClosedNotice } from "@/components/store/StoreStatusProvider";
 import { EXTRAS_LIMITS, isRetiredExtraKey, parseVariantSize } from "@/lib/extras-rules";
 import { formatEurPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
+import { addToCartParams, trackAppEvent } from "@/lib/app-analytics";
 import {
   ProductExtrasPicker,
   freeToppingsChosen,
@@ -285,6 +286,18 @@ export function AddToCart({
     }
 
     addProduct(product, variant, quantity, list);
+    // Android app only, with consent. The line as the basket stores it.
+    trackAppEvent(
+      "add_to_cart",
+      addToCartParams({
+        lineId: "",
+        product,
+        selectedVariant: variant,
+        extras: list,
+        quantity,
+        unitPrice: priceEur,
+      })
+    );
     setJustAdded(true);
     setQuantity(1);
     setSelectedExtras({});

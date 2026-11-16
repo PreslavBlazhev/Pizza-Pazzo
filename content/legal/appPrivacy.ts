@@ -20,8 +20,8 @@ import type { LegalDoc } from "./types";
  */
 export const appPrivacyDoc: LegalDoc = {
   slug: "app-privacy",
-  version: "2026-10-12",
-  updated: "12.10.2026",
+  version: "2026-10-14",
+  updated: "14.10.2026",
   showCompanyBox: true,
   intro: [
     {
@@ -46,8 +46,8 @@ export const appPrivacyDoc: LegalDoc = {
       blocks: [
         {
           p: {
-            bg: "Приложението не създава собствен, отделен профил и не изпраща никакви данни към разработчика. В него няма реклами, няма аналитика, няма проследяване и няма SDK-та на трети страни. То показва сайта на Pizza Pazzo по HTTPS — точно както би направил браузър.",
-            en: "The app creates no separate account of its own and sends no data to the developer. It contains no ads, no analytics, no tracking and no third-party SDKs. It shows the Pizza Pazzo website over HTTPS — exactly as a browser would.",
+            bg: "Приложението не създава собствен, отделен профил. То показва сайта на Pizza Pazzo по HTTPS — точно както би направил браузър. В него няма реклами и рекламно проследяване. Единственото SDK на трета страна е Google Analytics за Firebase (от версия 1.2.0), което работи само ако го разрешите — виж раздел 2.",
+            en: "The app creates no separate account of its own. It shows the Pizza Pazzo website over HTTPS — exactly as a browser would. It contains no ads and no advertising tracking. The only third-party SDK is Google Analytics for Firebase (from version 1.2.0), which runs only if you allow it — see section 2.",
           },
         },
         {
@@ -107,9 +107,62 @@ export const appPrivacyDoc: LegalDoc = {
       ],
     },
     {
+      id: "analytics",
       heading: {
-        bg: "2. Какво се пази на самото устройство",
-        en: "2. What is stored on the device itself",
+        bg: "2. Статистика за употреба (Google Analytics за Firebase)",
+        en: "2. Usage statistics (Google Analytics for Firebase)",
+      },
+      blocks: [
+        {
+          p: {
+            bg: "При първото стартиране приложението ви пита дали разрешавате статистика за употреба. Докато не отговорите, и ако откажете, към Google не се изпраща нищо — събирането е изключено по подразбиране. Изборът не влияе на поръчването.",
+            en: "On first start the app asks whether you allow usage statistics. Until you answer, and if you decline, nothing is sent to Google — collection is switched off by default. Your choice does not affect ordering.",
+          },
+        },
+        {
+          p: {
+            bg: "Ако разрешите, приложението изпраща към Google Analytics за Firebase (Google Ireland Ltd / Google LLC, като обработващ):",
+            en: "If you allow it, the app sends the following to Google Analytics for Firebase (Google Ireland Ltd / Google LLC, as processor):",
+          },
+        },
+        {
+          list: [
+            {
+              bg: "кои страници от приложението отваряте — само вида на страницата („меню“, „продукт“, „количка“), без адреса и параметрите ѝ;",
+              en: "which pages of the app you open — only the kind of page (“menu”, “product”, “basket”), never its address or parameters;",
+            },
+            {
+              bg: "разглеждане на продукт, добавяне в количката, започване на поръчка и успешно завършена поръчка — с номера на поръчката, продуктите, количествата и сумите в евро;",
+              en: "viewing a product, adding to the basket, starting checkout and a successfully completed order — with the order number, the products, quantities and amounts in euro;",
+            },
+            {
+              bg: "вход в профил и регистрация — само че са се случили, без имейла или профила;",
+              en: "signing in and registering — only that it happened, not the email or the account;",
+            },
+            {
+              bg: "технически данни, които SDK-то добавя само: случаен идентификатор на инсталацията, модел на устройството, версия на Android и на приложението, език, приблизителна държава/град (по IP адреса, който Google не съхранява).",
+              en: "technical data the SDK adds by itself: a random installation identifier, device model, Android and app version, language, approximate country/city (from the IP address, which Google does not store).",
+            },
+          ],
+        },
+        {
+          p: {
+            bg: "Никога не се изпращат име, имейл, телефон, адрес за доставка, бележки към поръчка, рекламен идентификатор или данни от служебните страници. Рекламните сигнали (ad storage, ad user data, ad personalization) са винаги отказани, а разрешението за рекламен идентификатор е премахнато от приложението.",
+            en: "Name, email, phone, delivery address, order notes, the advertising ID and anything from the staff pages are never sent. Advertising signals (ad storage, ad user data, ad personalisation) are always denied, and the advertising-ID permission is removed from the app.",
+          },
+        },
+        {
+          p: {
+            bg: "Основание: вашето съгласие (чл. 6, ал. 1, б. „а“ ОРЗД). Цел: да разберем как се използва приложението и да го подобряваме. Google пази събитийните данни не повече от 14 месеца. Можете да оттеглите съгласието по всяко време с бутона по-долу (вижда се, когато страницата е отворена в приложението). При оттегляне събирането спира веднага, а идентификаторът на инсталацията и неизпратените данни се изтриват от устройството.",
+            en: "Basis: your consent (Art. 6(1)(a) GDPR). Purpose: understanding how the app is used and improving it. Google keeps the event-level data for no longer than 14 months. You may withdraw consent at any time with the button below (shown when this page is opened in the app). On withdrawal collection stops at once, and the installation identifier and any unsent data are deleted from the device.",
+          },
+        },
+      ],
+    },
+    {
+      heading: {
+        bg: "3. Какво се пази на самото устройство",
+        en: "3. What is stored on the device itself",
       },
       blocks: [
         {
@@ -132,6 +185,10 @@ export const appPrivacyDoc: LegalDoc = {
               bg: "Само за служебни устройства: настройките на Bluetooth принтера — име и адрес на избрания сдвоен принтер, ширина на хартията, кодировка и подобни технически предпочитания, плюс текста на последната грешка при печат.",
               en: "On staff devices only: the Bluetooth printer settings — the name and address of the selected paired printer, paper width, character encoding and similar technical preferences, plus the text of the last printing error.",
             },
+            {
+              bg: "Вашият избор за статистиката за употреба и кога сте го направили, както и номерата на вече отчетените поръчки (за да не се отчете една поръчка два пъти).",
+              en: "Your choice about usage statistics and when you made it, plus the numbers of orders already reported (so that one order is never reported twice).",
+            },
           ],
         },
         {
@@ -144,8 +201,8 @@ export const appPrivacyDoc: LegalDoc = {
     },
     {
       heading: {
-        bg: "3. Разрешения и защо са нужни",
-        en: "3. Permissions and why they are needed",
+        bg: "4. Разрешения и защо са нужни",
+        en: "4. Permissions and why they are needed",
       },
       blocks: [
         {
@@ -182,8 +239,8 @@ export const appPrivacyDoc: LegalDoc = {
     },
     {
       heading: {
-        bg: "4. Данни за поръчките при печат (служебна функция)",
-        en: "4. Order data when printing (staff feature)",
+        bg: "5. Данни за поръчките при печат (служебна функция)",
+        en: "5. Order data when printing (staff feature)",
       },
       blocks: [
         {
@@ -202,8 +259,8 @@ export const appPrivacyDoc: LegalDoc = {
     },
     {
       heading: {
-        bg: "5. Деца",
-        en: "5. Children",
+        bg: "6. Деца",
+        en: "6. Children",
       },
       blocks: [
         {
@@ -216,8 +273,8 @@ export const appPrivacyDoc: LegalDoc = {
     },
     {
       heading: {
-        bg: "6. Изтриване на данните",
-        en: "6. Deleting your data",
+        bg: "7. Изтриване на данните",
+        en: "7. Deleting your data",
       },
       blocks: [
         {
@@ -254,8 +311,8 @@ export const appPrivacyDoc: LegalDoc = {
     },
     {
       heading: {
-        bg: "7. Промени и контакт",
-        en: "7. Changes and contact",
+        bg: "8. Промени и контакт",
+        en: "8. Changes and contact",
       },
       blocks: [
         {

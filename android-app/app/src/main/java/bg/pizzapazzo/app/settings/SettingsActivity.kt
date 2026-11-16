@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import bg.pizzapazzo.app.BuildConfig
 import bg.pizzapazzo.app.PizzaPazzoApplication
 import bg.pizzapazzo.app.R
+import bg.pizzapazzo.app.analytics.ConsentDialog
 import bg.pizzapazzo.app.bluetooth.PrinterConnectionState
 import bg.pizzapazzo.app.databinding.ActivitySettingsBinding
 import bg.pizzapazzo.app.printer.CyrillicEncodingMode
@@ -67,6 +68,10 @@ class SettingsActivity : AppCompatActivity() {
             WebView(this).clearCache(true)
             WebStorage.getInstance().deleteAllData()
             Toast.makeText(this, R.string.settings_cache_cleared, Toast.LENGTH_SHORT).show()
+        }
+        binding.analyticsConsentButton.isEnabled = app.analytics.isSupported
+        binding.analyticsConsentButton.setOnClickListener {
+            ConsentDialog.show(this, app.analytics)
         }
         binding.reloadPageButton.setOnClickListener {
             saveValues()

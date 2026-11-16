@@ -4,7 +4,9 @@ import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import type { Locale } from "@/i18n/routing";
-import { db } from "@/lib/db";
+import { getOrderByNumber } from "@/lib/orders";
+import { purchaseParams } from "@/lib/app-analytics";
+import { TrackAppPurchase } from "@/components/analytics/AppAnalytics";
 import { isValidOrderReceipt } from "@/lib/checkout/receipt";
 import { CallNowButton } from "@/components/layout/CallNow";
 
@@ -32,10 +34,9 @@ export default async function OrderSuccessPage({ params, searchParams }: PagePro
   // "Received" only for an order that exists AND that this server just handed
   // to this browser (the signed receipt) — never for a bare ?n= in the URL.
   const number = n && /^\d{1,9}$/.test(n) ? Number(n) : null;
-  const confirmed =
-    number !== null &&
-    isValidOrderReceipt(number, r) &&
-    (await db.order.findUnique({ where: { orderNumber: number }, select: { id: true } })) !== null;
+  const order =
+    number !== null && isValidOrderReceipt(number, r) ? await getOrderByNumber(number) : null;
+  const confirmed = order !== null;
   const orderNumber = confirmed ? String(number) : null;
 
   if (!confirmed) {
@@ -66,6 +67,9 @@ export default async function OrderSuccessPage({ params, searchParams }: PagePro
     <>
       <Header />
       <main className="container flex flex-col items-center py-20 text-center sm:py-28">
+        {/* Android app only, with consent; null for a test, cancelled or
+            unpaid card order — see purchaseParams. */}
+        <TrackAppPurchase params={purchaseParams(order)} />
         <div className="text-5xl">🍕</div>
         <h1 className="mt-6 font-display text-3xl font-bold text-pizza-ink sm:text-4xl">
           {t("title")}

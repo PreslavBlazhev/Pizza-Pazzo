@@ -2,6 +2,7 @@ package bg.pizzapazzo.app
 
 import android.app.Application
 import android.webkit.WebView
+import bg.pizzapazzo.app.analytics.AppAnalytics
 import bg.pizzapazzo.app.bluetooth.BluetoothPrinterManager
 import bg.pizzapazzo.app.printer.EscPosPrinterService
 import bg.pizzapazzo.app.printer.PaperWidth
@@ -22,6 +23,8 @@ class PizzaPazzoApplication : Application() {
         private set
     lateinit var printerService: EscPosPrinterService
         private set
+    lateinit var analytics: AppAnalytics
+        private set
 
     /** Set by SettingsActivity ("reload page"); consumed by MainActivity.onResume. */
     @Volatile
@@ -35,6 +38,10 @@ class PizzaPazzoApplication : Application() {
         // it is a development convenience, never something a shipped build does.
         // BuildConfig.DEBUG is false in every artifact that reaches Play.
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
+
+        // Before anything can log: re-applies the stored consent decision.
+        // Without one, collection stays off (see AndroidManifest.xml).
+        analytics = AppAnalytics(this).also { it.start() }
 
         preferences = PrinterPreferences(this)
         printerManager = BluetoothPrinterManager(this)

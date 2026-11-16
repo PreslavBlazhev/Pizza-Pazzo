@@ -17,3 +17,8 @@ keystore.properties
 keystore/
 *.jks
 *.keystore
+
+# Firebase config. The repo is PUBLIC; the file holds the Android API key of
+# the "pizza-pazzo" Firebase project. Download it again from the Firebase
+# console (Project settings → bg.pizzapazzo.app) on a new machine.
+app/google-services.json

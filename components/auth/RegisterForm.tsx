@@ -7,6 +7,7 @@ import { registerUser } from "@/app/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/ui/FormAlert";
 import { PasswordField } from "./PasswordField";
+import { AppAnalyticsFormField } from "@/components/analytics/AppAnalytics";
 import type { ActionResult } from "@/types/auth";
 
 /** Registration form. Validation and account creation happen in the action. */
@@ -24,6 +25,7 @@ export function RegisterForm() {
     // necessarily the site's, and would compete with our messages from zod.
     <form action={formAction} className="space-y-4" noValidate>
       {state?.error && <FormAlert tone="error">{state.error}</FormAlert>}
+      <AppAnalyticsFormField />
 
       <Input
         label={t("fields.fullName")}
