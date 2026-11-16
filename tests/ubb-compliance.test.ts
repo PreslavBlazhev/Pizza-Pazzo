@@ -238,7 +238,7 @@ test("the texts never promise what the code does not do", () => {
   const all = JSON.stringify(DOCS);
   assert.ok(!/ec\.europa\.eu\/consumers\/odr/.test(all), "the EU ODR platform closed on 20.07.2025");
   assert.ok(!/лв\.|BGN/.test(all), "the euro is the only currency");
-  assert.ok(!/Apple Pay|Google Pay/.test(all.replace(/портфейл като Google Pay или Apple Pay, определят банката|wallet such as Google Pay or Apple Pay, depends on the bank/g, "")), "wallets only as the bank's choice on its own page");
+  assert.ok(!/Apple Pay|Google Pay/.test(all.replace(/Google Pay и Apple Pay се показват само ако банката ги е активирала|Google Pay and Apple Pay are shown only if the bank has enabled them/g, "")), "wallets only when the bank enabled them");
   assert.ok(!/14 дни.{0,40}пиц/i.test(all), "no 14-day return for pizza");
   // An unconfirmed payment is a transaction to CHECK, not proof that nothing
   // was taken — neither the documents nor the payment pages may say otherwise.

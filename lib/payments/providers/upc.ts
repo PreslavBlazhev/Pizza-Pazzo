@@ -16,7 +16,6 @@
  * Card numbers never reach this server; masked PANs, if UPC sends them, are
  * dropped before anything is stored.
  */
-import { sign as rsaSign, verify as rsaVerify } from "node:crypto";
 import type { PaymentConfig } from "../config";
 import {
   PaymentProviderError,
@@ -36,11 +35,13 @@ import {
   isValidUpcAmount,
   isValidUpcOrderId,
   numericCurrency,
+  openEnvelope,
   outcomeForTranCode,
   parseFormBody,
   parseKeyValueText,
   requestSignatureData,
   signBase64,
+  signEnvelope,
   UPC_SIGNATURE_ALGORITHMS,
   verifyGatewayMessage,
   type UpcFields,
@@ -176,57 +177,33 @@ async function jsonStatus(
   query: StatusQuery,
   sent: Record<string, string>
 ): Promise<StatusFinding> {
-  const b64u = (v: string) => Buffer.from(v).toString("base64url");
-  const header = b64u(JSON.stringify({ alg: "RS256" }));
-  const payload = b64u(
-    JSON.stringify({
+  const request = signEnvelope(
+    {
       MerchantID: settings.merchantId,
       TerminalID: settings.terminalId,
       OrderID: query.reference,
       TotalAmount: sent.TotalAmount,
       Currency: sent.Currency,
       PurchaseTime: sent.PurchaseTime,
-    })
+    },
+    settings.privateKey
   );
-  const signature = rsaSign("sha256", Buffer.from(`${header}.${payload}`), settings.privateKey).toString("base64url");
   const text = await postStatus(settings.statusUrl, {
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ header, payload, signature }),
+    body: JSON.stringify(request),
   });
 
-  let envelope: { header?: string; payload?: string; signature?: string };
-  try {
-    envelope = JSON.parse(text);
-  } catch {
-    throw new PaymentProviderError("UPC status answer is not JSON");
+  const opened = openEnvelope(text, settings.gatewayKey, settings.gatewayAlgorithms);
+  if (!opened.ok) {
+    const why = {
+      "not-envelope": "UPC status answer is not a signed envelope",
+      algorithm: `UPC status answer signed with an unaccepted algorithm "${opened.alg ?? ""}"`,
+      signature: "UPC status answer: signature does NOT verify",
+      payload: "UPC status answer: unreadable payload",
+    }[opened.reason];
+    throw new PaymentProviderError(why);
   }
-  if (!envelope.header || !envelope.payload || !envelope.signature) {
-    throw new PaymentProviderError("UPC status answer is not a signed envelope");
-  }
-  let alg = "";
-  try {
-    alg = String(JSON.parse(Buffer.from(envelope.header, "base64url").toString("utf8")).alg ?? "");
-  } catch {
-    /* falls through to the check below */
-  }
-  const hash = alg === "RS512" ? "sha512" : alg === "RS256" ? "sha256" : null;
-  if (!hash || !settings.gatewayAlgorithms.includes(hash)) {
-    throw new PaymentProviderError(`UPC status answer signed with an unaccepted algorithm "${alg}"`);
-  }
-  const ok = rsaVerify(
-    hash,
-    Buffer.from(`${envelope.header}.${envelope.payload}`),
-    settings.gatewayKey,
-    Buffer.from(envelope.signature, "base64url")
-  );
-  if (!ok) throw new PaymentProviderError("UPC status answer: signature does NOT verify");
-
-  let body: { TranCode?: string; Comment?: string; results?: Array<Record<string, unknown>> };
-  try {
-    body = JSON.parse(Buffer.from(envelope.payload, "base64url").toString("utf8"));
-  } catch {
-    throw new PaymentProviderError("UPC status answer: unreadable payload");
-  }
+  const body = (opened.payload ?? {}) as { TranCode?: string; Comment?: string; results?: Array<Record<string, unknown>> };
   const results = Array.isArray(body.results) ? body.results : [];
   const purchase = results.find((r) => String(r.operType ?? "").toUpperCase() === "PURCHASE") ?? results[0];
   if (!purchase) {

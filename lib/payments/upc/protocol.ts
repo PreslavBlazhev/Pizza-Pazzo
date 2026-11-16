@@ -24,7 +24,6 @@
  *   MerchantID;TerminalID;PurchaseTime;OrderID;Currency;TotalAmount;;
  */
 import { createPrivateKey, createPublicKey, sign as rsaSign, verify as rsaVerify, type KeyObject } from "node:crypto";
-
 /** Hash algorithms UPC documents for RSA signatures (RSASSA-PKCS1-v1_5). */
 export const UPC_SIGNATURE_ALGORITHMS = ["sha512", "sha256", "sha1"] as const;
 export type UpcSignatureAlgorithm = (typeof UPC_SIGNATURE_ALGORITHMS)[number];
@@ -235,6 +234,74 @@ export function verifyGatewayMessage(
   return null;
 }
 
+// ── Signed JSON envelopes (status query, payByWallet) ─────────────────────
+
+/** {header, payload, signature} — JWS-style, as UPC's JSON requests use it. */
+export interface UpcEnvelope {
+  header: string;
+  payload: string;
+  signature: string;
+}
+
+/**
+ * OUR signed JSON request: header {"alg":"RS256"}, the payload as JSON, both
+ * base64url, and an RS256 signature over "header.payload" with the merchant
+ * key. The exact form the KBC gateways accept for the status query
+ * (ecg.test.upc.ua and secure.kbcbank.bg, 29.10 / 02.11.2026).
+ */
+export function signEnvelope(payload: Record<string, unknown>, key: KeyObject): UpcEnvelope {
+  const b64u = (v: string) => Buffer.from(v, "utf8").toString("base64url");
+  const header = b64u(JSON.stringify({ alg: "RS256" }));
+  const body = b64u(JSON.stringify(payload));
+  const signature = rsaSign("sha256", Buffer.from(`${header}.${body}`), key).toString("base64url");
+  return { header, payload: body, signature };
+}
+
+export type OpenedEnvelope =
+  | { ok: true; payload: unknown; alg: string }
+  | { ok: false; reason: "not-envelope" | "algorithm" | "signature" | "payload"; alg?: string };
+
+/**
+ * A signed answer from UPC: verified with the pinned gateway key BEFORE the
+ * payload is read. Accepts base64 and base64url. Never throws.
+ */
+export function openEnvelope(
+  text: string,
+  key: KeyObject,
+  algorithms: readonly UpcSignatureAlgorithm[]
+): OpenedEnvelope {
+  let env: Partial<UpcEnvelope>;
+  try {
+    env = JSON.parse(text);
+  } catch {
+    return { ok: false, reason: "not-envelope" };
+  }
+  if (!env || typeof env.header !== "string" || typeof env.payload !== "string" || typeof env.signature !== "string") {
+    return { ok: false, reason: "not-envelope" };
+  }
+  const fromB64 = (v: string) => Buffer.from(v.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+  let alg = "";
+  try {
+    alg = String(JSON.parse(fromB64(env.header).toString("utf8")).alg ?? "");
+  } catch {
+    /* falls through */
+  }
+  const hash = alg === "RS512" ? "sha512" : alg === "RS256" ? "sha256" : null;
+  if (!hash || !algorithms.includes(hash)) return { ok: false, reason: "algorithm", alg };
+  let verified = false;
+  try {
+    verified = rsaVerify(hash, Buffer.from(`${env.header}.${env.payload}`), key, fromB64(env.signature));
+  } catch {
+    verified = false;
+  }
+  if (!verified) return { ok: false, reason: "signature", alg };
+  try {
+    return { ok: true, payload: JSON.parse(fromB64(env.payload).toString("utf8")), alg };
+  } catch {
+    return { ok: false, reason: "payload", alg };
+  }
+}
+
 // ── Parsing what the gateway sends ─────────────────────────────────────────
 
 /** Field names we read; anything else UPC adds is ignored, as it asks. */
@@ -337,8 +404,15 @@ export function buildNotifyResponse(
 
 // ── TranCode → our state ───────────────────────────────────────────────────
 
-/** Codes that report a technical problem, not a decision about the payment. */
-export const TECHNICAL_TRAN_CODES = new Set(["290", "291", "403", "902", "909"]);
+/**
+ * Codes that report a technical problem or an unfinished transaction, not a
+ * decision about the payment. 999 is UPC's "transaction in progress …
+ * (intermediate status, you must send a request for payment status before
+ * the final status)" — Response codes TranCode page; it used to fall under
+ * the 9xx "failed" pattern, which could have opened a second payment while
+ * the first was still running.
+ */
+export const TECHNICAL_TRAN_CODES = new Set(["290", "291", "403", "902", "909", "999"]);
 
 /**
  * The only documented FINAL results of a transaction that was cancelled after
@@ -382,7 +456,7 @@ export function failureReasonFor(tranCode: string): string {
   if (code === "404") return "AUTHENTICATION_FAILED";
   if (["101", "111"].includes(code)) return "CARD_DATA";
   if (["105", "108", "130", "131", "701"].includes(code)) return "DECLINED_BY_ISSUER";
-  if (["290", "291", "403", "902", "909"].includes(code)) return "TECHNICAL";
+  if (["290", "291", "403", "902", "909", "999"].includes(code)) return "TECHNICAL";
   if (["501", "601"].includes(code)) return "CANCELLED_BY_CUSTOMER";
   if (code === "503") return "CANCELLED_BY_MERCHANT";
   if (["401", "402", "405", "407", "411", "412", "430"].includes(code)) return "GATEWAY_REJECTED";

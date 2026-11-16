@@ -81,8 +81,8 @@ export const paymentDoc: LegalDoc = {
         },
         {
           p: {
-            bg: "Сайтът няма собствени бутони за дигитални портфейли. Какви начини за плащане вижда клиентът на защитената страница, включително портфейл като Google Pay или Apple Pay, определят банката и устройството му.",
-            en: "The site has no digital-wallet buttons of its own. What a customer can use on the secure payment page, including a wallet such as Google Pay or Apple Pay, depends on the bank and on their device.",
+            bg: "Google Pay и Apple Pay се показват само ако банката ги е активирала за Pizza Pazzo и устройството на клиента ги поддържа — на страницата ни за плащане или на защитената страница на банката; иначе бутони за портфейли няма. Данните на картата не достигат до Pizza Pazzo: портфейлът ги предава криптирани и ги разчита банката.",
+            en: "Google Pay and Apple Pay are shown only if the bank has enabled them for Pizza Pazzo and the customer's device supports them — on our payment page or on the bank's secure page; otherwise there are no wallet buttons. Card details never reach Pizza Pazzo: the wallet passes them on encrypted and the bank reads them.",
           },
         },
       ],

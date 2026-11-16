@@ -395,6 +395,13 @@ model PaymentAttempt {
   /// The bank's last answer to that check: code, "not found", error (no card data).
   bankCheckResult String?
 
+  /// Google Pay / Apple Pay (UPC payByWallet): "GOOGLE_PAY" | "APPLE_PAY" of the
+  /// last wallet submission on this attempt, when, and how many. The wallet
+  /// token itself is never stored.
+  walletType        String?
+  walletSubmittedAt DateTime?
+  walletSubmissions Int       @default(0)
+
   @@index([orderId])
   @@index([providerPaymentId])
   @@index([status])

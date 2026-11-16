@@ -15,7 +15,7 @@
 import { test, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import {
@@ -453,7 +453,7 @@ test("rate limiter: allows the limit, blocks the rest, opens again after the win
 
 // ── Nothing claims wallets the bank has not enabled ─────────────────────
 
-test("no Google Pay / Apple Pay button or logo of our own, and no claim beyond the bank's page", () => {
+test("Google Pay / Apple Pay only in the wallet component and routes; no logo of our own; the terms say the bank and the device decide", () => {
   const WALLET = /\bapple[\s-]?pay\b|\bgoogle[\s-]?pay\b|\bgpay\b|PaymentRequest\(|pay\.google\.com|apple-developer-merchantid/i;
   const roots = ["app", "components", "messages", "content", "public"];
   const hits: string[] = [];
@@ -464,13 +464,17 @@ test("no Google Pay / Apple Pay button or logo of our own, and no claim beyond t
       else if (/\.(tsx?|json|svg|md|txt)$/.test(name)) {
         const text = readFileSync(p, "utf8");
         if (!WALLET.test(text)) continue;
-        // The one allowed mention: the payment terms saying the site has no
-        // wallet buttons and that the bank's page and the device decide.
+        // The wallet buttons themselves (drawn only when ОББ/UPC enabled the
+        // wallet AND the device supports it — tests/payments-wallet.test.ts),
+        // their API routes, and the payment terms saying exactly that.
+        const walletCode =
+          p === join("components", "payment", "WalletButtons.tsx") ||
+          p.startsWith(join("app", "api", "payments", "wallet") + sep);
         const bankDecides =
           p === join("content", "legal", "payment.ts") &&
-          /няма собствени бутони[^"]*определят банката/.test(text) &&
-          /no digital-wallet buttons[^"]*depends on the bank/.test(text);
-        if (!bankDecides) hits.push(p);
+          /само ако банката ги е активирала[^"]*устройството на клиента ги поддържа/.test(text) &&
+          /only if the bank has enabled them[^"]*device supports them/.test(text);
+        if (!walletCode && !bankDecides) hits.push(p);
       } else if (/apple-?pay|\bgpay\b|google-?pay/i.test(name)) hits.push(p);
     }
   };
