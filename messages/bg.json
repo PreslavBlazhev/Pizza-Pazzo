@@ -224,6 +224,7 @@
     "categoryNav": "Категории",
     "allCategories": "← Всички категории",
     "categoryFallback": "Категория",
+    "categoryPhotoAlt": "Снимка на категория „{name}“",
     "empty": "В тази категория няма продукти."
   },
   "product": {

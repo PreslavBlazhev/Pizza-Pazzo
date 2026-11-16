@@ -12,8 +12,10 @@ export interface Category {
    *  resolves under both /menu/... and /en/menu/... */
   slug: string;
   description?: string;
-  /** Optional icon (emoji or icon name) shown in the category navigation. */
+  /** Legacy emoji — shown only while the category has no photo. */
   icon?: string;
+  /** Category photo uploaded from the admin (/uploads/categories/...). */
+  imageUrl?: string;
   /** Display order in the menu (ascending). */
   sortOrder: number;
   isActive: boolean;

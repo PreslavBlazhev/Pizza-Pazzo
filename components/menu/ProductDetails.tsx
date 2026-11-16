@@ -5,6 +5,7 @@ import type { ProductExtrasData } from "@/types/cart";
 import { formatEurPrice } from "@/lib/format-price";
 import { isAllergenId, orderedAllergens } from "@/lib/allergens";
 import { AddToCart } from "@/components/cart/AddToCart";
+import { CategoryVisual } from "./CategoryVisual";
 import { ProductImage } from "./ProductImage";
 
 interface ProductDetailsProps {
@@ -56,7 +57,15 @@ export function ProductDetails({
       <div className="flex flex-col">
         {category && (
           <span className="text-xs font-semibold uppercase tracking-[0.2em] text-pizza-green">
-            {category.icon} {category.name}
+            <span className="inline-flex items-center gap-2">
+              <CategoryVisual
+                category={category}
+                decorative
+                sizes="24px"
+                className="h-6 w-6 rounded-full"
+              />
+              {category.name}
+            </span>
           </span>
         )}
         <h1 className="mt-2 text-3xl font-bold text-pizza-ink sm:text-4xl">

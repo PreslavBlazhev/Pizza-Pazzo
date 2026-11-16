@@ -1,5 +1,6 @@
 import type { Category } from "@/types/category";
 import type { Product } from "@/types/product";
+import { CategoryVisual } from "./CategoryVisual";
 import { ProductCard } from "./ProductCard";
 
 interface ProductGridProps {
@@ -34,11 +35,12 @@ export function ProductGrid({ categories, products }: ProductGridProps) {
                 id={`heading-${category.slug}`}
                 className="flex items-center gap-3 text-2xl font-bold text-pizza-ink sm:text-3xl"
               >
-                {category.icon && (
-                  <span className="text-2xl sm:text-3xl" aria-hidden>
-                    {category.icon}
-                  </span>
-                )}
+                <CategoryVisual
+                  category={category}
+                  sizes="(min-width: 640px) 64px, 48px"
+                  className="h-12 w-12 rounded-2xl shadow-sm sm:h-16 sm:w-16"
+                  emojiClassName="text-2xl sm:text-3xl"
+                />
                 {category.name}
               </h2>
               {category.description && (

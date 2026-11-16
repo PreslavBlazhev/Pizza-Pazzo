@@ -42,3 +42,29 @@ export function extractProductImageFilename(publicPath: string): string | null {
   if (rest.includes("/") || rest.length === 0) return null;
   return rest;
 }
+
+/** Public URL prefix for category photos (app/uploads/categories/[filename]). */
+export const CATEGORY_IMAGES_PUBLIC_PREFIX = "/uploads/categories";
+
+export function toPublicCategoryImagePath(filename: string): string {
+  return `${CATEGORY_IMAGES_PUBLIC_PREFIX}/${filename}`;
+}
+
+/** Filename behind a stored category photo path, or null if it isn't ours. */
+export function extractCategoryImageFilename(publicPath: string): string | null {
+  if (!publicPath.startsWith(`${CATEGORY_IMAGES_PUBLIC_PREFIX}/`)) return null;
+  const rest = publicPath.slice(CATEGORY_IMAGES_PUBLIC_PREFIX.length + 1);
+  if (rest.includes("/") || rest.length === 0) return null;
+  return rest;
+}
+
+/**
+ * True when uploads would land on persistent storage. In production an unset
+ * UPLOADS_DIR means the dev fallback folder inside the app directory — which
+ * Render wipes on every deploy/restart — so callers refuse to save instead of
+ * silently losing the photo later.
+ */
+export function isPersistentUploadsConfigured(): boolean {
+  if (process.env.NODE_ENV !== "production") return true;
+  return Boolean(process.env.UPLOADS_DIR?.trim());
+}

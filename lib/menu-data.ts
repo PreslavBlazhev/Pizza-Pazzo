@@ -73,6 +73,7 @@ function toRawCategory(row: CategoryRow): RawCategory {
         ? { bg: row.descriptionBg, en: row.descriptionEn }
         : undefined,
     icon: row.icon ?? undefined,
+    imageUrl: row.imageUrl ?? undefined,
     sortOrder: row.sortOrder,
     isActive: row.isActive,
   };

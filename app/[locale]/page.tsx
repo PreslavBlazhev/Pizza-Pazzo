@@ -6,6 +6,7 @@ import { Logo } from "@/components/layout/Logo";
 import { CallNowButton, LogoPhone } from "@/components/layout/CallNow";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ProductCard } from "@/components/menu/ProductCard";
+import { CategoryVisual } from "@/components/menu/CategoryVisual";
 import { GallerySection } from "@/components/home/GallerySection";
 import { ReviewsSection } from "@/components/home/ReviewsSection";
 import {
@@ -165,11 +166,14 @@ export default async function HomePage({
               <Link
                 key={c.id}
                 href={`/menu/${c.slug}`}
-                className="group flex flex-col items-center rounded-3xl border border-pizza-cream-dark bg-white p-6 text-center shadow-card transition hover:-translate-y-1 hover:border-pizza-green/40 hover:shadow-soft"
+                className="group flex min-w-0 flex-col items-center rounded-3xl border border-pizza-cream-dark bg-white p-3 text-center sm:p-5 shadow-card transition hover:-translate-y-1 hover:border-pizza-green/40 hover:shadow-soft"
               >
-                <span className="text-4xl transition group-hover:scale-110">
-                  {c.icon}
-                </span>
+                <CategoryVisual
+                  category={c}
+                  sizes="(min-width: 1024px) 220px, (min-width: 640px) 30vw, 42vw"
+                  className="aspect-[4/3] w-full rounded-2xl transition group-hover:scale-[1.03]"
+                  emojiClassName="aspect-[4/3] w-full rounded-2xl bg-pizza-cream/60 text-4xl transition group-hover:scale-[1.03]"
+                />
                 <span className="mt-3 font-display text-lg font-semibold text-pizza-ink">
                   {c.name}
                 </span>

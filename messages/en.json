@@ -224,6 +224,7 @@
     "categoryNav": "Categories",
     "allCategories": "← All categories",
     "categoryFallback": "Category",
+    "categoryPhotoAlt": "Photo of the {name} category",
     "empty": "There are no products in this category."
   },
   "product": {

@@ -488,7 +488,8 @@ model MenuCategory {
   nameEn        String
   descriptionBg String  @default("")
   descriptionEn String  @default("")
-  icon          String?
+  icon          String? // legacy emoji — public fallback only, no longer edited in admin
+  imageUrl      String? // /uploads/categories/<uuid>.webp (Persistent Disk), see lib/uploads
   sortOrder     Int     @default(0)
   isActive      Boolean @default(true)
 

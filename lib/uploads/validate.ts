@@ -134,3 +134,67 @@ export function validateProductImageUpload(params: {
 
   return { ok: true, format: actualFormat, extension: EXTENSION_BY_FORMAT[actualFormat] };
 }
+
+// ── Category photos ─────────────────────────────────────────────────────────
+// Uploaded straight from the owner's phone gallery, so this is more lenient
+// about the CLAIMS (some Android pickers send an empty MIME type or a name
+// without an extension) and just as strict about the BYTES: the sniffed
+// signature is the only thing that decides whether the file is accepted.
+// The bytes are then re-encoded by lib/uploads/image-processing.ts, so the
+// stored file is always a fresh WebP made by us, never the original upload.
+
+/** 8 MB stays under Next's 10 MB proxy body buffer with room for the other
+ *  form fields (see serverActions.bodySizeLimit in next.config.ts). Larger
+ *  phone photos are shrunk in the browser before they are sent. */
+export const MAX_CATEGORY_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+/** HEIC/HEIF (iPhone/Samsung "high efficiency") — recognised only to give a
+ *  clear message; it is not decodable by our image pipeline. */
+export function isHeifSignature(bytes: Uint8Array): boolean {
+  if (bytes.length < 12) return false;
+  const box = String.fromCharCode(bytes[4], bytes[5], bytes[6], bytes[7]);
+  if (box !== "ftyp") return false;
+  const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+  return ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"].includes(brand);
+}
+
+export const UNSUPPORTED_IMAGE_MESSAGE =
+  "Неподдържан формат. Изберете снимка във формат JPG, PNG или WebP.";
+export const HEIC_IMAGE_MESSAGE =
+  "Снимката е във формат HEIC, който не се поддържа. Изберете я като JPG (на iPhone: Настройки → Камера → Формати → „Най-съвместим“) или изберете друга снимка.";
+
+export function validateCategoryImageUpload(params: {
+  size: number;
+  mimeType: string;
+  bytes: Uint8Array;
+}): ValidationResult {
+  const { size, mimeType, bytes } = params;
+
+  if (size <= 0 || bytes.length === 0) {
+    return { ok: false, message: "Избраният файл е празен." };
+  }
+  if (size > MAX_CATEGORY_UPLOAD_BYTES) {
+    return {
+      ok: false,
+      message: `Снимката е твърде голяма (макс. ${MAX_CATEGORY_UPLOAD_BYTES / 1024 / 1024} MB).`,
+    };
+  }
+  if (isHeifSignature(bytes)) {
+    return { ok: false, message: HEIC_IMAGE_MESSAGE };
+  }
+
+  const declared = mimeType.trim().toLowerCase();
+  if (declared && !ALLOWED_MIME_TYPES[declared]) {
+    return { ok: false, message: UNSUPPORTED_IMAGE_MESSAGE };
+  }
+
+  const actualFormat = sniffImageFormat(bytes);
+  if (!actualFormat) {
+    return { ok: false, message: "Файлът не е валидна снимка (JPG, PNG или WebP)." };
+  }
+  if (declared && ALLOWED_MIME_TYPES[declared] !== actualFormat) {
+    return { ok: false, message: "Съдържанието на файла не съответства на типа му." };
+  }
+
+  return { ok: true, format: actualFormat, extension: EXTENSION_BY_FORMAT[actualFormat] };
+}

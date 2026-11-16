@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Category } from "@/types/category";
 import { cn } from "@/lib/utils";
+import { CategoryVisual } from "./CategoryVisual";
 
 interface CategoryTabsProps {
   categories: Category[];
@@ -70,7 +71,12 @@ export function CategoryTabs({ categories }: CategoryTabsProps) {
                     : "border-pizza-cream-dark bg-white text-pizza-ink/80 hover:border-pizza-green/40 hover:bg-pizza-green-light hover:text-pizza-green-dark"
                 )}
               >
-                {category.icon && <span aria-hidden>{category.icon}</span>}
+                <CategoryVisual
+                  category={category}
+                  decorative
+                  sizes="28px"
+                  className="-my-1 -ml-2 h-7 w-7 rounded-full"
+                />
                 {category.name}
               </a>
             </li>

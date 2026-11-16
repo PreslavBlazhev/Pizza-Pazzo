@@ -1,15 +1,9 @@
 import { db } from "@/lib/db";
 import { generateSafeFilename } from "./filename";
-import { LocalDiskStorage } from "./local-disk-storage";
 import { extractProductImageFilename, toPublicProductImagePath } from "./paths";
-import type { StorageAdapter } from "./storage-adapter";
+import { uploadStorage as storage } from "./storage";
 
 const PRODUCTS_SUBDIR = "products";
-
-/** The active storage backend. Swap this one line to change where product
- *  images live (e.g. an S3Storage) — everything else in this file, and every
- *  caller, is unaffected. */
-const storage: StorageAdapter = new LocalDiskStorage();
 
 /** Saves a validated image and returns the public path to store on the product. */
 export async function saveProductImage(bytes: Uint8Array, extension: string): Promise<string> {

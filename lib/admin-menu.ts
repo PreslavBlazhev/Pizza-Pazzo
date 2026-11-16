@@ -41,7 +41,9 @@ export interface AdminMenuCategory {
   slug: string;
   nameBg: string;
   nameEn: string;
+  /** Legacy emoji — shown in the admin preview only while there is no photo. */
   icon: string | null;
+  imageUrl: string | null;
   sortOrder: number;
   isActive: boolean;
   productCount: number;
@@ -129,6 +131,7 @@ export async function getAdminCategories(): Promise<AdminMenuCategory[]> {
     nameBg: row.nameBg,
     nameEn: row.nameEn,
     icon: row.icon,
+    imageUrl: row.imageUrl,
     sortOrder: row.sortOrder,
     isActive: row.isActive,
     productCount: row._count.products,

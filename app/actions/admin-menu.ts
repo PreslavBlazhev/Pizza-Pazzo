@@ -7,7 +7,15 @@ import { redirect } from "@/i18n/navigation";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MENU_CACHE_TAG } from "@/lib/menu-data";
+import {
+  deleteCategoryImageIfUnused,
+  discardCategoryImage,
+  saveCategoryImage,
+} from "@/lib/uploads/category-image-storage";
+import { ImageProcessingError, normalizeCategoryImage } from "@/lib/uploads/image-processing";
+import { isPersistentUploadsConfigured } from "@/lib/uploads/paths";
 import { deleteProductImageIfUnused } from "@/lib/uploads/product-image-storage";
+import { validateCategoryImageUpload } from "@/lib/uploads/validate";
 import { latinSlug } from "@/lib/utils";
 import {
   categoryUpdateSchema,
@@ -299,7 +307,16 @@ export async function updateProductAction(
   redirect({ href: "/admin/products", locale: await getLocale() });
 }
 
-/** ADMIN+: category edit (slug stays fixed — it is a public URL). */
+/**
+ * ADMIN+: category edit (slug stays fixed — it is a public URL), including an
+ * optional new photo in the `image` field. All-or-nothing: if the photo is
+ * invalid or cannot be stored, NOTHING is written and the old photo stays.
+ * The photo is validated by its bytes, re-encoded (EXIF orientation applied,
+ * metadata stripped) and stored on the Persistent Disk before the DB write;
+ * the previous file is removed only after the DB points at the new one.
+ * The legacy emoji (`icon`) is no longer edited here — it stays untouched as
+ * the public fallback for categories without a photo.
+ */
 export async function updateCategoryAction(
   _prev: ActionResult | null,
   formData: FormData
@@ -309,14 +326,13 @@ export async function updateCategoryAction(
   const id = String(formData.get("categoryId") ?? "");
   const existing = await db.menuCategory.findUnique({
     where: { id },
-    select: { id: true },
+    select: { id: true, imageUrl: true },
   });
   if (!existing) return { ok: false, error: "Категорията не беше намерена." };
 
   const parsed = categoryUpdateSchema.safeParse({
     nameBg: String(formData.get("nameBg") ?? ""),
     nameEn: String(formData.get("nameEn") ?? ""),
-    icon: String(formData.get("icon") ?? ""),
     sortOrder: String(formData.get("sortOrder") ?? "0"),
     isActive: formData.get("isActive") === "on",
   });
@@ -328,17 +344,64 @@ export async function updateCategoryAction(
     };
   }
 
-  await db.menuCategory.update({
-    where: { id },
-    data: {
-      nameBg: parsed.data.nameBg,
-      nameEn: parsed.data.nameEn,
-      icon: parsed.data.icon || null,
-      sortOrder: parsed.data.sortOrder,
-      isActive: parsed.data.isActive,
-    },
-  });
+  // ── Optional new photo ────────────────────────────────────────────────
+  let newImageUrl: string | null = null;
+  const image = formData.get("image");
+  if (image instanceof File && image.size > 0) {
+    const bytes = new Uint8Array(await image.arrayBuffer());
+    const check = validateCategoryImageUpload({
+      size: image.size,
+      mimeType: image.type,
+      bytes,
+    });
+    if (!check.ok) {
+      return { ok: false, error: check.message, fieldErrors: { image: check.message } };
+    }
+    if (!isPersistentUploadsConfigured()) {
+      console.error("[admin] category photo refused: UPLOADS_DIR is not set in production");
+      return {
+        ok: false,
+        error:
+          "Снимката не може да се запази: хранилището за снимки не е настроено. Свържете се с поддръжката.",
+      };
+    }
+    try {
+      const webp = await normalizeCategoryImage(bytes);
+      newImageUrl = await saveCategoryImage(webp);
+    } catch (error) {
+      const isImageError = error instanceof ImageProcessingError;
+      if (!isImageError) console.error("[admin] category photo save failed", error);
+      const message = isImageError
+        ? error.message
+        : "Снимката не беше запазена. Опитайте отново.";
+      return { ok: false, error: message, fieldErrors: { image: message } };
+    }
+  }
+
+  try {
+    await db.menuCategory.update({
+      where: { id },
+      data: {
+        nameBg: parsed.data.nameBg,
+        nameEn: parsed.data.nameEn,
+        sortOrder: parsed.data.sortOrder,
+        isActive: parsed.data.isActive,
+        ...(newImageUrl ? { imageUrl: newImageUrl } : {}),
+      },
+    });
+  } catch (error) {
+    console.error("[admin] category update failed", error);
+    if (newImageUrl) await discardCategoryImage(newImageUrl);
+    return { ok: false, error: "Промените не бяха запазени. Опитайте отново." };
+  }
+
+  if (newImageUrl && existing.imageUrl && existing.imageUrl !== newImageUrl) {
+    await deleteCategoryImageIfUnused(existing.imageUrl, id);
+  }
 
   revalidateMenu();
-  return { ok: true, message: "Категорията е запазена." };
+  return {
+    ok: true,
+    message: newImageUrl ? "Категорията и снимката са запазени." : "Категорията е запазена.",
+  };
 }

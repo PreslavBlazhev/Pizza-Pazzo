@@ -66,7 +66,6 @@ export type VariantUpdateInput = z.infer<typeof variantUpdateSchema>;
 export const categoryUpdateSchema = z.object({
   nameBg: z.string().trim().min(2, "Името (BG) трябва да е поне 2 символа.").max(80, "Името (BG) е твърде дълго."),
   nameEn: optionalText(80, "Името (EN)"),
-  icon: optionalText(8, "Иконата"),
   sortOrder: z
     .string()
     .trim()
