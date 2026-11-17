@@ -399,12 +399,17 @@ export function parseProductExtraKey(
 /**
  * Extracts the numeric size from a variant name. Handles "30 см", "30 cm" and
  * combined snapshot names like "30 см / 30 cm". Returns null when the name
- * carries no digits or carries CONFLICTING numbers — callers must treat null
+ * carries no digits or carries CONFLICTING sizes — callers must treat null
  * as "size unknown" and reject, never fall back to an arbitrary variant.
+ *
+ * Numbers marked "см"/"cm" are THE size; other numbers in the label (the
+ * weight in "30 см / 400g" — Маргарита, Кашкавалина) are ignored. Only a
+ * label with no unit at all falls back to "every number must agree".
  */
 export function parseVariantSize(name: string | null | undefined): number | null {
   if (!name) return null;
-  const groups = name.match(/\d+/g);
+  const sized = [...name.matchAll(/(\d+)\s*(?:см|cm)(?![a-zа-я])/gi)].map((m) => m[1]);
+  const groups = sized.length > 0 ? sized : name.match(/\d+/g);
   if (!groups || groups.length === 0) return null;
   const unique = new Set(groups.map((g) => Number(g)));
   return unique.size === 1 ? [...unique][0] : null;
