@@ -149,14 +149,16 @@ export async function getPendingOrders(): Promise<Order[]> {
 }
 
 /**
- * Orders the kitchen is working on (accepted → out for delivery), oldest
- * first, with their lines — the live board's "В процес" list with the next
- * step buttons. Expired orders are never returned (lib/db.ts).
+ * Orders the kitchen is working on (accepted → out for delivery), NEWEST
+ * first by creation time (lib/order-sort.ts), with their lines — the live
+ * board's "В процес" list with the next step buttons. Newest first also means
+ * `take` keeps the latest 50, not the oldest. Expired orders are never
+ * returned (lib/db.ts).
  */
 export async function getActiveOrders(): Promise<Order[]> {
   const rows = await db.order.findMany({
     where: { status: { in: [...ACTIVE_ORDER_STATUSES] }, ...RELEASED_TO_KITCHEN },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "desc" }, { orderNumber: "desc" }, { id: "desc" }],
     include: { items: true },
     take: 50,
   });

@@ -23,6 +23,7 @@ import { PRINT_TEMPLATE_IDS, defaultPrintTemplate, type PrintTemplateData } from
 import type { StoreStatus } from "@/types/store-status";
 import type { PaymentAttentionItem } from "@/lib/payments/admin";
 import type { EmailJobView } from "@/lib/email/outbox";
+import { sortNewestFirst } from "@/lib/order-sort";
 
 /**
  * The shift, for the WHOLE admin panel.
@@ -149,7 +150,10 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         cutoffAt?: string;
       };
       setOrders(data.orders);
-      setActiveOrders((data.activeOrders ?? []).map((o) => ({ ...o, items: o.items ?? [] })));
+      // Newest on top, whatever order the server sent them in (lib/order-sort.ts).
+      setActiveOrders(
+        sortNewestFirst((data.activeOrders ?? []).map((o) => ({ ...o, items: o.items ?? [] })))
+      );
       setEmailJobs(data.emailJobs ?? {});
       if (data.cutoffAt) setCutoffAt(data.cutoffAt);
       setPaymentAttention(data.paymentAttention ?? []);

@@ -17,6 +17,9 @@ import type { PrintTemplateData } from "@/types/print";
  * both. Every tap carries the status this screen shows, so a second tablet
  * that already moved the order turns the tap into a clear conflict message
  * (lib/order-workflow.ts) instead of a double step.
+ *
+ * Newest order on top (createdAt DESC — lib/order-sort.ts); the list arrives
+ * already sorted from ShiftProvider, so this component only renders it.
  */
 export function ActiveOrdersList({
   orders,
