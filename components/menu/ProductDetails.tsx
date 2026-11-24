@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
 import type { ProductExtrasData } from "@/types/cart";
-import { formatEurPrice } from "@/lib/format-price";
+import { formatProductPrice } from "@/lib/format-price";
 import { isAllergenId, orderedAllergens } from "@/lib/allergens";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { CategoryVisual } from "./CategoryVisual";
@@ -88,7 +88,7 @@ export function ProductDetails({
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <div className="flex items-end gap-2">
             <span className="font-display text-3xl font-bold text-brand">
-              {formatEurPrice(product.priceEur)}
+              {formatProductPrice(product)}
             </span>
 
           </div>

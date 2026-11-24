@@ -20,6 +20,34 @@ const priceField = z
   .refine((n) => n < 10000, "Цената е неправдоподобно висока.")
   .transform((n) => Math.round(n * 100) / 100);
 
+/**
+ * The product's "Базова цена" is FREE TEXT (owner request 24.11.2026): staff
+ * may type "7.50/12.00" or anything else. A plain number is stored exactly as
+ * before (priceLabel = null). Any other text is kept verbatim as priceLabel
+ * and shown on the menu instead of the number; the basket still needs a
+ * number, so priceEur becomes the first number found in the text, or null
+ * when there is none (the action then keeps the product's previous price).
+ */
+const PLAIN_PRICE = /^\d+(?:[.,]\d+)?$/;
+const productPriceField = z
+  .string()
+  .trim()
+  .min(1, "Въведете цена.")
+  .max(100, "Цената е твърде дълга (до 100 знака).")
+  .superRefine((v, ctx) => {
+    if (!PLAIN_PRICE.test(v)) return;
+    const n = Number(v.replace(",", "."));
+    if (!(n > 0)) ctx.addIssue({ code: "custom", message: "Цената трябва да е положително число." });
+    else if (n >= 10000) ctx.addIssue({ code: "custom", message: "Цената е неправдоподобно висока." });
+  })
+  .transform((v): { priceEur: number | null; priceLabel: string | null } => {
+    const toPrice = (s: string) => Math.round(Number(s.replace(",", ".")) * 100) / 100;
+    if (PLAIN_PRICE.test(v)) return { priceEur: toPrice(v), priceLabel: null };
+    const first = v.match(/\d+(?:[.,]\d+)?/)?.[0];
+    const n = first ? toPrice(first) : NaN;
+    return { priceEur: n > 0 && n < 10000 ? n : null, priceLabel: v };
+  });
+
 /** Optional short text: empty string → "" (kept, the UI falls back to BG). */
 const optionalText = (max: number, label: string) =>
   z.string().trim().max(max, `${label} е твърде дълго (до ${max} знака).`);
@@ -30,7 +58,7 @@ export const productUpdateSchema = z.object({
   descriptionBg: optionalText(600, "Описанието (BG)"),
   descriptionEn: optionalText(600, "Описанието (EN)"),
   categoryId: z.string().trim().min(1, "Изберете категория."),
-  priceEur: priceField,
+  price: productPriceField,
   imageUrl: z
     .string()
     .trim()

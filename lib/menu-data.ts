@@ -109,6 +109,7 @@ function toRawProduct(row: ProductRow): RawProduct {
     description: { bg: row.descriptionBg, en: row.descriptionEn },
     categoryId: row.categoryId,
     priceEur: Number(row.priceEur),
+    priceLabel: row.priceLabel || undefined,
     imageUrl: row.imageUrl ?? "",
     allergens: parseAllergens(row.allergens, row.id),
     allergensUnverified: row.allergensUnverified || undefined,

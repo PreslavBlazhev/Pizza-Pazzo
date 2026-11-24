@@ -34,6 +34,8 @@ export interface Product {
   categoryId: string;
   /** Base price in EUR (€). For products with variants this is the "from" price. */
   priceEur: number;
+  /** Free-text price typed in the admin (e.g. "7.50/12.00"); shown instead of priceEur when set. */
+  priceLabel?: string;
   /** Path to the product image. Always read the image from here (never hardcode). */
   imageUrl: string;
   /** Allergen ids — names live in the `allergens` message namespace. */

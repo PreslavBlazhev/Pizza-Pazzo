@@ -24,6 +24,7 @@ export interface AdminMenuProduct {
   descriptionEn: string;
   categoryId: string;
   priceEur: number;
+  priceLabel: string | null;
   imageUrl: string | null;
   allergens: string[];
   allergensUnverified: boolean;
@@ -70,6 +71,7 @@ function toAdminProduct(row: ProductRow): AdminMenuProduct {
     descriptionEn: row.descriptionEn,
     categoryId: row.categoryId,
     priceEur: Number(row.priceEur),
+    priceLabel: row.priceLabel,
     imageUrl: row.imageUrl,
     allergens,
     allergensUnverified: row.allergensUnverified,

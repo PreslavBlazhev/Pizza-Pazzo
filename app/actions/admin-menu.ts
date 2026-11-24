@@ -87,7 +87,7 @@ function parseProductForm(formData: FormData) {
     descriptionBg: String(formData.get("descriptionBg") ?? ""),
     descriptionEn: String(formData.get("descriptionEn") ?? ""),
     categoryId: String(formData.get("categoryId") ?? ""),
-    priceEur: String(formData.get("priceEur") ?? ""),
+    price: String(formData.get("priceEur") ?? ""),
     imageUrl: String(formData.get("imageUrl") ?? ""),
     sizeBg: String(formData.get("sizeBg") ?? ""),
     sizeEn: String(formData.get("sizeEn") ?? ""),
@@ -158,6 +158,16 @@ export async function createProductAction(
   });
   if (!category) return { ok: false, error: "Невалидна категория." };
 
+  // A free-text price with no number in it leaves the basket nothing to
+  // charge, so a NEW product needs at least one number somewhere in the text.
+  if (data.price.priceEur === null) {
+    return {
+      ok: false,
+      error: "Проверете полетата по-долу.",
+      fieldErrors: { price: "Добавете поне едно число в цената (напр. 7.50)." },
+    };
+  }
+
   const { id, slug } = await nextProductIdentity(data.nameBg);
 
   try {
@@ -170,7 +180,8 @@ export async function createProductAction(
         descriptionBg: data.descriptionBg,
         descriptionEn: data.descriptionEn,
         categoryId: data.categoryId,
-        priceEur: data.priceEur,
+        priceEur: data.price.priceEur,
+        priceLabel: data.price.priceLabel,
         imageUrl: data.imageUrl || null,
         sizeBg: data.sizeBg || null,
         sizeEn: data.sizeEn || null,
@@ -265,7 +276,9 @@ export async function updateProductAction(
         descriptionBg: data.descriptionBg,
         descriptionEn: data.descriptionEn,
         categoryId: data.categoryId,
-        priceEur: data.priceEur,
+        // Text without any number keeps the previous number for the basket.
+        priceEur: data.price.priceEur ?? existing.priceEur,
+        priceLabel: data.price.priceLabel,
         imageUrl: data.imageUrl || null,
         sizeBg: data.sizeBg || null,
         sizeEn: data.sizeEn || null,

@@ -515,6 +515,9 @@ model MenuProduct {
 
   // Base price in EUR; for products with variants this is the "from" price.
   priceEur Decimal
+  // Free text shown instead of priceEur when set (e.g. "7.50/12.00"). The
+  // basket still charges priceEur — see lib/validators/admin-menu.ts.
+  priceLabel String?
 
   imageUrl            String?
   // JSON array of allergen ids (SQLite has no arrays) — see lib/allergens.ts.

@@ -109,9 +109,9 @@ export function ProductForm({
         <Input
           label={product && product.variants.length > 0 ? "Базова цена € („от“)" : "Цена €"}
           name="priceEur"
-          defaultValue={product ? product.priceEur.toFixed(2) : ""}
-          error={fieldError("priceEur")}
-          inputMode="decimal"
+          defaultValue={product ? product.priceLabel ?? product.priceEur.toFixed(2) : ""}
+          error={fieldError("price")}
+          hint="Свободен текст, напр. „7.50“ или „7.50/12.00“ — показва се в менюто точно както е написан. В количката се ползва първото число."
           required
         />
         <Input
