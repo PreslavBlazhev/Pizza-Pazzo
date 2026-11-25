@@ -470,7 +470,7 @@ test("template: the merchant/terms/withdrawal block is gone; the useful parts ar
       "приета",
       "Маргарита",
       "Кашкавален борд",
-      "Оферта 2 пици 40 + 30 см: 19.43 € (редовно 22.49 €)",
+      "Оферта 2 пици 30 + 30 см: 19.00 € (редовно 19.42 €)",
       `${order.totalEur.toFixed(2)} €`,
       "в брой при доставка",
       "Доставка до адрес",

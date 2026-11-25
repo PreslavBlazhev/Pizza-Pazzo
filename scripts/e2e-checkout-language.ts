@@ -203,12 +203,12 @@ async function main() {
         where: { customerEmail: EMAIL, deliveryAddress: { contains: "(C)" } },
         include: { items: true },
       });
-      // 2 × 12.78 = 25.56 €, free topping 0 €; the pair 40 + 40 → 23.01 €.
-      check(shown === "23.01", "the page showed 25.56 − 2.55 offer = 23.01 €", shown);
+      // 2 × 12.78 = 25.56 €, free topping 0 €; below the 40 + 40 package (26.00 €), so no offer.
+      check(shown === "25.56", "the page showed 25.56 € (no offer: below the 26.00 € package)", shown);
       check(Number(order?.totalEur).toFixed(2) === shown, "saved total equals the shown total", `${order?.totalEur} vs ${shown}`);
       check(
-        Number(order?.subtotalEur) === 25.56 && Number(order?.discountEur) === 2.55,
-        "saved: items 25.56, discount 2.55",
+        Number(order?.subtotalEur) === 25.56 && Number(order?.discountEur) === 0,
+        "saved: items 25.56, discount 0",
         `${order?.subtotalEur} / ${order?.discountEur}`
       );
       check(order?.items[0]?.extrasJson.includes("free_topping:prod_topping_bekon") ?? false, "the free topping is on the saved line");
@@ -336,27 +336,27 @@ async function main() {
       await page.goto(`${BASE}${prefix}/cart`);
       await page.locator('[data-testid="cart-total"]').waitFor();
       check((await money("cart-subtotal")) === "19.42", "2 × 30 cm: items 19.42 €");
-      check((await money("cart-discount")) === "2.55", "offer line −2.55 €");
-      check((await money("cart-total")) === "16.87", "total 16.87 €");
+      check((await money("cart-discount")) === "0.42", "offer line −0.42 €");
+      check((await money("cart-total")) === "19.00", "total 19.00 €");
       const offerName = locale === "en" ? /Wrong maths/ : /Грешна математика/;
       check(offerName.test(await page.locator("aside").first().innerText()), "the offer is named in this language");
 
       await page.getByRole("button", { name: locale === "en" ? /^Increase the quantity/ : /^Увеличи количеството/ }).click();
       // Final rule (owner, 17.10.2026): with 3 pizzas the best pair keeps
       // its package price and the third pizza is at its regular price.
-      await page.waitForFunction(() => /26.58/.test(document.querySelector('[data-testid="cart-total"]')?.textContent ?? ""));
-      check((await money("cart-total")) === "26.58", "3 pizzas: one pair at 16.87 € + one at 9.71 € = 26.58 €");
-      check((await money("cart-discount")) === "2.55", "3 pizzas: the pair's saving stays");
+      await page.waitForFunction(() => /28.71/.test(document.querySelector('[data-testid="cart-total"]')?.textContent ?? ""));
+      check((await money("cart-total")) === "28.71", "3 pizzas: one pair at 19.00 € + one at 9.71 € = 28.71 €");
+      check((await money("cart-discount")) === "0.42", "3 pizzas: the pair's saving stays");
 
       await page.getByRole("button", { name: locale === "en" ? /^Reduce the quantity/ : /^Намали количеството/ }).click();
       await page.locator('[data-testid="cart-discount"]').waitFor();
-      check((await money("cart-total")) === "16.87", "back to 2: 16.87 € again");
+      check((await money("cart-total")) === "19.00", "back to 2: 19.00 € again");
 
       await page.goto(`${BASE}${prefix}/checkout`);
       await page.locator('[name="customerName"]').waitFor();
       const final = (await page.locator('[data-testid="checkout-final-total"]').innerText()).match(/(\d+\.\d{2})\s*€/)?.[1];
-      check(final === "16.87", "checkout: final amount 16.87 €", final);
-      check((await money("cart-discount")) === "2.55", "checkout summary shows the discount");
+      check(final === "19.00", "checkout: final amount 19.00 €", final);
+      check((await money("cart-discount")) === "0.42", "checkout summary shows the discount");
       const before = await ordersMade();
       await fill(page, `K-${locale}`);
       await submit(page);
@@ -364,8 +364,8 @@ async function main() {
       check((await ordersMade()) === before + 1, "exactly one order saved");
       const order = await db.order.findFirst({ where: { customerEmail: EMAIL, deliveryAddress: { contains: `(K-${locale})` } } });
       check(
-        Number(order?.subtotalEur) === 19.42 && Number(order?.discountEur) === 2.55 && Number(order?.totalEur) === 16.87,
-        "saved 19.42 − 2.55 = 16.87",
+        Number(order?.subtotalEur) === 19.42 && Number(order?.discountEur) === 0.42 && Number(order?.totalEur) === 19,
+        "saved 19.42 − 0.42 = 19.00",
         `${order?.subtotalEur} / ${order?.discountEur} / ${order?.totalEur}`
       );
       await ctx.close();

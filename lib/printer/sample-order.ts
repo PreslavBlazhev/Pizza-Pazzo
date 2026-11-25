@@ -15,9 +15,9 @@ import { pizzaMathDiscount } from "@/lib/pizza-math";
  *   - the same pizza twice with different modifications stays two lines;
  *   - sauces chosen ON dishes (2 × 2 garlic sauces, 1 burger sauce) plus a
  *     garlic sauce ordered on its own add up in the sauce section (5 + 1);
- *   - a two-pizza combo that really saves (Пеперони 40 + 30), computed by
- *     the real lib/pizza-math.ts — the 2 × Маргарита 40 do not pair (20.46 €
- *     is below the 23.01 € package);
+ *   - a two-pizza combo that really saves (2 × Пеперони 30: 19.42 → 19.00),
+ *     computed by the real lib/pizza-math.ts — the 2 × Маргарита 40 do not
+ *     pair (20.46 € is below the 26.00 € package);
  *   - a long name that has to wrap, an item note and a customer note.
  */
 
@@ -105,11 +105,11 @@ const LINES: Line[] = [
     productSlug: "peperoni-maks",
     productNameBg: "Пеперони Макс",
     productNameEn: "Pepperoni Max",
-    variantId: "var_peperoni_maks_2",
-    variantName: "40 см / 40 cm",
+    variantId: "var_peperoni_maks_1",
+    variantName: "30 см / 30 cm",
     quantity: 1,
-    unitPriceEur: 12.78,
-    totalPriceEur: 12.78,
+    unitPriceEur: 9.71,
+    totalPriceEur: 9.71,
     extras: [],
     itemNote: "Добре изпечена, нарязана на 8 парчета",
     ...PIZZA,

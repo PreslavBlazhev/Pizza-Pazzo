@@ -107,23 +107,23 @@
     "pizzaThursday": "Every Thursday is pizza day",
     "promos": {
       "twoToppings": {
-        "ariaLabel": "Promotion: pizza with 2 toppings — 30 cm for 5.11 €, 40 cm for 7.67 €, collection only. View the menu.",
+        "ariaLabel": "Promotion: pizza with 2 toppings — 30 cm for 6.00 €, 40 cm for 9.00 €, collection only. View the menu.",
         "title": "Pizza with 2 toppings",
         "medium": "30 cm · medium",
-        "mediumPrice": "5.11 €",
+        "mediumPrice": "6.00 €",
         "large": "40 cm · large",
-        "largePrice": "7.67 €",
+        "largePrice": "9.00 €",
         "collectionOnly": "Collection only"
       },
       "pizzaMath": {
-        "ariaLabel": "Promotion: wrong maths, right offers — two standard pizzas 30 + 30 for 16.87 €, 40 + 30 for 19.43 €, 40 + 40 for 23.01 €, whenever that is cheaper than their regular price. Special pizzas are not included. View the menu.",
+        "ariaLabel": "Promotion: wrong maths, right offers — two standard pizzas 30 + 30 for 19.00 €, 40 + 30 for 22.50 €, 40 + 40 for 26.00 €, whenever that is cheaper than their regular price. Special pizzas are not included. View the menu.",
         "titleLine1": "Wrong maths",
         "titleLine2": "right offers",
-        "offer3030": "30 + 30 → 16.87 €",
-        "offer4030": "40 + 30 → 19.43 €",
-        "offer4040": "40 + 40 → 23.01 €",
-        "noteLine1": "You add the pizzas up in centimetres, and the arrow points to the price of the combination.",
-        "noteLine2": "Standard pizzas only, and only when it saves you money."
+        "offer3030": "30 + 30 = 19.00 €",
+        "offer4030": "40 + 30 = 22.50 €",
+        "offer4040": "40 + 40 = 26.00 €",
+        "noteLine1": "The sum is the pizzas in centimetres, and the result is the price of the combination.",
+        "noteLine2": "Special pizzas are not included in this offer!"
       }
     },
     "hero": {
@@ -401,7 +401,7 @@
     "pizzaMathDiscount": "‘Wrong maths’ offer",
     "pizzaMathCombo": "2-pizza offer {sizes} (regular {regular})",
     "pizzaMathSurcharge": "Difference to the package price",
-    "pizzaMathHint": "‘Wrong maths’: two standard pizzas 30 + 30 cm for 16.87 €, 40 + 30 cm for 19.43 €, 40 + 40 cm for 23.01 € — automatically, only when the package is cheaper than the two pizzas’ regular price. Special pizzas are not included. Toppings, crusts and sauces are charged separately.",
+    "pizzaMathHint": "‘Wrong maths’: two standard pizzas 30 + 30 cm for 19.00 €, 40 + 30 cm for 22.50 €, 40 + 40 cm for 26.00 € — automatically, only when the package is cheaper than the two pizzas’ regular price. Special pizzas are not included. Toppings, crusts and sauces are charged separately.",
     "quantity": "Quantity",
     "quantityShort": "Qty: {count}",
     "remove": "Remove",

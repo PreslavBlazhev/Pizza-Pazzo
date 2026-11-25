@@ -157,46 +157,49 @@ const pay = (lines: PizzaMathLine[], mode: ComboPricingMode = "never_dearer") =>
   return (regular - pizzaMathDiscount(lines, { mode }).discountCents) / 100;
 };
 
-test("the three pairs cost exactly 16.87 / 19.43 / 23.01 €, in integer cents", () => {
-  assert.deepEqual(PIZZA_COMBO_PRICES_CENTS, { "30+30": 1687, "30+40": 1943, "40+40": 2301 });
-  assert.equal(pay([L(30, 9.71), L(30, 9.71)]), 16.87);
-  assert.equal(pay([L(40, 12.78), L(30, 9.71)]), 19.43);
-  assert.equal(pay([L(40, 12.78), L(40, 12.78)]), 23.01);
+test("the three pairs cost exactly 19.00 / 22.50 / 26.00 €, in integer cents", () => {
+  assert.deepEqual(PIZZA_COMBO_PRICES_CENTS, { "30+30": 1900, "30+40": 2250, "40+40": 2600 });
+  assert.equal(pay([L(30, 11), L(30, 11)]), 19);
+  assert.equal(pay([L(40, 15), L(30, 11)]), 22.5);
+  assert.equal(pay([L(40, 15), L(40, 15)]), 26);
   // Two identical pizzas as ONE line with quantity 2.
-  assert.equal(pay([L(30, 9.71, 2)]), 16.87);
-  assert.equal(pay([L(40, 12.78, 2)]), 23.01);
+  assert.equal(pay([L(30, 11, 2)]), 19);
+  assert.equal(pay([L(40, 15, 2)]), 26);
 });
 
 test("special pizzas never pair; 5 standard pizzas = 2 pairs + the cheapest one alone", () => {
   const SP = "cat_pizzas_special";
-  assert.equal(pay([L(40, 15.34, 1, SP), L(30, 11.76, 1, SP)]), 27.1, "special + special: regular price");
-  assert.equal(pay([L(30, 11.76, 1, SP), L(30, 9.71)]), 21.47, "special + standard: regular price");
-  // 3×30 (9.71) + 2×40 (12.78): 2 × (40+30) + one 30 alone = 2×19.43 + 9.71
-  assert.equal(pay([L(30, 9.71, 3), L(40, 12.78, 2)]), 48.57);
+  assert.equal(pay([L(40, 18, 1, SP), L(30, 14, 1, SP)]), 32, "special + special: regular price");
+  assert.equal(pay([L(30, 14, 1, SP), L(30, 11)]), 25, "special + standard: regular price");
+  // 3×30 (11.00) + 2×40 (15.00): two pairs + one 30 alone = 45.00 + 11.00
+  // (2 × 40+30 and 30+30 & 40+40 both save 7.00)
+  assert.equal(pay([L(30, 11, 3), L(40, 15, 2)]), 56);
   // …and two specials next to them change nothing for the standard ones.
-  assert.equal(pay([L(30, 9.71, 3), L(40, 12.78, 2), L(40, 15.34, 2, SP)]), 48.57 + 30.68);
+  assert.equal(pay([L(30, 11, 3), L(40, 15, 2), L(40, 18, 2, SP)]), 56 + 36);
   // one pizza: no combo
-  assert.equal(pay([L(30, 9.71)]), 9.71);
+  assert.equal(pay([L(30, 11)]), 11);
 });
 
 test("3+ standard pizzas: the cheapest pairing, and no pair is forced without a saving", () => {
-  // Маргарита 30 ×2 (6.65) + Пеперони 30 ×2 (9.71): pairing the two
-  // Пеперони saves 2.55; pairing the Маргарита (13.30) would cost MORE, so
+  // Маргарита 30 ×2 (7.50) + Пеперони 30 ×2 (11.00): pairing the two
+  // Пеперони saves 3.00; pairing the Маргарита (15.00) would cost MORE, so
   // they stay single — fewer pairs, lower total.
-  const r = pizzaMathDiscount([L(30, 6.65, 2), L(30, 9.71, 2)]);
+  const r = pizzaMathDiscount([L(30, 7.5, 2), L(30, 11, 2)]);
   assert.equal(r.pairs.length, 1);
-  assert.equal(r.discountEur, 2.55);
-  assert.equal(pay([L(30, 6.65, 2), L(30, 9.71, 2)]), 13.3 + 16.87);
-  // A mixed pair is chosen over two same-size pairs when that is cheaper.
-  assert.equal(pay([L(30, 9.71, 2), L(40, 12.78, 2)]), 2 * 19.43);
+  assert.equal(r.discountEur, 3);
+  assert.equal(pay([L(30, 7.5, 2), L(30, 11, 2)]), 15 + 19);
+  // The lowest total wins, whatever kind of pair it uses: 30 (9.00) ×2 +
+  // 40 (15.00) ×2 — 2 × 40+30 (24.00 → 22.50) saves 3.00, while 40+40 alone
+  // saves 4.00 (30+30 = 18.00 would save nothing), so 40+40 is chosen.
+  assert.equal(pay([L(30, 9, 2), L(40, 15, 2)]), 18 + 26);
 });
 
-test("FINAL RULE: Маргарита 30 + Кашкавалина 40 keeps its regular 16.88 € (the package would be dearer)", () => {
+test("FINAL RULE: Маргарита 30 + Кашкавалина 40 keeps its regular 19.50 € (the package would be dearer)", () => {
   assert.equal(COMBO_PRICING_MODE, "never_dearer");
-  const pair = [L(30, 6.65), L(40, 10.23)];
-  assert.equal(pay(pair), 16.88);
+  const pair = [L(30, 7.5), L(40, 12)];
+  assert.equal(pay(pair), 19.5);
   assert.equal(pizzaMathDiscount(pair).pairs.length, 0, "no combo shown");
-  assert.equal(pay(pair, "fixed"), 19.43, "only the unused fixed mode would charge the package");
+  assert.equal(pay(pair, "fixed"), 22.5, "only the unused fixed mode would charge the package");
 });
 
 test("other sizes, missing sizes and non-pizza categories never take part", () => {
@@ -245,9 +248,10 @@ const pizza = (id: string, categoryId: string, p30: number, p40: number): Produc
   ],
 });
 const MENU: Record<string, Product> = {
-  p_marg: pizza("p_marg", "cat_pizzas_standard", 6.65, 10.23),
-  p_pep: pizza("p_pep", "cat_pizzas_standard", 9.71, 12.78),
-  p_salmon: pizza("p_salmon", "cat_pizzas_special", 11.76, 15.34),
+  // Live prices (pizzapazzo.bg, 2026-11-25).
+  p_marg: pizza("p_marg", "cat_pizzas_standard", 7.5, 12),
+  p_pep: pizza("p_pep", "cat_pizzas_standard", 11, 15),
+  p_salmon: pizza("p_salmon", "cat_pizzas_special", 14, 18),
   s_garlic: {
     id: "s_garlic",
     name: "Чеснов сос",
@@ -300,35 +304,35 @@ const garlic = (quantity: number) => ({ key: "sauce:s_garlic", sourceProductId: 
 test("server: combos + sauces with quantities + a drink; saved order, ticket and e-mail all agree", async () => {
   const r = await place([
     { productId: "d_cola", quantity: 1 }, //                                     2.30
-    { productId: "p_pep", variantId: "p_pep_40", quantity: 2, extras: [garlic(2)] }, // (12.78 + 2.04) × 2 = 29.64
+    { productId: "p_pep", variantId: "p_pep_40", quantity: 2, extras: [garlic(2)] }, // (15.00 + 2.04) × 2 = 34.08
     { productId: "s_garlic", quantity: 1 }, //                                   1.02
-    { productId: "p_salmon", variantId: "p_salmon_30", quantity: 1 }, //         11.76
+    { productId: "p_salmon", variantId: "p_salmon_30", quantity: 1 }, //         14.00
   ]);
   assert.ok(r.ok, JSON.stringify(r));
   if (!r.ok) return;
   const order = await getOrderById(r.orderId);
   assert.ok(order?.items);
   if (!order?.items) return;
-  // Standard 40 (12.78) ×2 and a SPECIAL 30 (11.76): the special does not
-  // take part (40+30 with it would have saved 5.11). The two standard 40s
-  // pair: 25.56 → 23.01 (−2.55). Sauces are never part of the combo.
-  assert.equal(order.subtotalEur, 44.72);
-  assert.equal(order.discountEur, 2.55);
-  assert.equal(order.totalEur, 42.17);
+  // Standard 40 (15.00) ×2 and a SPECIAL 30 (14.00): the special does not
+  // take part (40+30 with it would have saved 6.50). The two standard 40s
+  // pair: 30.00 → 26.00 (−4.00). Sauces are never part of the combo.
+  assert.equal(order.subtotalEur, 51.4);
+  assert.equal(order.discountEur, 4);
+  assert.equal(order.totalEur, 47.4);
   assert.equal(order.offer.length, 1);
   assert.equal(order.offer[0].sizes, "40+40");
   assert.deepEqual([...order.offer[0].pizzasBg].sort(), ["Пеперони 40 см", "Пеперони 40 см"]);
   const lineShare = order.items.reduce((s, i) => s + Math.round(i.discountEur * 100), 0);
-  assert.equal(lineShare, 255, "the per-line shares add up to the discount");
+  assert.equal(lineShare, 400, "the per-line shares add up to the discount");
   assert.equal(order.items.find((i) => i.productId === "p_salmon")?.discountEur, 0, "the special pays in full");
   assert.equal(order.items[1].categoryNameBg, "Стандартни пици", "category snapshot saved");
 
   const ticket = buildTicketText(order, defaultPrintTemplate("DELIVERY"));
-  assert.match(ticket, /ОБЩО\s+42\.17 €/);
-  assert.match(ticket, /-2\.55 €/);
+  assert.match(ticket, /ОБЩО\s+47\.40 €/);
+  assert.match(ticket, /-4\.00 €/);
   const mail = customerOrderAcceptedEmail({ ...order, items: order.items }, { phone: "064 801 999" });
-  assert.match(mail.text, /Обща сума: 42\.17 €/);
-  assert.match(mail.text, /Отстъпка „Грешна математика“: -2\.55 €/);
+  assert.match(mail.text, /Обща сума: 47\.40 €/);
+  assert.match(mail.text, /Отстъпка „Грешна математика“: -4\.00 €/);
 });
 
 test("server: the order in which pizzas were added never changes the saved money", async () => {
@@ -348,13 +352,13 @@ test("server: the order in which pizzas were added never changes the saved money
     seen.add(JSON.stringify([o?.subtotalEur, o?.discountEur, o?.totalEur, o?.offer.map((c) => c.sizes).sort()]));
   }
   assert.equal(seen.size, 1, [...seen].join(" | "));
-  // Standard units: 30 ×2 Маргарита 6.65, 30 ×2 Пеперони 9.71, 40 Пеперони 12.78.
-  // Best: 40+30 Пеперони (−3.06); the remaining Пеперони 30 + Маргарита 30
-  // (16.36) would not save, so it is not paired. (The alternative 30+30
-  // Пеперони −2.55 + 40 with Маргарита 30 = 19.43, equal, saves less.)
-  // The special 40 pays its 15.34.
+  // Standard units: 30 ×2 Маргарита 7.50, 30 ×2 Пеперони 11.00, 40 Пеперони 15.00.
+  // Best: 40+30 Пеперони (−3.50); the remaining Пеперони 30 + Маргарита 30
+  // (18.50) would not save, so it is not paired. (The alternative 30+30
+  // Пеперони −3.00 + 40 with Маргарита 30 = 22.50, equal, saves less.)
+  // The special 40 pays its 18.00.
   const [sub, disc, total, sizes] = JSON.parse([...seen][0]);
-  assert.equal(disc, 3.06);
+  assert.equal(disc, 3.5);
   assert.equal(Math.round((sub - disc) * 100), Math.round(total * 100));
   assert.deepEqual(sizes, ["30+40"]);
 });
@@ -384,7 +388,7 @@ test("server: rounding stays exact on long baskets (no float drift)", async () =
   assert.ok(r.ok);
   if (!r.ok) return;
   const o = await getOrderById(r.orderId);
-  // 7 × (9.71 + 3.06) + 3 × 10.23 = 89.39 + 30.69 = 120.08
-  assert.equal(o?.subtotalEur, 120.08);
+  // 7 × (11.00 + 3.06) + 3 × 12.00 = 98.42 + 36.00 = 134.42
+  assert.equal(o?.subtotalEur, 134.42);
   assert.equal(Math.round((o!.subtotalEur - o!.discountEur) * 100), Math.round(o!.totalEur * 100));
 });

@@ -275,10 +275,10 @@ const payload = (lines: CartItem[]) =>
     extras: i.extras.map(({ key: k, sourceProductId, quantity }) => ({ key: k, sourceProductId, quantity })),
   }));
 
-// Two pizzas are also the „Грешна математика“ pair (30 + 30 → 16.87 €): the
-// two bases 19.42 € become 16.87 € (−2.55 €); the paid topping stays on top.
+// Two pizzas are also the „Грешна математика“ pair (30 + 30 = 19.00 €): the
+// two bases 19.42 € become 19.00 € (−0.42 €); the paid topping stays on top.
 // tests/pizza-math.test.ts covers the offer itself.
-test("maths: 2 × «Моята Пацо» 30 cm with 3 free + 1 paid = 24.54 € − 2.55 € offer = 21.99 €", async () => {
+test("maths: 2 × «Моята Пацо» 30 cm with 3 free + 1 paid = 24.54 € − 0.42 € offer = 24.12 €", async () => {
   const line = cartLine("prod_moyata_patso", 0, 2, [
     { sel: MEAT, price: 0 },
     { sel: DAIRY, price: 0 },
@@ -296,8 +296,8 @@ test("maths: 2 × «Моята Пацо» 30 cm with 3 free + 1 paid = 24.54 €
     include: { items: true },
   });
   assert.equal(Number(row?.subtotalEur), 24.54);
-  assert.equal(Number(row?.discountEur), 2.55);
-  assert.equal(Number(row?.totalEur), 21.99);
+  assert.equal(Number(row?.discountEur), 0.42);
+  assert.equal(Number(row?.totalEur), 24.12);
   const item = row!.items[0];
   assert.equal(item.quantity, 2);
   assert.equal(Number(item.unitPriceEur), 9.71); // base only
@@ -320,12 +320,13 @@ test("maths: a mixed basket — preview total equals the server total to the cen
   assert.equal(r.ok, true);
   if (!r.ok) return;
   const row = await db.order.findUnique({ where: { orderNumber: r.orderNumber } });
-  // Since 2026-10-17 four pizzas form two combos (40+30 saves 3.06, 40+40
-  // saves 2.55): the basket's preview and the server agree on that too.
+  // With the 2026-11-25 package prices these four pizzas form no combo
+  // (40+40: 25.56 < 26.00, 40+30: 22.49 < 22.50 — the offer never makes an
+  // order dearer): the basket's preview and the server agree on that too.
   assert.equal(Number(row?.subtotalEur), preview);
-  assert.equal(Number(row?.discountEur), 5.61);
+  assert.equal(Number(row?.discountEur), 0);
   assert.equal(Number(row?.totalEur), cartTotals(lines).total);
-  assert.equal(cartTotals(lines).total, 51.65);
+  assert.equal(cartTotals(lines).total, 57.26);
 });
 
 test("maths: a 4th free topping in a crafted request refuses the whole order", async () => {

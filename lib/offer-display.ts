@@ -63,7 +63,7 @@ export interface ComboLike {
   regularEur: number;
 }
 
-/** "Оферта 2 пици 40 + 30 см: 19.43 € (редовно 22.49 €)". */
+/** "Оферта 2 пици 30 + 30 см: 19.00 € (редовно 19.42 €)". */
 export function comboLineBg(combo: ComboLike, format: (eur: number) => string): string {
   return `Оферта 2 пици ${comboSizesLabel(combo.sizes)}: ${format(combo.comboEur)} (редовно ${format(
     combo.regularEur

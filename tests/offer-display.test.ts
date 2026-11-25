@@ -3,7 +3,7 @@
  * for two STANDARD pizzas whose regular base prices are strictly above the
  * package price. So every real consumer must:
  *   - show NOTHING about a package when the pair would not save (Маргарита
- *     30 + Кашкавалина 40: 16.88 € regular stays 16.88 €) — no combo line, no
+ *     30 + Кашкавалина 40: 19.50 € regular stays 19.50 €) — no combo line, no
  *     "discount", no "difference";
  *   - leave special pizzas out of every combo, and show no package promise
  *     for a basket of special pizzas only;
@@ -62,11 +62,12 @@ const pizza = (id: string, name: string, p30: number, p40: number, categoryId = 
   ],
 });
 const MENU: Record<string, Product> = {
-  marg: pizza("marg", "Маргарита", 6.65, 10.23),
-  kash: pizza("kash", "Кашкавалина", 6.65, 10.23),
-  pep: pizza("pep", "Пеперони Макс", 9.71, 12.78),
-  salmon: pizza("salmon", "Сьомга", 11.76, 15.34, SPECIAL),
-  prosh: pizza("prosh", "Прошуто", 11.76, 15.34, SPECIAL),
+  // Live prices (pizzapazzo.bg, 2026-11-25).
+  marg: pizza("marg", "Маргарита", 7.5, 12),
+  kash: pizza("kash", "Кашкавалина", 7.5, 12),
+  pep: pizza("pep", "Пеперони Макс", 11, 15),
+  salmon: pizza("salmon", "Сьомга", 14, 18, SPECIAL),
+  prosh: pizza("prosh", "Прошуто", 14, 18, SPECIAL),
 };
 const CATS: Record<string, { name: string; sortOrder: number }> = {
   [STD]: { name: "Стандартни пици", sortOrder: 1 },
@@ -172,9 +173,9 @@ test("the presenter: a discount has one minus; any other stored value is never s
 
 test("basket/checkout: a pair that would NOT save shows no combo, no discount and its regular total", () => {
   for (const [items, total] of [
-    [[cartLine("marg", 30), cartLine("kash", 40)], "16.88 €"], // below 19.43
-    [[cartLine("marg", 30), cartLine("pep", 40)], "19.43 €"], // exactly 19.43
-    [[cartLine("marg", 40, 2)], "20.46 €"], // below 23.01
+    [[cartLine("marg", 30), cartLine("kash", 40)], "19.50 €"], // below 22.50
+    [[cartLine("marg", 30), cartLine("pep", 40)], "22.50 €"], // exactly 22.50
+    [[cartLine("marg", 40, 2)], "24.00 €"], // below 26.00
   ] as const) {
     for (const locale of ["bg", "en"] as const) {
       const html = renderSummary([...items], locale);
@@ -189,14 +190,14 @@ test("basket/checkout: a pair that would NOT save shows no combo, no discount an
 
 test("basket: a CHEAPER pair shows the package, the regular price and one discount line with one minus", () => {
   const html = renderSummary([cartLine("pep", 40), cartLine("pep", 30)]);
-  assert.ok(html.includes("Оферта 2 пици 40 + 30 см (редовно 22.49 €)"), html);
+  assert.ok(html.includes("Оферта 2 пици 40 + 30 см (редовно 26.00 €)"), html);
   assert.ok(html.includes("Отстъпка „Грешна математика“"));
-  assert.ok(html.includes('data-testid="cart-discount">−3.06 €'));
-  assert.ok(html.includes('data-testid="cart-total">19.43 €'));
+  assert.ok(html.includes('data-testid="cart-discount">−3.50 €'));
+  assert.ok(html.includes('data-testid="cart-total">22.50 €'));
   assertNoNegativeDiscount(html, "CartSummary (discount)");
   const enHtml = renderSummary([cartLine("pep", 40), cartLine("pep", 30)], "en");
-  assert.ok(enHtml.includes("2-pizza offer 40 + 30 cm (regular 22.49 €)"));
-  assert.ok(enHtml.includes('data-testid="cart-discount">−3.06 €'));
+  assert.ok(enHtml.includes("2-pizza offer 40 + 30 cm (regular 26.00 €)"));
+  assert.ok(enHtml.includes('data-testid="cart-discount">−3.50 €'));
 });
 
 test("basket: special pizzas — no combo with them, and no package promise for a basket of specials only", () => {
@@ -212,12 +213,12 @@ test("basket: special pizzas — no combo with them, and no package promise for 
   // Special + standard: no combo; the standard pizza alone may get the hint.
   const mixed = renderSummary([cartLine("salmon", 30), cartLine("pep", 30)]);
   assert.ok(!mixed.includes('data-testid="cart-combo"'));
-  assert.ok(mixed.includes('data-testid="cart-total">21.47 €'));
+  assert.ok(mixed.includes('data-testid="cart-total">25.00 €'));
   // Two standard + specials: exactly the standard pair.
   const both = renderSummary([cartLine("salmon", 40), cartLine("pep", 30, 2), cartLine("prosh", 30)]);
   assert.equal(both.split('data-testid="cart-combo"').length - 1, 1);
-  assert.ok(both.includes("Оферта 2 пици 30 + 30 см (редовно 19.42 €)"));
-  assert.ok(both.includes('data-testid="cart-discount">−2.55 €'));
+  assert.ok(both.includes("Оферта 2 пици 30 + 30 см (редовно 22.00 €)"));
+  assert.ok(both.includes('data-testid="cart-discount">−3.00 €'));
   // One standard pizza: the hint, which now names the rule.
   const one = renderSummary([cartLine("pep", 30)]);
   assert.ok(one.includes('data-testid="pizza-math-hint"'));
@@ -229,9 +230,9 @@ test("server → saved order → both e-mails, ticket and Android job: a pair th
     { productId: "marg", variantId: "marg_30", quantity: 1 },
     { productId: "kash", variantId: "kash_40", quantity: 1 },
   ]);
-  assert.equal(order.subtotalEur, 16.88);
+  assert.equal(order.subtotalEur, 19.5);
   assert.equal(order.discountEur, 0);
-  assert.equal(order.totalEur, 16.88, "never dearer: the regular price is charged");
+  assert.equal(order.totalEur, 19.5, "never dearer: the regular price is charged");
   assert.deepEqual(order.offer, []);
   assert.ok(order.items.every((i) => i.discountEur === 0));
   assert.equal(cartTotals([cartLine("marg", 30), cartLine("kash", 40)]).total, order.totalEur, "basket = server");
@@ -248,11 +249,11 @@ test("server → saved order → both e-mails, ticket and Android job: a pair th
     assertNoOffer(part, where);
     assertNoNegativeDiscount(part, where);
   }
-  assert.ok(mail.text.includes("Обща сума: 16.88 €"));
-  assert.ok(kitchenMail.text.includes("Общо: 16.88 €"));
-  assert.match(ticket, /ОБЩО\s+16\.88 €/);
+  assert.ok(mail.text.includes("Обща сума: 19.50 €"));
+  assert.ok(kitchenMail.text.includes("Общо: 19.50 €"));
+  assert.match(ticket, /ОБЩО\s+19\.50 €/);
   assert.equal(job.discount, 0);
-  assert.equal(job.total, 16.88);
+  assert.equal(job.total, 19.5);
   assert.ok(!job.items.some((i: { section: string }) => i.section === "offer"));
   assertJobAddsUp(job);
 });
@@ -264,15 +265,15 @@ test("server → every surface: two standard + a special — the same saving and
     { productId: "pep", variantId: "pep_30", quantity: 1 },
   ];
   const order = await place(items);
-  // 11.76 + 12.78 + 9.71 = 34.25; only the standard 40 + 30 pair (22.49 → 19.43).
-  assert.equal(order.subtotalEur, 34.25);
-  assert.equal(order.discountEur, 3.06);
-  assert.equal(order.totalEur, 31.19);
+  // 14.00 + 15.00 + 11.00 = 40.00; only the standard 40 + 30 pair (26.00 → 22.50).
+  assert.equal(order.subtotalEur, 40);
+  assert.equal(order.discountEur, 3.5);
+  assert.equal(order.totalEur, 36.5);
   assert.equal(order.offer.length, 1);
   assert.deepEqual([...order.offer[0].pizzasBg].sort(), ["Пеперони Макс 30 см", "Пеперони Макс 40 см"]);
   assert.equal(order.items.find((i) => i.productId === "salmon")?.discountEur, 0, "the special pays in full");
   const preview = cartTotals([cartLine("salmon", 30), cartLine("pep", 40), cartLine("pep", 30)]);
-  assert.deepEqual([preview.subtotal, preview.discount, preview.total], [34.25, 3.06, 31.19], "basket = server");
+  assert.deepEqual([preview.subtotal, preview.discount, preview.total], [40, 3.5, 36.5], "basket = server");
 
   const { mail, kitchenMail, ticket, job } = await surfaces(order);
   for (const [part, where] of [
@@ -281,33 +282,33 @@ test("server → every surface: two standard + a special — the same saving and
     [kitchenMail.text, "restaurant text"],
     [kitchenMail.html, "restaurant html"],
   ] as const) {
-    assert.ok(part.includes("Оферта 2 пици 40 + 30 см: 19.43 € (редовно 22.49 €)"), where);
+    assert.ok(part.includes("Оферта 2 пици 40 + 30 см: 22.50 € (редовно 26.00 €)"), where);
     if (where === "customer html") {
       // The HTML table puts the label and the amount in two cells.
-      assert.ok(part.includes("Отстъпка „Грешна математика“") && part.includes("-3.06 €"), where);
+      assert.ok(part.includes("Отстъпка „Грешна математика“") && part.includes("-3.50 €"), where);
     } else {
-      assert.ok(part.includes("Отстъпка „Грешна математика“: -3.06 €"), where);
+      assert.ok(part.includes("Отстъпка „Грешна математика“: -3.50 €"), where);
     }
     assert.ok(!part.includes("Разлика до пакетната цена"), where);
     assertNoNegativeDiscount(part, where);
   }
-  assert.ok(mail.text.includes("Обща сума: 31.19 €"));
-  assert.ok(kitchenMail.text.includes("Общо: 31.19 €"));
-  assert.match(ticket, /Отстъпка „Грешна математика“\s+-3\.06 €/);
-  assert.match(ticket, /ОБЩО\s+31\.19 €/);
+  assert.ok(mail.text.includes("Обща сума: 36.50 €"));
+  assert.ok(kitchenMail.text.includes("Общо: 36.50 €"));
+  assert.match(ticket, /Отстъпка „Грешна математика“\s+-3\.50 €/);
+  assert.match(ticket, /ОБЩО\s+36\.50 €/);
   assert.ok(!ticket.includes("Разлика до пакетната цена"));
   assertNoNegativeDiscount(ticket, "ticket");
-  assert.equal(job.discount, 3.06);
-  assert.equal(job.total, 31.19);
+  assert.equal(job.discount, 3.5);
+  assert.equal(job.total, 36.5);
   assert.ok(!job.items.some((i: { section: string }) => i.section === "offer"));
   assertJobAddsUp(job);
 });
 
 test("server: special + special and special + standard save NOTHING on every surface", async () => {
   for (const [items, total] of [
-    [[{ productId: "salmon", variantId: "salmon_40", quantity: 1 }, { productId: "prosh", variantId: "prosh_40", quantity: 1 }], 30.68],
-    [[{ productId: "salmon", variantId: "salmon_30", quantity: 2 }], 23.52],
-    [[{ productId: "prosh", variantId: "prosh_30", quantity: 1 }, { productId: "pep", variantId: "pep_40", quantity: 1 }], 24.54],
+    [[{ productId: "salmon", variantId: "salmon_40", quantity: 1 }, { productId: "prosh", variantId: "prosh_40", quantity: 1 }], 36],
+    [[{ productId: "salmon", variantId: "salmon_30", quantity: 2 }], 28],
+    [[{ productId: "prosh", variantId: "prosh_30", quantity: 1 }, { productId: "pep", variantId: "pep_40", quantity: 1 }], 29],
   ] as const) {
     const order = await place([...items]);
     assert.equal(order.discountEur, 0);

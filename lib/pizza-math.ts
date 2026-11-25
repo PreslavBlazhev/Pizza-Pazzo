@@ -2,9 +2,13 @@
  * „Грешна математика, правилни оферти“ — automatic two-pizza combos.
  *
  * Package prices for the BASES of two STANDARD pizzas:
- *   30 см + 30 см → 16.87 €   (1687 cents)
- *   40 см + 30 см → 19.43 €   (1943 cents)
- *   40 см + 40 см → 23.01 €   (2301 cents)
+ *   30 см + 30 см = 19.00 €   (1900 cents)
+ *   40 см + 30 см = 22.50 €   (2250 cents)
+ *   40 см + 40 см = 26.00 €   (2600 cents)
+ *
+ * Prices from the owner's new printed boards (2026-11-25; before:
+ * 16.87 / 19.43 / 23.01 €). Only the package prices changed — every rule
+ * below still holds.
  *
  * FINAL rule (owner, 2026-10-17 — replaces the earlier "fixed package
  * prices" and "special pizzas take part" instructions):
@@ -44,7 +48,7 @@
  * sorted by price (descending, ties by line key). A pairing is described by
  * x mixed pairs, y 30+30 pairs and z 40+40 pairs. For fixed (x, y, z) the
  * paired units' prices are replaced by fixed combo prices, so the discount is
- *     D(x, y, z) = S30(x + 2y) + S40(x + 2z) − (1943x + 1687y + 2301z)
+ *     D(x, y, z) = S30(x + 2y) + S40(x + 2z) − (2250x + 1900y + 2600z)
  * where Sk(n) is the sum of the n most expensive units of size k: whatever
  * goes into a pair loses its own price, so the best choice of units for given
  * counts is always the most expensive ones, and WHO pairs with whom inside
@@ -85,16 +89,16 @@ export type ComboSizes = "30+30" | "30+40" | "40+40";
 
 /** Combo price in cents for a pair of sizes ("small+large"). */
 export const PIZZA_COMBO_PRICES_CENTS: Readonly<Record<ComboSizes, number>> = {
-  "30+30": 1687,
-  "30+40": 1943,
-  "40+40": 2301,
+  "30+30": 1900,
+  "30+40": 2250,
+  "40+40": 2600,
 };
 
 /** The same in euros, for display. */
 export const PIZZA_MATH_PRICES_EUR: Readonly<Record<ComboSizes, number>> = {
-  "30+30": 16.87,
-  "30+40": 19.43,
-  "40+40": 23.01,
+  "30+30": 19.0,
+  "30+40": 22.5,
+  "40+40": 26.0,
 };
 
 /** The facts about one basket/order line the rule needs. */
