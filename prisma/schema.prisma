@@ -695,3 +695,21 @@ model EmailOutbox {
   @@index([orderId])
   @@index([status, nextAttemptAt])
 }
+
+/// Photos in the public gallery ("Из нашата кухня" on the home page, all of
+/// them on /gallery), managed from Admin → Галерия. The home page shows the
+/// first five by sortOrder, the first one as the big tile. Seeded by the
+/// migration with the former data/gallery.json placeholders, so the owner
+/// replaces them one by one instead of starting from an empty section.
+model GalleryImage {
+  id        String   @id @default(cuid())
+  /// /uploads/gallery/<uuid>.webp (Persistent Disk) or a bundled /images/... placeholder
+  imageUrl  String
+  captionBg String
+  captionEn String   @default("")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}

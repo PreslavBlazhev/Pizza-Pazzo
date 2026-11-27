@@ -21,12 +21,25 @@ export class ImageProcessingError extends Error {}
  *    gate after the magic-byte sniff.
  */
 export async function normalizeCategoryImage(bytes: Uint8Array): Promise<Uint8Array> {
+  return normalizeToWebp(bytes, CATEGORY_IMAGE_MAX_SIDE);
+}
+
+/** Gallery photos: the big home-page tile is ~600 CSS px wide on desktop
+ *  (×2 on retina), so they keep a little more detail than category photos. */
+const GALLERY_IMAGE_MAX_SIDE = 1600;
+
+/** Same pipeline as normalizeCategoryImage, sized for the gallery. */
+export async function normalizeGalleryImage(bytes: Uint8Array): Promise<Uint8Array> {
+  return normalizeToWebp(bytes, GALLERY_IMAGE_MAX_SIDE);
+}
+
+async function normalizeToWebp(bytes: Uint8Array, maxSide: number): Promise<Uint8Array> {
   try {
     const out = await sharp(bytes, { failOn: "error", limitInputPixels: MAX_INPUT_PIXELS })
       .rotate()
       .resize({
-        width: CATEGORY_IMAGE_MAX_SIDE,
-        height: CATEGORY_IMAGE_MAX_SIDE,
+        width: maxSide,
+        height: maxSide,
         fit: "inside",
         withoutEnlargement: true,
       })

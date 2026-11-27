@@ -213,7 +213,7 @@ export default async function HomePage({
         )}
 
         {/* ── Gallery ──────────────────────────────────────────── */}
-        <GallerySection />
+        <GallerySection locale={locale} />
 
         {/* ── Reviews ──────────────────────────────────────────── */}
         <ReviewsSection />

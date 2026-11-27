@@ -1,22 +1,21 @@
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { use } from "react";
 import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHero } from "@/components/ui/PageHero";
 import { GalleryGrid } from "@/components/gallery/GalleryGrid";
-import { getGalleryItems } from "@/components/gallery/gallery-data";
-import { routing, type Locale } from "@/i18n/routing";
+import { getGalleryItems } from "@/lib/gallery-data";
+import type { Locale } from "@/i18n/routing";
 
 interface PageProps {
   params: Promise<{ locale: Locale }>;
 }
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+// The photos live in the database (Admin → Галерия), which on Render is not
+// available at build time — render on demand; lib/gallery-data.ts caches the
+// read and every admin save invalidates it.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
@@ -24,13 +23,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: t("title"), description: t("description") };
 }
 
-export default function GalleryPage({ params }: PageProps) {
-  const { locale } = use(params);
+export default async function GalleryPage({ params }: PageProps) {
+  const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = useTranslations("gallery");
-  const tCommon = useTranslations("common");
-  const galleryItems = getGalleryItems(locale);
+  const t = await getTranslations({ locale, namespace: "gallery" });
+  const tCommon = await getTranslations({ locale, namespace: "common" });
+  const galleryItems = await getGalleryItems(locale);
 
   return (
     <>
@@ -40,7 +39,11 @@ export default function GalleryPage({ params }: PageProps) {
           eyebrow={t("eyebrow")}
           title={t("title")}
           subtitle={t("subtitle")}
-          note={t("note")}
+          note={
+            galleryItems.some((item) => item.src.startsWith("/images/products/placeholder"))
+              ? t("note")
+              : undefined
+          }
         />
 
         <div className="container pb-24 pt-12">

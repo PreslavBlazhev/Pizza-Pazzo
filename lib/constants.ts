@@ -127,6 +127,7 @@ export const ADMIN_NAV = [
   // /admin/menu is gone — /admin/products IS the menu management now.
   { href: "/admin/products", labelKey: "products", allow: ["STAFF", "ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/categories", labelKey: "categories", allow: ["ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/gallery", labelKey: "gallery", allow: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/users", labelKey: "users", allow: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/settings", labelKey: "settings", allow: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/settings/print", labelKey: "printSettings", allow: ["ADMIN", "SUPER_ADMIN"] },

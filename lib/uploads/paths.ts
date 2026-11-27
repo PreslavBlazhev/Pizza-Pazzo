@@ -68,3 +68,19 @@ export function isPersistentUploadsConfigured(): boolean {
   if (process.env.NODE_ENV !== "production") return true;
   return Boolean(process.env.UPLOADS_DIR?.trim());
 }
+
+/** Public URL prefix for gallery photos (app/uploads/gallery/[filename]). */
+export const GALLERY_IMAGES_PUBLIC_PREFIX = "/uploads/gallery";
+
+export function toPublicGalleryImagePath(filename: string): string {
+  return `${GALLERY_IMAGES_PUBLIC_PREFIX}/${filename}`;
+}
+
+/** Filename behind a stored gallery photo path, or null if it isn't ours
+ *  (e.g. one of the bundled /images/products/placeholder-*.svg tiles). */
+export function extractGalleryImageFilename(publicPath: string): string | null {
+  if (!publicPath.startsWith(`${GALLERY_IMAGES_PUBLIC_PREFIX}/`)) return null;
+  const rest = publicPath.slice(GALLERY_IMAGES_PUBLIC_PREFIX.length + 1);
+  if (rest.includes("/") || rest.length === 0) return null;
+  return rest;
+}

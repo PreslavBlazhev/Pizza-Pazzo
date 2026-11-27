@@ -1,5 +1,5 @@
 import { ProductImage } from "@/components/menu/ProductImage";
-import type { GalleryItem } from "./gallery-data";
+import type { GalleryItem } from "@/lib/gallery-data";
 
 interface GalleryGridProps {
   items: GalleryItem[];
@@ -27,12 +27,14 @@ export function GalleryGrid({ items, feature = true }: GalleryGridProps) {
           </div>
           {/* Visible caption on every tile — the alt text says the same to
               screen readers, so the caption itself is hidden from them. */}
-          <figcaption
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-pizza-ink/75 to-transparent px-3 pb-2.5 pt-8 text-sm font-semibold text-white"
-          >
-            {item.caption}
-          </figcaption>
+          {item.caption && (
+            <figcaption
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-pizza-ink/75 to-transparent px-3 pb-2.5 pt-8 text-sm font-semibold text-white"
+            >
+              {item.caption}
+            </figcaption>
+          )}
         </figure>
       ))}
     </div>

@@ -90,6 +90,7 @@ const ADMIN_RULES: { prefix: string; allow: readonly UserRole[] }[] = [
   // Product LIST is staff (availability toggle); product EDIT pages are not.
   { prefix: "/admin/products/", allow: ["ADMIN", "SUPER_ADMIN"] },
   { prefix: "/admin/categories", allow: ["ADMIN", "SUPER_ADMIN"] },
+  { prefix: "/admin/gallery", allow: ["ADMIN", "SUPER_ADMIN"] },
 ];
 
 /**

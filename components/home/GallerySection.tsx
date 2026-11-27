@@ -1,16 +1,18 @@
-import { useLocale, useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GalleryGrid } from "@/components/gallery/GalleryGrid";
-import { getGalleryItems } from "@/components/gallery/gallery-data";
+import { HOME_GALLERY_COUNT, getGalleryItems } from "@/lib/gallery-data";
+import type { Locale } from "@/i18n/routing";
 
 /**
- * Homepage teaser for the gallery. The full set lives on /gallery — drop the
- * real food photos into /public/images/gallery and update data/gallery.json.
+ * Homepage teaser for the gallery ("Из нашата кухня"): the first
+ * HOME_GALLERY_COUNT photos by the order set in Admin → Галерия. The full set
+ * lives on /gallery.
  */
-export function GallerySection() {
-  const t = useTranslations("gallery");
-  const galleryItems = getGalleryItems(useLocale());
+export async function GallerySection({ locale }: { locale: Locale }) {
+  const t = await getTranslations({ locale, namespace: "gallery" });
+  const galleryItems = await getGalleryItems(locale);
 
   if (galleryItems.length === 0) return null;
 
@@ -24,7 +26,7 @@ export function GallerySection() {
           subtitle={t("homeSubtitle")}
         />
         <div className="mt-10">
-          <GalleryGrid items={galleryItems.slice(0, 5)} />
+          <GalleryGrid items={galleryItems.slice(0, HOME_GALLERY_COUNT)} />
         </div>
         <div className="mt-10 text-center">
           <Link
